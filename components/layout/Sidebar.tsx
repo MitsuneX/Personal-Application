@@ -47,9 +47,10 @@ const NAV_SECTIONS = [
 ];
 
 const DRAMA_SUB = [
-  { href: "/drama/japanese", icon: "🇯🇵", label: "Japanese" },
-  { href: "/drama/korean",   icon: "🇰🇷", label: "Korean"   },
-  { href: "/drama/chinese",  icon: "🇨🇳", label: "Chinese"  },
+  { href: "/drama/japanese",  icon: "🇯🇵", label: "Japanese"  },
+  { href: "/drama/korean",    icon: "🇰🇷", label: "Korean"    },
+  { href: "/drama/chinese",   icon: "🇨🇳", label: "Chinese"   },
+  { href: "/drama/hollywood", icon: "🎬", label: "Hollywood"  },
 ];
 
 export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false }: SidebarProps) {

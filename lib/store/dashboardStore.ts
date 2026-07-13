@@ -41,7 +41,7 @@ export interface GameEntry {
 
 export type MediaStatus = "GOAT Status" | "All-Star" | "Rising" | "Classic";
 export type AnimeStatus = "Watching" | "Completed" | "On Hold" | "Plan to Watch" | "Dropped";
-export type DramaCountry = "japanese" | "korean" | "chinese";
+export type DramaCountry = "japanese" | "korean" | "chinese" | "hollywood";
 export type DramaStatus = "Watching" | "Completed" | "Plan to Watch" | "On Hold";
 
 export interface ActorEntry {

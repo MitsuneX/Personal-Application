@@ -63,6 +63,11 @@ const initialDramas = [
   { title: "Word of Honor", country: "chinese", episodes: 36, episodesWatched: 36, status: "Completed", rating: 9, genre: "Wuxia / Action", year: 2021, platform: "iQIYI" },
   { title: "Love O2O", country: "chinese", episodes: 30, episodesWatched: 15, status: "Watching", rating: 8, genre: "Romance / Gaming", year: 2016, platform: "iQIYI" },
   { title: "Nirvana in Fire", country: "chinese", episodes: 54, episodesWatched: 54, status: "Completed", rating: 10, genre: "Historical / Political", year: 2015, platform: "iQIYI" },
+  // Hollywood
+  { title: "Succession", country: "hollywood", episodes: 39, episodesWatched: 39, status: "Completed", rating: 10, genre: "Drama / Satire", year: 2018, platform: "HBO Max", cast: ["Brian Cox", "Jeremy Strong"] },
+  { title: "Breaking Bad", country: "hollywood", episodes: 62, episodesWatched: 62, status: "Completed", rating: 10, genre: "Crime / Drama", year: 2008, platform: "Netflix", cast: ["Bryan Cranston", "Aaron Paul"] },
+  { title: "Severance", country: "hollywood", episodes: 9, episodesWatched: 9, status: "Completed", rating: 10, genre: "Sci-Fi / Thriller", year: 2022, platform: "Apple TV+", cast: ["Adam Scott", "Patricia Arquette"] },
+  { title: "The Last of Us", country: "hollywood", episodes: 9, episodesWatched: 6, status: "Watching", rating: 9, genre: "Drama / Post-Apocalyptic", year: 2023, platform: "HBO Max", cast: ["Pedro Pascal", "Bella Ramsey"] },
 ];
 
 const initialHallOfFame = [

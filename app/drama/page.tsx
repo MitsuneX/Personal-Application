@@ -36,7 +36,17 @@ const REGIONS = [
     desc: "Wuxia, historical epics, and romantic xianxia from China",
     palette: { brutal: { bg: "#FFE4C4", border: "#7A0000", accent: "#C8102E" }, cyber: { glow: "#FFD700", bg: "rgba(200,16,46,0.08)" } },
   },
+  {
+    id: "hollywood",
+    flag: "🎬",
+    label: "Hollywood Drama",
+    sublabel: "Hollywood",
+    href: "/drama/hollywood",
+    desc: "Blockbuster series, prestige TV, and cinematic universes from the West",
+    palette: { brutal: { bg: "#F3E8FF", border: "#4C1D95", accent: "#7C3AED" }, cyber: { glow: "#A78BFA", bg: "rgba(124,58,237,0.08)" } },
+  },
 ];
+
 
 export default function DramaHubPage() {
   const { theme } = useTheme();
