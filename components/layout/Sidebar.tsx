@@ -122,18 +122,18 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false }: 
                 animate={{
                   color: isCyber ? "#E0E8FF" : "#1A1A1A",
                   fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
-                  letterSpacing: isCyber ? "0.08em" : "0em",
+                  letterSpacing: isCyber ? "0.12em" : "0em",
                 }}
                 transition={{ duration: 0.4 }}
               >
-                {isCyber ? "NEXUS XENON" : "Nexus Xenon"}
+                {isCyber ? "NEXUS" : "XENON"}
               </motion.span>
               <motion.span
                 className="text-xs tracking-widest uppercase truncate"
                 animate={{ color: isCyber ? "rgba(0,245,255,0.5)" : "rgba(0,0,0,0.4)" }}
                 transition={{ duration: 0.4 }}
               >
-                {isCyber ? "// Cyber X Brutal" : "Personal Hub"}
+                {isCyber ? "// Cyberpunk Mode" : "Neubrutalism Mode"}
               </motion.span>
             </motion.div>
           )}

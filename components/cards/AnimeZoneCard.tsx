@@ -1,15 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { motion, useAnimation } from "framer-motion";
 import { BentoCard } from "./BentoCard";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
-import {
-  listContainerVariants,
-  listItemVariants,
-  progressBarVariants,
-} from "@/lib/theme/motionVariants";
+import { listContainerVariants, listItemVariants } from "@/lib/theme/motionVariants";
 import type { AnimeStatus } from "@/lib/store/dashboardStore";
 
 const STATUS_CONFIG: Record<
@@ -31,7 +27,39 @@ const BRUTAL_STATUS_CONFIG: Record<AnimeStatus, { color: string; bg: string }> =
   Dropped:        { color: "#8A1A1A", bg: "rgba(239,71,111,0.12)"  },
 };
 
-// ─── Progress Bar ─────────────────────────────────────────────────────────────
+// ─── Card Pop Spring Variants ─────────────────────────────────────────────────
+
+const cardPopVariants = {
+  hidden: { opacity: 0, scale: 0.88, y: 16 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 260,
+      damping: 22,
+      staggerChildren: 0.08,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemPopVariants = {
+  hidden: { opacity: 0, scale: 0.9, y: 12 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 280,
+      damping: 20,
+    },
+  },
+};
+
+// ─── Animated Progress Bar with Hover Glow Sweep ─────────────────────────────
 
 function AnimeProgressBar({
   watched,
@@ -44,23 +72,58 @@ function AnimeProgressBar({
   isCyber: boolean;
   delay?: number;
 }) {
+  const [isHovered, setIsHovered] = useState(false);
   const pct = total > 0 ? Math.min((watched / total) * 100, 100) : 0;
 
   return (
-    <div className="mt-1.5">
-      <div className="progress-track">
+    <div
+      className="mt-1.5"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div
+        className="progress-track relative overflow-hidden"
+        style={{ height: "6px", borderRadius: "3px" }}
+      >
+        {/* Base fill — animates from 0% on load */}
         <motion.div
-          className="progress-fill"
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: pct / 100 }}
+          className="progress-fill absolute inset-y-0 left-0"
+          initial={{ width: "0%" }}
+          animate={{ width: `${pct}%` }}
           transition={{
             type: "spring",
-            stiffness: 70,
-            damping: 18,
-            delay: 0.5 + delay,
+            stiffness: 60,
+            damping: 16,
+            delay: 0.4 + delay,
           }}
-          style={{ transformOrigin: "left" }}
+          style={{
+            background: isCyber
+              ? "linear-gradient(90deg, #00F5FF, #BF5FFF)"
+              : "linear-gradient(90deg, #FF6B35, #FFD166)",
+          }}
         />
+
+        {/* Hover glow sweep — continuous sliding gradient */}
+        {isHovered && (
+          <motion.div
+            className="absolute inset-y-0"
+            initial={{ left: "-30%", width: "30%" }}
+            animate={{ left: "130%", width: "30%" }}
+            transition={{
+              duration: 1.0,
+              repeat: Infinity,
+              ease: "easeInOut",
+              repeatDelay: 0.2,
+            }}
+            style={{
+              background: isCyber
+                ? "linear-gradient(90deg, transparent, rgba(0,245,255,0.7), rgba(255,255,255,0.9), rgba(191,95,255,0.7), transparent)"
+                : "linear-gradient(90deg, transparent, rgba(255,215,0,0.6), rgba(255,255,255,0.8), rgba(255,107,53,0.6), transparent)",
+              filter: "blur(2px)",
+              borderRadius: "3px",
+            }}
+          />
+        )}
       </div>
       <div className="flex justify-between mt-0.5">
         <span
@@ -69,12 +132,20 @@ function AnimeProgressBar({
         >
           {watched} / {total} eps
         </span>
-        <span
+        <motion.span
           className="text-xs font-mono font-bold"
-          style={{ color: isCyber ? "rgba(0,245,255,0.7)" : "rgba(0,0,0,0.6)" }}
+          animate={{
+            color: isHovered
+              ? isCyber ? "#00F5FF" : "#FF6B35"
+              : isCyber ? "rgba(0,245,255,0.7)" : "rgba(0,0,0,0.6)",
+            textShadow: isHovered && isCyber
+              ? "0 0 8px rgba(0,245,255,0.8)"
+              : "none",
+          }}
+          transition={{ duration: 0.2 }}
         >
           {Math.round(pct)}%
-        </span>
+        </motion.span>
       </div>
     </div>
   );
@@ -96,7 +167,7 @@ function AnimeRow({
 
   return (
     <motion.li
-      variants={listItemVariants}
+      variants={itemPopVariants}
       custom={index}
       className="rounded-lg px-3 pt-2.5 pb-2 group"
       style={{
@@ -152,7 +223,7 @@ function AnimeRow({
         watched={anime.episodesWatched}
         total={anime.totalEpisodes}
         isCyber={isCyber}
-        delay={index * 0.05}
+        delay={index * 0.06}
       />
     </motion.li>
   );
@@ -173,151 +244,158 @@ export function AnimeZoneCard() {
   const totalEpsWatched = animeList.reduce((sum, a) => sum + a.episodesWatched, 0);
 
   return (
-    <BentoCard
-      id="anime-zone-card"
+    <motion.div
+      layout
       className="col-span-1 md:col-span-2 lg:col-span-1 xl:col-span-2"
     >
-      {/* ── Header ── */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <motion.span
-            className="text-2xl"
-            animate={{
-              filter: isCyber
-                ? "drop-shadow(0 0 10px rgba(191,95,255,0.9))"
-                : "none",
-            }}
-            transition={{ duration: 0.4 }}
-          >
-            ⛩️
-          </motion.span>
-          <div>
-            <motion.h2
-              className="font-black text-base leading-tight theme-text-primary"
-              animate={{ fontFamily: isCyber ? "var(--font-orbitron)" : "inherit" }}
-              transition={{ duration: 0.4 }}
-            >
-              {isCyber ? "ANIME.ZONE" : "Anime Zone"}
-            </motion.h2>
-            <p className="theme-text-muted text-xs tracking-widest uppercase">
-              {animeList.length} in log
-            </p>
-          </div>
-        </div>
-
-        {/* Stats row */}
-        <div className="flex gap-2">
-          <StatPill
-            label="Watching"
-            value={watching.length}
-            color={isCyber ? "#00F5FF" : "#06D6A0"}
-            isCyber={isCyber}
-          />
-          <StatPill
-            label="Done"
-            value={completed.length}
-            color={isCyber ? "#BF5FFF" : "#FF6B35"}
-            isCyber={isCyber}
-          />
-        </div>
-      </div>
-
-      {/* ── Anime List ── */}
-      <motion.ul
-        className="space-y-2.5 mb-4"
-        variants={listContainerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {animeList.slice(0, 5).map((anime, i) => (
-          <AnimeRow key={anime.id} anime={anime} isCyber={isCyber} index={i} />
-        ))}
-      </motion.ul>
-
-      {/* ── Divider ── */}
-      <div
-        className="h-px mb-4"
-        style={{
-          background: isCyber
-            ? "linear-gradient(90deg, rgba(0,245,255,0.4), rgba(191,95,255,0.4), transparent)"
-            : "rgba(0,0,0,0.1)",
-        }}
-      />
-
-      {/* ── Favorite Characters ── */}
-      <div>
-        <p
-          className="text-xs font-bold tracking-widest uppercase mb-2.5"
-          style={{ color: isCyber ? "rgba(191,95,255,0.7)" : "rgba(0,0,0,0.45)" }}
-        >
-          ♥ Favorite Characters
-        </p>
-
+      <BentoCard id="anime-zone-card">
+        {/* ── Header ── */}
         <motion.div
-          className="flex flex-wrap gap-2"
-          variants={listContainerVariants}
+          className="flex items-start justify-between mb-4"
+          variants={cardPopVariants}
           initial="hidden"
           animate="visible"
         >
-          {characters
-            .filter((c) => c.isFavorite)
-            .map((char, i) => (
-              <motion.div
-                key={char.id}
-                variants={listItemVariants}
-                custom={i}
-                className="rounded-lg px-2.5 py-1.5 flex flex-col"
-                style={{
-                  background: isCyber
-                    ? "rgba(191,95,255,0.08)"
-                    : "rgba(255,107,53,0.08)",
-                  border: isCyber
-                    ? "1px solid rgba(191,95,255,0.3)"
-                    : "1.5px solid rgba(0,0,0,0.2)",
-                }}
-                whileHover={{
-                  scale: 1.04,
-                  boxShadow: isCyber
-                    ? "0 0 12px rgba(191,95,255,0.5)"
-                    : "3px 3px 0px 0px rgba(0,0,0,1)",
-                  transition: { duration: 0.15 },
-                }}
+          <div className="flex items-center gap-2">
+            <motion.span
+              className="text-2xl"
+              animate={{
+                filter: isCyber
+                  ? "drop-shadow(0 0 10px rgba(191,95,255,0.9))"
+                  : "none",
+              }}
+              transition={{ duration: 0.4 }}
+            >
+              ⛩️
+            </motion.span>
+            <div>
+              <motion.h2
+                className="font-black text-base leading-tight theme-text-primary"
+                animate={{ fontFamily: isCyber ? "var(--font-orbitron)" : "inherit" }}
+                transition={{ duration: 0.4 }}
               >
-                <span
-                  className="font-bold text-xs"
-                  style={{ color: isCyber ? "#E0E8FF" : "#1A1A1A" }}
-                >
-                  {char.name}
-                </span>
-                <span
-                  className="text-xs"
-                  style={{ color: isCyber ? "rgba(191,95,255,0.7)" : "rgba(0,0,0,0.45)" }}
-                >
-                  {char.anime}
-                </span>
-              </motion.div>
-            ))}
-        </motion.div>
-      </div>
+                {isCyber ? "ANIME.ZONE" : "Anime Zone"}
+              </motion.h2>
+              <p className="theme-text-muted text-xs tracking-widest uppercase">
+                {animeList.length} in log
+              </p>
+            </div>
+          </div>
 
-      {/* ── Total eps counter ── */}
-      <motion.div
-        className="mt-4 pt-3 flex items-center gap-2"
-        style={{ borderTop: isCyber ? "1px solid rgba(0,245,255,0.1)" : "1px solid rgba(0,0,0,0.08)" }}
-      >
-        <span className="theme-text-muted text-xs">Total episodes watched:</span>
-        <motion.span
-          className="font-black text-sm font-mono"
-          animate={{
-            color: isCyber ? "#00F5FF" : "#FF6B35",
-            textShadow: isCyber ? "0 0 10px rgba(0,245,255,0.8)" : "none",
-          }}
-          transition={{ duration: 0.4 }}
+          {/* Stats row */}
+          <div className="flex gap-2">
+            <StatPill
+              label="Watching"
+              value={watching.length}
+              color={isCyber ? "#00F5FF" : "#06D6A0"}
+              isCyber={isCyber}
+            />
+            <StatPill
+              label="Done"
+              value={completed.length}
+              color={isCyber ? "#BF5FFF" : "#FF6B35"}
+              isCyber={isCyber}
+            />
+          </div>
+        </motion.div>
+
+        {/* ── Anime List — organic scale spring pop ── */}
+        <motion.ul
+          className="space-y-2.5 mb-4"
+          variants={cardPopVariants}
+          initial="hidden"
+          animate="visible"
         >
-          {totalEpsWatched.toLocaleString()}
-        </motion.span>
-      </motion.div>
-    </BentoCard>
+          {animeList.slice(0, 5).map((anime, i) => (
+            <AnimeRow key={anime.id} anime={anime} isCyber={isCyber} index={i} />
+          ))}
+        </motion.ul>
+
+        {/* ── Divider ── */}
+        <div
+          className="h-px mb-4"
+          style={{
+            background: isCyber
+              ? "linear-gradient(90deg, rgba(0,245,255,0.4), rgba(191,95,255,0.4), transparent)"
+              : "rgba(0,0,0,0.1)",
+          }}
+        />
+
+        {/* ── Favorite Characters ── */}
+        <div>
+          <p
+            className="text-xs font-bold tracking-widest uppercase mb-2.5"
+            style={{ color: isCyber ? "rgba(191,95,255,0.7)" : "rgba(0,0,0,0.45)" }}
+          >
+            ♥ Favorite Characters
+          </p>
+
+          <motion.div
+            className="flex flex-wrap gap-2"
+            variants={listContainerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {characters
+              .filter((c) => c.isFavorite)
+              .map((char, i) => (
+                <motion.div
+                  key={char.id}
+                  variants={listItemVariants}
+                  custom={i}
+                  className="rounded-lg px-2.5 py-1.5 flex flex-col"
+                  style={{
+                    background: isCyber
+                      ? "rgba(191,95,255,0.08)"
+                      : "rgba(255,107,53,0.08)",
+                    border: isCyber
+                      ? "1px solid rgba(191,95,255,0.3)"
+                      : "1.5px solid rgba(0,0,0,0.2)",
+                  }}
+                  whileHover={{
+                    scale: 1.04,
+                    boxShadow: isCyber
+                      ? "0 0 12px rgba(191,95,255,0.5)"
+                      : "3px 3px 0px 0px rgba(0,0,0,1)",
+                    transition: { duration: 0.15 },
+                  }}
+                >
+                  <span
+                    className="font-bold text-xs"
+                    style={{ color: isCyber ? "#E0E8FF" : "#1A1A1A" }}
+                  >
+                    {char.name}
+                  </span>
+                  <span
+                    className="text-xs"
+                    style={{ color: isCyber ? "rgba(191,95,255,0.7)" : "rgba(0,0,0,0.45)" }}
+                  >
+                    {char.anime}
+                  </span>
+                </motion.div>
+              ))}
+          </motion.div>
+        </div>
+
+        {/* ── Total eps counter ── */}
+        <motion.div
+          className="mt-4 pt-3 flex items-center gap-2"
+          style={{ borderTop: isCyber ? "1px solid rgba(0,245,255,0.1)" : "1px solid rgba(0,0,0,0.08)" }}
+        >
+          <span className="theme-text-muted text-xs">Total episodes watched:</span>
+          <motion.span
+            className="font-black text-sm font-mono"
+            animate={{
+              color: isCyber ? "#00F5FF" : "#FF6B35",
+              textShadow: isCyber ? "0 0 10px rgba(0,245,255,0.8)" : "none",
+            }}
+            transition={{ duration: 0.4 }}
+          >
+            {totalEpsWatched.toLocaleString()}
+          </motion.span>
+        </motion.div>
+      </BentoCard>
+    </motion.div>
   );
 }
 
