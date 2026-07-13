@@ -223,7 +223,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   fetchDashboard: async () => {
     set({ isLoading: true });
     try {
-      const res = await fetch("/api/dashboard");
+      const res = await fetch("/api/dashboard?t=" + Date.now(), { cache: "no-store" });
       const data = await res.json();
       if (data && !data.error) {
         set({

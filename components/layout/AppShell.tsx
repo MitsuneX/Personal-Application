@@ -19,6 +19,21 @@ export function AppShell({ children }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const { isLoading, isHydrated, fetchDashboard } = useDashboardStore();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Load sidebar preference on client mount
+  useEffect(() => {
+    const saved = localStorage.getItem("sidebar_collapsed");
+    if (saved !== null) {
+      setSidebarCollapsed(saved === "true");
+    }
+  }, []);
+
+  const handleToggleSidebar = () => {
+    const nextVal = !sidebarCollapsed;
+    setSidebarCollapsed(nextVal);
+    localStorage.setItem("sidebar_collapsed", String(nextVal));
+  };
 
   useEffect(() => {
     if (!isHydrated) {
@@ -27,16 +42,21 @@ export function AppShell({ children }: AppShellProps) {
   }, [isHydrated, fetchDashboard]);
 
   return (
-    <motion.div
-      className="h-screen overflow-hidden flex flex-row"
-      animate={{ backgroundColor: isCyber ? "#050816" : "#FFF5E4" }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-    >
+    <>
       <LoadingOverlay isLoading={isLoading && !isHydrated} />
-      {/* ── Desktop Sidebar ── */}
-      <div className="hidden md:flex flex-col w-[72px] lg:w-60 shrink-0 h-full z-40 relative">
-        <Sidebar collapsed={false} />
-      </div>
+      <motion.div
+        className="h-screen overflow-hidden flex flex-row"
+        animate={{ backgroundColor: isCyber ? "#050816" : "#FFF5E4" }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      >
+        {/* ── Desktop Sidebar ── */}
+        <motion.div 
+          className="hidden md:flex flex-col shrink-0 h-full z-40 relative"
+          animate={{ width: sidebarCollapsed ? 78 : 240 }}
+          transition={{ type: "spring", stiffness: 280, damping: 26 }}
+        >
+          <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={handleToggleSidebar} />
+        </motion.div>
 
       {/* ── Mobile Drawer Overlay ── */}
       <AnimatePresence>
@@ -109,6 +129,7 @@ export function AppShell({ children }: AppShellProps) {
         </main>
       </div>
     </motion.div>
+    </>
   );
 }
 

@@ -12,6 +12,7 @@ interface SidebarProps {
   collapsed?: boolean;
   onClose?: () => void;
   isMobileDrawer?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 const NAV_SECTIONS = [
@@ -53,7 +54,7 @@ const DRAMA_SUB = [
   { href: "/drama/hollywood", icon: "🎬", label: "Hollywood"  },
 ];
 
-export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false }: SidebarProps) {
+export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, onToggleCollapse }: SidebarProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const pathname = usePathname();
@@ -95,7 +96,7 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false }: 
 
         {/* ── Brand ── */}
         <div
-          className="flex items-center gap-3 px-4 h-16 shrink-0"
+          className="flex items-center gap-3 px-4 h-16 shrink-0 relative"
           style={{ borderBottom: isCyber ? "1px solid rgba(0,245,255,0.12)" : "2px solid rgba(0,0,0,0.1)" }}
         >
           <motion.div
@@ -137,6 +138,23 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false }: 
                 {isCyber ? "// Cyberpunk Mode" : "Neubrutalism Mode"}
               </motion.span>
             </motion.div>
+          )}
+
+          {/* Collapse toggle button for desktop */}
+          {!isMobileDrawer && onToggleCollapse && (
+            <button
+              onClick={onToggleCollapse}
+              className="absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full border flex items-center justify-center text-xs font-black z-50 cursor-pointer shadow-md select-none transition-all hover:scale-110 active:scale-95"
+              style={{
+                backgroundColor: isCyber ? "#050816" : "#FFF5E4",
+                borderColor: isCyber ? "#00F5FF" : "#000000",
+                color: isCyber ? "#00F5FF" : "#000000",
+                boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.4)" : "3px 3px 0px rgba(0,0,0,1)",
+                borderWidth: "2px",
+              }}
+            >
+              {collapsed ? "▶" : "◀"}
+            </button>
           )}
 
           {/* Mobile close */}
