@@ -70,10 +70,18 @@ const initialHallOfFame = [
   { name: "Ryan Gosling", type: "actor", status: "GOAT Status", knownFor: ["Blade Runner 2049", "La La Land", "Drive"], nationality: "Canadian", note: "The definition of cool", rank: 1, isChampion: true },
   { name: "Keanu Reeves", type: "actor", status: "GOAT Status", knownFor: ["John Wick", "The Matrix", "Speed"], nationality: "American", note: "Real-life protagonist energy", rank: 2, isChampion: false },
   { name: "Adam Scott", type: "actor", status: "All-Star", knownFor: ["Severance", "Parks & Recreation", "Step Brothers"], nationality: "American", rank: 3, isChampion: false },
-  // Actresses
-  { name: "Ana de Armas", type: "actress", status: "All-Star", knownFor: ["Knives Out", "Blonde", "Blade Runner 2049"], nationality: "Cuban-Spanish", rank: 1, isChampion: false },
-  { name: "Zendaya", type: "actress", status: "Rising", knownFor: ["Euphoria", "Dune", "Challengers"], nationality: "American", note: "Gen Z's greatest", rank: 2, isChampion: false },
-  { name: "Patricia Arquette", type: "actress", status: "GOAT Status", knownFor: ["Severance", "True Romance", "Medium"], nationality: "American", rank: 3, isChampion: false },
+  // Actresses - China
+  { name: "Li Yu Xiao", type: "actress", status: "GOAT Status", knownFor: ["Historical Drama", "C-Drama Star"], nationality: "China", note: "Rank #1 Chinese Actress", rank: 1, isChampion: false },
+  { name: "Qi yu chen", type: "actress", status: "All-Star", knownFor: ["Modern Romance", "Rising Star"], nationality: "China", note: "Rank #2 Chinese Actress", rank: 2, isChampion: false },
+  { name: "Bao Shang Er", type: "actress", status: "Rising", knownFor: ["New Generation Talent"], nationality: "China", note: "Rank #3 Chinese Actress", rank: 3, isChampion: false },
+  // Actresses - Korea
+  { name: "Jeon So Young and Kang Mi Na", type: "actress", status: "GOAT Status", knownFor: ["K-Drama Legends", "Dynamic Performances"], nationality: "Korea", note: "Rank #1 Korean Actresses", rank: 1, isChampion: false },
+  { name: "Han hyo Joo , Park Bo yong and Bae suzy", type: "actress", status: "All-Star", knownFor: ["Hallyu Queens", "Top Tier Romance"], nationality: "Korea", note: "Rank #2 Korean Actresses", rank: 2, isChampion: false },
+  { name: "UI , Kim Ji Won , Go youn Jung , Hong Hwa-yeon", type: "actress", status: "Rising", knownFor: ["Iconic Visuals", "Masterclass Roles"], nationality: "Korea", note: "Rank #3 Korean Actresses", rank: 3, isChampion: false },
+  // Actresses - Hollywood
+  { name: "Inde Navarrette", type: "actress", status: "GOAT Status", knownFor: ["13 Reasons Why", "Superman & Lois"], nationality: "Hollywood", note: "Rank #1 Hollywood Actress", rank: 1, isChampion: false },
+  { name: "Emma Watson", type: "actress", status: "All-Star", knownFor: ["Harry Potter Series", "Beauty and the Beast"], nationality: "Hollywood", note: "Rank #2 Hollywood Actress", rank: 2, isChampion: false },
+  { name: "Kathryn Newton", type: "actress", status: "Rising", knownFor: ["Ant-Man and the Wasp: Quantumania", "Society"], nationality: "Hollywood", note: "Rank #3 Hollywood Actress", rank: 3, isChampion: false },
   // Anime
   { name: "Frieren: Beyond Journey's End", type: "anime", status: "GOAT Status", knownFor: ["Emotional depth", "Beautiful world-building", "Sousou no Frieren OST"], note: "A masterpiece of the era", rank: 1, isChampion: false },
   { name: "Vinland Saga", type: "anime", status: "GOAT Status", knownFor: ["Character development", "Historical accuracy", "Thorfinn's arc"], note: "The greatest redemption arc", rank: 2, isChampion: false },

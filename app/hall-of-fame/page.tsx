@@ -240,106 +240,271 @@ export default function HallOfFamePage() {
 
       {/* Grid of Standard Enshrinements */}
       <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-          variants={gridContainerVariants}
-          initial="hidden"
-          animate="visible"
-          exit={{ opacity: 0, transition: { duration: 0.15 } }}
-        >
-          {listWithoutChampion.map((entry, i) => {
-            const cyberStyle  = STATUS_STYLE[entry.status] || STATUS_STYLE["GOAT Status"];
-            const brutalStyle = BRUTAL_STATUS_STYLE[entry.status] || BRUTAL_STATUS_STYLE["GOAT Status"];
-            const isGOAT      = entry.status === "GOAT Status";
+          {activeTab === "actress" ? (
+            <div className="w-full space-y-12">
+              {/* Group definition helper */}
+              {[
+                {
+                  code: "China",
+                  title: "🇨🇳 Chinese Actresses (C-Drama)",
+                  description: "Elegant silhouettes, classic imperial reds, and high-fidelity neon accents",
+                  accentColor: "#FF2A2A",
+                  accentBg: "rgba(255,42,42,0.06)",
+                  accentBorder: "rgba(255,42,42,0.3)",
+                  brutalBorder: "#CC1111",
+                },
+                {
+                  code: "Korea",
+                  title: "🇰🇷 Korean Actresses (Hallyu)",
+                  description: "Premium pastel pinks, soft sky blues, and clean glassmorphism profiles",
+                  accentColor: "#FF7EB9",
+                  accentBg: "rgba(255,126,185,0.06)",
+                  accentBorder: "rgba(255,126,185,0.3)",
+                  brutalBorder: "#CC3377",
+                },
+                {
+                  code: "Hollywood",
+                  title: "🎬 Hollywood Actresses",
+                  description: "Golden VIP stars, deep space purples, and high-contrast spotlight borders",
+                  accentColor: "#FFD700",
+                  accentBg: "rgba(255,215,0,0.06)",
+                  accentBorder: "rgba(255,215,0,0.3)",
+                  brutalBorder: "#B59300",
+                }
+              ].map((group) => {
+                const groupItems = listWithoutChampion.filter(
+                  (item) => item.nationality?.toLowerCase() === group.code.toLowerCase()
+                );
 
-            return (
-              <motion.div
-                key={entry.id}
-                variants={cardVariants}
-                custom={i}
-                className="group relative cursor-pointer"
-                onClick={(e) => handleEdit(entry, e)}
-              >
-                <div
-                  className="rounded-xl p-5 h-full flex flex-col gap-3 relative overflow-hidden transition-transform border-adaptive-unique"
-                  style={{
-                    background: isCyber ? "rgba(255,255,255,0.02)" : "#FFFFFF",
-                  }}
-                >
-                  {/* Rank flag */}
-                  <div className="absolute top-3 right-3 text-[10px] font-black tracking-wider px-2 py-0.5 rounded-md"
-                    style={{
-                      backgroundColor: isCyber ? "rgba(0,245,255,0.1)" : "#FFD166",
-                      color: isCyber ? "#00F5FF" : "#000",
-                      border: isCyber ? "1px solid rgba(0,245,255,0.2)" : "1.5px solid #000",
-                    }}
-                  >
-                    🏆 Rank #{entry.rank}
-                  </div>
+                if (groupItems.length === 0) return null;
 
-                  {/* Type and status */}
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full"
+                return (
+                  <div key={group.code} className="space-y-4">
+                    {/* Header bar for country */}
+                    <div 
+                      className="p-4 rounded-xl border-adaptive-unique flex flex-col sm:flex-row justify-between sm:items-center gap-2"
                       style={{
-                        backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)",
-                        color: isCyber ? "#94A3B8" : "#4A4A4A",
+                        background: isCyber ? "rgba(255,255,255,0.02)" : "#FFF",
+                        borderLeft: `6px solid ${group.accentColor}`,
                       }}
                     >
-                      {entry.type === "actor" ? "🎭 Actor" : entry.type === "actress" ? "💫 Actress" : "⛩️ Anime"}
-                    </span>
-                    <span className="text-[9px] font-black uppercase tracking-wide" style={{ color: isCyber ? cyberStyle.color : brutalStyle.color }}>
-                      {entry.status}
-                    </span>
-                  </div>
-
-                  {/* Name */}
-                  <div className="pt-1">
-                    <h3 className="font-black text-base theme-text-primary leading-tight">
-                      {entry.name}
-                    </h3>
-                    {entry.note && (
-                      <p className="text-xs theme-text-muted mt-1 italic leading-relaxed">
-                        "{entry.note}"
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Known for */}
-                  <div className="flex flex-wrap gap-1.5 pt-2 mt-auto">
-                    {entry.knownFor.map((work) => (
-                      <span key={work} className="text-[10px] font-semibold px-2 py-0.5 rounded-md border"
+                      <div>
+                        <h3 
+                          className="font-black text-lg sm:text-xl flex items-center gap-2"
+                          style={{
+                            color: isCyber ? group.accentColor : "#000",
+                            fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
+                          }}
+                        >
+                          {group.title}
+                        </h3>
+                        <p className="text-xs theme-text-muted mt-0.5">
+                          {group.description}
+                        </p>
+                      </div>
+                      <span 
+                        className="theme-badge text-xs px-2.5 py-1 self-start sm:self-auto"
                         style={{
-                          backgroundColor: isCyber ? "rgba(255,255,255,0.03)" : "#FFF",
-                          borderColor: isCyber ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)",
-                          color: isCyber ? "#94A3B8" : "#6B7280",
+                          backgroundColor: isCyber ? group.accentBg : "rgba(0,0,0,0.05)",
+                          color: isCyber ? group.accentColor : "#000",
+                          borderColor: isCyber ? group.accentBorder : "#000",
                         }}
                       >
-                        {work}
+                        {groupItems.length} Enshrined
                       </span>
-                    ))}
-                  </div>
+                    </div>
 
-                  {/* Hover Quick Action Buttons */}
-                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 p-1 rounded-lg backdrop-blur-sm z-20">
-                    <button
-                      onClick={(e) => handleEdit(entry, e)}
-                      className="p-1 text-xs hover:bg-white/10 rounded"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      onClick={(e) => handleDelete(entry.id, entry.name, e)}
-                      className="p-1 text-xs hover:bg-white/10 text-red-400 rounded"
-                    >
-                      🗑️
-                    </button>
+                    {/* Group specific cards grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {groupItems.map((entry, idx) => {
+                        const cyberStyle  = STATUS_STYLE[entry.status] || STATUS_STYLE["GOAT Status"];
+                        const brutalStyle = BRUTAL_STATUS_STYLE[entry.status] || BRUTAL_STATUS_STYLE["GOAT Status"];
+
+                        return (
+                          <motion.div
+                            key={entry.id}
+                            variants={cardVariants}
+                            custom={idx}
+                            className="group relative cursor-pointer"
+                            onClick={(e) => handleEdit(entry, e)}
+                          >
+                            <div
+                              className="rounded-xl p-5 h-full flex flex-col gap-3 relative overflow-hidden transition-all border-adaptive-unique"
+                              style={{
+                                background: isCyber 
+                                  ? `linear-gradient(135deg, rgba(10,15,44,0.9), ${group.accentBg})` 
+                                  : "#FFFFFF",
+                                border: isCyber 
+                                  ? `1px solid ${group.accentBorder}` 
+                                  : `2px solid ${group.brutalBorder}`,
+                                boxShadow: isCyber 
+                                  ? `0 0 25px ${group.accentBg}` 
+                                  : `4px 4px 0px 0px #000`,
+                              }}
+                            >
+                              {/* Rank flag */}
+                              <div className="absolute top-3 right-3 text-[10px] font-black tracking-wider px-2 py-0.5 rounded-md"
+                                style={{
+                                  backgroundColor: isCyber ? group.accentBg : "#FFD166",
+                                  color: isCyber ? group.accentColor : "#000",
+                                  border: isCyber ? `1px solid ${group.accentBorder}` : "1.5px solid #000",
+                                }}
+                              >
+                                🏆 Rank #{entry.rank}
+                              </div>
+
+                              {/* Status */}
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[9px] font-black uppercase tracking-wide" style={{ color: isCyber ? cyberStyle.color : brutalStyle.color }}>
+                                  {entry.status}
+                                </span>
+                              </div>
+
+                              {/* Name */}
+                              <div className="pt-1">
+                                <h3 className="font-black text-base theme-text-primary leading-tight">
+                                  {entry.name}
+                                </h3>
+                                {entry.note && (
+                                  <p className="text-xs theme-text-muted mt-1 italic leading-relaxed">
+                                    "{entry.note}"
+                                  </p>
+                                )}
+                              </div>
+
+                              {/* Known for */}
+                              <div className="flex flex-wrap gap-1.5 pt-2 mt-auto">
+                                {entry.knownFor.map((work) => (
+                                  <span key={work} className="text-[10px] font-semibold px-2 py-0.5 rounded-md border"
+                                    style={{
+                                      backgroundColor: isCyber ? "rgba(255,255,255,0.03)" : "#FFF",
+                                      borderColor: isCyber ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)",
+                                      color: isCyber ? "#94A3B8" : "#6B7280",
+                                    }}
+                                  >
+                                    {work}
+                                  </span>
+                                ))}
+                              </div>
+
+                              {/* Hover Quick Action Buttons */}
+                              <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 p-1 rounded-lg backdrop-blur-sm z-20">
+                                <button
+                                  onClick={(e) => handleEdit(entry, e)}
+                                  className="p-1 text-xs hover:bg-white/10 rounded"
+                                >
+                                  ✏️
+                                </button>
+                                <button
+                                  onClick={(e) => handleDelete(entry.id, entry.name, e)}
+                                  className="p-1 text-xs hover:bg-white/10 text-red-400 rounded"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </motion.div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {listWithoutChampion.map((entry, i) => {
+                const cyberStyle  = STATUS_STYLE[entry.status] || STATUS_STYLE["GOAT Status"];
+                const brutalStyle = BRUTAL_STATUS_STYLE[entry.status] || BRUTAL_STATUS_STYLE["GOAT Status"];
+
+                return (
+                  <motion.div
+                    key={entry.id}
+                    variants={cardVariants}
+                    custom={i}
+                    className="group relative cursor-pointer"
+                    onClick={(e) => handleEdit(entry, e)}
+                  >
+                    <div
+                      className="rounded-xl p-5 h-full flex flex-col gap-3 relative overflow-hidden transition-transform border-adaptive-unique"
+                      style={{
+                        background: isCyber ? "rgba(255,255,255,0.02)" : "#FFFFFF",
+                      }}
+                    >
+                      {/* Rank flag */}
+                      <div className="absolute top-3 right-3 text-[10px] font-black tracking-wider px-2 py-0.5 rounded-md"
+                        style={{
+                          backgroundColor: isCyber ? "rgba(0,245,255,0.1)" : "#FFD166",
+                          color: isCyber ? "#00F5FF" : "#000",
+                          border: isCyber ? "1px solid rgba(0,245,255,0.2)" : "1.5px solid #000",
+                        }}
+                      >
+                        🏆 Rank #{entry.rank}
+                      </div>
+
+                      {/* Type and status */}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full"
+                          style={{
+                            backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)",
+                            color: isCyber ? "#94A3B8" : "#4A4A4A",
+                          }}
+                        >
+                          {entry.type === "actor" ? "🎭 Actor" : entry.type === "actress" ? "💫 Actress" : "⛩️ Anime"}
+                        </span>
+                        <span className="text-[9px] font-black uppercase tracking-wide" style={{ color: isCyber ? cyberStyle.color : brutalStyle.color }}>
+                          {entry.status}
+                        </span>
+                      </div>
+
+                      {/* Name */}
+                      <div className="pt-1">
+                        <h3 className="font-black text-base theme-text-primary leading-tight">
+                          {entry.name}
+                        </h3>
+                        {entry.note && (
+                          <p className="text-xs theme-text-muted mt-1 italic leading-relaxed">
+                            "{entry.note}"
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Known for */}
+                      <div className="flex flex-wrap gap-1.5 pt-2 mt-auto">
+                        {entry.knownFor.map((work) => (
+                          <span key={work} className="text-[10px] font-semibold px-2 py-0.5 rounded-md border"
+                            style={{
+                              backgroundColor: isCyber ? "rgba(255,255,255,0.03)" : "#FFF",
+                              borderColor: isCyber ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)",
+                              color: isCyber ? "#94A3B8" : "#6B7280",
+                            }}
+                          >
+                            {work}
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Hover Quick Action Buttons */}
+                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 p-1 rounded-lg backdrop-blur-sm z-20">
+                        <button
+                          onClick={(e) => handleEdit(entry, e)}
+                          className="p-1 text-xs hover:bg-white/10 rounded"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={(e) => handleDelete(entry.id, entry.name, e)}
+                          className="p-1 text-xs hover:bg-white/10 text-red-400 rounded"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
       </AnimatePresence>
 
       {/* Editor Modal Popup */}
