@@ -294,3 +294,88 @@ body {
 @supports (height: 100dvh) {
   .h-screen { height: 100dvh; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   CUSTOM UNIQUE BORDER DESIGNS (Brutal & Cyber Styles)
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Brutal Unique Borders ─────────────────────────────────────────────────── */
+.border-brutal-double {
+  border: 4px double #000000 !important;
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1) !important;
+}
+
+.border-brutal-dashed {
+  border: 3px dashed #000000 !important;
+  box-shadow: 3px 3px 0px 0px rgba(0,0,0,1) !important;
+}
+
+.border-brutal-ink {
+  border: 3px solid #000000 !important;
+  border-radius: 255px 15px 225px 15px/15px 225px 15px 255px !important; /* Calligraphic hand-drawn style */
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1) !important;
+}
+
+/* ── Cyber Unique Borders ──────────────────────────────────────────────────── */
+.border-cyber-neon-double {
+  border: 1px solid rgba(0, 245, 255, 0.4) !important;
+  outline: 1px solid rgba(191, 95, 255, 0.4) !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 15px rgba(0, 245, 255, 0.2), inset 0 0 10px rgba(0, 245, 255, 0.1) !important;
+}
+
+.border-cyber-bracket {
+  position: relative;
+  border: 1px solid rgba(0, 245, 255, 0.25) !important;
+}
+.border-cyber-bracket::before,
+.border-cyber-bracket::after {
+  content: "" !important;
+  position: absolute !important;
+  width: 8px !important;
+  height: 8px !important;
+  pointer-events: none !important;
+}
+.border-cyber-bracket::before {
+  top: 0 !important;
+  left: 0 !important;
+  border-top: 2px solid #00F5FF !important;
+  border-left: 2px solid #00F5FF !important;
+}
+.border-cyber-bracket::after {
+  bottom: 0 !important;
+  right: 0 !important;
+  border-bottom: 2px solid #BF5FFF !important;
+  border-right: 2px solid #BF5FFF !important;
+}
+
+/* ── Theme-Adaptive Unique Border Utility ── */
+.border-adaptive-unique {
+  transition: all 0.3s ease;
+}
+[data-theme="brutal"] .border-adaptive-unique {
+  border: 3px solid #000000 !important;
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1) !important;
+}
+[data-theme="cyber"] .border-adaptive-unique {
+  border: 1px solid rgba(0, 245, 255, 0.3) !important;
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.15) !important;
+  position: relative;
+}
+
+/* ── Custom Loading Animation & Scanline Overlay ── */
+.loading-scanline {
+  position: relative;
+  overflow: hidden;
+}
+.loading-scanline::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 245, 255, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+  z-index: 200;
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+}
+

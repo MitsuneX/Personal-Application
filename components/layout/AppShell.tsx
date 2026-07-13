@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { PageTransition } from "./PageTransition";
+import { useDashboardStore } from "@/lib/store/dashboardStore";
+import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -16,12 +18,21 @@ export function AppShell({ children }: AppShellProps) {
   const isCyber = theme === "cyber";
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const { isLoading, isHydrated, fetchDashboard } = useDashboardStore();
+
+  useEffect(() => {
+    if (!isHydrated) {
+      fetchDashboard();
+    }
+  }, [isHydrated, fetchDashboard]);
+
   return (
     <motion.div
       className="h-screen overflow-hidden flex flex-row"
       animate={{ backgroundColor: isCyber ? "#050816" : "#FFF5E4" }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
+      <LoadingOverlay isLoading={isLoading && !isHydrated} />
       {/* ── Desktop Sidebar ── */}
       <div className="hidden md:flex flex-col w-[72px] lg:w-60 shrink-0 h-full z-40 relative">
         <Sidebar collapsed={false} />

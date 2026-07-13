@@ -25,17 +25,23 @@ export function GameRadarChart() {
   const isCyber = theme === "cyber";
 
   const accentColor = isCyber ? "#00F5FF" : "#FF6B35";
-  const fillColor   = isCyber ? "rgba(0,245,255,0.15)" : "rgba(255,107,53,0.18)";
-  const gridColor   = isCyber ? "rgba(0,245,255,0.15)" : "rgba(0,0,0,0.12)";
-  const textColor   = isCyber ? "#94A3B8" : "#6B7280";
+  const fillColor   = isCyber ? "rgba(0,245,255,0.08)" : "rgba(255,107,53,0.1)";
+  const gridColor   = isCyber ? "rgba(0,245,255,0.12)" : "rgba(0,0,0,0.08)";
+  const textColor   = isCyber ? "#94A3B8" : "#4B5563";
 
   return (
     <ResponsiveContainer width="100%" height={220}>
-      <RadarChart data={data} margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
-        <PolarGrid stroke={gridColor} />
+      <RadarChart data={data} margin={{ top: 15, right: 15, bottom: 15, left: 15 }}>
+        <PolarGrid stroke={gridColor} gridType="circle" />
         <PolarAngleAxis
           dataKey="genre"
-          tick={{ fill: textColor, fontSize: 10, fontWeight: 600 }}
+          tick={{
+            fill: textColor,
+            fontSize: 9,
+            fontWeight: 800,
+            fontFamily: isCyber ? "var(--font-jetbrains-mono)" : "inherit",
+            letterSpacing: "0.02em"
+          }}
         />
         <Radar
           name="Activity"
@@ -43,17 +49,18 @@ export function GameRadarChart() {
           stroke={accentColor}
           fill={fillColor}
           strokeWidth={isCyber ? 1.5 : 2}
-          dot={{ fill: accentColor, r: 3 }}
+          dot={{ fill: accentColor, r: 2.5, strokeWidth: 1 }}
         />
         <Tooltip
           contentStyle={{
-            backgroundColor: isCyber ? "rgba(5,8,22,0.95)" : "#fff",
-            border: isCyber ? "1px solid rgba(0,245,255,0.3)" : "2px solid #000",
-            borderRadius: isCyber ? "8px" : "4px",
+            backgroundColor: isCyber ? "#0A0F2C" : "#FFFFFF",
+            border: isCyber ? "1px solid rgba(0,245,255,0.3)" : "2.5px solid #000000",
+            borderRadius: isCyber ? "10px" : "6px",
             color: isCyber ? "#E0E8FF" : "#1A1A1A",
-            fontSize: "12px",
-            fontWeight: 700,
-            boxShadow: isCyber ? "0 0 20px rgba(0,245,255,0.2)" : "4px 4px 0 rgba(0,0,0,1)",
+            fontSize: "10px",
+            fontWeight: 800,
+            fontFamily: "var(--font-jetbrains-mono)",
+            boxShadow: isCyber ? "0 0 20px rgba(0,245,255,0.15)" : "4px 4px 0 rgba(0,0,0,1)",
           }}
           formatter={(v: any) => [`${v}%`, "Activity"]}
         />

@@ -1,8 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Static export for Tauri v2 compatibility + Vercel static hosting
-  output: "export",
 
   // Required for static export (disables Next.js Image Optimization server)
   images: {
