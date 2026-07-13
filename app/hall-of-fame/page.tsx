@@ -13,7 +13,7 @@ import type { MediaStatus, HallOfFameEntry } from "@/lib/store/dashboardStore";
 const HOF_TABS = [
   { id: "all",     label: "All",       icon: "◈" },
   { id: "actor",   label: "Actors",    icon: "🎭" },
-  { id: "actress", label: "Actresses", icon: "💫" },
+  { id: "actress", label: "Favorite Artists", icon: "💫" },
   { id: "anime",   label: "Anime",     icon: "⛩️"  },
 ];
 
@@ -79,7 +79,7 @@ export default function HallOfFamePage() {
           background: isCyber
             ? "linear-gradient(135deg, #050816, rgba(255,215,0,0.08), rgba(0,245,255,0.05))"
             : "linear-gradient(135deg, #FFF9C4, #FFF5E4, #FFE4B5)",
-          border: isCyber ? "1px solid rgba(255,215,0,0.3)" : "3px solid #000",
+          border: isCyber ? "1px solid rgba(255,215,0,0.3)" : "3px solid #00",
           boxShadow: isCyber ? "0 0 60px rgba(255,215,0,0.15)" : "5px 5px 0 rgba(0,0,0,1)",
         }}
       >
@@ -105,10 +105,10 @@ export default function HallOfFamePage() {
                 textShadow: isCyber ? "0 0 20px rgba(255,215,0,0.5)" : "none",
               }}
             >
-              {isCyber ? "HALL_OF_FAME" : "Hall of Fame"}
+              {isCyber ? "FAVORITE_ARTISTS" : "Mitsu's Favorite Artists"}
             </motion.h1>
             <p className="theme-text-secondary text-xs font-semibold">
-              Curate and rank the ultimate list of favorite actresses, actors, and anime masterworks.
+              Curate and rank Mitsu's absolute favorite actresses, actors, and anime masterworks.
             </p>
           </div>
 
@@ -246,8 +246,8 @@ export default function HallOfFamePage() {
               {[
                 {
                   code: "China",
-                  title: "🇨🇳 Chinese Actresses (C-Drama)",
-                  description: "Elegant silhouettes, classic imperial reds, and high-fidelity neon accents",
+                  title: "🇨🇳 Chinese Artists",
+                  description: "Elegant aesthetics, classic C-drama stars, and imperial red profiles",
                   accentColor: "#FF2A2A",
                   accentBg: "rgba(255,42,42,0.06)",
                   accentBorder: "rgba(255,42,42,0.3)",
@@ -255,8 +255,8 @@ export default function HallOfFamePage() {
                 },
                 {
                   code: "Korea",
-                  title: "🇰🇷 Korean Actresses (Hallyu)",
-                  description: "Premium pastel pinks, soft sky blues, and clean glassmorphism profiles",
+                  title: "🇰🇷 Korean Artists",
+                  description: "Absolute favorites and hallyu superstars in premium styled layouts",
                   accentColor: "#FF7EB9",
                   accentBg: "rgba(255,126,185,0.06)",
                   accentBorder: "rgba(255,126,185,0.3)",
@@ -264,8 +264,8 @@ export default function HallOfFamePage() {
                 },
                 {
                   code: "Hollywood",
-                  title: "🎬 Hollywood Actresses",
-                  description: "Golden VIP stars, deep space purples, and high-contrast spotlight borders",
+                  title: "🎬 Hollywood Artists",
+                  description: "VIP spotlight stars and marquee western screen talents",
                   accentColor: "#FFD700",
                   accentBg: "rgba(255,215,0,0.06)",
                   accentBorder: "rgba(255,215,0,0.3)",
