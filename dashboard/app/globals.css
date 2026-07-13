@@ -1,0 +1,381 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   GLOBAL THEME ENGINE
+   Two visual worlds: "brutal" and "cyber"
+   Applied as data-theme="brutal" | data-theme="cyber" on <html>
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Tailwind v4 Theme Tokens ──────────────────────────────────────────────── */
+
+@theme inline {
+  /* Fonts */
+  --font-sans: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  --font-display: "Orbitron", "Space Grotesk", sans-serif;
+
+  /* Animation easing curves */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Base Transition ──────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* CSS properties that transition during theme switch */
+html {
+  transition:
+    background-color 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   BRUTAL THEME
+   High-contrast pastels · Heavy black borders · Zero-blur hard shadows
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="brutal"] {
+  /* Color palette */
+  --bg-primary:    #FFF5E4;
+  --bg-secondary:  #FFE4B5;
+  --bg-surface:    #FFFFFF;
+  --bg-elevated:   #FFF9F0;
+
+  --accent-primary:   #FF6B35;
+  --accent-secondary: #FFD166;
+  --accent-tertiary:  #06D6A0;
+  --accent-danger:    #EF476F;
+
+  --text-primary:   #1A1A1A;
+  --text-secondary: #4A4A4A;
+  --text-muted:     #8A8A8A;
+  --text-inverse:   #FFFFFF;
+
+  --border-color:   #000000;
+  --border-width:   2px;
+  --border-radius:  6px;
+
+  /* Signature hard shadows — no blur */
+  --shadow-sm:     2px 2px 0px 0px rgba(0,0,0,1);
+  --shadow-md:     4px 4px 0px 0px rgba(0,0,0,1);
+  --shadow-lg:     6px 6px 0px 0px rgba(0,0,0,1);
+  --shadow-hover:  8px 8px 0px 0px rgba(0,0,0,1);
+  --shadow-active: 1px 1px 0px 0px rgba(0,0,0,1);
+
+  /* Rank badge colors */
+  --rank-iron:        #9E9E9E;
+  --rank-bronze:      #CD7F32;
+  --rank-silver:      #C0C0C0;
+  --rank-gold:        #FFD700;
+  --rank-platinum:    #00CED1;
+  --rank-diamond:     #B9F2FF;
+  --rank-master:      #FF69B4;
+  --rank-grandmaster: #FF4500;
+  --rank-challenger:  #FF6B35;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   CYBER THEME
+   Deep dark space · Neon cyan/violet glows · Glassmorphic surfaces
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="cyber"] {
+  /* Color palette */
+  --bg-primary:    #050816;
+  --bg-secondary:  #0A0F2C;
+  --bg-surface:    rgba(10, 15, 44, 0.75);
+  --bg-elevated:   rgba(15, 20, 60, 0.8);
+
+  --accent-primary:   #00F5FF;
+  --accent-secondary: #BF5FFF;
+  --accent-tertiary:  #39FF14;
+  --accent-danger:    #FF073A;
+
+  --text-primary:   #E0E8FF;
+  --text-secondary: #94A3B8;
+  --text-muted:     #475569;
+  --text-inverse:   #050816;
+
+  --border-color:   rgba(0, 245, 255, 0.4);
+  --border-width:   1px;
+  --border-radius:  10px;
+
+  /* Signature neon glows */
+  --shadow-sm:    0 0 8px rgba(0,245,255,0.2), 0 0 20px rgba(0,245,255,0.06);
+  --shadow-md:    0 0 20px rgba(0,245,255,0.3), 0 0 60px rgba(0,245,255,0.08), inset 0 0 20px rgba(0,245,255,0.02);
+  --shadow-lg:    0 0 30px rgba(0,245,255,0.4), 0 0 80px rgba(191,95,255,0.15);
+  --shadow-hover: 0 0 40px rgba(0,245,255,0.6), 0 0 100px rgba(191,95,255,0.25), inset 0 0 30px rgba(0,245,255,0.04);
+  --shadow-active:0 0 10px rgba(0,245,255,0.3);
+
+  /* Rank badge colors (neon variants) */
+  --rank-iron:        #6B7280;
+  --rank-bronze:      #F59E0B;
+  --rank-silver:      #94A3B8;
+  --rank-gold:        #FCD34D;
+  --rank-platinum:    #22D3EE;
+  --rank-diamond:     #A78BFA;
+  --rank-master:      #F472B6;
+  --rank-grandmaster: #F87171;
+  --rank-challenger:  #00F5FF;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   THEME-AWARE BASE STYLES
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans, "Space Grotesk", system-ui, sans-serif);
+  overflow: hidden;
+}
+
+/* ── Custom Scrollbar ───────────────────────────────────────────────────────── */
+
+[data-theme="brutal"] ::-webkit-scrollbar { width: 8px; }
+[data-theme="brutal"] ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+[data-theme="brutal"] ::-webkit-scrollbar-thumb {
+  background: var(--text-primary);
+  border: 2px solid var(--bg-secondary);
+}
+[data-theme="brutal"] ::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
+
+[data-theme="cyber"] ::-webkit-scrollbar { width: 6px; }
+[data-theme="cyber"] ::-webkit-scrollbar-track { background: transparent; }
+[data-theme="cyber"] ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--accent-primary), var(--accent-secondary));
+  border-radius: 99px;
+  box-shadow: 0 0 8px rgba(0,245,255,0.5);
+}
+
+/* ── Utility Classes ────────────────────────────────────────────────────────── */
+
+.theme-card {
+  background-color: var(--bg-surface);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  transition:
+    background-color 0.5s var(--ease-smooth),
+    border-color 0.5s var(--ease-smooth),
+    box-shadow 0.5s var(--ease-smooth),
+    border-radius 0.5s var(--ease-smooth),
+    transform 0.18s var(--ease-spring);
+}
+
+[data-theme="cyber"] .theme-card {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.theme-badge {
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  transition:
+    background-color 0.4s ease,
+    border-color 0.4s ease,
+    box-shadow 0.4s ease,
+    color 0.4s ease;
+}
+
+.theme-text-primary   { color: var(--text-primary);   transition: color 0.4s ease; }
+.theme-text-secondary { color: var(--text-secondary);  transition: color 0.4s ease; }
+.theme-text-muted     { color: var(--text-muted);      transition: color 0.4s ease; }
+.theme-accent         { color: var(--accent-primary);  transition: color 0.4s ease; }
+
+/* ── Brutal-specific utilities ──────────────────────────────────────────────── */
+
+[data-theme="brutal"] .brutal-text-outline {
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+}
+
+[data-theme="brutal"] .brutal-rotate {
+  transform: rotate(-2deg);
+}
+
+/* ── Cyber-specific utilities ────────────────────────────────────────────────── */
+
+[data-theme="cyber"] .cyber-glow-text {
+  text-shadow:
+    0 0 10px rgba(0,245,255,0.8),
+    0 0 30px rgba(0,245,255,0.4);
+}
+
+[data-theme="cyber"] .cyber-gradient-text {
+  background: linear-gradient(135deg, #00F5FF, #BF5FFF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Anime progress bar ─────────────────────────────────────────────────────── */
+
+.progress-track {
+  background-color: var(--bg-secondary);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: 99px;
+  height: 8px;
+  overflow: hidden;
+  transition: border-color 0.4s ease, background-color 0.4s ease;
+}
+
+[data-theme="brutal"] .progress-fill {
+  background: var(--accent-primary);
+  height: 100%;
+  transform-origin: left;
+}
+
+[data-theme="cyber"] .progress-fill {
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  height: 100%;
+  transform-origin: left;
+  box-shadow: 0 0 10px var(--accent-primary);
+}
+
+/* ── Status dot animations ───────────────────────────────────────────────────── */
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(1.4); }
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+.status-online   { background-color: #22C55E; }
+.status-away     { background-color: #F59E0B; }
+.status-busy     { background-color: #EF4444; }
+.status-offline  { background-color: #6B7280; animation: none; }
+
+/* ── Rank badge tiers ────────────────────────────────────────────────────────── */
+
+.rank-iron        { background-color: var(--rank-iron);        color: #fff; }
+.rank-bronze      { background-color: var(--rank-bronze);      color: #fff; }
+.rank-silver      { background-color: var(--rank-silver);      color: #1a1a1a; }
+.rank-gold        { background-color: var(--rank-gold);        color: #1a1a1a; }
+.rank-platinum    { background-color: var(--rank-platinum);    color: #1a1a1a; }
+.rank-diamond     { background-color: var(--rank-diamond);     color: #1a1a1a; }
+.rank-master      { background-color: var(--rank-master);      color: #fff; }
+.rank-grandmaster { background-color: var(--rank-grandmaster); color: #fff; }
+.rank-challenger  { background-color: var(--rank-challenger);  color: #fff; }
+
+/* ── Glassmorphic surface (Cyber only) ──────────────────────────────────────── */
+
+[data-theme="cyber"] .glass {
+  background: rgba(10, 15, 44, 0.6);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(0, 245, 255, 0.15);
+}
+
+/* ── Mobile viewport fix ─────────────────────────────────────────────────────── */
+
+@supports (height: 100dvh) {
+  .h-screen { height: 100dvh; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   CUSTOM UNIQUE BORDER DESIGNS (Brutal & Cyber Styles)
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Brutal Unique Borders ─────────────────────────────────────────────────── */
+.border-brutal-double {
+  border: 4px double #000000 !important;
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1) !important;
+}
+
+.border-brutal-dashed {
+  border: 3px dashed #000000 !important;
+  box-shadow: 3px 3px 0px 0px rgba(0,0,0,1) !important;
+}
+
+.border-brutal-ink {
+  border: 3px solid #000000 !important;
+  border-radius: 255px 15px 225px 15px/15px 225px 15px 255px !important; /* Calligraphic hand-drawn style */
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1) !important;
+}
+
+/* ── Cyber Unique Borders ──────────────────────────────────────────────────── */
+.border-cyber-neon-double {
+  border: 1px solid rgba(0, 245, 255, 0.4) !important;
+  outline: 1px solid rgba(191, 95, 255, 0.4) !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 15px rgba(0, 245, 255, 0.2), inset 0 0 10px rgba(0, 245, 255, 0.1) !important;
+}
+
+.border-cyber-bracket {
+  position: relative;
+  border: 1px solid rgba(0, 245, 255, 0.25) !important;
+}
+.border-cyber-bracket::before,
+.border-cyber-bracket::after {
+  content: "" !important;
+  position: absolute !important;
+  width: 8px !important;
+  height: 8px !important;
+  pointer-events: none !important;
+}
+.border-cyber-bracket::before {
+  top: 0 !important;
+  left: 0 !important;
+  border-top: 2px solid #00F5FF !important;
+  border-left: 2px solid #00F5FF !important;
+}
+.border-cyber-bracket::after {
+  bottom: 0 !important;
+  right: 0 !important;
+  border-bottom: 2px solid #BF5FFF !important;
+  border-right: 2px solid #BF5FFF !important;
+}
+
+/* ── Theme-Adaptive Unique Border Utility ── */
+.border-adaptive-unique {
+  transition: all 0.3s ease;
+}
+[data-theme="brutal"] .border-adaptive-unique {
+  border: 3px solid #000000 !important;
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1) !important;
+}
+[data-theme="cyber"] .border-adaptive-unique {
+  border: 1px solid rgba(0, 245, 255, 0.3) !important;
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.15) !important;
+  position: relative;
+}
+
+/* ── Custom Loading Animation & Scanline Overlay ── */
+.loading-scanline {
+  position: relative;
+  overflow: hidden;
+}
+.loading-scanline::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 245, 255, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+  z-index: 200;
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+}
+

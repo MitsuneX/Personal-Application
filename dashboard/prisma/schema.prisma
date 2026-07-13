@@ -1,0 +1,119 @@
+datasource db {
+  provider  = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Profile {
+  id          String   @id @default("profile")
+  name        String
+  tagline     String
+  bio         String
+  status      String   // "online" | "away" | "busy" | "offline"
+  location    String
+  skills      String[]
+  socials     Json     // array of SocialHandle { platform, handle, url }
+  avatar      String?
+  borderStyle String?
+  updatedAt   DateTime @updatedAt
+}
+
+model Game {
+  id            String   @id @default(uuid())
+  game          String
+  handle        String?
+  platform      String   // "PC" | "PSN" | "Xbox" | "Switch" | "Mobile" | "Multi"
+  rank          String?
+  mainCharacter String
+  mainRole      String?
+  category      String   // "Gacha RPG" | "Gacha Action" | "MOBA" | "FPS" | "Action RPG" | "Fighting"
+  isActive      Boolean  @default(true)
+  accentColor   String
+  createdAt     DateTime @default(now())
+}
+
+model Anime {
+  id              String   @id @default(uuid())
+  title           String
+  episodesWatched Int
+  totalEpisodes   Int
+  status          String   // "Watching" | "Completed" | "On Hold" | "Plan to Watch" | "Dropped"
+  rating          Int?
+  genre           String?
+  studio          String?
+  year            Int?
+  createdAt       DateTime @default(now())
+}
+
+model FavoriteCharacter {
+  id         String   @id @default(uuid())
+  name       String
+  anime      String
+  isFavorite Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}
+
+model Drama {
+  id              String   @id @default(uuid())
+  title           String
+  country         String   // "japanese" | "korean" | "chinese"
+  episodes        Int
+  episodesWatched Int
+  status          String   // "Watching" | "Completed" | "Plan to Watch" | "On Hold"
+  rating          Int
+  genre           String
+  year            Int
+  platform        String?
+  cast            String[]
+  createdAt       DateTime @default(now())
+}
+
+model HallOfFame {
+  id          String   @id @default(uuid())
+  name        String
+  type        String   // "actor" | "actress" | "anime"
+  status      String   // "GOAT Status" | "All-Star" | "Rising" | "Classic"
+  knownFor    String[]
+  nationality String?
+  note        String?
+  imageUrl    String?
+  rank        Int      @default(0)
+  isChampion  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  updatedAt DateTime @updatedAt
+}
+
+model Link {
+  id        String   @id @default(uuid())
+  title     String
+  url       String
+  category  String   // e.g. "Watch", "Entertainment", "Book", "Productivity"
+  createdAt DateTime @default(now())
+}
+
+model GalleryItem {
+  id        String   @id @default(uuid())
+  title     String
+  url       String
+  createdAt DateTime @default(now())
+}
+
+model Song {
+  id        String   @id @default(uuid())
+  title     String
+  artist    String
+  album     String?
+  imageUrl  String?
+  category  String   // e.g. "All-Time Favorites", "Chill Beats", "Hype/J-Pop", "K-Osts"
+  duration  String?
+  createdAt DateTime @default(now())
+}
+
