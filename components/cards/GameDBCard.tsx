@@ -8,7 +8,7 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { listContainerVariants, listItemVariants } from "@/lib/theme/motionVariants";
 import type { GameRank } from "@/lib/store/dashboardStore";
 
-const RANK_CLASS: Record<GameRank, string> = {
+const RANK_CLASS: Record<string, string> = {
   Iron:        "rank-iron",
   Bronze:      "rank-bronze",
   Silver:      "rank-silver",

@@ -3,127 +3,117 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { useTheme } from "@/lib/theme";
-import { ThemeSwitcherToggle } from "@/components/ui/ThemeSwitcherToggle";
-import { logoVariants } from "@/lib/theme/motionVariants";
+import { usePathname } from "next/navigation";
 
-export function Header() {
+interface HeaderProps {
+  onMenuToggle: () => void;
+}
+
+const PAGE_TITLES: Record<string, { title: string; icon: string }> = {
+  "/":                  { title: "Dashboard",    icon: "🏠" },
+  "/anime":             { title: "Anime Zone",   icon: "⛩️" },
+  "/drama":             { title: "Drama",        icon: "🎬" },
+  "/drama/japanese":    { title: "Japanese Drama", icon: "🇯🇵" },
+  "/drama/korean":      { title: "Korean Drama", icon: "🇰🇷" },
+  "/drama/chinese":     { title: "Chinese Drama", icon: "🇨🇳" },
+  "/hall-of-fame":      { title: "Hall of Fame", icon: "🏆" },
+  "/games":             { title: "Games",        icon: "🎮" },
+};
+
+export function Header({ onMenuToggle }: HeaderProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
+  const pathname = usePathname();
+
+  const pageInfo = PAGE_TITLES[pathname] ?? { title: "Dashboard", icon: "🏠" };
 
   return (
     <motion.header
-      className="relative z-50 flex items-center justify-between px-4 md:px-8 h-16 shrink-0"
+      className="flex items-center justify-between px-4 md:px-6 h-14 shrink-0 relative z-30"
       animate={{
-        backgroundColor: isCyber
-          ? "rgba(5, 8, 22, 0.85)"
-          : "rgba(255, 245, 228, 0.95)",
-        borderBottomColor: isCyber
-          ? "rgba(0, 245, 255, 0.3)"
-          : "rgba(0,0,0,1)",
+        backgroundColor: isCyber ? "rgba(5,8,22,0.8)" : "rgba(255,245,228,0.9)",
+        borderBottomColor: isCyber ? "rgba(0,245,255,0.15)" : "rgba(0,0,0,0.15)",
         backdropFilter: isCyber ? "blur(20px)" : "blur(0px)",
       }}
-      transition={{ duration: 0.5, ease: "easeInOut" }}
-      style={{
-        borderBottomWidth: "2px",
-        borderBottomStyle: "solid",
-      }}
+      transition={{ duration: 0.4 }}
+      style={{ borderBottomWidth: "1px", borderBottomStyle: "solid" }}
     >
-      {/* Logo / Wordmark */}
-      <motion.div
-        variants={logoVariants}
-        initial="hidden"
-        animate="visible"
-        className="flex items-center gap-3"
-      >
-        {/* Animated logo icon */}
-        <motion.div
-          className="w-9 h-9 rounded-lg flex items-center justify-center font-black text-lg relative overflow-hidden"
-          animate={{
-            backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
-            boxShadow: isCyber
-              ? "0 0 16px rgba(0,245,255,0.7), 0 0 40px rgba(0,245,255,0.3)"
-              : "3px 3px 0px 0px rgba(0,0,0,1)",
-            borderRadius: isCyber ? "8px" : "4px",
-            color: isCyber ? "#050816" : "#fff",
-          }}
-          transition={{ duration: 0.5, ease: "easeInOut" }}
-          whileHover={{ scale: 1.08, rotate: isCyber ? 5 : 0 }}
+      {/* Left: hamburger (mobile) + page title */}
+      <div className="flex items-center gap-3">
+        {/* Mobile hamburger */}
+        <motion.button
+          className="md:hidden p-2 rounded-lg"
+          onClick={onMenuToggle}
+          whileTap={{ scale: 0.9 }}
+          animate={{ color: isCyber ? "#94A3B8" : "#4A4A4A" }}
         >
-          {isCyber ? "◈" : "✦"}
-        </motion.div>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
+            <rect y="2" width="18" height="2" rx="1" />
+            <rect y="8" width="18" height="2" rx="1" />
+            <rect y="14" width="18" height="2" rx="1" />
+          </svg>
+        </motion.button>
 
-        {/* Wordmark */}
-        <div className="flex flex-col leading-tight">
-          <motion.span
-            className="font-black text-sm md:text-base tracking-tight"
+        {/* Page title */}
+        <motion.div
+          key={pathname}
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 26 }}
+          className="flex items-center gap-2"
+        >
+          <span className="text-lg">{pageInfo.icon}</span>
+          <motion.h1
+            className="font-black text-base md:text-lg"
             animate={{
               color: isCyber ? "#E0E8FF" : "#1A1A1A",
-              fontFamily: isCyber
-                ? "'Orbitron', sans-serif"
-                : "'Space Grotesk', sans-serif",
-              letterSpacing: isCyber ? "0.1em" : "0.02em",
+              fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
+              letterSpacing: isCyber ? "0.06em" : "0em",
             }}
             transition={{ duration: 0.4 }}
           >
-            {isCyber ? "NEXUS" : "Dashboard"}
-          </motion.span>
-          <motion.span
-            className="text-xs tracking-widest uppercase hidden md:block"
-            animate={{
-              color: isCyber ? "rgba(0,245,255,0.7)" : "rgba(0,0,0,0.45)",
-            }}
-            transition={{ duration: 0.4 }}
-          >
-            {isCyber ? "v2.0.1 // ONLINE" : "Personal Hub"}
-          </motion.span>
-        </div>
-      </motion.div>
+            {isCyber ? pageInfo.title.toUpperCase() : pageInfo.title}
+          </motion.h1>
+        </motion.div>
+      </div>
 
-      {/* Right controls */}
-      <div className="flex items-center gap-4">
-        {/* Live clock — Cyber mode only */}
+      {/* Right: cyber clock */}
+      <div className="flex items-center gap-3">
         {isCyber && <CyberClock />}
 
-        {/* Theme switcher */}
-        <ThemeSwitcherToggle />
+        {/* Status dot */}
+        <motion.div
+          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+          animate={{
+            backgroundColor: isCyber ? "rgba(34,197,94,0.1)" : "rgba(6,214,160,0.1)",
+            borderColor: isCyber ? "rgba(34,197,94,0.3)" : "#06D6A0",
+          }}
+          style={{ border: "1px solid" }}
+          transition={{ duration: 0.4 }}
+        >
+          <span className="status-dot status-online !w-1.5 !h-1.5" />
+          <span className="text-xs font-bold" style={{ color: "#22C55E" }}>Online</span>
+        </motion.div>
       </div>
     </motion.header>
   );
 }
 
-// ─── Cyber Clock ──────────────────────────────────────────────────────────────
-
 function CyberClock() {
   const [time, setTime] = React.useState("");
-
   React.useEffect(() => {
-    const update = () => {
-      setTime(
-        new Date().toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: false,
-        })
-      );
-    };
-    update();
-    const id = setInterval(update, 1000);
+    const tick = () => setTime(new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }));
+    tick();
+    const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, []);
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 10 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 10 }}
-      className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded font-mono text-xs font-bold tracking-widest"
-      style={{
-        color: "#00F5FF",
-        border: "1px solid rgba(0,245,255,0.3)",
-        background: "rgba(0,245,255,0.05)",
-        letterSpacing: "0.15em",
-      }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded font-mono text-xs font-bold tracking-widest"
+      style={{ color: "#00F5FF", border: "1px solid rgba(0,245,255,0.25)", background: "rgba(0,245,255,0.05)", letterSpacing: "0.12em" }}
     >
       <span className="w-1.5 h-1.5 rounded-full bg-[#00F5FF] animate-pulse" />
       {time}

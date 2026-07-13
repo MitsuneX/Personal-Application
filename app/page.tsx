@@ -7,136 +7,153 @@ import { ProfileCard } from "@/components/cards/ProfileCard";
 import { GameDBCard } from "@/components/cards/GameDBCard";
 import { MediaLogCard } from "@/components/cards/MediaLogCard";
 import { AnimeZoneCard } from "@/components/cards/AnimeZoneCard";
+import { GameRadarChart } from "@/components/charts/GameRadarChart";
+import { AnimeBarChart } from "@/components/charts/AnimeBarChart";
+import { BentoCard } from "@/components/cards/BentoCard";
 import { useTheme } from "@/lib/theme";
-import { gridContainerVariants } from "@/lib/theme/motionVariants";
+import { useDashboardStore } from "@/lib/store/dashboardStore";
+import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants";
+import Link from "next/link";
 
 export default function DashboardPage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
+  const { games, animeList, dramas, hallOfFame } = useDashboardStore();
+
+  const totalEps = animeList.reduce((s, a) => s + a.episodesWatched, 0);
+  const completedAnime = animeList.filter((a) => a.status === "Completed").length;
+  const activeGames = games.filter((g) => g.isActive).length;
+  const totalDramas = dramas.length;
+
+  const stats = [
+    { label: "Active Games",    value: activeGames,     icon: "🎮", href: "/games",        color: isCyber ? "#00F5FF" : "#FF6B35" },
+    { label: "Anime Watched",   value: completedAnime,  icon: "⛩️",  href: "/anime",        color: isCyber ? "#39FF14" : "#06D6A0" },
+    { label: "Total Episodes",  value: totalEps,        icon: "📺",  href: "/anime",        color: isCyber ? "#BF5FFF" : "#FFD166" },
+    { label: "Dramas Tracked",  value: totalDramas,     icon: "🎬",  href: "/drama",        color: isCyber ? "#F472B6" : "#EF476F" },
+    { label: "Hall of Fame",    value: hallOfFame.length, icon: "🏆", href: "/hall-of-fame", color: isCyber ? "#FFD700" : "#FF6B35" },
+  ];
 
   return (
     <AppShell>
-      {/* ── Page Title Row ── */}
+      {/* ── Page header ── */}
       <motion.div
-        className="flex items-center justify-between mb-5 md:mb-6"
-        initial={{ opacity: 0, y: -12 }}
+        className="mb-6"
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 280, damping: 22, delay: 0.1 }}
+        transition={{ type: "spring", stiffness: 280, damping: 22 }}
       >
-        <div>
-          <motion.h1
-            className="font-black text-xl md:text-2xl lg:text-3xl leading-tight"
-            animate={{
-              fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
-              color: isCyber ? "#E0E8FF" : "#1A1A1A",
-              letterSpacing: isCyber ? "0.06em" : "0em",
-            }}
-            transition={{ duration: 0.45 }}
-          >
-            {isCyber ? "// COMMAND CENTER" : "My Dashboard"}
-          </motion.h1>
-          <motion.p
-            className="text-sm mt-0.5"
-            animate={{ color: isCyber ? "rgba(0,245,255,0.55)" : "rgba(0,0,0,0.45)" }}
-            transition={{ duration: 0.4 }}
-          >
-            {isCyber
-              ? `SYS::${new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }).toUpperCase()}`
-              : new Date().toLocaleDateString("en-US", {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                })}
-          </motion.p>
-        </div>
-
-        {/* Quick stats row */}
-        <QuickStats isCyber={isCyber} />
+        <motion.p
+          className="text-xs font-bold tracking-widest uppercase mb-1"
+          animate={{ color: isCyber ? "rgba(0,245,255,0.5)" : "rgba(0,0,0,0.4)" }}
+        >
+          {isCyber
+            ? `SYS::${new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }).toUpperCase()}`
+            : new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+        </motion.p>
+        <motion.h1
+          className="font-black text-2xl md:text-3xl"
+          animate={{ color: isCyber ? "#E0E8FF" : "#1A1A1A", fontFamily: isCyber ? "var(--font-orbitron)" : "inherit", letterSpacing: isCyber ? "0.05em" : "0em" }}
+          transition={{ duration: 0.4 }}
+        >
+          {isCyber ? "// COMMAND CENTER" : "My Dashboard"}
+        </motion.h1>
       </motion.div>
 
-      {/* ── Bento Grid ── */}
+      {/* ── Quick Stats Bar ── */}
       <motion.div
-        id="bento-grid"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5 lg:gap-6"
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6"
         variants={gridContainerVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* Profile Card — spans 2 cols on md+ */}
-        <div className="col-span-1 md:col-span-2">
+        {stats.map((stat) => (
+          <motion.div key={stat.label} variants={cardVariants}>
+            <Link href={stat.href}>
+              <motion.div
+                className="rounded-xl p-4 flex flex-col gap-1 cursor-pointer"
+                animate={{
+                  background: isCyber ? `${stat.color}0D` : `${stat.color}12`,
+                  border: isCyber ? `1px solid ${stat.color}30` : `2px solid ${stat.color}`,
+                  boxShadow: isCyber ? `0 0 20px ${stat.color}15` : `3px 3px 0 rgba(0,0,0,1)`,
+                }}
+                transition={{ duration: 0.4 }}
+                whileHover={{ scale: 1.04, boxShadow: isCyber ? `0 0 30px ${stat.color}30` : `5px 5px 0 rgba(0,0,0,1)` }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <span className="text-2xl">{stat.icon}</span>
+                <motion.span className="font-black text-2xl leading-none" animate={{ color: stat.color, textShadow: isCyber ? `0 0 12px ${stat.color}` : "none" }} transition={{ duration: 0.4 }}>
+                  {stat.value}
+                </motion.span>
+                <span className="text-xs font-semibold theme-text-muted">{stat.label}</span>
+              </motion.div>
+            </Link>
+          </motion.div>
+        ))}
+      </motion.div>
+
+      {/* ── Main Grid ── */}
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-5"
+        variants={gridContainerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {/* Profile — spans 2 cols */}
+        <div className="md:col-span-2 xl:col-span-1">
           <ProfileCard />
         </div>
 
-        {/* Game DB Card */}
-        <div className="col-span-1 md:col-span-1 lg:col-span-1 xl:col-span-2">
-          <GameDBCard />
-        </div>
+        {/* Game Radar Chart */}
+        <motion.div variants={cardVariants}>
+          <BentoCard id="radar-card" noHover>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xl">📡</span>
+              <div>
+                <motion.h2 className="font-black text-sm theme-text-primary" animate={{ fontFamily: isCyber ? "var(--font-orbitron)" : "inherit" }} transition={{ duration: 0.4 }}>
+                  {isCyber ? "GENRE.RADAR" : "Genre Activity"}
+                </motion.h2>
+                <p className="theme-text-muted text-xs">Gaming spread</p>
+              </div>
+            </div>
+            <GameRadarChart />
+          </BentoCard>
+        </motion.div>
 
-        {/* Media Log Card — spans 2 cols on lg+ */}
-        <div className="col-span-1 md:col-span-1 lg:col-span-2 xl:col-span-2">
-          <MediaLogCard />
-        </div>
-
-        {/* Anime Zone Card — spans 2 cols on md, 1 on lg */}
-        <div className="col-span-1 md:col-span-2 lg:col-span-1 xl:col-span-2">
-          <AnimeZoneCard />
-        </div>
+        {/* Anime Episodes Chart */}
+        <motion.div variants={cardVariants}>
+          <BentoCard id="anime-chart-card" noHover>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xl">📊</span>
+              <div>
+                <motion.h2 className="font-black text-sm theme-text-primary" animate={{ fontFamily: isCyber ? "var(--font-orbitron)" : "inherit" }} transition={{ duration: 0.4 }}>
+                  {isCyber ? "ANIME.PROGRESS" : "Episode Progress"}
+                </motion.h2>
+                <p className="theme-text-muted text-xs">{totalEps} total eps watched</p>
+              </div>
+            </div>
+            <AnimeBarChart />
+          </BentoCard>
+        </motion.div>
       </motion.div>
 
-      {/* ── Footer ── */}
-      <motion.footer
-        className="mt-8 pb-4 flex items-center justify-center gap-2 text-xs"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.5 }}
-        transition={{ delay: 1.5, duration: 0.6 }}
+      {/* ── Bottom Grid ── */}
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 gap-5"
+        variants={gridContainerVariants}
+        initial="hidden"
+        animate="visible"
       >
+        <motion.div variants={cardVariants}><GameDBCard /></motion.div>
+        <motion.div variants={cardVariants}><MediaLogCard /></motion.div>
+        <motion.div variants={cardVariants} className="md:col-span-2"><AnimeZoneCard /></motion.div>
+      </motion.div>
+
+      {/* Footer */}
+      <motion.footer className="mt-8 pb-2 text-center text-xs" initial={{ opacity: 0 }} animate={{ opacity: 0.4 }} transition={{ delay: 1.5 }}>
         <span style={{ color: isCyber ? "rgba(0,245,255,0.4)" : "rgba(0,0,0,0.3)" }}>
-          {isCyber
-            ? "NEXUS v1.0.0 // BUILT WITH NEXT.JS + FRAMER MOTION"
-            : "Dashboard v1.0.0 · Built with Next.js + Framer Motion"}
+          {isCyber ? "NEXUS v2.0.0 // NEXT.JS + FRAMER MOTION + RECHARTS" : "Dashboard v2.0.0 · Next.js + Framer Motion + Recharts"}
         </span>
       </motion.footer>
     </AppShell>
-  );
-}
-
-// ─── Quick Stats Widget ────────────────────────────────────────────────────────
-
-function QuickStats({ isCyber }: { isCyber: boolean }) {
-  const stats = [
-    { label: "Cards", value: "4", icon: "⊞" },
-    { label: "Games", value: "4", icon: "🎮" },
-    { label: "Anime", value: "5", icon: "⛩" },
-  ];
-
-  return (
-    <motion.div
-      className="hidden md:flex items-center gap-2"
-      initial={{ opacity: 0, x: 12 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.3, duration: 0.5 }}
-    >
-      {stats.map((stat) => (
-        <motion.div
-          key={stat.label}
-          className="flex flex-col items-center px-3 py-1.5 rounded-lg"
-          animate={{
-            background: isCyber ? "rgba(0,245,255,0.05)" : "rgba(0,0,0,0.04)",
-            border: isCyber ? "1px solid rgba(0,245,255,0.2)" : "2px solid rgba(0,0,0,0.12)",
-          }}
-          transition={{ duration: 0.4 }}
-          whileHover={{ scale: 1.05 }}
-        >
-          <span className="text-base leading-none mb-0.5">{stat.icon}</span>
-          <span
-            className="font-black text-sm leading-none"
-            style={{ color: isCyber ? "#00F5FF" : "#FF6B35" }}
-          >
-            {stat.value}
-          </span>
-          <span className="text-xs theme-text-muted">{stat.label}</span>
-        </motion.div>
-      ))}
-    </motion.div>
   );
 }

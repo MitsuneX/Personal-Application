@@ -116,7 +116,7 @@ export function ProfileCard() {
               animate={{
                 backgroundColor: isCyber
                   ? `rgba(${status.color === "#22C55E" ? "34,197,94" : "239,68,68"},0.15)`
-                  : "transparent",
+                  : "rgba(0,0,0,0)",
                 color: status.color,
                 borderColor: status.color,
               }}
