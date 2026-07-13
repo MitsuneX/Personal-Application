@@ -99,6 +99,30 @@ export interface HallOfFameEntry {
   knownFor: string[];
   nationality?: string;
   note?: string;
+  rank: number;
+  isChampion: boolean;
+}
+
+// ─── Misc Section Types ─────────────────────────────────────────────────────────
+
+export interface NoteEntry {
+  id: string;
+  title: string;
+  content: string;
+  updatedAt?: string;
+}
+
+export interface LinkEntry {
+  id: string;
+  title: string;
+  url: string;
+  category: string;
+}
+
+export interface GalleryEntry {
+  id: string;
+  title: string;
+  url: string;
 }
 
 // ─── State Interface ──────────────────────────────────────────────────────────
@@ -111,6 +135,9 @@ interface DashboardState {
   favoriteCharacters: FavoriteCharacter[];
   dramas: DramaEntry[];
   hallOfFame: HallOfFameEntry[];
+  notes: NoteEntry[];
+  links: LinkEntry[];
+  gallery: GalleryEntry[];
   isLoading: boolean;
   isHydrated: boolean;
 
@@ -127,6 +154,22 @@ interface DashboardState {
   addDrama: (drama: DramaEntry) => Promise<void>;
   updateDrama: (id: string, data: Partial<DramaEntry>) => Promise<void>;
   removeDrama: (id: string) => Promise<void>;
+
+  // HOF Actions
+  updateHof: (id: string, data: Partial<HallOfFameEntry>) => Promise<void>;
+  deleteHof: (id: string) => Promise<void>;
+
+  // Notepad Actions
+  saveNote: (id: string, title: string, content: string) => Promise<void>;
+  deleteNote: (id: string) => Promise<void>;
+
+  // Bookmark Link Actions
+  saveLink: (id: string, title: string, url: string, category: string) => Promise<void>;
+  deleteLink: (id: string) => Promise<void>;
+
+  // Gallery Actions
+  addGalleryItem: (id: string, title: string, url: string) => Promise<void>;
+  deleteGalleryItem: (id: string) => Promise<void>;
 }
 
 // ─── Seed Data (Fallback) ──────────────────────────────────────────────────────
@@ -171,6 +214,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   favoriteCharacters: [],
   dramas: [],
   hallOfFame: [],
+  notes: [],
+  links: [],
+  gallery: [],
   isLoading: false,
   isHydrated: false,
 
@@ -190,6 +236,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           favoriteCharacters: data.favoriteCharacters,
           dramas: data.dramas,
           hallOfFame: data.hallOfFame,
+          notes: data.notes || [],
+          links: data.links || [],
+          gallery: data.gallery || [],
           isHydrated: true,
         });
       }
@@ -201,7 +250,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   updateProfile: async (data) => {
-    // Optimistic Update
     set((s) => ({ profile: { ...s.profile, ...data } }));
     try {
       const res = await fetch("/api/profile", {
@@ -251,7 +299,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
   removeGame: async (id) => {
     set((s) => ({ games: s.games.filter((g) => g.id !== id) }));
-    // Future sync if needed
   },
 
   updateMedia: (data) => set((s) => ({ media: { ...s.media, ...data } })),
@@ -344,5 +391,140 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
   removeDrama: async (id) => {
     set((s) => ({ dramas: s.dramas.filter((d) => d.id !== id) }));
+  },
+
+  // ─── HOF Actions ───────────────────────────────────────────────────────────
+
+  updateHof: async (id, data) => {
+    set((s) => {
+      const exists = s.hallOfFame.some((h) => h.id === id);
+      const newHof = exists
+        ? s.hallOfFame.map((h) => (h.id === id ? { ...h, ...data } as HallOfFameEntry : h))
+        : [...s.hallOfFame, { id, ...data } as HallOfFameEntry];
+      
+      // Sort HOF by rank asc
+      return { hallOfFame: newHof.sort((a, b) => a.rank - b.rank) };
+    });
+    try {
+      const item = get().hallOfFame.find((h) => h.id === id);
+      if (item) {
+        await fetch("/api/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "UPDATE_HOF", payload: item }),
+        });
+      }
+    } catch (err) {
+      console.error("Failed to sync HOF item:", err);
+    }
+  },
+
+  deleteHof: async (id) => {
+    set((s) => ({ hallOfFame: s.hallOfFame.filter((h) => h.id !== id) }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_HOF", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to delete HOF item:", err);
+    }
+  },
+
+  // ─── Notepad Actions ───────────────────────────────────────────────────────
+
+  saveNote: async (id, title, content) => {
+    set((s) => {
+      const exists = s.notes.some((n) => n.id === id);
+      const newNotes = exists
+        ? s.notes.map((n) => (n.id === id ? { id, title, content } : n))
+        : [{ id, title, content }, ...s.notes];
+      return { notes: newNotes };
+    });
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "UPDATE_NOTE", payload: { id, title, content } }),
+      });
+    } catch (err) {
+      console.error("Failed to sync note:", err);
+    }
+  },
+
+  deleteNote: async (id) => {
+    set((s) => ({ notes: s.notes.filter((n) => n.id !== id) }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_NOTE", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to delete note:", err);
+    }
+  },
+
+  // ─── Link Actions ──────────────────────────────────────────────────────────
+
+  saveLink: async (id, title, url, category) => {
+    set((s) => {
+      const exists = s.links.some((l) => l.id === id);
+      const newLinks = exists
+        ? s.links.map((l) => (l.id === id ? { id, title, url, category } : l))
+        : [{ id, title, url, category }, ...s.links];
+      return { links: newLinks };
+    });
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "UPDATE_LINK", payload: { id, title, url, category } }),
+      });
+    } catch (err) {
+      console.error("Failed to sync link:", err);
+    }
+  },
+
+  deleteLink: async (id) => {
+    set((s) => ({ links: s.links.filter((l) => l.id !== id) }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_LINK", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to delete link:", err);
+    }
+  },
+
+  // ─── Gallery Actions ───────────────────────────────────────────────────────
+
+  addGalleryItem: async (id, title, url) => {
+    set((s) => ({ gallery: [{ id, title, url }, ...s.gallery] }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "ADD_GALLERY", payload: { id, title, url } }),
+      });
+    } catch (err) {
+      console.error("Failed to sync gallery item:", err);
+    }
+  },
+
+  deleteGalleryItem: async (id) => {
+    set((s) => ({ gallery: s.gallery.filter((g) => g.id !== id) }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_GALLERY", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to delete gallery item:", err);
+    }
   },
 }));

@@ -7,6 +7,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { ProfileEditorModal } from "@/components/ui/ProfileEditorModal";
 
+import { ThemeSwitcherToggle } from "@/components/ui/ThemeSwitcherToggle";
+
 interface HeaderProps {
   onMenuToggle: () => void;
 }
@@ -21,6 +23,9 @@ const PAGE_TITLES: Record<string, { title: string; icon: string }> = {
   "/hall-of-fame":      { title: "Hall of Fame", icon: "🏆" },
   "/games":             { title: "Games HUD",    icon: "🎮" },
   "/heroes":            { title: "Heroes Registry", icon: "🛡️" },
+  "/notepad":           { title: "Notepad Workspace", icon: "📝" },
+  "/links":             { title: "Bookmark Directory", icon: "🔗" },
+  "/gallery":           { title: "Media Gallery", icon: "🖼️" },
 };
 
 export function Header({ onMenuToggle }: HeaderProps) {
@@ -217,6 +222,9 @@ export function Header({ onMenuToggle }: HeaderProps) {
         {/* Right Section: customizable profile and clock */}
         <div className="flex items-center gap-3 shrink-0">
           {isCyber && <CyberClock />}
+
+          {/* Theme switcher toggle added in the Header */}
+          <ThemeSwitcherToggle />
 
           {/* Customizable Profile Header Item */}
           <motion.div

@@ -30,8 +30,8 @@ const orbitron = Orbitron({
 
 export const metadata: Metadata = {
   title: {
-    default: "Dashboard — Personal Hub",
-    template: "%s | Dashboard",
+    default: "Nexus Xenon — Personal Hub",
+    template: "%s | Nexus Xenon",
   },
   description:
     "A highly personal command-center dashboard tracking games, media, anime, and more. Built with Next.js, Tailwind CSS, and Framer Motion.",

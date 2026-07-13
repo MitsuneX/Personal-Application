@@ -76,5 +76,30 @@ model HallOfFame {
   knownFor    String[]
   nationality String?
   note        String?
+  rank        Int      @default(0)
+  isChampion  Boolean  @default(false)
   createdAt   DateTime @default(now())
 }
+
+model Note {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  updatedAt DateTime @updatedAt
+}
+
+model Link {
+  id        String   @id @default(uuid())
+  title     String
+  url       String
+  category  String   // e.g. "Watch", "Entertainment", "Book", "Productivity"
+  createdAt DateTime @default(now())
+}
+
+model GalleryItem {
+  id        String   @id @default(uuid())
+  title     String
+  url       String
+  createdAt DateTime @default(now())
+}
+

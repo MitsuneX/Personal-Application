@@ -104,6 +104,103 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true, data: char });
       }
 
+      // ─── Hall Of Fame Actions ──────────────────────────────────────────────────
+      case "UPDATE_HOF": {
+        const hof = await prisma.hallOfFame.upsert({
+          where: { id: payload.id },
+          update: {
+            name: payload.name,
+            type: payload.type,
+            status: payload.status,
+            knownFor: payload.knownFor,
+            nationality: payload.nationality,
+            note: payload.note,
+            rank: payload.rank,
+            isChampion: payload.isChampion,
+          },
+          create: {
+            id: payload.id,
+            name: payload.name,
+            type: payload.type,
+            status: payload.status,
+            knownFor: payload.knownFor,
+            nationality: payload.nationality || null,
+            note: payload.note || null,
+            rank: payload.rank || 0,
+            isChampion: payload.isChampion || false,
+          },
+        });
+        return NextResponse.json({ success: true, data: hof });
+      }
+
+      case "DELETE_HOF": {
+        await prisma.hallOfFame.delete({ where: { id: payload.id } });
+        return NextResponse.json({ success: true });
+      }
+
+      // ─── Note Actions ──────────────────────────────────────────────────────────
+      case "UPDATE_NOTE": {
+        const note = await prisma.note.upsert({
+          where: { id: payload.id },
+          update: {
+            title: payload.title,
+            content: payload.content,
+          },
+          create: {
+            id: payload.id,
+            title: payload.title,
+            content: payload.content,
+          },
+        });
+        return NextResponse.json({ success: true, data: note });
+      }
+
+      case "DELETE_NOTE": {
+        await prisma.note.delete({ where: { id: payload.id } });
+        return NextResponse.json({ success: true });
+      }
+
+      // ─── Link Actions ──────────────────────────────────────────────────────────
+      case "UPDATE_LINK": {
+        const link = await prisma.link.upsert({
+          where: { id: payload.id },
+          update: {
+            title: payload.title,
+            url: payload.url,
+            category: payload.category,
+          },
+          create: {
+            id: payload.id,
+            title: payload.title,
+            url: payload.url,
+            category: payload.category,
+          },
+        });
+        return NextResponse.json({ success: true, data: link });
+      }
+
+      case "DELETE_LINK": {
+        await prisma.link.delete({ where: { id: payload.id } });
+        return NextResponse.json({ success: true });
+      }
+
+      // ─── Gallery Actions ───────────────────────────────────────────────────────
+      case "ADD_GALLERY": {
+        const item = await prisma.galleryItem.create({
+          data: {
+            id: payload.id,
+            title: payload.title,
+            url: payload.url,
+          },
+        });
+        return NextResponse.json({ success: true, data: item });
+      }
+
+      case "DELETE_GALLERY": {
+        await prisma.galleryItem.delete({ where: { id: payload.id } });
+        return NextResponse.json({ success: true });
+      }
+
       default:
         return NextResponse.json({ error: "Unknown action" }, { status: 400 });
     }

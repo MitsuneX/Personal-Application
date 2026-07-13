@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { NavLink } from "@/components/ui/NavLink";
-import { ThemeSwitcherToggle } from "@/components/ui/ThemeSwitcherToggle";
 import { usePathname } from "next/navigation";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { ProfileEditorModal } from "@/components/ui/ProfileEditorModal";
@@ -35,6 +34,14 @@ const NAV_SECTIONS = [
     items: [
       { href: "/games", icon: "🎮", label: "Games" },
       { href: "/heroes", icon: "🛡️", label: "Heroes" },
+    ],
+  },
+  {
+    label: "Misc",
+    items: [
+      { href: "/notepad", icon: "📝", label: "Notepad" },
+      { href: "/links", icon: "🔗", label: "Links" },
+      { href: "/gallery", icon: "🖼️", label: "Gallery" },
     ],
   },
 ];
@@ -119,14 +126,14 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false }: 
                 }}
                 transition={{ duration: 0.4 }}
               >
-                {isCyber ? "NEXUS" : "Dashboard"}
+                {isCyber ? "NEXUS XENON" : "Nexus Xenon"}
               </motion.span>
               <motion.span
                 className="text-xs tracking-widest uppercase truncate"
                 animate={{ color: isCyber ? "rgba(0,245,255,0.5)" : "rgba(0,0,0,0.4)" }}
                 transition={{ duration: 0.4 }}
               >
-                {isCyber ? "// v2.0" : "Personal Hub"}
+                {isCyber ? "// Cyber X Brutal" : "Personal Hub"}
               </motion.span>
             </motion.div>
           )}
@@ -138,41 +145,6 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false }: 
             </button>
           )}
         </div>
-
-        {/* ── Customizable Profile Section ── */}
-        {!collapsed && (
-          <motion.div
-            onClick={() => setEditorOpen(true)}
-            className="mx-3 mt-4 p-3 rounded-xl cursor-pointer flex items-center gap-3 border border-adaptive-unique relative overflow-hidden"
-            whileHover={{ scale: 1.02 }}
-            style={{
-              backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#FFFDEB",
-            }}
-          >
-            {/* Corner styling for Cyber Profile Box */}
-            {isCyber && (
-              <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-[#00F5FF]" />
-            )}
-
-            <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 shrink-0"
-              style={{
-                borderColor: isCyber ? "#00F5FF" : "#FF6B35",
-                boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.4)" : "none",
-              }}
-            >
-              <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <p className="font-black text-xs truncate" style={{ color: isCyber ? "#E0E8FF" : "#1A1A1A" }}>
-                {profile.name}
-              </p>
-              <p className="text-[10px] theme-text-muted truncate font-bold font-mono">
-                {isCyber ? `STATUS::${profile.status.toUpperCase()}` : profile.tagline}
-              </p>
-            </div>
-          </motion.div>
-        )}
 
         {/* ── Navigation ── */}
         <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
@@ -267,23 +239,55 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false }: 
           ))}
         </nav>
 
-        {/* ── Bottom: Theme Switcher ── */}
-        <div
-          className="px-4 py-4 shrink-0"
-          style={{ borderTop: isCyber ? "1px solid rgba(0,245,255,0.12)" : "2px solid rgba(0,0,0,0.1)" }}
-        >
-          {!collapsed && (
-            <p
-              className="text-xs font-bold tracking-widest uppercase mb-3"
-              style={{ color: isCyber ? "rgba(0,245,255,0.35)" : "rgba(0,0,0,0.3)" }}
+        {/* ── Bottom Section: Profile is now located below the sidebar navigation links ── */}
+        {!collapsed ? (
+          <div
+            className="p-3 shrink-0"
+            style={{ borderTop: isCyber ? "1px solid rgba(0,245,255,0.12)" : "2px solid rgba(0,0,0,0.1)" }}
+          >
+            <motion.div
+              onClick={() => setEditorOpen(true)}
+              className="p-2.5 rounded-xl cursor-pointer flex items-center gap-3 border border-adaptive-unique relative overflow-hidden"
+              whileHover={{ scale: 1.02 }}
+              style={{
+                backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#FFFDEB",
+              }}
             >
-              Theme
-            </p>
-          )}
-          <div className={collapsed ? "flex justify-center" : ""}>
-            <ThemeSwitcherToggle />
+              {/* Corner styling for Cyber Profile Box */}
+              {isCyber && (
+                <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-[#00F5FF]" />
+              )}
+
+              <div className="relative w-9 h-9 rounded-full overflow-hidden border-2 shrink-0"
+                style={{
+                  borderColor: isCyber ? "#00F5FF" : "#FF6B35",
+                  boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.4)" : "none",
+                }}
+              >
+                <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="font-black text-xs truncate" style={{ color: isCyber ? "#E0E8FF" : "#1A1A1A" }}>
+                  {profile.name}
+                </p>
+                <p className="text-[9px] theme-text-muted truncate font-bold font-mono">
+                  {isCyber ? `STATUS::${profile.status.toUpperCase()}` : profile.tagline}
+                </p>
+              </div>
+            </motion.div>
           </div>
-        </div>
+        ) : (
+          <div
+            onClick={() => setEditorOpen(true)}
+            className="py-4 shrink-0 flex justify-center cursor-pointer"
+            style={{ borderTop: isCyber ? "1px solid rgba(0,245,255,0.12)" : "2px solid rgba(0,0,0,0.1)" }}
+          >
+            <div className="w-8 h-8 rounded-full overflow-hidden border-2" style={{ borderColor: isCyber ? "#00F5FF" : "#FF6B35" }}>
+              <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+            </div>
+          </div>
+        )}
       </motion.aside>
 
       {/* Profile Editor Dialog */}

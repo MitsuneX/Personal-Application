@@ -67,23 +67,31 @@ const initialDramas = [
 
 const initialHallOfFame = [
   // Actors
-  { name: "Ryan Gosling", type: "actor", status: "GOAT Status", knownFor: ["Blade Runner 2049", "La La Land", "Drive"], nationality: "Canadian", note: "The definition of cool" },
-  { name: "Keanu Reeves", type: "actor", status: "GOAT Status", knownFor: ["John Wick", "The Matrix", "Speed"], nationality: "American", note: "Real-life protagonist energy" },
-  { name: "Adam Scott", type: "actor", status: "All-Star", knownFor: ["Severance", "Parks & Recreation", "Step Brothers"], nationality: "American" },
-  { name: "Kento Yamazaki", type: "actor", status: "All-Star", knownFor: ["Alice in Borderland", "Death Note"], nationality: "Japanese" },
-  { name: "Lee Jung-jae", type: "actor", status: "All-Star", knownFor: ["Squid Game", "The Aura"], nationality: "Korean" },
+  { name: "Ryan Gosling", type: "actor", status: "GOAT Status", knownFor: ["Blade Runner 2049", "La La Land", "Drive"], nationality: "Canadian", note: "The definition of cool", rank: 1, isChampion: true },
+  { name: "Keanu Reeves", type: "actor", status: "GOAT Status", knownFor: ["John Wick", "The Matrix", "Speed"], nationality: "American", note: "Real-life protagonist energy", rank: 2, isChampion: false },
+  { name: "Adam Scott", type: "actor", status: "All-Star", knownFor: ["Severance", "Parks & Recreation", "Step Brothers"], nationality: "American", rank: 3, isChampion: false },
   // Actresses
-  { name: "Ana de Armas", type: "actress", status: "All-Star", knownFor: ["Knives Out", "Blonde", "Blade Runner 2049"], nationality: "Cuban-Spanish" },
-  { name: "Zendaya", type: "actress", status: "Rising", knownFor: ["Euphoria", "Dune", "Challengers"], nationality: "American", note: "Gen Z's greatest" },
-  { name: "Patricia Arquette", type: "actress", status: "GOAT Status", knownFor: ["Severance", "True Romance", "Medium"], nationality: "American" },
-  { name: "Son Ye-jin", type: "actress", status: "All-Star", knownFor: ["Crash Landing on You", "Something in the Rain"], nationality: "Korean" },
-  { name: "Tao Tsuchiya", type: "actress", status: "Rising", knownFor: ["Alice in Borderland", "Orange"], nationality: "Japanese" },
+  { name: "Ana de Armas", type: "actress", status: "All-Star", knownFor: ["Knives Out", "Blonde", "Blade Runner 2049"], nationality: "Cuban-Spanish", rank: 1, isChampion: false },
+  { name: "Zendaya", type: "actress", status: "Rising", knownFor: ["Euphoria", "Dune", "Challengers"], nationality: "American", note: "Gen Z's greatest", rank: 2, isChampion: false },
+  { name: "Patricia Arquette", type: "actress", status: "GOAT Status", knownFor: ["Severance", "True Romance", "Medium"], nationality: "American", rank: 3, isChampion: false },
   // Anime
-  { name: "Frieren: Beyond Journey's End", type: "anime", status: "GOAT Status", knownFor: ["Emotional depth", "Beautiful world-building", "Sousou no Frieren OST"], note: "A masterpiece of the era" },
-  { name: "Vinland Saga", type: "anime", status: "GOAT Status", knownFor: ["Character development", "Historical accuracy", "Thorfinn's arc"], note: "The greatest redemption arc" },
-  { name: "Chainsaw Man", type: "anime", status: "All-Star", knownFor: ["Unique storytelling", "MAPPA animation", "Iconic OSTs"] },
-  { name: "Dungeon Meshi", type: "anime", status: "All-Star", knownFor: ["World-building", "Creative cooking", "Trigger animation"] },
-  { name: "Solo Leveling", type: "anime", status: "All-Star", knownFor: ["Power fantasy", "Incredible fights", "A-1 Pictures quality"] },
+  { name: "Frieren: Beyond Journey's End", type: "anime", status: "GOAT Status", knownFor: ["Emotional depth", "Beautiful world-building", "Sousou no Frieren OST"], note: "A masterpiece of the era", rank: 1, isChampion: false },
+  { name: "Vinland Saga", type: "anime", status: "GOAT Status", knownFor: ["Character development", "Historical accuracy", "Thorfinn's arc"], note: "The greatest redemption arc", rank: 2, isChampion: false },
+  { name: "Chainsaw Man", type: "anime", status: "All-Star", knownFor: ["Unique storytelling", "MAPPA animation", "Iconic OSTs"], rank: 3, isChampion: false },
+];
+
+const initialNotes = [
+  { title: "Nexus Xenon Workspace", content: "Welcome to your dynamic dashboard notepad! You can jot down ideas, code blocks, or personal watches. All changes are saved in Supabase in real-time." },
+];
+
+const initialLinks = [
+  { title: "YouTube Watch", url: "https://youtube.com", category: "Watch" },
+  { title: "MyAnimeList Database", url: "https://myanimelist.net", category: "Entertainment" },
+  { title: "Tauri Developer Docs", url: "https://tauri.app", category: "Productivity" },
+];
+
+const initialGallery = [
+  { title: "Dashboard Avatar Grid", url: "/avatar.png" },
 ];
 
 export async function GET() {
@@ -134,10 +142,31 @@ export async function GET() {
     }
 
     // 6. Fetch or Seed Hall of Fame
-    let dbHOF = await prisma.hallOfFame.findMany({ orderBy: { createdAt: "asc" } });
+    let dbHOF = await prisma.hallOfFame.findMany({ orderBy: { rank: "asc" } });
     if (dbHOF.length === 0) {
       await prisma.hallOfFame.createMany({ data: initialHallOfFame });
-      dbHOF = await prisma.hallOfFame.findMany({ orderBy: { createdAt: "asc" } });
+      dbHOF = await prisma.hallOfFame.findMany({ orderBy: { rank: "asc" } });
+    }
+
+    // 7. Fetch or Seed Notes
+    let dbNotes = await prisma.note.findMany({ orderBy: { updatedAt: "desc" } });
+    if (dbNotes.length === 0) {
+      await prisma.note.createMany({ data: initialNotes });
+      dbNotes = await prisma.note.findMany({ orderBy: { updatedAt: "desc" } });
+    }
+
+    // 8. Fetch or Seed Links
+    let dbLinks = await prisma.link.findMany({ orderBy: { createdAt: "desc" } });
+    if (dbLinks.length === 0) {
+      await prisma.link.createMany({ data: initialLinks });
+      dbLinks = await prisma.link.findMany({ orderBy: { createdAt: "desc" } });
+    }
+
+    // 9. Fetch or Seed Gallery Items
+    let dbGallery = await prisma.galleryItem.findMany({ orderBy: { createdAt: "desc" } });
+    if (dbGallery.length === 0) {
+      await prisma.galleryItem.createMany({ data: initialGallery });
+      dbGallery = await prisma.galleryItem.findMany({ orderBy: { createdAt: "desc" } });
     }
 
     return NextResponse.json({
@@ -147,6 +176,9 @@ export async function GET() {
       favoriteCharacters: dbCharacters,
       dramas: dbDramas,
       hallOfFame: dbHOF,
+      notes: dbNotes,
+      links: dbLinks,
+      gallery: dbGallery,
     });
   } catch (error: any) {
     console.error("API GET Dashboard Error:", error);
