@@ -1,0 +1,217 @@
+"use client";
+
+import React from "react";
+import { motion } from "framer-motion";
+import { BentoCard } from "./BentoCard";
+import { useTheme } from "@/lib/theme";
+import { useDashboardStore } from "@/lib/store/dashboardStore";
+import { listContainerVariants, listItemVariants, statusPulse } from "@/lib/theme/motionVariants";
+
+const PLATFORM_COLORS: Record<string, string> = {
+  GitHub: "#1A1A1A",
+  "Twitter/X": "#000000",
+  Discord: "#5865F2",
+  Instagram: "#E1306C",
+  LinkedIn: "#0077B5",
+};
+
+const PLATFORM_ICONS: Record<string, string> = {
+  GitHub: "◈",
+  "Twitter/X": "𝕏",
+  Discord: "◉",
+  Instagram: "◎",
+  LinkedIn: "▣",
+};
+
+const STATUS_CONFIG = {
+  online:  { label: "ONLINE",  color: "#22C55E", dotClass: "status-online"  },
+  away:    { label: "AWAY",    color: "#F59E0B", dotClass: "status-away"    },
+  busy:    { label: "BUSY",    color: "#EF4444", dotClass: "status-busy"    },
+  offline: { label: "OFFLINE", color: "#6B7280", dotClass: "status-offline" },
+};
+
+export function ProfileCard() {
+  const { theme } = useTheme();
+  const isCyber = theme === "cyber";
+  const profile = useDashboardStore((s) => s.profile);
+  const status = STATUS_CONFIG[profile.status];
+
+  return (
+    <BentoCard
+      id="profile-card"
+      className="col-span-1 md:col-span-2 lg:col-span-2 xl:col-span-2"
+      noHover
+    >
+      {/* ── Header Row ────────────────────────────────────────────────────── */}
+      <div className="flex items-start gap-4 mb-5">
+        {/* Avatar */}
+        <div className="relative shrink-0">
+          {/* Animated ring */}
+          <motion.div
+            className="absolute inset-0 rounded-full"
+            animate={
+              isCyber
+                ? {
+                    boxShadow: [
+                      "0 0 0 2px rgba(0,245,255,0.4), 0 0 20px rgba(0,245,255,0.2)",
+                      "0 0 0 4px rgba(0,245,255,0.7), 0 0 30px rgba(0,245,255,0.4)",
+                      "0 0 0 2px rgba(0,245,255,0.4), 0 0 20px rgba(0,245,255,0.2)",
+                    ],
+                  }
+                : {
+                    boxShadow: "3px 3px 0px 0px rgba(0,0,0,1)",
+                  }
+            }
+            transition={
+              isCyber
+                ? { duration: 2.5, repeat: Infinity, ease: "easeInOut" }
+                : { duration: 0.4 }
+            }
+          />
+
+          <motion.div
+            className="w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center text-4xl font-black relative z-10"
+            animate={{
+              backgroundColor: isCyber ? "#0A0F2C" : "#FF6B35",
+              border: isCyber
+                ? "2px solid rgba(0,245,255,0.5)"
+                : "3px solid #000",
+              color: "#FFFFFF",
+            }}
+            transition={{ duration: 0.4 }}
+          >
+            {/* Placeholder initials avatar */}
+            <span className={isCyber ? "cyber-glow-text" : ""}>
+              {profile.name
+                .split(" ")
+                .map((w) => w[0])
+                .join("")
+                .slice(0, 2)}
+            </span>
+          </motion.div>
+
+          {/* Status dot */}
+          <div
+            className={`status-dot ${status.dotClass} absolute -bottom-0.5 -right-0.5 border-2`}
+            style={{
+              borderColor: isCyber ? "#0A0F2C" : "#FFFFFF",
+            }}
+          />
+        </div>
+
+        {/* Name & info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2 flex-wrap">
+            <motion.h1
+              className={`font-black text-xl md:text-2xl leading-tight ${isCyber ? "cyber-gradient-text" : "theme-text-primary"}`}
+              animate={{ fontFamily: isCyber ? "var(--font-orbitron)" : "inherit" }}
+              transition={{ duration: 0.4 }}
+            >
+              {profile.name}
+            </motion.h1>
+
+            {/* Status badge */}
+            <motion.div
+              className="theme-badge flex items-center gap-1.5 shrink-0"
+              animate={{
+                backgroundColor: isCyber
+                  ? `rgba(${status.color === "#22C55E" ? "34,197,94" : "239,68,68"},0.15)`
+                  : "transparent",
+                color: status.color,
+                borderColor: status.color,
+              }}
+              transition={{ duration: 0.4 }}
+            >
+              <span className={`status-dot ${status.dotClass} !w-1.5 !h-1.5`} />
+              {status.label}
+            </motion.div>
+          </div>
+
+          <p className="theme-text-secondary text-sm md:text-base font-medium mt-0.5">
+            {profile.tagline}
+          </p>
+
+          <p className="theme-text-muted text-xs mt-1 hidden md:block">
+            📍 {profile.location}
+          </p>
+        </div>
+      </div>
+
+      {/* ── Bio ───────────────────────────────────────────────────────────── */}
+      <motion.p
+        className="theme-text-secondary text-sm leading-relaxed mb-5 pb-5"
+        style={{ borderBottom: isCyber ? "1px solid rgba(0,245,255,0.15)" : "2px solid rgba(0,0,0,0.1)" }}
+        animate={{ borderBottomColor: isCyber ? "rgba(0,245,255,0.15)" : "rgba(0,0,0,0.1)" }}
+        transition={{ duration: 0.4 }}
+      >
+        {profile.bio}
+      </motion.p>
+
+      {/* ── Skills ────────────────────────────────────────────────────────── */}
+      <div className="mb-4">
+        <p className="theme-text-muted text-xs font-bold tracking-widest uppercase mb-2">
+          Stack
+        </p>
+        <motion.div
+          className="flex flex-wrap gap-2"
+          variants={listContainerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {profile.skills.map((skill, i) => (
+            <motion.span
+              key={skill}
+              variants={listItemVariants}
+              custom={i}
+              className="theme-badge"
+              style={{
+                backgroundColor: isCyber ? "rgba(0,245,255,0.08)" : "rgba(255,107,53,0.12)",
+                color: isCyber ? "#00F5FF" : "#FF6B35",
+                borderColor: isCyber ? "rgba(0,245,255,0.35)" : "#FF6B35",
+              }}
+              whileHover={{ scale: 1.06 }}
+            >
+              {skill}
+            </motion.span>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* ── Socials ───────────────────────────────────────────────────────── */}
+      <motion.div
+        className="flex flex-wrap gap-2 mt-auto pt-2"
+        variants={listContainerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {profile.socials.map((s) => (
+          <motion.a
+            key={s.platform}
+            href={s.url ?? "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            variants={listItemVariants}
+            className="theme-badge inline-flex items-center gap-1.5 no-underline"
+            style={{
+              backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.05)",
+              color: isCyber ? "#E0E8FF" : "#1A1A1A",
+              borderColor: isCyber ? "rgba(255,255,255,0.12)" : "#000",
+            }}
+            whileHover={{
+              scale: 1.04,
+              backgroundColor: isCyber
+                ? "rgba(0,245,255,0.1)"
+                : "rgba(255,107,53,0.15)",
+              borderColor: isCyber ? "rgba(0,245,255,0.5)" : "#FF6B35",
+            }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.18 }}
+          >
+            <span>{PLATFORM_ICONS[s.platform] ?? "◆"}</span>
+            {s.handle}
+          </motion.a>
+        ))}
+      </motion.div>
+    </BentoCard>
+  );
+}
