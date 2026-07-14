@@ -262,25 +262,20 @@ export function Header({ onMenuToggle }: HeaderProps) {
           </ProfileHoverPopover>
 
           {/* Status dot */}
-          <ProfileHoverPopover
-            onOpenAesthetics={() => setAestheticsOpen(true)}
-            placement="down-left"
-          >
-            <Link href="/profile">
-              <motion.div
-                className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full cursor-pointer"
-                animate={{
-                  backgroundColor: isCyber ? "rgba(34,197,94,0.08)" : "rgba(6,214,160,0.08)",
-                  borderColor: isCyber ? "rgba(34,197,94,0.25)" : "#06D6A0",
-                }}
-                style={{ border: "1px solid" }}
-                transition={{ duration: 0.4 }}
-              >
-                <span className="status-dot status-online !w-1.5 !h-1.5" />
-                <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: "#22C55E" }}>{profile.status}</span>
-              </motion.div>
-            </Link>
-          </ProfileHoverPopover>
+          <Link href="/profile">
+            <motion.div
+              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full cursor-pointer"
+              animate={{
+                backgroundColor: isCyber ? "rgba(34,197,94,0.08)" : "rgba(6,214,160,0.08)",
+                borderColor: isCyber ? "rgba(34,197,94,0.25)" : "#06D6A0",
+              }}
+              style={{ border: "1px solid" }}
+              transition={{ duration: 0.4 }}
+            >
+              <span className="status-dot status-online !w-1.5 !h-1.5" />
+              <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: "#22C55E" }}>{profile.status}</span>
+            </motion.div>
+          </Link>
         </div>
       </motion.header>
 
