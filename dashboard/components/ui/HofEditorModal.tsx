@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import Cropper from "react-easy-crop";
+import getCroppedImg from "@/utils/cropImage";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
@@ -31,6 +33,12 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [imgError, setImgError] = useState(false);
+
+  // Crop State
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -67,17 +75,36 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       setIsChampion(false);
     }
     setImgError(false);
+    setCropImageSrc(null); // Reset crop state on open
   }, [entryToEdit, isOpen]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
+    // Read the file as a data URL for cropping
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
 
+  const onCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const handleCropAndUpload = async () => {
+    if (!cropImageSrc || !croppedAreaPixels) return;
+
+    setIsUploading(true);
     try {
+      const croppedBlob = await getCroppedImg(cropImageSrc, croppedAreaPixels);
+      if (!croppedBlob) throw new Error("Crop failed");
+
+      const formData = new FormData();
+      formData.append("file", croppedBlob, "cropped.jpg");
+
       const res = await fetch("/api/upload", {
         method: "POST",
         body: formData,
@@ -86,6 +113,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       if (data.url) {
         setImageUrl(data.url);
         setImgError(false);
+        setCropImageSrc(null); // Return to main form
       } else {
         alert("Upload failed: " + (data.error || "Unknown error"));
       }
@@ -163,10 +191,64 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                   </button>
                 </div>
 
-                {/* Form */}
-                <form onSubmit={handleSave} className="space-y-4">
+                {cropImageSrc ? (
+                  <div className="space-y-4">
+                    <div className="relative w-full h-80 bg-black rounded-lg overflow-hidden">
+                      <Cropper
+                        image={cropImageSrc}
+                        crop={crop}
+                        zoom={zoom}
+                        aspect={3 / 4} // Portrait aspect ratio standard for Hall of Fame
+                        onCropChange={setCrop}
+                        onZoomChange={setZoom}
+                        onCropComplete={onCropComplete}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2 px-2">
+                      <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
+                        Zoom
+                      </label>
+                      <input
+                        type="range"
+                        min={1}
+                        max={3}
+                        step={0.1}
+                        value={zoom}
+                        onChange={(e) => setZoom(Number(e.target.value))}
+                        className="w-full accent-[#00F5FF]"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => { setCropImageSrc(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                        className="px-4 py-2 text-sm font-bold rounded-lg border-2 transition-colors"
+                        style={{
+                          borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB",
+                          color: isCyber ? "#94A3B8" : "#6B7280",
+                          backgroundColor: "transparent",
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCropAndUpload}
+                        disabled={isUploading}
+                        className="px-5 py-2 text-sm font-black rounded-lg transition-transform active:scale-95 disabled:opacity-60"
+                        style={{
+                          backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
+                          color: isCyber ? "#050816" : "#fff",
+                        }}
+                      >
+                        {isUploading ? "Uploading..." : "Crop & Upload"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSave} className="space-y-4">
 
-                  {/* Image Preview + Option Toggles */}
+                    {/* Image Preview + Option Toggles */}
                   <div className="flex flex-col gap-2">
                     <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
                       Photo Source
@@ -250,7 +332,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                             <input
                               type="file"
                               ref={fileInputRef}
-                              onChange={handleFileUpload}
+                              onChange={handleFileSelect}
                               accept="image/*"
                               className="hidden"
                             />
@@ -455,8 +537,9 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                       {isSaving ? "Saving..." : (entryToEdit ? "Save Changes" : "✨ Enshrine")}
                     </button>
                   </div>
-            </form>
-          </div>
+                </form>
+              )}
+            </div>
     </Modal>
   );
 }
