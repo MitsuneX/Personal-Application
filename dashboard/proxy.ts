@@ -1,7 +1,7 @@
 import { type NextRequest } from "next/server";
 import { createClient } from "@/utils/supabase/middleware";
 
-export default async function proxy(request: NextRequest) {
+async function proxy(request: NextRequest) {
   return createClient(request);
 }
 
@@ -17,3 +17,6 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|icons|.*\\.(?:svg|png|jpg|jpeg|gif|webp|js|css|json)$).*)",
   ],
 };
+
+// Keeping all default exports strictly at the end of the file
+export default proxy;
