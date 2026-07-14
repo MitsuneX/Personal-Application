@@ -19,6 +19,8 @@ export async function POST(req: Request) {
             category: payload.category,
             isActive: payload.isActive,
             accentColor: payload.accentColor,
+            profileLink: payload.profileLink ?? null,
+            icon: payload.icon ?? null,
           },
           create: {
             id: payload.id,
@@ -31,9 +33,16 @@ export async function POST(req: Request) {
             category: payload.category,
             isActive: payload.isActive !== undefined ? payload.isActive : true,
             accentColor: payload.accentColor,
+            profileLink: payload.profileLink || null,
+            icon: payload.icon || null,
           },
         });
         return NextResponse.json({ success: true, data: game });
+      }
+
+      case "DELETE_GAME": {
+        await prisma.game.delete({ where: { id: payload.id } });
+        return NextResponse.json({ success: true });
       }
 
       case "UPDATE_ANIME": {

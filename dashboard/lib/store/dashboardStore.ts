@@ -46,6 +46,8 @@ export interface GameEntry {
   category: GameCategory;
   isActive: boolean;
   accentColor: string;
+  profileLink?: string;
+  icon?: string;
 }
 
 // ─── Media Types ──────────────────────────────────────────────────────────────
@@ -425,6 +427,15 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
   removeGame: async (id) => {
     set((s) => ({ games: s.games.filter((g) => g.id !== id) }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_GAME", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to sync deleted game:", err);
+    }
   },
 
   updateMedia: (data) => set((s) => ({ media: { ...s.media, ...data } })),
