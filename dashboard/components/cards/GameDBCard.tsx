@@ -346,13 +346,13 @@ function GameRow({ game, isCyber, index, dimmed }: GameRowProps) {
                       "0 0 12px rgba(255,0,255,0.8)",
                       "0 0 6px rgba(0,245,255,0.6)",
                     ],
-                    color: ["currentColor", "#FF00FF", "#00F5FF", "currentColor"],
+                    color: [game.accentColor, "#FF00FF", "#00F5FF", game.accentColor],
                     transition: { duration: 0.6, repeat: Infinity },
                   }
                 : {
                     ...(
                       (game.rank === "Diamond" || game.rank === "Challenger")
-                        ? { boxShadow: ["0 0 6px currentColor", "0 0 14px currentColor", "0 0 6px currentColor"] }
+                        ? { boxShadow: [`0 0 6px ${game.accentColor}`, `0 0 14px ${game.accentColor}`, `0 0 6px ${game.accentColor}`] }
                         : {}
                     ),
                     transition: { duration: 1.8, repeat: Infinity, ease: "easeInOut" },
