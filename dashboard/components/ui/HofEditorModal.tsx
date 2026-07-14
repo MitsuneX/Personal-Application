@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
+import { Modal } from "@/components/ui/modal";
 import type { HallOfFameEntry, MediaStatus } from "@/lib/store/dashboardStore";
 
 interface HofEditorModalProps {
@@ -25,7 +26,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   const [imageUrl, setImageUrl] = useState("");
   const [imageSource, setImageSource] = useState<"upload" | "url">("upload");
   const [note, setNote] = useState("");
-  const [rank, setRank] = useState(1);
+  const [rank, setRank] = useState<number | null>(null);
   const [isChampion, setIsChampion] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -42,7 +43,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       setNationality(entryToEdit.nationality || "");
       setImageUrl(entryToEdit.imageUrl || "");
       setNote(entryToEdit.note || "");
-      setRank(entryToEdit.rank || 1);
+      setRank(entryToEdit.rank !== undefined ? entryToEdit.rank : null);
       setIsChampion(entryToEdit.isChampion || false);
       
       // Auto-detect image source
@@ -62,7 +63,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       setImageUrl("");
       setImageSource("upload");
       setNote("");
-      setRank(1);
+      setRank(null);
       setIsChampion(false);
     }
     setImgError(false);
@@ -111,7 +112,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
         nationality: nationality.trim() || undefined,
         imageUrl: imageUrl.trim() || undefined,
         note: note.trim() || undefined,
-        rank: Number(rank),
+        rank: rank === null ? null : Number(rank),
         isChampion,
       });
       onClose();
@@ -130,34 +131,9 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-        >
-          {/* Modal box — stops click propagation so clicking inside doesn't close */}
-          <motion.div
-            className="w-full max-w-lg pointer-events-auto rounded-2xl overflow-y-auto max-h-[90vh] relative"
-            initial={{ scale: 0.92, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.92, opacity: 0, y: 20 }}
-            transition={{ type: "spring", stiffness: 340, damping: 28 }}
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              backgroundColor: isCyber ? "rgba(8,12,38,0.98)" : "#FFFFFF",
-              color: isCyber ? "#E0E8FF" : "#1A1A1A",
-              border: isCyber ? "1px solid rgba(0,245,255,0.35)" : "3px solid #000000",
-              boxShadow: isCyber
-                ? "0 0 50px rgba(0,245,255,0.2), inset 0 0 30px rgba(0,245,255,0.03)"
-                : "7px 7px 0px 0px rgba(0,0,0,1)",
-            }}
-          >
-            {/* Cyber corner brackets */}
-            {isCyber && (
+    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-lg">
+      {/* Cyber corner brackets */}
+      {isCyber && (
               <>
                   <div className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-[#00F5FF]" />
                   <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-[#BF5FFF]" />
@@ -382,11 +358,14 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                       <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>Official Rank</label>
                       <input
                         type="number"
-                        required
                         min={1}
                         max={10}
-                        value={rank}
-                        onChange={(e) => setRank(Number(e.target.value))}
+                        value={rank === null ? "" : rank}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setRank(val === "" ? null : Number(val));
+                        }}
+                        placeholder="Unranked (Standard)"
                         className={inputClass}
                         style={inputStyle}
                       />
@@ -476,11 +455,8 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                       {isSaving ? "Saving..." : (entryToEdit ? "Save Changes" : "✨ Enshrine")}
                     </button>
                   </div>
-                </form>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </form>
+          </div>
+    </Modal>
   );
 }

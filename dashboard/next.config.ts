@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Restart trigger to load newly generated prisma client
 
   // Required for static export (disables Next.js Image Optimization server)
   images: {

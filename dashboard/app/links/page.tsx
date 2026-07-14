@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { BentoCard } from "@/components/cards/BentoCard";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore, LinkEntry } from "@/lib/store/dashboardStore";
+import { Modal } from "@/components/ui/modal";
 
 export default function LinksPage() {
   const { theme } = useTheme();
@@ -14,6 +15,7 @@ export default function LinksPage() {
 
   // Form states
   const [isOpen, setIsOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [category, setCategory] = useState("Watch");
@@ -30,10 +32,19 @@ export default function LinksPage() {
       finalUrl = "https://" + finalUrl;
     }
 
-    const newId = "link-" + Math.random().toString(36).substr(2, 9);
-    await saveLink(newId, title.trim(), finalUrl, finalCategory);
+    const finalId = editId || "link-" + Math.random().toString(36).substr(2, 9);
+    await saveLink(finalId, title.trim(), finalUrl, finalCategory);
 
     // Reset
+    setEditId(null);
+    setTitle("");
+    setUrl("");
+    setCustomCategory("");
+    setIsOpen(false);
+  };
+
+  const handleCloseModal = () => {
+    setEditId(null);
     setTitle("");
     setUrl("");
     setCustomCategory("");
@@ -72,7 +83,13 @@ export default function LinksPage() {
             </p>
           </div>
           <button
-            onClick={() => setIsOpen(true)}
+            onClick={() => {
+              setEditId(null);
+              setTitle("");
+              setUrl("");
+              setCustomCategory("");
+              setIsOpen(true);
+            }}
             className="px-4 py-2 text-xs font-black rounded-lg transition-transform active:scale-95 border-adaptive-unique shrink-0"
             style={{
               backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
@@ -129,17 +146,41 @@ export default function LinksPage() {
                     </BentoCard>
                   </a>
 
-                  {/* Absolute delete button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      if (confirm(`Delete "${link.title}" bookmark?`)) deleteLink(link.id);
-                    }}
-                    className="absolute top-2 right-2 p-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 text-white rounded hover:bg-red-600 z-20"
-                  >
-                    🗑️
-                  </button>
+                  {/* Absolute controls */}
+                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setEditId(link.id);
+                        setTitle(link.title);
+                        setUrl(link.url);
+                        if (["Watch", "Entertainment", "Book", "Productivity"].includes(link.category)) {
+                          setCategory(link.category);
+                          setCustomCategory("");
+                        } else {
+                          setCategory("Custom");
+                          setCustomCategory(link.category);
+                        }
+                        setIsOpen(true);
+                      }}
+                      className="p-1 text-xs bg-cyan-600 text-white rounded hover:bg-cyan-700"
+                      title="Edit Bookmark"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        if (confirm(`Delete "${link.title}" bookmark?`)) deleteLink(link.id);
+                      }}
+                      className="p-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                      title="Delete Bookmark"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -155,119 +196,97 @@ export default function LinksPage() {
       </div>
 
       {/* Bookmark Add Dialog */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            <motion.div
-              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsOpen(false)}
-            />
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-              <motion.div
-                className="w-full max-w-md pointer-events-auto rounded-2xl p-6 border-adaptive-unique relative overflow-y-auto max-h-[90vh]"
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
+      <Modal isOpen={isOpen} onClose={handleCloseModal} maxWidth="max-w-md">
+        <div className="p-6 relative">
+          {/* Brackets for Cyber */}
+          {isCyber && <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#00F5FF]" />}
+
+          <div className="flex justify-between items-center mb-4 pb-2" style={{ borderBottom: isCyber ? "1px solid rgba(255,255,255,0.1)" : "2px dashed #000" }}>
+            <h3 className="font-black text-base theme-text-primary">{editId ? "Edit Bookmark" : "New Bookmark"}</h3>
+            <button onClick={handleCloseModal} className="text-xs opacity-60">✕</button>
+          </div>
+
+          <form onSubmit={handleAddLink} className="space-y-4">
+            {/* Title */}
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-black uppercase tracking-wider theme-text-secondary">Title</label>
+              <input
+                type="text"
+                required
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Anime Watchlist"
+                className="px-3 py-2 text-xs font-semibold rounded-lg border outline-none bg-black/5 dark:bg-white/5 border-adaptive-unique theme-text-primary"
+              />
+            </div>
+
+            {/* URL */}
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-black uppercase tracking-wider theme-text-secondary">URL</label>
+              <input
+                type="text"
+                required
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="e.g. anime.com"
+                className="px-3 py-2 text-xs font-semibold rounded-lg border outline-none bg-black/5 dark:bg-white/5 border-adaptive-unique theme-text-primary"
+              />
+            </div>
+
+            {/* Category select */}
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-black uppercase tracking-wider theme-text-secondary">Category</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="px-3 py-2 text-xs font-semibold rounded-lg border outline-none bg-transparent border-adaptive-unique theme-text-primary cursor-pointer"
+              >
+                <option value="Watch">Watch</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Book">Book</option>
+                <option value="Productivity">Productivity</option>
+                <option value="Custom">Custom Category...</option>
+              </select>
+            </div>
+
+            {/* Custom category input */}
+            {category === "Custom" && (
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-black uppercase tracking-wider theme-text-secondary">Custom Name</label>
+                <input
+                  type="text"
+                  required
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  placeholder="e.g. Coding"
+                  className="px-3 py-2 text-xs font-semibold rounded-lg border outline-none bg-black/5 dark:bg-white/5 border-adaptive-unique theme-text-primary"
+                />
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="px-3 py-1.5 text-xs font-bold rounded-lg border border-adaptive-unique bg-transparent theme-text-muted"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-1.5 text-xs font-black rounded-lg transition-transform active:scale-95"
                 style={{
-                  backgroundColor: isCyber ? "#0A0F2C" : "#FFFFFF",
-                  boxShadow: isCyber ? "0 0 30px rgba(0,245,255,0.2)" : "5px 5px 0 #000",
+                  backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
+                  color: isCyber ? "#050816" : "#fff",
                 }}
               >
-                {/* Brackets for Cyber */}
-                {isCyber && <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#00F5FF]" />}
-
-                <div className="flex justify-between items-center mb-4 pb-2" style={{ borderBottom: isCyber ? "1px solid rgba(255,255,255,0.1)" : "2px dashed #000" }}>
-                  <h3 className="font-black text-base theme-text-primary">New Bookmark</h3>
-                  <button onClick={() => setIsOpen(false)} className="text-xs opacity-60">✕</button>
-                </div>
-
-                <form onSubmit={handleAddLink} className="space-y-4">
-                  {/* Title */}
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-black uppercase tracking-wider theme-text-secondary">Title</label>
-                    <input
-                      type="text"
-                      required
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="e.g. Anime Watchlist"
-                      className="px-3 py-2 text-xs font-semibold rounded-lg border outline-none bg-black/5 dark:bg-white/5 border-adaptive-unique theme-text-primary"
-                    />
-                  </div>
-
-                  {/* URL */}
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-black uppercase tracking-wider theme-text-secondary">URL</label>
-                    <input
-                      type="text"
-                      required
-                      value={url}
-                      onChange={(e) => setUrl(e.target.value)}
-                      placeholder="e.g. anime.com"
-                      className="px-3 py-2 text-xs font-semibold rounded-lg border outline-none bg-black/5 dark:bg-white/5 border-adaptive-unique theme-text-primary"
-                    />
-                  </div>
-
-                  {/* Category select */}
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-black uppercase tracking-wider theme-text-secondary">Category</label>
-                    <select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="px-3 py-2 text-xs font-semibold rounded-lg border outline-none bg-transparent border-adaptive-unique theme-text-primary cursor-pointer"
-                    >
-                      <option value="Watch">Watch</option>
-                      <option value="Entertainment">Entertainment</option>
-                      <option value="Book">Book</option>
-                      <option value="Productivity">Productivity</option>
-                      <option value="Custom">Custom Category...</option>
-                    </select>
-                  </div>
-
-                  {/* Custom category input */}
-                  {category === "Custom" && (
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-black uppercase tracking-wider theme-text-secondary">Custom Name</label>
-                      <input
-                        type="text"
-                        required
-                        value={customCategory}
-                        onChange={(e) => setCustomCategory(e.target.value)}
-                        placeholder="e.g. Coding"
-                        className="px-3 py-2 text-xs font-semibold rounded-lg border outline-none bg-black/5 dark:bg-white/5 border-adaptive-unique theme-text-primary"
-                      />
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex justify-end gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsOpen(false)}
-                      className="px-3 py-1.5 text-xs font-bold rounded-lg border border-adaptive-unique bg-transparent theme-text-muted"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-1.5 text-xs font-black rounded-lg transition-transform active:scale-95"
-                      style={{
-                        backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
-                        color: isCyber ? "#050816" : "#fff",
-                      }}
-                    >
-                      Enshrine Link
-                    </button>
-                  </div>
-                </form>
-              </motion.div>
+                {editId ? "Save Changes" : "Enshrine Link"}
+              </button>
             </div>
-          </>
-        )}
-      </AnimatePresence>
+          </form>
+        </div>
+      </Modal>
     </AppShell>
   );
 }

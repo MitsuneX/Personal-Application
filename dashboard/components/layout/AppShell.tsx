@@ -5,9 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
-import { PageTransition } from "./PageTransition";
+import { PageWrapper } from "./PageWrapper";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
-import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
+import { TopLoader } from "@/components/ui/TopLoader";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -43,7 +43,7 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <>
-      <LoadingOverlay isLoading={isLoading && !isHydrated} />
+      <TopLoader />
       <motion.div
         className="h-screen overflow-hidden flex flex-row"
         animate={{ backgroundColor: isCyber ? "#050816" : "#FFF5E4" }}
@@ -124,7 +124,7 @@ export function AppShell({ children }: AppShellProps) {
 
           {/* Content with padding */}
           <div className="w-full max-w-screen-2xl mx-auto px-4 md:px-6 lg:px-8 py-6">
-            <PageTransition>{children}</PageTransition>
+            <PageWrapper>{children}</PageWrapper>
           </div>
         </main>
       </div>

@@ -18,12 +18,12 @@ import Link from "next/link";
 export default function DashboardPage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { games, animeList, dramas, hallOfFame } = useDashboardStore();
+  const { games, animeList, dramas, dramaLog, hallOfFame } = useDashboardStore();
 
   const totalEps = animeList.reduce((s, a) => s + a.episodesWatched, 0);
   const completedAnime = animeList.filter((a) => a.status === "Completed").length;
   const activeGames = games.filter((g) => g.isActive).length;
-  const totalDramas = dramas.length;
+  const totalDramas = dramas.length + dramaLog.length;
 
   const stats = [
     { label: "Active Games",    value: activeGames,     icon: "🎮", href: "/games",        color: isCyber ? "#00F5FF" : "#FF6B35" },

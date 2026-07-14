@@ -7,6 +7,7 @@ import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import type { SongEntry } from "@/lib/store/dashboardStore";
 import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants";
+import { Modal } from "@/components/ui/modal";
 
 const MUSIC_TABS = [
   { id: "all", label: "All Tracks", icon: "◈" },
@@ -509,20 +510,8 @@ function SongEditorModal({ isOpen, onClose, songToEdit, isCyber, saveSong }: Son
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
-      <motion.div
-        className="w-full max-w-md pointer-events-auto rounded-2xl overflow-y-auto max-h-[90vh] relative p-6 flex flex-col gap-4"
-        initial={{ scale: 0.92, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.92, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          backgroundColor: isCyber ? "rgba(8,12,38,0.98)" : "#FFFFFF",
-          color: isCyber ? "#E0E8FF" : "#1A1A1A",
-          border: isCyber ? "1px solid rgba(0,245,255,0.35)" : "3px solid #000000",
-          boxShadow: isCyber ? "0 0 50px rgba(0,245,255,0.2)" : "7px 7px 0px 0px rgba(0,0,0,1)",
-        }}
-      >
+    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
+      <div className="p-6 flex flex-col gap-4 relative">
         {isCyber && <div className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-[#00F5FF]" />}
 
         <div className="flex justify-between items-center pb-3"
@@ -620,9 +609,8 @@ function SongEditorModal({ isOpen, onClose, songToEdit, isCyber, saveSong }: Son
               {isSaving ? "Saving..." : "Save Song"}
             </button>
           </div>
-
         </form>
-      </motion.div>
-    </div>
+      </div>
+    </Modal>
   );
 }

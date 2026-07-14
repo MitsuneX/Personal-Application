@@ -1,11 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants";
+import { DramaSearchModal } from "@/components/ui/DramaSearchModal";
+import { ManualDramaModal } from "@/components/ui/ManualDramaModal";
 
 // ── Chinese Palette ───────────────────────────────────────────────────────────
 // Brutal: imperial red + jade + gold on cream
@@ -34,12 +36,32 @@ function CloudPattern({ isCyber, color }: { isCyber: boolean; color: string }) {
 export default function ChineseDramaPage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const allDramas = useDashboardStore((s) => s.dramas);
-  const dramas = allDramas.filter((d) => d.country === "chinese");
+  const { dramas: allDramas, dramaLog, deleteDramaLog } = useDashboardStore();
+  const dramas = [
+    ...allDramas.filter((d) => d.country === "chinese"),
+    ...dramaLog
+      .filter((d) => d.country === "chinese")
+      .map((d) => ({
+        id: d.id,
+        title: d.title,
+        country: "chinese",
+        episodes: d.type === "Movie" ? 1 : 16,
+        episodesWatched: d.statusBadge === "Classic" || d.statusBadge === "GOAT Status" ? (d.type === "Movie" ? 1 : 16) : 0,
+        status: d.statusBadge === "Classic" || d.statusBadge === "GOAT Status" ? "Completed" : "Watching",
+        rating: d.rating ? Math.round(parseFloat(d.rating)) : 8,
+        genre: d.type || "Series",
+        year: d.releaseYear || 2026,
+        platform: "OMDb Log",
+        cast: d.mainActors,
+      })),
+  ];
   const p = isCyber ? CN.cyber : CN.brutal;
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
 
   return (
-    <AppShell>
+    <>
+      <AppShell>
       {/* Page hero */}
       <motion.div
         className="relative rounded-2xl overflow-hidden mb-8 p-8"
@@ -112,11 +134,26 @@ export default function ChineseDramaPage() {
                 {!isCyber && <div className="absolute top-0 left-0 right-0 h-1 rounded-t-xl" style={{ background: `linear-gradient(90deg, ${CN.brutal.accent}, ${CN.brutal.gold}, ${CN.brutal.accent2})` }} />}
 
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-black text-base leading-snug" style={{ color: p.text }}>{drama.title}</h3>
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full shrink-0"
-                    style={{ backgroundColor: isCompleted ? (isCyber ? "rgba(57,255,20,0.15)" : "rgba(6,214,160,0.12)") : (isCyber ? `${CN.cyber.accent}20` : `${CN.brutal.accent}15`), color: isCompleted ? (isCyber ? "#39FF14" : "#06D6A0") : (isCyber ? CN.cyber.accent : CN.brutal.accent) }}>
-                    {drama.status}
-                  </span>
+                  <h3 className="font-black text-base leading-snug flex-1" style={{ color: p.text }}>{drama.title}</h3>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                      style={{ backgroundColor: isCompleted ? (isCyber ? "rgba(57,255,20,0.15)" : "rgba(6,214,160,0.12)") : (isCyber ? `${CN.cyber.accent}20` : `${CN.brutal.accent}15`), color: isCompleted ? (isCyber ? "#39FF14" : "#06D6A0") : (isCyber ? CN.cyber.accent : CN.brutal.accent) }}>
+                      {drama.status}
+                    </span>
+                    {drama.id.startsWith("drama-") && (
+                      <button
+                        onClick={() => {
+                          if (confirm(`Remove "${drama.title}" from watchlist?`)) {
+                            deleteDramaLog(drama.id);
+                          }
+                        }}
+                        className="text-xs opacity-40 hover:opacity-100 hover:text-red-500 transition-all p-0.5 rounded"
+                        title="Delete Drama"
+                      >
+                        🗑️
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap gap-1.5">
@@ -151,6 +188,55 @@ export default function ChineseDramaPage() {
           );
         })}
       </motion.div>
-    </AppShell>
+      </AppShell>
+
+      <DramaSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} defaultCountry="chinese" />
+
+      {/* Manual Drama Add Overlay */}
+      <ManualDramaModal isOpen={manualOpen} onClose={() => setManualOpen(false)} defaultCountry="chinese" />
+
+      <motion.button
+        className="fixed bottom-[76px] right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-sm shadow-2xl"
+        style={{
+          background: isCyber ? "linear-gradient(135deg, rgba(255,215,0,0.9), rgba(200,16,46,0.7))" : CN.brutal.accent,
+          color: "#fff",
+          border: isCyber ? "1px solid rgba(255,215,0,0.6)" : "2.5px solid #000",
+          boxShadow: isCyber ? "0 0 24px rgba(255,215,0,0.3)" : "4px 4px 0 #000",
+          fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
+        }}
+        whileHover={{ scale: 1.06, y: -2 }}
+        whileTap={{ scale: 0.97 }}
+        onClick={() => setSearchOpen(true)}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, type: "spring" as const, stiffness: 300, damping: 22 }}
+      >
+        <span>🔍</span>
+        <span>{isCyber ? "SEARCH" : "Search Drama"}</span>
+      </motion.button>
+
+      {/* Floating Manual Add FAB */}
+      <motion.button
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-sm shadow-2xl"
+        style={{
+          background: isCyber
+            ? "linear-gradient(135deg, #00F5FF, #bf5fff)"
+            : CN.brutal.accent2,
+          color: "#fff",
+          border: isCyber ? "1px solid rgba(0,245,255,0.4)" : "2.5px solid #000",
+          boxShadow: isCyber ? "0 0 24px rgba(0,245,255,0.3)" : "4px 4px 0 #000",
+          fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
+        }}
+        whileHover={{ scale: 1.06, y: -2 }}
+        whileTap={{ scale: 0.97 }}
+        onClick={() => setManualOpen(true)}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7, type: "spring" as const, stiffness: 300, damping: 22 }}
+      >
+        <span>＋</span>
+        <span>{isCyber ? "MANUAL.ADD" : "Add Manually"}</span>
+      </motion.button>
+    </>
   );
 }

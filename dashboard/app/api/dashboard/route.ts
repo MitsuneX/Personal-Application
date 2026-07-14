@@ -187,7 +187,7 @@ export async function GET() {
     } else {
       // Sync any code-defined imageUrls back to the database automatically
       for (const item of (initialHallOfFame as any[])) {
-        const match = dbHOF.find(x => x.name === item.name);
+        const match = dbHOF.find((x: any) => x.name === item.name);
         if (match && !match.imageUrl && item.imageUrl) {
           await prisma.hallOfFame.update({
             where: { id: match.id },
@@ -227,6 +227,44 @@ export async function GET() {
       dbSongs = await prisma.song.findMany({ orderBy: { createdAt: "desc" } });
     }
 
+    // 11. Fetch Drama Log (user-saved drama search entries)
+    const dbDramaLog = await prisma.dramaLog.findMany({ orderBy: { createdAt: "desc" } });
+
+    // 12. Fetch Saved Prompts
+    const dbPrompts = await prisma.savedPrompt.findMany({ orderBy: { createdAt: "desc" } });
+
+    // 13. Fetch or Seed Hobby Skills
+    let dbHobbySkills = await prisma.hobbySkill.findMany({ orderBy: { createdAt: "asc" } });
+    if (dbHobbySkills.length === 0) {
+      const seeds = [
+        { name: "Chinese",       category: "Languages",    priority: "Priority" },
+        { name: "English",       category: "Languages",    priority: "Priority" },
+        { name: "Japanese",      category: "Languages",    priority: "Haven't Started" },
+        { name: "Korean",        category: "Languages",    priority: "Haven't Started" },
+        { name: "German",        category: "Languages",    priority: "Manifest" },
+        { name: "Russian",       category: "Languages",    priority: "Manifest" },
+        { name: "Spanish",       category: "Languages",    priority: "Manifest" },
+        { name: "Neuroscience",  category: "Doctors",      priority: "Priority" },
+        { name: "Patofisiologi", category: "Doctors",      priority: "Priority" },
+        { name: "MMA",           category: "Martial Arts", priority: "Priority" },
+        { name: "Judo",          category: "Martial Arts", priority: "Manifest" },
+        { name: "Taekwondo",     category: "Martial Arts", priority: "Manifest" },
+        { name: "Karate",        category: "Martial Arts", priority: "Manifest" },
+        { name: "Silat",         category: "Martial Arts", priority: "Priority" },
+      ];
+      await prisma.hobbySkill.createMany({ data: seeds });
+      dbHobbySkills = await prisma.hobbySkill.findMany({ orderBy: { createdAt: "asc" } });
+    }
+
+    // 14. Fetch Hobby Logs
+    const dbHobbyLogs = await prisma.hobbyLog.findMany({ orderBy: { createdAt: "asc" } });
+
+    // 15. Fetch Profile History (last 10 entries for rollback)
+    const dbProfileHistory = await prisma.profileHistory.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    });
+
     return NextResponse.json({
       profile: dbProfile,
       games: dbGames,
@@ -238,6 +276,11 @@ export async function GET() {
       links: dbLinks,
       gallery: dbGallery,
       songs: dbSongs,
+      dramaLog: dbDramaLog,
+      savedPrompts: dbPrompts,
+      hobbySkills: dbHobbySkills,
+      hobbyLogs: dbHobbyLogs,
+      profileHistory: dbProfileHistory,
     });
   } catch (error: any) {
     console.error("API GET Dashboard Error:", error);

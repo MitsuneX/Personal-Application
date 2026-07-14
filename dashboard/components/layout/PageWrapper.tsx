@@ -4,31 +4,44 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 
-interface PageTransitionProps {
+interface PageWrapperProps {
   children: React.ReactNode;
 }
 
-const variants = {
-  hidden: { opacity: 0, y: 12 },
-  enter:  { opacity: 1, y: 0 },
-  exit:   { opacity: 0, y: -12 },
+const pageTransitionVariants = {
+  hidden: {
+    opacity: 0,
+    y: 12,
+  },
+  enter: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.35,
+      ease: [0.16, 1, 0.3, 1] as const,
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -12,
+    transition: {
+      duration: 0.25,
+      ease: [0.7, 0, 0.84, 0] as const,
+    },
+  },
 };
 
-export function PageTransition({ children }: PageTransitionProps) {
+export function PageWrapper({ children }: PageWrapperProps) {
   const pathname = usePathname();
 
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={pathname}
-        variants={variants}
+        variants={pageTransitionVariants}
         initial="hidden"
         animate="enter"
         exit="exit"
-        transition={{
-          ease: [0.16, 1, 0.3, 1] as const, // premium custom cubic-bezier curve for lightning-fast professional feel
-          duration: 0.35,
-        }}
         className="w-full min-h-full"
       >
         {children}
@@ -36,3 +49,4 @@ export function PageTransition({ children }: PageTransitionProps) {
     </AnimatePresence>
   );
 }
+

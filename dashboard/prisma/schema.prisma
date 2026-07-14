@@ -1,5 +1,5 @@
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
 generator client {
@@ -16,8 +16,18 @@ model Profile {
   skills      String[]
   socials     Json     // array of SocialHandle { platform, handle, url }
   avatar      String?
+  banner      String?  // URL for profile banner (image or video)
+  nameplate   String?  // URL for sidebar bottom banner/nameplate
+  customTag   String?  // e.g. "#4269"
   borderStyle String?
   updatedAt   DateTime @updatedAt
+}
+
+model ProfileHistory {
+  id        String   @id @default(uuid())
+  assetType String   // "avatar" | "banner"
+  url       String
+  createdAt DateTime @default(now())
 }
 
 model Game {
@@ -79,16 +89,20 @@ model HallOfFame {
   nationality String?
   note        String?
   imageUrl    String?
-  rank        Int      @default(0)
+  rank        Int?     @default(0)
+  likes       Int      @default(0)
   isChampion  Boolean  @default(false)
   createdAt   DateTime @default(now())
 }
 
 model Note {
-  id        String   @id @default(uuid())
-  title     String
-  content   String
-  updatedAt DateTime @updatedAt
+  id          String      @id @default(uuid())
+  title       String
+  content     String
+  hobbyId     String?
+  isCuriosity Boolean     @default(false)
+  hobby       HobbySkill? @relation(fields: [hobbyId], references: [id])
+  updatedAt   DateTime    @updatedAt
 }
 
 model Link {
@@ -103,6 +117,8 @@ model GalleryItem {
   id        String   @id @default(uuid())
   title     String
   url       String
+  caption   String?
+  tags      Json?    // string[]
   createdAt DateTime @default(now())
 }
 
@@ -117,3 +133,46 @@ model Song {
   createdAt DateTime @default(now())
 }
 
+model DramaLog {
+  id          String   @id @default(uuid())
+  title       String
+  type        String   // "Movie" | "Series"
+  releaseYear Int?
+  plotSummary String?
+  posterUrl   String?
+  mainActors  Json     // string[]
+  statusBadge String   @default("All-Star") // "GOAT Status" | "All-Star" | "Rising" | "Classic"
+  omdbId      String?  // imdbID for deduplication
+  country     String?  // "korean" | "japanese" | "hollywood" | "chinese" | "other"
+  rating      String?  // e.g. "8.5"
+  createdAt   DateTime @default(now())
+}
+
+model SavedPrompt {
+  id         String   @id @default(uuid())
+  title      String
+  targetAI   String
+  promptText String
+  createdAt  DateTime @default(now())
+}
+
+model HobbySkill {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  category  String     // "Languages" | "Doctors" | "Martial Arts"
+  priority  String     // "Priority" | "Haven't Started" | "Manifest"
+  progress  Float      @default(0)
+  createdAt DateTime   @default(now())
+  logs      HobbyLog[]
+  notes     Note[]
+}
+
+model HobbyLog {
+  id        String     @id @default(uuid())
+  skillId   String
+  skill     HobbySkill @relation(fields: [skillId], references: [id])
+  delta     Float
+  wordCount Int        @default(0)
+  note      String?
+  createdAt DateTime   @default(now())
+}

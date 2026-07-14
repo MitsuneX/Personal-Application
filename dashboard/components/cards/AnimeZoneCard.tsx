@@ -7,6 +7,7 @@ import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { listContainerVariants, listItemVariants } from "@/lib/theme/motionVariants";
 import type { AnimeStatus } from "@/lib/store/dashboardStore";
+import { AnimeSearchModal } from "@/components/ui/AnimeSearchModal";
 
 const STATUS_CONFIG: Record<
   AnimeStatus,
@@ -234,8 +235,8 @@ function AnimeRow({
 export function AnimeZoneCard() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const animeList = useDashboardStore((s) => s.animeList);
-  const characters = useDashboardStore((s) => s.favoriteCharacters);
+  const { animeList, favoriteCharacters: characters } = useDashboardStore();
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const watching = animeList.filter((a) => a.status === "Watching");
   const completed = animeList.filter((a) => a.status === "Completed");
@@ -394,7 +395,37 @@ export function AnimeZoneCard() {
             {totalEpsWatched.toLocaleString()}
           </motion.span>
         </motion.div>
+
+        {/* ── Anime Search Shortcut Button ── */}
+        <motion.button
+          className="w-full mt-4 py-2.5 rounded-xl text-sm font-bold tracking-wide flex items-center justify-center gap-2 transition-all"
+          style={{
+            background: isCyber
+              ? "linear-gradient(135deg, rgba(0,245,255,0.08), rgba(191,95,255,0.08))"
+              : "rgba(255,107,53,0.08)",
+            border: isCyber ? "1px solid rgba(0,245,255,0.25)" : "2px dashed rgba(255,107,53,0.4)",
+            color: isCyber ? "rgba(0,245,255,0.8)" : "#FF6B35",
+            fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
+          }}
+          whileHover={{
+            scale: 1.01,
+            backgroundColor: isCyber ? "rgba(0,245,255,0.06)" : "rgba(255,107,53,0.12)",
+            boxShadow: isCyber ? "0 0 16px rgba(0,245,255,0.15)" : "none",
+          }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setSearchOpen(true)}
+        >
+          <span>🔍</span>
+          <span>{isCyber ? "SEARCH ANIME.DB" : "Search & Log Anime"}</span>
+        </motion.button>
+
       </BentoCard>
+
+      {/* Anime Search Modal */}
+      <AnimeSearchModal
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+      />
     </motion.div>
   );
 }

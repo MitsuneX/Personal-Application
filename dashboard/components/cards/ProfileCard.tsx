@@ -108,7 +108,69 @@ export const BORDER_CONFIGS: Record<string, {
       border: "4px solid #000000",
       boxShadow: "8px 8px 0px 0px #000000",
     })
-  }
+  },
+  "cyber-target": {
+    name: "Cyber Crosshair",
+    avatarRing: () => ({
+      boxShadow: [
+        "0 0 0 1px rgba(0,245,255,0.6), 0 0 0 4px rgba(0,245,255,0.1), 0 0 20px rgba(0,245,255,0.3)",
+        "0 0 0 3px rgba(0,245,255,0.9), 0 0 0 6px rgba(0,245,255,0.15), 0 0 35px rgba(0,245,255,0.6)",
+        "0 0 0 1px rgba(0,245,255,0.6), 0 0 0 4px rgba(0,245,255,0.1), 0 0 20px rgba(0,245,255,0.3)",
+      ]
+    }),
+    avatarBorder: () => "1px solid rgba(0,245,255,0.8)",
+    cardStyle: (isCyber) => isCyber ? {
+      border: "1px solid rgba(0,245,255,0.5)",
+      boxShadow: "0 0 40px rgba(0,245,255,0.12), inset 0 0 20px rgba(0,245,255,0.03)",
+      outline: "1px solid rgba(0,245,255,0.1)",
+      outlineOffset: "3px",
+    } : {
+      border: "3px solid #00D4FF",
+      boxShadow: "5px 5px 0px 0px #000",
+    }
+  },
+  "cyber-glitch": {
+    name: "Glitch Energy",
+    avatarRing: () => ({
+      boxShadow: [
+        "0 0 0 2px #FF0080, 0 0 0 4px #00F5FF, 0 0 25px rgba(255,0,128,0.5)",
+        "0 0 0 2px #00F5FF, 0 0 0 4px #FF0080, 0 0 25px rgba(0,245,255,0.5)",
+        "0 0 0 2px #FF0080, 0 0 0 4px #00F5FF, 0 0 25px rgba(255,0,128,0.5)",
+      ]
+    }),
+    avatarBorder: () => "2px solid #FF0080",
+    cardStyle: (isCyber) => isCyber ? {
+      border: "1px solid #FF0080",
+      boxShadow: "0 0 30px rgba(255,0,128,0.25), 0 0 60px rgba(0,245,255,0.1)",
+    } : {
+      border: "3px solid #FF0080",
+      boxShadow: "5px 5px 0px 0px #000",
+    }
+  },
+  "brutal-checker": {
+    name: "Retro Checkered",
+    avatarRing: () => ({
+      boxShadow: "3px 3px 0px 0px #000, 6px 6px 0px 0px #FF6B35, 9px 9px 0px 0px #000"
+    }),
+    avatarBorder: () => "3px solid #000",
+    cardStyle: () => ({
+      border: "3px solid #000",
+      boxShadow: "6px 6px 0px 0px #FF6B35, 9px 9px 0px 0px #000",
+      backgroundImage: "repeating-conic-gradient(rgba(0,0,0,0.03) 0% 25%, transparent 0% 50%) 0 0 / 16px 16px",
+    })
+  },
+  "brutal-vector": {
+    name: "Sharp Vector Block",
+    avatarRing: () => ({
+      boxShadow: "5px 5px 0px 0px #FFD166, 6px 6px 0px 0px #000"
+    }),
+    avatarBorder: () => "3px solid #000",
+    cardStyle: () => ({
+      border: "3px solid #000",
+      boxShadow: "7px 7px 0px 0px #FFD166, 8px 8px 0px 0px #000",
+      borderRadius: "0px",
+    })
+  },
 };
 
 // ─── Welcome Fade Entry Animation ─────────────────────────────────────────────

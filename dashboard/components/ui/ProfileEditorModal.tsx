@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
+import { Modal } from "@/components/ui/modal";
 
 interface ProfileEditorModalProps {
   isOpen: boolean;
@@ -44,45 +44,17 @@ export function ProfileEditorModal({ isOpen, onClose }: ProfileEditorModalProps)
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
+    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-lg">
+      {/* Corner brackets for Cyber */}
+      {isCyber && (
         <>
-          {/* Backdrop */}
-          <motion.div
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
+          <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#00F5FF]" />
+          <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#BF5FFF]" />
+        </>
+      )}
 
-          {/* Modal Container */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
-              className="w-full max-w-lg pointer-events-auto rounded-2xl overflow-y-auto max-h-[90vh] border-adaptive-unique p-6 relative"
-              initial={{ scale: 0.95, opacity: 0, y: 15 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              transition={{ type: "spring", stiffness: 350, damping: 28 }}
-              style={{
-                backgroundColor: isCyber ? "rgba(10,15,44,0.95)" : "#FFFFFF",
-                color: isCyber ? "#E0E8FF" : "#1A1A1A",
-                border: isCyber ? "1px solid rgba(0,245,255,0.35)" : "3px solid #000000",
-                boxShadow: isCyber 
-                  ? "0 0 40px rgba(0,245,255,0.25), inset 0 0 20px rgba(0,245,255,0.05)"
-                  : "6px 6px 0px 0px rgba(0,0,0,1)",
-              }}
-            >
-              {/* Corner brackets for Cyber */}
-              {isCyber && (
-                <>
-                  <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#00F5FF]" />
-                  <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#BF5FFF]" />
-                </>
-              )}
-
-              {/* Header */}
-              <div className="flex justify-between items-center mb-5 pb-3" style={{ borderBottom: isCyber ? "1px solid rgba(255,255,255,0.1)" : "2px dashed #000" }}>
+      {/* Header */}
+      <div className="flex justify-between items-center mb-5 pb-3 px-6 pt-6" style={{ borderBottom: isCyber ? "1px solid rgba(255,255,255,0.1)" : "2px dashed #000" }}>
                 <h2 className="text-xl font-black font-mono tracking-wide" style={{ fontFamily: isCyber ? "var(--font-orbitron)" : "inherit" }}>
                   {isCyber ? "EDIT_PROFILE.CONFIG" : "Customise Profile"}
                 </h2>
@@ -226,10 +198,6 @@ export function ProfileEditorModal({ isOpen, onClose }: ProfileEditorModalProps)
                   </button>
                 </div>
               </form>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+    </Modal>
   );
 }

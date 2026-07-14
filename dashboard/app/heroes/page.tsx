@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { BentoCard } from "@/components/cards/BentoCard";
 import { useTheme } from "@/lib/theme";
 import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants";
+import { Modal } from "@/components/ui/modal";
 
 interface HeroCharacter {
   id: string;
@@ -244,106 +245,80 @@ export default function HeroesPage() {
       </motion.div>
 
       {/* Hero detail drawer modal */}
-      <AnimatePresence>
+      <Modal isOpen={!!selectedHero} onClose={() => setSelectedHero(null)} maxWidth="max-w-lg">
         {selectedHero && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedHero(null)}
-            />
+          <div className="p-6 relative">
+            {/* Cyber Brackets */}
+            {isCyber && (
+              <div className="absolute top-0 left-0 w-6 h-6" style={{ borderTop: `2px solid ${selectedHero.accent}`, borderLeft: `2px solid ${selectedHero.accent}` }} />
+            )}
 
-            {/* Modal */}
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-              <motion.div
-                className="w-full max-w-lg pointer-events-auto rounded-2xl p-6 relative overflow-y-auto max-h-[90vh] border-adaptive-unique"
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
+            {/* Close Button */}
+            <button
+              onClick={() => setSelectedHero(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10"
+            >
+              ✕
+            </button>
+
+            {/* Content Header */}
+            <div className="flex gap-4 items-center mb-6 pb-4" style={{ borderBottom: isCyber ? "1px solid rgba(255,255,255,0.08)" : "2px dashed #000" }}>
+              <div className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl shrink-0"
                 style={{
-                  backgroundColor: isCyber ? "#0A0F2C" : "#FFFFFF",
-                  border: isCyber ? `1px solid ${selectedHero.accent}45` : "3px solid #000000",
-                  boxShadow: isCyber 
-                    ? `0 0 40px ${selectedHero.accent}20`
-                    : "5px 5px 0 rgba(0,0,0,1)",
+                  background: isCyber ? `${selectedHero.accent}15` : selectedHero.accent,
+                  border: "2px solid #000",
+                  boxShadow: isCyber ? `0 0 15px ${selectedHero.accent}` : "2px 2px 0 #000",
+                  color: "#FFF",
                 }}
               >
-                {/* Cyber Brackets */}
-                {isCyber && (
-                  <div className="absolute top-0 left-0 w-6 h-6" style={{ borderTop: `2px solid ${selectedHero.accent}`, borderLeft: `2px solid ${selectedHero.accent}` }} />
-                )}
+                {selectedHero.avatarIcon}
+              </div>
+              <div>
+                <h2 className="text-2xl font-black theme-text-primary leading-tight">{selectedHero.name}</h2>
+                <p className="text-xs theme-text-muted font-black font-mono tracking-widest uppercase mt-0.5">{selectedHero.game}</p>
+              </div>
+            </div>
 
-                {/* Close Button */}
-                <button
-                  onClick={() => setSelectedHero(null)}
-                  className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10"
-                >
-                  ✕
-                </button>
+            {/* Stats Detail */}
+            <div className="mb-6">
+              <h4 className="text-xs font-black uppercase tracking-wider theme-text-secondary mb-3">Capabilities Dossier</h4>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                {selectedHero.stats.map((st) => (
+                  <div key={st.label} className="p-3 rounded-xl border border-adaptive-unique" style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#FFFDEB" }}>
+                    <p className="text-[10px] uppercase font-bold theme-text-muted">{st.label}</p>
+                    <p className="text-2xl font-black mt-1" style={{ color: selectedHero.accent }}>{st.value}%</p>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-                {/* Content Header */}
-                <div className="flex gap-4 items-center mb-6 pb-4" style={{ borderBottom: isCyber ? "1px solid rgba(255,255,255,0.08)" : "2px dashed #000" }}>
-                  <div className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl shrink-0"
+            {/* Skills */}
+            <div className="mb-6">
+              <h4 className="text-xs font-black uppercase tracking-wider theme-text-secondary mb-2.5">Combat Skills</h4>
+              <div className="flex flex-wrap gap-2">
+                {selectedHero.skills.map((sk) => (
+                  <span key={sk} className="text-xs font-bold px-3 py-1.5 rounded-lg border border-adaptive-unique"
                     style={{
-                      background: isCyber ? `${selectedHero.accent}15` : selectedHero.accent,
-                      border: "2px solid #000",
-                      boxShadow: isCyber ? `0 0 15px ${selectedHero.accent}` : "2px 2px 0 #000",
-                      color: "#FFF",
+                      backgroundColor: isCyber ? "rgba(255,255,255,0.03)" : "#FFF",
+                      borderColor: selectedHero.accent,
                     }}
                   >
-                    {selectedHero.avatarIcon}
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-black theme-text-primary leading-tight">{selectedHero.name}</h2>
-                    <p className="text-xs theme-text-muted font-black font-mono tracking-widest uppercase mt-0.5">{selectedHero.game}</p>
-                  </div>
-                </div>
-
-                {/* Stats Detail */}
-                <div className="mb-6">
-                  <h4 className="text-xs font-black uppercase tracking-wider theme-text-secondary mb-3">Capabilities Dossier</h4>
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    {selectedHero.stats.map((st) => (
-                      <div key={st.label} className="p-3 rounded-xl border border-adaptive-unique" style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#FFFDEB" }}>
-                        <p className="text-[10px] uppercase font-bold theme-text-muted">{st.label}</p>
-                        <p className="text-2xl font-black mt-1" style={{ color: selectedHero.accent }}>{st.value}%</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Skills */}
-                <div className="mb-6">
-                  <h4 className="text-xs font-black uppercase tracking-wider theme-text-secondary mb-2.5">Combat Skills</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedHero.skills.map((sk) => (
-                      <span key={sk} className="text-xs font-bold px-3 py-1.5 rounded-lg border border-adaptive-unique"
-                        style={{
-                          backgroundColor: isCyber ? "rgba(255,255,255,0.03)" : "#FFF",
-                          borderColor: selectedHero.accent,
-                        }}
-                      >
-                        ⚡ {sk}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div>
-                  <h4 className="text-xs font-black uppercase tracking-wider theme-text-secondary mb-1.5">Character Briefing</h4>
-                  <p className="text-xs leading-relaxed theme-text-secondary">
-                    {selectedHero.description}
-                  </p>
-                </div>
-              </motion.div>
+                    ⚡ {sk}
+                  </span>
+                ))}
+              </div>
             </div>
-          </>
+
+            {/* Description */}
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-wider theme-text-secondary mb-1.5">Character Briefing</h4>
+              <p className="text-xs leading-relaxed theme-text-secondary">
+                {selectedHero.description}
+              </p>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
+      </Modal>
     </AppShell>
   );
 }

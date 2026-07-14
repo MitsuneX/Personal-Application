@@ -9,6 +9,8 @@ import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { gridContainerVariants, cardVariants, listContainerVariants, listItemVariants } from "@/lib/theme/motionVariants";
 import type { AnimeStatus } from "@/lib/store/dashboardStore";
+import { AnimeSearchModal } from "@/components/ui/AnimeSearchModal";
+import { ManualAnimeModal } from "@/components/ui/ManualAnimeModal";
 
 const STATUS_TABS = [
   { id: "all",       label: "All",        icon: "◈" },
@@ -35,11 +37,12 @@ const BRUTAL_STATUS_COLORS: Record<string, string> = {
 export default function AnimePage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const animeList = useDashboardStore((s) => s.animeList);
-  const favoriteCharacters = useDashboardStore((s) => s.favoriteCharacters);
+  const { animeList, favoriteCharacters, removeAnime } = useDashboardStore();
   const characters = favoriteCharacters.filter((c) => c.isFavorite);
 
   const [activeTab, setActiveTab] = useState("all");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
 
   const filtered = activeTab === "all"
     ? animeList
@@ -52,7 +55,8 @@ export default function AnimePage() {
   const watching   = animeList.filter((a) => a.status === "Watching").length;
 
   return (
-    <AppShell>
+    <>
+      <AppShell>
       {/* Stats header */}
       <motion.div
         className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6"
@@ -113,13 +117,26 @@ export default function AnimePage() {
               <motion.div key={anime.id} variants={cardVariants} custom={i}>
                 <BentoCard>
                   {/* Title + rating */}
-                  <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex items-start justify-between gap-2 mb-2 relative pr-6">
                     <h3 className="font-black text-sm theme-text-primary leading-snug flex-1">{anime.title}</h3>
-                    {anime.rating && (
-                      <motion.span className="font-mono font-black text-sm shrink-0" animate={{ color: isCyber ? "#FFD700" : "#FF6B35", textShadow: isCyber ? "0 0 8px rgba(255,215,0,0.7)" : "none" }} transition={{ duration: 0.4 }}>
-                        ★{anime.rating}
-                      </motion.span>
-                    )}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {anime.rating && (
+                        <motion.span className="font-mono font-black text-sm" animate={{ color: isCyber ? "#FFD700" : "#FF6B35", textShadow: isCyber ? "0 0 8px rgba(255,215,0,0.7)" : "none" }} transition={{ duration: 0.4 }}>
+                          ★{anime.rating}
+                        </motion.span>
+                      )}
+                      <button
+                        onClick={() => {
+                          if (confirm(`Remove "${anime.title}" from watchlist?`)) {
+                            removeAnime(anime.id);
+                          }
+                        }}
+                        className="text-xs opacity-40 hover:opacity-100 hover:text-red-500 transition-all p-0.5 rounded"
+                        title="Delete Anime"
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </div>
 
                   {/* Meta row */}
@@ -177,5 +194,58 @@ export default function AnimePage() {
         </motion.div>
       </div>
     </AppShell>
+
+    {/* Anime Database Search Overlay */}
+    <AnimeSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+
+    {/* Manual Anime Add Overlay */}
+    <ManualAnimeModal isOpen={manualOpen} onClose={() => setManualOpen(false)} />
+
+    {/* Floating Search Action Button */}
+    <motion.button
+      className="fixed bottom-[76px] right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-sm shadow-2xl"
+      style={{
+        background: isCyber
+          ? "linear-gradient(135deg, rgba(0,245,255,0.9), rgba(191,95,255,0.7))"
+          : "#FF6B35",
+        color: "#fff",
+        border: isCyber ? "1px solid rgba(0,245,255,0.6)" : "2.5px solid #000",
+        boxShadow: isCyber ? "0 0 24px rgba(0,245,255,0.4)" : "4px 4px 0 #000",
+        fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
+      }}
+      whileHover={{ scale: 1.06, y: -2 }}
+      whileTap={{ scale: 0.97 }}
+      onClick={() => setSearchOpen(true)}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.6, type: "spring" as const, stiffness: 300, damping: 22 }}
+    >
+      <span>🔍</span>
+      <span>{isCyber ? "SEARCH.ANIME" : "Search Anime"}</span>
+    </motion.button>
+
+    {/* Floating Manual Add Button */}
+    <motion.button
+      className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-sm shadow-2xl"
+      style={{
+        background: isCyber
+          ? "linear-gradient(135deg, #00F5FF, #bf5fff)"
+          : "#2EC4B6",
+        color: "#fff",
+        border: isCyber ? "1px solid rgba(0,245,255,0.4)" : "2.5px solid #000",
+        boxShadow: isCyber ? "0 0 24px rgba(0,245,255,0.3)" : "4px 4px 0 #000",
+        fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
+      }}
+      whileHover={{ scale: 1.06, y: -2 }}
+      whileTap={{ scale: 0.97 }}
+      onClick={() => setManualOpen(true)}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.7, type: "spring" as const, stiffness: 300, damping: 22 }}
+    >
+      <span>＋</span>
+      <span>{isCyber ? "MANUAL.ADD" : "Add Manually"}</span>
+    </motion.button>
+    </>
   );
 }

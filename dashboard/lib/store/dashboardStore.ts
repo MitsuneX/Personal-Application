@@ -13,11 +13,21 @@ export interface ProfileData {
   tagline: string;
   bio: string;
   avatar?: string;
+  banner?: string;
+  nameplate?: string;
+  customTag?: string;
   borderStyle?: string;
   status: "online" | "away" | "busy" | "offline";
   socials: SocialHandle[];
   skills: string[];
   location: string;
+}
+
+export interface ProfileHistoryEntry {
+  id: string;
+  assetType: "avatar" | "banner" | "nameplate";
+  url: string;
+  createdAt: string;
 }
 
 // ─── Game Types ───────────────────────────────────────────────────────────────
@@ -101,7 +111,8 @@ export interface HallOfFameEntry {
   nationality?: string;
   note?: string;
   imageUrl?: string;
-  rank: number;
+  rank: number | null;
+  likes: number;
   isChampion: boolean;
 }
 
@@ -111,6 +122,8 @@ export interface NoteEntry {
   id: string;
   title: string;
   content: string;
+  hobbyId?: string | null;
+  isCuriosity?: boolean;
   updatedAt?: string;
 }
 
@@ -125,6 +138,16 @@ export interface GalleryEntry {
   id: string;
   title: string;
   url: string;
+  caption?: string | null;
+  tags?: string[] | null;
+}
+
+export interface SavedPromptEntry {
+  id: string;
+  title: string;
+  targetAI: string;
+  promptText: string;
+  createdAt?: string;
 }
 
 export interface SongEntry {
@@ -135,6 +158,41 @@ export interface SongEntry {
   imageUrl?: string;
   category: string;
   duration?: string;
+}
+
+export type DramaLogStatus = "GOAT Status" | "All-Star" | "Rising" | "Classic";
+
+export interface DramaLogEntry {
+  id: string;
+  title: string;
+  type: "Movie" | "Series";
+  releaseYear?: number | null;
+  plotSummary?: string | null;
+  posterUrl?: string | null;
+  mainActors: string[];
+  statusBadge: DramaLogStatus;
+  omdbId?: string | null;
+  country?: string | null;
+  rating?: string | null;
+  createdAt?: string;
+}
+
+export interface HobbySkillEntry {
+  id: string;
+  name: string;
+  category: string; // "Languages" | "Doctors" | "Martial Arts"
+  priority: string; // "Priority" | "Haven't Started" | "Manifest"
+  progress: number; // 0–100
+  createdAt?: string;
+}
+
+export interface HobbyLogEntry {
+  id: string;
+  skillId: string;
+  delta: number;
+  wordCount: number;
+  note?: string | null;
+  createdAt: string;
 }
 
 // ─── State Interface ──────────────────────────────────────────────────────────
@@ -151,6 +209,7 @@ interface DashboardState {
   links: LinkEntry[];
   gallery: GalleryEntry[];
   songs: SongEntry[];
+  savedPrompts: SavedPromptEntry[];
   isLoading: boolean;
   isHydrated: boolean;
 
@@ -170,10 +229,11 @@ interface DashboardState {
 
   // HOF Actions
   updateHof: (id: string, data: Partial<HallOfFameEntry>) => Promise<void>;
+  likeHof: (id: string) => Promise<void>;
   deleteHof: (id: string) => Promise<void>;
 
   // Notepad Actions
-  saveNote: (id: string, title: string, content: string) => Promise<void>;
+  saveNote: (id: string, title: string, content: string, hobbyId?: string | null, isCuriosity?: boolean) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
 
   // Bookmark Link Actions
@@ -181,12 +241,38 @@ interface DashboardState {
   deleteLink: (id: string) => Promise<void>;
 
   // Gallery Actions
-  addGalleryItem: (id: string, title: string, url: string) => Promise<void>;
+  addGalleryItem: (id: string, title: string, url: string, caption?: string, tags?: string[]) => Promise<void>;
   deleteGalleryItem: (id: string) => Promise<void>;
 
   // Music Actions
   saveSong: (id: string, data: Omit<SongEntry, "id">) => Promise<void>;
   deleteSong: (id: string) => Promise<void>;
+
+  // Drama Log Actions
+  dramaLog: DramaLogEntry[];
+  saveDramaLog: (entry: DramaLogEntry) => Promise<void>;
+  deleteDramaLog: (id: string) => Promise<void>;
+
+  // Saved Prompts Actions
+  addSavedPrompt: (prompt: SavedPromptEntry) => Promise<void>;
+  deleteSavedPrompt: (id: string) => Promise<void>;
+
+  // Hobby Actions
+  hobbySkills: HobbySkillEntry[];
+  hobbyLogs: HobbyLogEntry[];
+  logHobbyXP: (skillId: string, noteText: string) => Promise<void>;
+
+  // Profile Aesthetics Actions
+  profileHistory: ProfileHistoryEntry[];
+  updateAesthetics: (data: {
+    name?: string;
+    customTag?: string;
+    bio?: string;
+    avatar?: string;
+    banner?: string;
+    nameplate?: string;
+    borderStyle?: string;
+  }) => Promise<void>;
 }
 
 // ─── Seed Data (Fallback) ──────────────────────────────────────────────────────
@@ -236,6 +322,11 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   links: [],
   gallery: [],
   songs: [],
+  dramaLog: [],
+  savedPrompts: [],
+  hobbySkills: [],
+  hobbyLogs: [],
+  profileHistory: [],
   isLoading: false,
   isHydrated: false,
 
@@ -260,6 +351,20 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           links: data.links || [],
           gallery: data.gallery || [],
           songs: data.songs || [],
+          dramaLog: (data.dramaLog || []).map((d: any) => ({
+            ...d,
+            mainActors: Array.isArray(d.mainActors) ? d.mainActors : [],
+          })),
+          savedPrompts: data.savedPrompts || [],
+          hobbySkills: data.hobbySkills || [],
+          hobbyLogs: (data.hobbyLogs || []).map((l: any) => ({
+            ...l,
+            createdAt: l.createdAt ?? new Date().toISOString(),
+          })),
+          profileHistory: (data.profileHistory || []).map((h: any) => ({
+            ...h,
+            createdAt: h.createdAt ?? new Date().toISOString(),
+          })),
           isHydrated: true,
         });
       }
@@ -357,6 +462,15 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
   removeAnime: async (id) => {
     set((s) => ({ animeList: s.animeList.filter((a) => a.id !== id) }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_ANIME", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to delete anime:", err);
+    }
   },
 
   toggleFavoriteCharacter: async (id) => {
@@ -422,9 +536,15 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       const newHof = exists
         ? s.hallOfFame.map((h) => (h.id === id ? { ...h, ...data } as HallOfFameEntry : h))
         : [...s.hallOfFame, { id, ...data } as HallOfFameEntry];
-      
-      // Sort HOF by rank asc
-      return { hallOfFame: newHof.sort((a, b) => a.rank - b.rank) };
+
+      // Sort HOF: rank asc (Infinity if null), then likes desc
+      const sorted = newHof.sort((a, b) => {
+        const aRank = a.rank === null || a.rank === undefined ? Infinity : a.rank;
+        const bRank = b.rank === null || b.rank === undefined ? Infinity : b.rank;
+        if (aRank !== bRank) return aRank - bRank;
+        return (b.likes || 0) - (a.likes || 0);
+      });
+      return { hallOfFame: sorted };
     });
     try {
       const item = get().hallOfFame.find((h) => h.id === id);
@@ -437,6 +557,31 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       }
     } catch (err) {
       console.error("Failed to sync HOF item:", err);
+    }
+  },
+
+  likeHof: async (id) => {
+    set((s) => {
+      const newHof = s.hallOfFame.map((h) =>
+        h.id === id ? { ...h, likes: (h.likes || 0) + 1 } : h
+      );
+      // Re-sort: rank asc, likes desc
+      const sorted = newHof.sort((a, b) => {
+        const aRank = a.rank === null || a.rank === undefined ? Infinity : a.rank;
+        const bRank = b.rank === null || b.rank === undefined ? Infinity : b.rank;
+        if (aRank !== bRank) return aRank - bRank;
+        return (b.likes || 0) - (a.likes || 0);
+      });
+      return { hallOfFame: sorted };
+    });
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "LIKE_HOF", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to like HOF:", err);
     }
   },
 
@@ -455,19 +600,20 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
   // ─── Notepad Actions ───────────────────────────────────────────────────────
 
-  saveNote: async (id, title, content) => {
+  saveNote: async (id, title, content, hobbyId?, isCuriosity?) => {
     set((s) => {
       const exists = s.notes.some((n) => n.id === id);
+      const newNote: NoteEntry = { id, title, content, hobbyId: hobbyId ?? null, isCuriosity: isCuriosity ?? false };
       const newNotes = exists
-        ? s.notes.map((n) => (n.id === id ? { id, title, content } : n))
-        : [{ id, title, content }, ...s.notes];
+        ? s.notes.map((n) => (n.id === id ? newNote : n))
+        : [newNote, ...s.notes];
       return { notes: newNotes };
     });
     try {
       await fetch("/api/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "UPDATE_NOTE", payload: { id, title, content } }),
+        body: JSON.stringify({ action: "UPDATE_NOTE", payload: { id, title, content, hobbyId: hobbyId ?? null, isCuriosity: isCuriosity ?? false } }),
       });
     } catch (err) {
       console.error("Failed to sync note:", err);
@@ -523,13 +669,13 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
   // ─── Gallery Actions ───────────────────────────────────────────────────────
 
-  addGalleryItem: async (id, title, url) => {
-    set((s) => ({ gallery: [{ id, title, url }, ...s.gallery] }));
+  addGalleryItem: async (id, title, url, caption = undefined, tags = []) => {
+    set((s) => ({ gallery: [{ id, title, url, caption, tags }, ...s.gallery] }));
     try {
       await fetch("/api/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "ADD_GALLERY", payload: { id, title, url } }),
+        body: JSON.stringify({ action: "ADD_GALLERY", payload: { id, title, url, caption, tags } }),
       });
     } catch (err) {
       console.error("Failed to sync gallery item:", err);
@@ -580,6 +726,150 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
     } catch (err) {
       console.error("Failed to delete song:", err);
+    }
+  },
+
+  // ─── Drama Log Actions ──────────────────────────────────────────────────────
+
+  saveDramaLog: async (entry) => {
+    set((s) => {
+      const exists = s.dramaLog.some((d) => d.id === entry.id);
+      const updated = exists
+        ? s.dramaLog.map((d) => (d.id === entry.id ? entry : d))
+        : [entry, ...s.dramaLog];
+      return { dramaLog: updated };
+    });
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "SAVE_DRAMA_LOG", payload: entry }),
+      });
+    } catch (err) {
+      console.error("Failed to save drama log:", err);
+    }
+  },
+
+  deleteDramaLog: async (id) => {
+    set((s) => ({ dramaLog: s.dramaLog.filter((d) => d.id !== id) }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_DRAMA_LOG", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to delete drama log:", err);
+    }
+  },
+
+  // ─── Saved Prompt Actions ──────────────────────────────────────────────────
+
+  addSavedPrompt: async (prompt) => {
+    set((s) => {
+      const exists = s.savedPrompts.some((p) => p.id === prompt.id);
+      const updated = exists
+        ? s.savedPrompts.map((p) => (p.id === prompt.id ? prompt : p))
+        : [prompt, ...s.savedPrompts];
+      return { savedPrompts: updated };
+    });
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "UPDATE_PROMPT", payload: prompt }),
+      });
+    } catch (err) {
+      console.error("Failed to add prompt:", err);
+    }
+  },
+
+  deleteSavedPrompt: async (id) => {
+    set((s) => ({ savedPrompts: s.savedPrompts.filter((p) => p.id !== id) }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_PROMPT", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to delete prompt:", err);
+    }
+  },
+
+  // ─── Hobby Actions ──────────────────────────────────────────────────────────
+
+  logHobbyXP: async (skillId, noteText) => {
+    const words = noteText.trim().split(/\s+/).filter(Boolean).length;
+    const delta = 0.1 + words * 0.001;
+
+    // Optimistic update on skill progress
+    set((s) => ({
+      hobbySkills: s.hobbySkills.map((sk) =>
+        sk.id === skillId
+          ? { ...sk, progress: Math.min(100, sk.progress + delta) }
+          : sk
+      ),
+      hobbyLogs: [
+        ...s.hobbyLogs,
+        {
+          id: "local-" + Date.now(),
+          skillId,
+          delta,
+          wordCount: words,
+          note: noteText.slice(0, 120),
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    }));
+
+    try {
+      const res = await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "LOG_HOBBY_XP",
+          payload: { skillId, wordCount: words, note: noteText.slice(0, 120) },
+        }),
+      });
+      const result = await res.json();
+      // Sync authoritative progress from server
+      if (result.success && result.data) {
+        set((s) => ({
+          hobbySkills: s.hobbySkills.map((sk) =>
+            sk.id === skillId ? { ...sk, progress: result.data.progress } : sk
+          ),
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to log hobby XP:", err);
+    }
+  },
+
+  // ─── Profile Aesthetics Actions ──────────────────────────────────────────────
+
+  updateAesthetics: async (data) => {
+    // Optimistic update
+    set((s) => ({ profile: { ...s.profile, ...data } }));
+    try {
+      const res = await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "SAVE_AESTHETIC", payload: data }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        // Sync server profile (covers updatedAt etc.)
+        set((s) => ({
+          profile: { ...s.profile, ...result.data },
+          profileHistory: (result.history || []).map((h: any) => ({
+            ...h,
+            createdAt: h.createdAt ?? new Date().toISOString(),
+          })),
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to save aesthetics:", err);
     }
   },
 }));

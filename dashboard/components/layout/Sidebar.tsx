@@ -7,6 +7,8 @@ import { NavLink } from "@/components/ui/NavLink";
 import { usePathname } from "next/navigation";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { ProfileEditorModal } from "@/components/ui/ProfileEditorModal";
+import { ProfileHoverPopover } from "@/components/ui/ProfileHoverPopover";
+import { AestheticsModal } from "@/components/ui/AestheticsModal";
 import Link from "next/link";
 
 interface SidebarProps {
@@ -42,9 +44,11 @@ const NAV_SECTIONS = [
   {
     label: "Misc",
     items: [
+      { href: "/hobbies", icon: "🎯", label: "Hobbies" },
       { href: "/notepad", icon: "📝", label: "Notepad" },
       { href: "/links", icon: "🔗", label: "Links" },
       { href: "/gallery", icon: "🖼️", label: "Gallery" },
+      { href: "/prompt-vault", icon: "⚡", label: "Prompt Vault" },
     ],
   },
 ];
@@ -62,6 +66,7 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
   const pathname = usePathname();
   const [dramaOpen, setDramaOpen] = useState(pathname.startsWith("/drama"));
   const [editorOpen, setEditorOpen] = useState(false);
+  const [aestheticsOpen, setAestheticsOpen] = useState(false);
 
   const { profile } = useDashboardStore();
   const avatar = profile.avatar || "/avatar.png";
@@ -70,7 +75,7 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
   return (
     <>
       <motion.aside
-        className={`flex flex-col h-full relative overflow-hidden ${isMobileDrawer ? "w-64" : ""}`}
+        className={`flex flex-col h-full relative overflow-visible ${isMobileDrawer ? "w-64" : ""}`}
         animate={{
           backgroundColor: isCyber ? "rgba(5, 8, 22, 0.95)" : "#FFF5E4",
           borderRightColor: isCyber ? "rgba(0,245,255,0.2)" : "#000000",
@@ -260,60 +265,136 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
           ))}
         </nav>
 
-        {/* ── Bottom Section: Profile is now located below the sidebar navigation links ── */}
         {!collapsed ? (
           <div
-            className="p-3 shrink-0"
-            style={{ borderTop: isCyber ? "1px solid rgba(0,245,255,0.12)" : "2px solid rgba(0,0,0,0.1)" }}
+            className="shrink-0 relative overflow-visible"
+            style={{
+              borderTop: isCyber ? "1px solid rgba(0,245,255,0.12)" : "2px solid rgba(0,0,0,0.1)",
+              height: 56,
+              background: isCyber ? "rgba(5, 8, 22, 0.95)" : "#FFFDEB",
+            }}
           >
-            <Link href="/profile" className="block w-full">
-              <motion.div
-                className="p-2.5 rounded-xl cursor-pointer flex items-center gap-3 border border-adaptive-unique relative overflow-hidden"
-                whileHover={{ scale: 1.02 }}
-                style={{
-                  backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#FFFDEB",
-                }}
-              >
-                {/* Corner styling for Cyber Profile Box */}
-                {isCyber && (
-                  <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-[#00F5FF]" />
+            {/* Nameplate background */}
+            {profile.nameplate && (
+              <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden opacity-40">
+                {/\.(mp4|webm|ogg)(\?.*)?$/i.test(profile.nameplate) ? (
+                  <video
+                    src={profile.nameplate}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src={profile.nameplate}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
                 )}
+              </div>
+            )}
 
-                <div className="relative w-9 h-9 rounded-full overflow-hidden border-2 shrink-0"
-                  style={{
-                    borderColor: isCyber ? "#00F5FF" : "#FF6B35",
-                    boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.4)" : "none",
-                  }}
-                >
-                  <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
-                </div>
+            {/* Sidebar Bottom Bar Container */}
+            <div className="absolute inset-0 z-10 flex items-center justify-between px-3.5 gap-2 min-w-0">
+              <ProfileHoverPopover
+                onOpenAesthetics={() => setAestheticsOpen(true)}
+                placement="up"
+                className="min-w-0 flex-1 relative"
+              >
+                <div className="flex items-center gap-2 cursor-pointer min-w-0">
+                  {/* Avatar */}
+                  <div className="relative w-8 h-8 rounded-full overflow-hidden border shrink-0"
+                    style={{
+                      borderColor: isCyber ? "#00F5FF" : "#FF6B35",
+                    }}
+                  >
+                    <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+                  </div>
 
-                <div className="min-w-0 flex-1">
-                  <p className="font-black text-xs truncate" style={{ color: isCyber ? "#E0E8FF" : "#1A1A1A" }}>
-                    {profile.name}
-                  </p>
-                  <p className="text-[9px] theme-text-muted truncate font-bold font-mono">
-                    {isCyber ? `STATUS::${profile.status.toUpperCase()}` : profile.tagline}
-                  </p>
+                  {/* Name Info */}
+                  <div className="min-w-0 flex-1 leading-tight">
+                    <p className="font-black text-xs truncate" style={{ color: isCyber ? "#E0E8FF" : "#1A1A1A" }}>
+                      {profile.name}
+                    </p>
+                    <p className="text-[9px] theme-text-muted truncate font-bold font-mono">
+                      {profile.customTag ? profile.customTag : (isCyber ? `STATUS::${profile.status.toUpperCase()}` : profile.tagline)}
+                    </p>
+                  </div>
                 </div>
-              </motion.div>
-            </Link>
+              </ProfileHoverPopover>
+            </div>
           </div>
         ) : (
-          <Link
-            href="/profile"
-            className="py-4 shrink-0 flex justify-center cursor-pointer block"
-            style={{ borderTop: isCyber ? "1px solid rgba(0,245,255,0.12)" : "2px solid rgba(0,0,0,0.1)" }}
+          <ProfileHoverPopover
+            onOpenAesthetics={() => setAestheticsOpen(true)}
+            placement="right"
           >
-            <div className="w-8 h-8 rounded-full overflow-hidden border-2" style={{ borderColor: isCyber ? "#00F5FF" : "#FF6B35" }}>
-              <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
-            </div>
-          </Link>
+            <Link
+              href="/profile"
+              className="py-4 shrink-0 flex justify-center cursor-pointer block"
+              style={{ borderTop: isCyber ? "1px solid rgba(0,245,255,0.12)" : "2px solid rgba(0,0,0,0.1)" }}
+            >
+              <div className="w-8 h-8 rounded-full overflow-hidden border-2" style={{ borderColor: isCyber ? "#00F5FF" : "#FF6B35" }}>
+                <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+              </div>
+            </Link>
+          </ProfileHoverPopover>
         )}
       </motion.aside>
 
       {/* Profile Editor Dialog */}
       <ProfileEditorModal isOpen={editorOpen} onClose={() => setEditorOpen(false)} />
+
+      {/* Aesthetics Dialog */}
+      <AestheticsModal isOpen={aestheticsOpen} onClose={() => setAestheticsOpen(false)} />
     </>
+  );
+}
+
+function SidebarMicButton({ isCyber }: { isCyber: boolean }) {
+  const [isMuted, setIsMuted] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => setIsMuted(!isMuted)}
+      className="p-1 rounded transition-colors hover:bg-black/10 dark:hover:bg-white/10 relative flex items-center justify-center"
+      style={{ color: isMuted ? "#EF4444" : isCyber ? "#00F5FF" : "#6B7280", width: 22, height: 22 }}
+      title={isMuted ? "Unmute Microphone" : "Mute Microphone"}
+    >
+      <span>🎙️</span>
+      {isMuted && (
+        <span
+          className="absolute inset-0 flex items-center justify-center font-black text-red-500 pointer-events-none select-none"
+          style={{ fontSize: "16px", transform: "rotate(-45deg)", marginTop: "-2px" }}
+        >
+          \
+        </span>
+      )}
+    </button>
+  );
+}
+
+function SidebarDeafenButton({ isCyber }: { isCyber: boolean }) {
+  const [isDeafened, setIsDeafened] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => setIsDeafened(!isDeafened)}
+      className="p-1 rounded transition-colors hover:bg-black/10 dark:hover:bg-white/10 relative flex items-center justify-center"
+      style={{ color: isDeafened ? "#EF4444" : isCyber ? "#00F5FF" : "#6B7280", width: 22, height: 22 }}
+      title={isDeafened ? "Undeafen Audio" : "Deafen Audio"}
+    >
+      <span>🎧</span>
+      {isDeafened && (
+        <span
+          className="absolute inset-0 flex items-center justify-center font-black text-red-500 pointer-events-none select-none"
+          style={{ fontSize: "16px", transform: "rotate(-45deg)", marginTop: "-2px" }}
+        >
+          \
+        </span>
+      )}
+    </button>
   );
 }

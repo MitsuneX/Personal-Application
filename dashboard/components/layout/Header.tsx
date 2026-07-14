@@ -7,6 +7,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { ProfileEditorModal } from "@/components/ui/ProfileEditorModal";
 import { ThemeSwitcherToggle } from "@/components/ui/ThemeSwitcherToggle";
+import { ProfileHoverPopover } from "@/components/ui/ProfileHoverPopover";
+import { AestheticsModal } from "@/components/ui/AestheticsModal";
 import Link from "next/link";
 
 interface HeaderProps {
@@ -38,6 +40,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
   // States
   const [editorOpen, setEditorOpen] = useState(false);
+  const [aestheticsOpen, setAestheticsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
 
@@ -228,51 +231,64 @@ export function Header({ onMenuToggle }: HeaderProps) {
           <ThemeSwitcherToggle />
 
           {/* Customizable Profile Header Item */}
-          <Link href="/profile">
-            <motion.div
-              className="flex items-center gap-2 cursor-pointer p-1 rounded-lg border border-transparent transition-all"
-              whileHover={{
-                borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#000000",
-                backgroundColor: isCyber ? "rgba(0,245,255,0.05)" : "rgba(0,0,0,0.05)",
-              }}
-            >
-              {/* Customizable Profile Picture */}
-              <div className="relative w-8 h-8 rounded-full overflow-hidden border-2"
-                style={{
-                  borderColor: isCyber ? "#00F5FF" : "#FF6B35",
-                  boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.5)" : "none",
+          <ProfileHoverPopover
+            onOpenAesthetics={() => setAestheticsOpen(true)}
+            placement="down-left"
+          >
+            <Link href="/profile">
+              <motion.div
+                className="flex items-center gap-2 cursor-pointer p-1 rounded-lg border border-transparent transition-all"
+                whileHover={{
+                  borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#000000",
+                  backgroundColor: isCyber ? "rgba(0,245,255,0.05)" : "rgba(0,0,0,0.05)",
                 }}
               >
-                <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
-              </div>
+                {/* Customizable Profile Picture */}
+                <div className="relative w-8 h-8 rounded-full overflow-hidden border-2"
+                  style={{
+                    borderColor: isCyber ? "#00F5FF" : "#FF6B35",
+                    boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.5)" : "none",
+                  }}
+                >
+                  <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+                </div>
 
-              {/* Custom Name */}
-              <span className="text-xs font-black hidden lg:inline-block" style={{ color: isCyber ? "#E0E8FF" : "#1A1A1A" }}>
-                {profile.name}
-              </span>
-            </motion.div>
-          </Link>
+                {/* Custom Name */}
+                <span className="text-xs font-black hidden lg:inline-block" style={{ color: isCyber ? "#E0E8FF" : "#1A1A1A" }}>
+                  {profile.name}
+                </span>
+              </motion.div>
+            </Link>
+          </ProfileHoverPopover>
 
           {/* Status dot */}
-          <Link href="/profile">
-            <motion.div
-              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full cursor-pointer"
-              animate={{
-                backgroundColor: isCyber ? "rgba(34,197,94,0.08)" : "rgba(6,214,160,0.08)",
-                borderColor: isCyber ? "rgba(34,197,94,0.25)" : "#06D6A0",
-              }}
-              style={{ border: "1px solid" }}
-              transition={{ duration: 0.4 }}
-            >
-              <span className="status-dot status-online !w-1.5 !h-1.5" />
-              <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: "#22C55E" }}>{profile.status}</span>
-            </motion.div>
-          </Link>
+          <ProfileHoverPopover
+            onOpenAesthetics={() => setAestheticsOpen(true)}
+            placement="down-left"
+          >
+            <Link href="/profile">
+              <motion.div
+                className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full cursor-pointer"
+                animate={{
+                  backgroundColor: isCyber ? "rgba(34,197,94,0.08)" : "rgba(6,214,160,0.08)",
+                  borderColor: isCyber ? "rgba(34,197,94,0.25)" : "#06D6A0",
+                }}
+                style={{ border: "1px solid" }}
+                transition={{ duration: 0.4 }}
+              >
+                <span className="status-dot status-online !w-1.5 !h-1.5" />
+                <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: "#22C55E" }}>{profile.status}</span>
+              </motion.div>
+            </Link>
+          </ProfileHoverPopover>
         </div>
       </motion.header>
 
       {/* Editor Modal */}
       <ProfileEditorModal isOpen={editorOpen} onClose={() => setEditorOpen(false)} />
+
+      {/* Aesthetics Dialog */}
+      <AestheticsModal isOpen={aestheticsOpen} onClose={() => setAestheticsOpen(false)} />
     </>
   );
 }
