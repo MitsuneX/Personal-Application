@@ -123,7 +123,8 @@ export function AestheticsModal({ isOpen, onClose }: AestheticsModalProps) {
       if (append && gifNext) params.set("pos", gifNext);
       const res = await fetch(`/api/gif/search?${params}`);
       const data = await res.json();
-      setGifResults((prev) => append ? [...prev, ...data.results] : data.results);
+      const newResults = Array.isArray(data.results) ? data.results : [];
+      setGifResults((prev) => append ? [...prev, ...newResults] : newResults);
       setGifNext(data.next ?? "");
     } catch (e) {
       console.error("GIF search error:", e);
