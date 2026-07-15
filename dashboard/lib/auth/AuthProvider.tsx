@@ -28,19 +28,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const supabase = createClient();
 
-    // Get initial session
+    // Get initial session — always resolves, even for anonymous users
     supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
+      setUser(user ?? null);
+      setIsLoading(false);
+    }).catch(() => {
+      // Network error or similar — don't block UI forever
       setIsLoading(false);
     });
 
     // Listen for auth state changes (sign in / sign out)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Absolute safety timeout: never block the UI more than 3 seconds
+    const timeout = setTimeout(() => setIsLoading(false), 3000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []);
 
   return (
