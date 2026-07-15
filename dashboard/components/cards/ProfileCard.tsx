@@ -7,12 +7,134 @@ import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { listContainerVariants, listItemVariants } from "@/lib/theme/motionVariants";
 
+import { 
+  Github, 
+  Instagram, 
+  MessageSquare, 
+  Twitter, 
+  Disc, 
+  Send, 
+  Share2, 
+  Phone, 
+  Brain 
+} from "lucide-react";
+
 const PLATFORM_ICONS: Record<string, string> = {
   GitHub: "◈",
   "Twitter/X": "𝕏",
   Discord: "◉",
   Instagram: "◎",
   LinkedIn: "▣",
+};
+
+const ZODIAC_METADATA: Record<string, { symbol: string; emoji: string; color: string }> = {
+  Aries: { symbol: "♈", emoji: "🐏", color: "#EF4444" },
+  Taurus: { symbol: "♉", emoji: "🐂", color: "#10B981" },
+  Gemini: { symbol: "♊", emoji: "♊", color: "#F59E0B" },
+  Cancer: { symbol: "♋", emoji: "🦀", color: "#3B82F6" },
+  Leo: { symbol: "♌", emoji: "🦁", color: "#F59E0B" },
+  Virgo: { symbol: "♍", emoji: "♍", color: "#EC4899" },
+  Libra: { symbol: "♎", emoji: "⚖️", color: "#10B981" },
+  Scorpio: { symbol: "♏", emoji: "🦂", color: "#8B5CF6" },
+  Sagittarius: { symbol: "♐", emoji: "🏹", color: "#3B82F6" },
+  Capricorn: { symbol: "♑", emoji: "🐐", color: "#6B7280" },
+  Aquarius: { symbol: "♒", emoji: "🏺", color: "#06B6D4" },
+  Pisces: { symbol: "♓", emoji: "🐟", color: "#3B82F6" },
+};
+
+const getSocialBrand = (platform: string, handle: string, url?: string) => {
+  const plat = platform.toLowerCase();
+  const link = url?.toLowerCase() || "";
+  const name = handle.toLowerCase();
+
+  if (plat.includes("github") || link.includes("github.com")) {
+    return {
+      name: "GitHub",
+      icon: Github,
+      bgCyber: "rgba(24, 28, 41, 0.7)",
+      borderCyber: "rgba(148, 163, 184, 0.4)",
+      textCyber: "#F8FAFC",
+      bgBrutal: "#24292F",
+      borderBrutal: "#000000",
+      textBrutal: "#FFFFFF",
+    };
+  }
+
+  if (plat.includes("instagram") || link.includes("instagram.com")) {
+    return {
+      name: "Instagram",
+      icon: Instagram,
+      bgCyber: "linear-gradient(135deg, rgba(131, 58, 180, 0.15), rgba(225, 48, 108, 0.15), rgba(253, 29, 29, 0.15))",
+      borderCyber: "rgba(225, 48, 108, 0.5)",
+      textCyber: "#FF69B4",
+      bgBrutal: "#FF007F",
+      borderBrutal: "#000000",
+      textBrutal: "#FFFFFF",
+    };
+  }
+
+  if (plat.includes("discord") || name.includes("#") || link.includes("discord")) {
+    return {
+      name: "Discord",
+      icon: MessageSquare,
+      bgCyber: "rgba(88, 101, 242, 0.15)",
+      borderCyber: "rgba(88, 101, 242, 0.4)",
+      textCyber: "#5865F2",
+      bgBrutal: "#5865F2",
+      borderBrutal: "#000000",
+      textBrutal: "#FFFFFF",
+    };
+  }
+
+  if (plat.includes("twitter") || plat.includes("x.com") || link.includes("x.com") || link.includes("twitter.com")) {
+    return {
+      name: "X/Twitter",
+      icon: Twitter,
+      bgCyber: "rgba(255, 255, 255, 0.05)",
+      borderCyber: "rgba(255, 255, 255, 0.2)",
+      textCyber: "#FFFFFF",
+      bgBrutal: "#000000",
+      borderBrutal: "#000000",
+      textBrutal: "#FFFFFF",
+    };
+  }
+
+  if (plat.includes("tiktok") || link.includes("tiktok.com")) {
+    return {
+      name: "TikTok",
+      icon: Disc,
+      bgCyber: "rgba(1, 1, 1, 0.6)",
+      borderCyber: "rgba(0, 245, 255, 0.4)",
+      textCyber: "#00F5FF",
+      bgBrutal: "#00F2FE",
+      borderBrutal: "#000000",
+      textBrutal: "#000000",
+    };
+  }
+
+  if (plat.includes("telegram") || link.includes("t.me") || link.includes("telegram.org")) {
+    return {
+      name: "Telegram",
+      icon: Send,
+      bgCyber: "rgba(0, 136, 204, 0.15)",
+      borderCyber: "rgba(0, 136, 204, 0.4)",
+      textCyber: "#33B5E5",
+      bgBrutal: "#0088CC",
+      borderBrutal: "#000000",
+      textBrutal: "#FFFFFF",
+    };
+  }
+
+  return {
+    name: platform,
+    icon: Share2,
+    bgCyber: "rgba(255, 255, 255, 0.04)",
+    borderCyber: "rgba(255, 255, 255, 0.12)",
+    textCyber: "#E0E8FF",
+    bgBrutal: "#E0E0E0",
+    borderBrutal: "#000000",
+    textBrutal: "#000000",
+  };
 };
 
 const STATUS_CONFIG = {
@@ -356,7 +478,7 @@ export function ProfileCard() {
 
           {/* ── Bio ──────────────────────────────────────────────────────── */}
           <motion.p
-            className="theme-text-secondary text-sm leading-relaxed mb-5 pb-5"
+            className="theme-text-secondary text-sm leading-relaxed mb-4 pb-4"
             style={{ borderBottom: isCyber ? "1px solid rgba(0,245,255,0.15)" : "2px solid rgba(0,0,0,0.1)" }}
             animate={{ borderBottomColor: isCyber ? "rgba(0,245,255,0.15)" : "rgba(0,0,0,0.1)" }}
             transition={{ duration: 0.4 }}
@@ -364,9 +486,65 @@ export function ProfileCard() {
             {profile.bio}
           </motion.p>
 
+          {/* ── Attributes & Stats Block ────────────────────────────────── */}
+          {(profile.mbti || profile.zodiac || profile.phoneNumber) && (
+            <div className="mb-5 flex flex-wrap gap-2 relative z-10">
+              {profile.mbti && (
+                <div
+                  className="text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition-all select-none border"
+                  style={{
+                    background: isCyber ? "rgba(0, 245, 255, 0.08)" : "#E0F2FE",
+                    borderColor: isCyber ? "rgba(0, 245, 255, 0.4)" : "#000000",
+                    boxShadow: isCyber ? "0 0 10px rgba(0, 245, 255, 0.2)" : "3px 3px 0px #000000",
+                    color: isCyber ? "#00F5FF" : "#0369A1",
+                    borderWidth: isCyber ? "1px" : "2.5px",
+                  }}
+                >
+                  <Brain className="w-3.5 h-3.5" />
+                  <span>{profile.mbti}</span>
+                </div>
+              )}
+
+              {profile.zodiac && ZODIAC_METADATA[profile.zodiac] && (() => {
+                const zodiacInfo = ZODIAC_METADATA[profile.zodiac];
+                return (
+                  <div
+                    className="text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition-all select-none border"
+                    style={{
+                      background: isCyber ? `${zodiacInfo.color}15` : "#F5F3FF",
+                      borderColor: isCyber ? zodiacInfo.color : "#000000",
+                      boxShadow: isCyber ? `0 0 10px ${zodiacInfo.color}33` : "3px 3px 0px #000000",
+                      color: isCyber ? zodiacInfo.color : "#5B21B6",
+                      borderWidth: isCyber ? "1px" : "2.5px",
+                    }}
+                  >
+                    <span>{zodiacInfo.symbol}</span>
+                    <span>{profile.zodiac} {zodiacInfo.emoji}</span>
+                  </div>
+                );
+              })()}
+
+              {profile.phoneNumber && (
+                <div
+                  className="text-xs font-black px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition-all select-none border"
+                  style={{
+                    background: isCyber ? "rgba(34, 197, 94, 0.08)" : "#DCFCE7",
+                    borderColor: isCyber ? "rgba(34, 197, 94, 0.4)" : "#000000",
+                    boxShadow: isCyber ? "0 0 10px rgba(34, 197, 94, 0.2)" : "3px 3px 0px #000000",
+                    color: isCyber ? "#22C55E" : "#166534",
+                    borderWidth: isCyber ? "1px" : "2.5px",
+                  }}
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>{profile.phoneNumber}</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ── Skills ───────────────────────────────────────────────────── */}
           <div className="mb-4">
-            <p className="theme-text-muted text-xs font-bold tracking-widest uppercase mb-2">
+            <p className="theme-text-muted text-[10px] font-bold tracking-widest uppercase mb-2">
               Stack
             </p>
             <motion.div
@@ -401,33 +579,43 @@ export function ProfileCard() {
             initial="hidden"
             animate="visible"
           >
-            {profile.socials.map((s) => (
-              <motion.a
-                key={s.platform}
-                href={s.url ?? "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                variants={listItemVariants}
-                className="theme-badge inline-flex items-center gap-1.5 no-underline"
-                style={{
-                  backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.05)",
-                  color: isCyber ? "#E0E8FF" : "#1A1A1A",
-                  borderColor: isCyber ? "rgba(255,255,255,0.12)" : "#000",
-                }}
-                whileHover={{
-                  scale: 1.04,
-                  backgroundColor: isCyber
-                    ? "rgba(0,245,255,0.1)"
-                    : "rgba(255,107,53,0.15)",
-                  borderColor: isCyber ? "rgba(0,245,255,0.5)" : "#FF6B35",
-                }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ duration: 0.18 }}
-              >
-                <span>{PLATFORM_ICONS[s.platform] ?? "◆"}</span>
-                {s.handle}
-              </motion.a>
-            ))}
+            {profile.socials.map((s) => {
+              const brand = getSocialBrand(s.platform, s.handle, s.url);
+              const Icon = brand.icon;
+              return (
+                <motion.a
+                  key={s.platform}
+                  href={s.url ?? "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variants={listItemVariants}
+                  className="theme-badge inline-flex items-center gap-1.5 no-underline transition-all"
+                  style={{
+                    background: isCyber ? brand.bgCyber : brand.bgBrutal,
+                    color: isCyber ? brand.textCyber : brand.textBrutal,
+                    borderColor: isCyber ? brand.borderCyber : brand.borderBrutal,
+                    borderWidth: isCyber ? "1px" : "2px",
+                    boxShadow: isCyber ? `0 0 8px ${brand.borderCyber}22` : `3px 3px 0px ${brand.borderBrutal}`,
+                  }}
+                  whileHover={{
+                    scale: 1.04,
+                    boxShadow: isCyber 
+                      ? `0 0 16px ${brand.textCyber}55` 
+                      : `5px 5px 0px ${brand.borderBrutal}`,
+                    y: isCyber ? 0 : -2
+                  }}
+                  whileTap={{ 
+                    scale: 0.97,
+                    y: isCyber ? 0 : 1,
+                    boxShadow: isCyber ? "none" : "1px 1px 0px #000"
+                  }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{s.handle}</span>
+                </motion.a>
+              );
+            })}
           </motion.div>
         </motion.div>
       </BentoCard>

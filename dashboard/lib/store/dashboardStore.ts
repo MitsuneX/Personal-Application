@@ -21,6 +21,9 @@ export interface ProfileData {
   socials: SocialHandle[];
   skills: string[];
   location: string;
+  phoneNumber?: string;
+  mbti?: string;
+  zodiac?: string;
 }
 
 export interface ProfileHistoryEntry {
@@ -296,6 +299,9 @@ const initialProfile: ProfileData = {
     { platform: "Twitter/X", handle: "@alexryukawa", url: "https://x.com" },
     { platform: "Discord", handle: "ryukawa#0001" },
   ],
+  phoneNumber: "",
+  mbti: "",
+  zodiac: "",
 };
 
 const initialMedia: MediaEntry = {

@@ -105,7 +105,7 @@ export default function KamenRiderPage() {
                 textShadow: t.textShadow 
               }}
             >
-              {isCyber ? "KAMEN_RIDER_ROSTER" : "Kamen Rider Franchise Roster"}
+              {isCyber ? "KAMEN_RIDER_ROSTER" : "Kamen Rider Franchise Directory"}
             </h1>
             <p className="text-sm opacity-80" style={{ color: isCyber ? "#94A3B8" : "#333" }}>
               The grasshopper-themed insectoid cyborgs and armored riders fighting for justice and human freedom.

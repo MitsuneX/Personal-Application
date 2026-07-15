@@ -18,6 +18,9 @@ export async function POST(req: Request) {
         socials: data.socials,
         avatar: data.avatar,
         borderStyle: data.borderStyle,
+        phoneNumber: data.phoneNumber,
+        mbti: data.mbti,
+        zodiac: data.zodiac,
       },
       create: {
         id: "profile",
@@ -30,6 +33,9 @@ export async function POST(req: Request) {
         socials: data.socials || [],
         avatar: data.avatar || "/avatar.png",
         borderStyle: data.borderStyle || "default",
+        phoneNumber: data.phoneNumber || "",
+        mbti: data.mbti || "",
+        zodiac: data.zodiac || "",
       },
     });
 

@@ -20,6 +20,9 @@ model Profile {
   nameplate   String?  // URL for sidebar bottom banner/nameplate
   customTag   String?  // e.g. "#4269"
   borderStyle String?
+  phoneNumber String?
+  mbti        String?
+  zodiac      String?
   updatedAt   DateTime @updatedAt
 }
 

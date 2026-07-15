@@ -96,7 +96,7 @@ export default function PowerRangersPage() {
                 textShadow: isCyber ? t.textShadow : "none" 
               }}
             >
-              {isCyber ? "POWER_RANGERS_ROSTER" : "Power Rangers Franchise"}
+              {isCyber ? "POWER_RANGERS_ROSTER" : "Power Rangers Directory"}
             </h1>
             <p className="text-sm opacity-80" style={{ color: isCyber ? "#94A3B8" : "#333" }}>
               The multi-colored superhero teams harnessing the power of dinosaurs, space, and beasts to battle evil forces.

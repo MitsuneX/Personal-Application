@@ -4,10 +4,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { ProfileCard, BORDER_CONFIGS } from "@/components/cards/ProfileCard";
+import { GamifiedStatsWidget } from "@/components/cards/GamifiedStatsWidget";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 
-const PLATFORMS = ["GitHub", "Twitter/X", "Discord", "Instagram", "LinkedIn"];
+const PLATFORMS = ["GitHub", "Twitter/X", "Discord", "Instagram", "LinkedIn", "Tiktok"];
 
 export default function ProfilePage() {
   const { theme } = useTheme();
@@ -23,6 +24,9 @@ export default function ProfilePage() {
   const [imageSource, setImageSource] = useState<"upload" | "url">("upload");
   const [borderStyle, setBorderStyle] = useState("default");
   const [skills, setSkills] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [mbti, setMbti] = useState("");
+  const [zodiac, setZodiac] = useState("");
   
   // Socials list state
   const [socials, setSocials] = useState<{ platform: string; handle: string; url?: string }[]>([]);
@@ -42,6 +46,9 @@ export default function ProfilePage() {
     setBorderStyle(profile.borderStyle || "default");
     setSkills(profile.skills ? profile.skills.join(", ") : "");
     setSocials(profile.socials || []);
+    setPhoneNumber(profile.phoneNumber || "");
+    setMbti(profile.mbti || "");
+    setZodiac(profile.zodiac || "");
 
     // Auto-detect image source
     if (profile.avatar && profile.avatar.startsWith("/uploads/")) {
@@ -110,6 +117,9 @@ export default function ProfilePage() {
         borderStyle: borderStyle,
         skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
         socials: socials.filter((s) => s.handle.trim() !== ""),
+        phoneNumber: phoneNumber.trim(),
+        mbti: mbti,
+        zodiac: zodiac,
       });
       alert("Profile configurations updated successfully!");
     } catch (err) {
@@ -122,7 +132,7 @@ export default function ProfilePage() {
 
   const inputClass = `w-full px-3 py-2 text-sm font-semibold rounded-lg outline-none border focus:ring-2 transition-all duration-200`;
   const inputStyle = {
-    backgroundColor: isCyber ? "rgba(255,255,255,0.03)" : "#FFFDF9",
+    backgroundColor: isCyber ? "rgba(255,255,255,0.03)" : "#FFFFFF",
     borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#000000",
     color: isCyber ? "#E0E8FF" : "#1A1A1A",
   };
@@ -158,7 +168,7 @@ export default function ProfilePage() {
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start">
         
         {/* Left Side: Live Preview Card */}
-        <div className="xl:col-span-2 space-y-4">
+        <div className="xl:col-span-2 space-y-5">
           <h3 className="text-xs font-black uppercase tracking-widest theme-text-muted mb-2 flex items-center gap-1">
             <span>👁️</span> Live Card Preview
           </h3>
@@ -166,6 +176,9 @@ export default function ProfilePage() {
             <div className="w-full max-w-md">
               <ProfileCard />
             </div>
+          </div>
+          <div className="w-full max-w-md">
+            <GamifiedStatsWidget />
           </div>
         </div>
 
@@ -245,6 +258,61 @@ export default function ProfilePage() {
                   className={inputClass + " resize-none"}
                   style={inputStyle}
                 />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">Phone Number</label>
+                  <input
+                    type="text"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="e.g. +62 812-3456-7890"
+                    className={inputClass}
+                    style={inputStyle}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">MBTI Type</label>
+                  <select
+                    value={mbti}
+                    onChange={(e) => setMbti(e.target.value)}
+                    className={inputClass + " cursor-pointer"}
+                    style={inputStyle}
+                  >
+                    <option value="">Select MBTI...</option>
+                    {["INTJ", "ENTJ", "INFJ", "ENFJ", "INFP", "ENFP", "INTP", "ENTP", "ISTJ", "ESTJ", "ISFJ", "ESFJ", "ISTP", "ESTP", "ISFP", "ESFP"].map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">Zodiac Sign</label>
+                  <select
+                    value={zodiac}
+                    onChange={(e) => setZodiac(e.target.value)}
+                    className={inputClass + " cursor-pointer"}
+                    style={inputStyle}
+                  >
+                    <option value="">Select Zodiac...</option>
+                    {[
+                      { name: "Aries", symbol: "♈" },
+                      { name: "Taurus", symbol: "♉" },
+                      { name: "Gemini", symbol: "♊" },
+                      { name: "Cancer", symbol: "♋" },
+                      { name: "Leo", symbol: "♌" },
+                      { name: "Virgo", symbol: "♍" },
+                      { name: "Libra", symbol: "♎" },
+                      { name: "Scorpio", symbol: "♏" },
+                      { name: "Sagittarius", symbol: "♐" },
+                      { name: "Capricorn", symbol: "♑" },
+                      { name: "Aquarius", symbol: "♒" },
+                      { name: "Pisces", symbol: "♓" }
+                    ].map((z) => (
+                      <option key={z.name} value={z.name}>{z.symbol} {z.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 
