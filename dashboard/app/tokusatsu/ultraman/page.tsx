@@ -23,7 +23,8 @@ const ULTRAMAN_THEME = {
     banner: "linear-gradient(135deg, #FFD2D2 0%, #FFF5F5 50%, #EF4444 100%)",
     border: "#000000",
     accent: "#EF4444",
-    accent2: "#708090"
+    accent2: "#708090",
+    textShadow: "none"
   }
 };
 

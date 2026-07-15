@@ -23,7 +23,8 @@ const POWER_RANGERS_THEME = {
     banner: "linear-gradient(135deg, #FEF08A 0%, #FFFDF0 50%, #EAB308 100%)",
     border: "#000000",
     accent: "#EAB308",
-    accent2: "#EF4444"
+    accent2: "#EF4444",
+    textShadow: "none"
   }
 };
 

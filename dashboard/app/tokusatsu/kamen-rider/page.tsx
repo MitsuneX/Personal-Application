@@ -23,7 +23,8 @@ const KAMEN_RIDER_THEME = {
     banner: "linear-gradient(135deg, #D4EDDA 0%, #F4FBF7 50%, #22C55E 100%)",
     border: "#000000",
     accent: "#22C55E",
-    accent2: "#475569"
+    accent2: "#475569",
+    textShadow: "none"
   }
 };
 
