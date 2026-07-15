@@ -32,6 +32,7 @@ const NAV_SECTIONS = [
       { href: "/drama", icon: "🎬", label: "Drama" },
       { href: "/music", icon: "🎵", label: "Music" },
       { href: "/hall-of-fame", icon: "🏆", label: "Hall of Fame" },
+      { href: "/characters", icon: "📖", label: "Characters" },
     ],
   },
   {
