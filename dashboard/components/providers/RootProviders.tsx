@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from "@/lib/auth/AuthProvider";
 import { SplashGuard } from "@/components/ui/SplashGuard";
 import { ThemeProvider } from "@/lib/theme";
 import { useRealtimeSync } from "@/lib/hooks/useRealtimeSync";
+import { ToastProvider } from "@/components/ui/ToastProvider";
 
 // Public routes that don't need the splash auth guard
 const PUBLIC_PATHS = ["/login", "/signup", "/auth"];
@@ -33,16 +34,18 @@ function AuthGateInner({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ─── Root provider: composes auth + theme + splash ────────────────────────────
+// ─── Root provider: composes toast + auth + theme + splash ────────────────────
 
 export function RootProviders({ children }: { children: React.ReactNode }) {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <AuthGateInner>
-          {children}
-        </AuthGateInner>
-      </ThemeProvider>
-    </AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <AuthGateInner>
+            {children}
+          </AuthGateInner>
+        </ThemeProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 }

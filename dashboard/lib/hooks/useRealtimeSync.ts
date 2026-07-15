@@ -3,9 +3,11 @@
 import { useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export function useRealtimeSync() {
-  const { isHydrated, fetchDashboard } = useDashboardStore();
+  const { isHydrated } = useDashboardStore();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -22,6 +24,7 @@ export function useRealtimeSync() {
           const { eventType, new: newRecord, old: oldRecord } = payload;
           useDashboardStore.setState((state) => {
             if (eventType === "DELETE") {
+              toast({ type: "info", title: "Game Removed", message: `Removed from Games roster.` });
               return { games: state.games.filter((g) => g.id !== oldRecord.id) };
             }
             const mappedRecord = {
@@ -40,9 +43,11 @@ export function useRealtimeSync() {
             };
             if (eventType === "INSERT") {
               if (state.games.some((g) => g.id === mappedRecord.id)) return {};
+              toast({ type: "success", title: "🎮 New Game Added", message: mappedRecord.game });
               return { games: [...state.games, mappedRecord] };
             }
             if (eventType === "UPDATE") {
+              toast({ type: "info", title: "🎮 Game Updated", message: mappedRecord.game });
               return {
                 games: state.games.map((g) =>
                   g.id === mappedRecord.id ? { ...g, ...mappedRecord } : g
@@ -65,6 +70,7 @@ export function useRealtimeSync() {
           const { eventType, new: newRecord, old: oldRecord } = payload;
           useDashboardStore.setState((state) => {
             if (eventType === "DELETE") {
+              toast({ type: "info", title: "⛩️ Anime Removed", message: "Removed from list." });
               return { animeList: state.animeList.filter((a) => a.id !== oldRecord.id) };
             }
             const mappedRecord = {
@@ -80,9 +86,11 @@ export function useRealtimeSync() {
             };
             if (eventType === "INSERT") {
               if (state.animeList.some((a) => a.id === mappedRecord.id)) return {};
+              toast({ type: "success", title: "⛩️ Anime Added", message: mappedRecord.title });
               return { animeList: [...state.animeList, mappedRecord] };
             }
             if (eventType === "UPDATE") {
+              toast({ type: "info", title: "⛩️ Anime Updated", message: mappedRecord.title });
               return {
                 animeList: state.animeList.map((a) =>
                   a.id === mappedRecord.id ? { ...a, ...mappedRecord } : a
@@ -105,6 +113,7 @@ export function useRealtimeSync() {
           const { eventType, new: newRecord, old: oldRecord } = payload;
           useDashboardStore.setState((state) => {
             if (eventType === "DELETE") {
+              toast({ type: "info", title: "🎬 Drama Removed", message: "Removed from drama list." });
               return { dramas: state.dramas.filter((d) => d.id !== oldRecord.id) };
             }
             const mappedRecord = {
@@ -122,9 +131,11 @@ export function useRealtimeSync() {
             };
             if (eventType === "INSERT") {
               if (state.dramas.some((d) => d.id === mappedRecord.id)) return {};
+              toast({ type: "success", title: "🎬 Drama Added", message: mappedRecord.title });
               return { dramas: [...state.dramas, mappedRecord] };
             }
             if (eventType === "UPDATE") {
+              toast({ type: "info", title: "🎬 Drama Updated", message: mappedRecord.title });
               return {
                 dramas: state.dramas.map((d) =>
                   d.id === mappedRecord.id ? { ...d, ...mappedRecord } : d
@@ -151,6 +162,7 @@ export function useRealtimeSync() {
               ...newRecord,
             },
           }));
+          toast({ type: "success", title: "👤 Profile Synced", message: "Your profile was updated remotely." });
         }
       )
       .subscribe();
@@ -161,5 +173,5 @@ export function useRealtimeSync() {
       supabase.removeChannel(dramaChannel);
       supabase.removeChannel(profileChannel);
     };
-  }, [isHydrated]);
+  }, [isHydrated, toast]);
 }

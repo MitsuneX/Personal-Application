@@ -8,6 +8,7 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { gridContainerVariants } from "@/lib/theme/motionVariants";
 import { HofEditorModal } from "@/components/ui/HofEditorModal";
 import { HofEntryCard, getGroupForEntry, getGroupDetails } from "@/components/cards/HofEntryCard";
+import { CharacterVotePanel } from "@/components/ui/CharacterVotePanel";
 import type { HallOfFameEntry } from "@/lib/store/dashboardStore";
 import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
 
@@ -154,6 +155,13 @@ export default function UltramanPage() {
           })}
         </motion.div>
       )}
+
+      {/* ── Voting Leaderboard ── */}
+      <CharacterVotePanel
+        entries={ultramanEntries}
+        franchise="Ultraman"
+        accentColor="#EF4444"
+      />
 
       {/* ── Editor Modal ── */}
       <AnimatePresence>

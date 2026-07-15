@@ -170,6 +170,14 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true, data: entry });
       }
 
+      case "RANK_HOF": {
+        const ranked = await prisma.hallOfFame.update({
+          where: { id: payload.id },
+          data: { rank: payload.rank },
+        });
+        return NextResponse.json({ success: true, data: ranked });
+      }
+
       case "DELETE_HOF": {
         await prisma.hallOfFame.delete({ where: { id: payload.id } });
         return NextResponse.json({ success: true });

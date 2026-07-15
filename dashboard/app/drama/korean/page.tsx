@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
@@ -8,234 +8,169 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants";
 import { DramaSearchModal } from "@/components/ui/DramaSearchModal";
 import { ManualDramaModal } from "@/components/ui/ManualDramaModal";
-
-// ── Korean Palette ────────────────────────────────────────────────────────────
-// Brutal: hanbok jewel tones — teal, crimson, gold on white
-// Cyber:  holographic K-pop — cyan shimmer, holographic overlay
+import { MediaCard } from "@/components/cards/MediaCard";
+import { FloatingFAB } from "@/components/ui/FloatingFAB";
 
 const KR = {
-  brutal: { bg: "#F0FAFA", surface: "#E8F7F7", border: "#003366", accent: "#2EC4B6", accent2: "#E84855", text: "#003366", gold: "#F9B731" },
-  cyber:  { bg: "#020D18", surface: "rgba(46,196,182,0.07)", border: "rgba(34,211,238,0.4)", accent: "#22D3EE", accent2: "#F472B6", text: "#E0F7FA", gold: "#FCD34D" },
+  brutal: { text: "#003366", accent: "#2EC4B6", accent2: "#E84855" },
+  cyber:  { text: "#E0F7FA", accent: "#22D3EE", accent2: "#F472B6" },
 };
 
 export default function KoreanDramaPage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { dramas: allDramas, dramaLog, deleteDramaLog } = useDashboardStore();
-  const dramas = [
-    ...allDramas.filter((d) => d.country === "korean"),
-    ...dramaLog
-      .filter((d) => d.country === "korean")
-      .map((d) => ({
-        id: d.id,
-        title: d.title,
-        country: "korean",
-        episodes: d.type === "Movie" ? 1 : 16,
-        episodesWatched: d.statusBadge === "Classic" || d.statusBadge === "GOAT Status" ? (d.type === "Movie" ? 1 : 16) : 0,
-        status: d.statusBadge === "Classic" || d.statusBadge === "GOAT Status" ? "Completed" : "Watching",
-        rating: d.rating ? Math.round(parseFloat(d.rating)) : 8,
-        genre: d.type || "Series",
-        year: d.releaseYear || 2026,
-        platform: "OMDb Log",
-        cast: d.mainActors,
-      })),
-  ];
-  const p = isCyber ? KR.cyber : KR.brutal;
+  const { dramas: allDramas, dramaLog, deleteDramaLog, updateDrama } = useDashboardStore();
+
   const [searchOpen, setSearchOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+
+  const p = isCyber ? KR.cyber : KR.brutal;
+
+  const editableEntries = allDramas
+    .filter(d => d.country === "korean")
+    .map(d => ({
+      id: d.id, title: d.title,
+      episodes: d.episodes, episodesWatched: d.episodesWatched,
+      status: d.status, rating: d.rating ?? 8,
+      genre: d.genre, year: d.year, platform: d.platform,
+      cast: d.cast,
+      isEditable: true,
+      posterUrl: undefined as string | undefined,
+      synopsis: undefined as string | undefined,
+    }));
+
+  const logEntries = dramaLog
+    .filter(d => d.country === "korean")
+    .map(d => ({
+      id: d.id, title: d.title,
+      episodes: d.type === "Movie" ? 1 : 16,
+      episodesWatched: d.statusBadge === "Classic" || d.statusBadge === "GOAT Status" ? (d.type === "Movie" ? 1 : 16) : 0,
+      status: d.statusBadge === "Classic" || d.statusBadge === "GOAT Status" ? "Completed" : "Watching",
+      rating: d.rating ? Math.round(parseFloat(d.rating)) : 8,
+      genre: d.type ?? "Series", year: d.releaseYear ?? 2026, platform: "OMDb Log",
+      cast: d.mainActors,
+      isEditable: false,
+      posterUrl: d.posterUrl ?? undefined,
+      synopsis: d.plotSummary ?? undefined,
+    }));
+
+  const allMerged = [...editableEntries, ...logEntries];
+
+  const handleStatusChange = useCallback((id: string, status: string) => {
+    updateDrama(id, { status: status as any });
+  }, [updateDrama]);
+
+  const handleEpisodeChange = useCallback((id: string, watched: number, newStatus: string) => {
+    updateDrama(id, { episodesWatched: watched, status: newStatus as any });
+  }, [updateDrama]);
+
+  const handleDelete = useCallback((id: string) => {
+    const drama = logEntries.find(d => d.id === id);
+    if (drama && confirm(`Remove "${drama.title}" from watchlist?`)) {
+      deleteDramaLog(id);
+    }
+  }, [logEntries, deleteDramaLog]);
 
   return (
     <>
       <AppShell>
-      {/* Page hero */}
-      <motion.div
-        className="relative rounded-2xl overflow-hidden mb-8 p-8"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 260, damping: 24 }}
-        style={{
-          background: isCyber
-            ? "linear-gradient(135deg, #020D18 0%, rgba(22,211,238,0.12) 40%, rgba(244,114,182,0.08) 100%)"
-            : "linear-gradient(135deg, #E8F7F7 0%, #F0FAFA 60%, #FFF9E6 100%)",
-          border: isCyber ? `1px solid ${KR.cyber.border}` : `3px solid ${KR.brutal.border}`,
-          boxShadow: isCyber ? `0 0 60px rgba(34,211,238,0.15), 0 0 120px rgba(244,114,182,0.08)` : "6px 6px 0 rgba(0,0,0,1)",
-        }}
-      >
-        {/* Korean wave + mugunghwa decorations */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-10">
-          {["🌊","🌊","🌊"].map((w, i) => (
-            <motion.span key={i} className="absolute text-5xl"
-              style={{ right: `${5 + i * 15}%`, top: `${10 + i * 20}%` }}
-              animate={{ x: [0, -10, 0], opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 4 + i, repeat: Infinity, delay: i * 0.8 }}
-            >
-              {w}
-            </motion.span>
-          ))}
-          {/* Holographic shimmer in cyber mode */}
-          {isCyber && (
-            <motion.div className="absolute inset-0"
-              style={{ background: "linear-gradient(45deg, transparent 30%, rgba(34,211,238,0.05) 50%, transparent 70%)" }}
-              animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            />
-          )}
-        </div>
-
-        <div className="relative z-10">
-          <motion.p className="text-xs font-bold tracking-[0.25em] uppercase mb-2" style={{ color: isCyber ? KR.cyber.accent : KR.brutal.accent }}>
-            {isCyber ? "// K-DRAMA.ARCHIVE" : "K-Drama Collection"}
-          </motion.p>
-          <h1 className="font-black text-3xl md:text-5xl mb-2"
-            style={{ color: p.text, fontFamily: isCyber ? "var(--font-orbitron)" : "inherit", textShadow: isCyber ? `0 0 20px ${KR.cyber.accent}, 0 0 60px ${KR.cyber.accent2}` : "none" }}
-          >
-            {isCyber ? "한국 DRAMA" : "🇰🇷 Korean Drama"}
-          </h1>
-          <p className="text-sm opacity-70" style={{ color: p.text }}>Romance, survival, and superhero sagas from the Korean Wave</p>
-
-          <div className="flex gap-4 mt-4">
-            <div><p className="font-black text-xl" style={{ color: isCyber ? KR.cyber.accent : KR.brutal.accent }}>{dramas.length}</p><p className="text-xs opacity-60" style={{ color: p.text }}>Total</p></div>
-            <div><p className="font-black text-xl" style={{ color: isCyber ? "#39FF14" : "#06D6A0" }}>{dramas.filter((d) => d.status === "Completed").length}</p><p className="text-xs opacity-60" style={{ color: p.text }}>Completed</p></div>
-            <div><p className="font-black text-xl" style={{ color: isCyber ? KR.cyber.accent2 : KR.brutal.accent2 }}>{dramas.filter((d) => d.status === "Watching").length}</p><p className="text-xs opacity-60" style={{ color: p.text }}>Watching</p></div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Drama grid */}
-      <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-4" variants={gridContainerVariants} initial="hidden" animate="visible">
-        {dramas.map((drama, i) => {
-          const pct = Math.round((drama.episodesWatched / drama.episodes) * 100);
-          const isCompleted = drama.status === "Completed";
-
-          return (
-            <motion.div key={drama.id} variants={cardVariants} custom={i}>
+        {/* ── Banner ── */}
+        <motion.div
+          className="relative rounded-2xl overflow-hidden mb-8 p-6 md:p-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 260, damping: 24 }}
+          style={{
+            background: isCyber
+              ? "linear-gradient(135deg, #020D18 0%, rgba(34,211,238,0.12) 40%, rgba(244,114,182,0.08) 100%)"
+              : "linear-gradient(135deg, #E8F7F7 0%, #F0FAFA 60%, #FFF9E6 100%)",
+            border: isCyber ? "1px solid rgba(34,211,238,0.3)" : "3px solid #003366",
+            boxShadow: isCyber ? "0 0 60px rgba(34,211,238,0.15), 0 0 120px rgba(244,114,182,0.08)" : "6px 6px 0 rgba(0,0,0,1)",
+          }}
+        >
+          {/* Wave decor */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-10">
+            {["🌊","🌊","🌊"].map((_, i) => (
+              <motion.span key={i} className="absolute text-5xl"
+                style={{ right: `${5 + i * 15}%`, top: `${10 + i * 20}%` }}
+                animate={{ x: [0, -10, 0], opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 4 + i, repeat: Infinity, delay: i * 0.8 }}
+              >🌊</motion.span>
+            ))}
+            {isCyber && (
               <motion.div
-                className="rounded-xl p-5 h-full flex flex-col gap-3 relative overflow-hidden"
-                style={{
-                  background: isCyber ? KR.cyber.surface : KR.brutal.surface,
-                  border: isCyber ? `1px solid ${KR.cyber.border}` : `2px solid ${KR.brutal.border}`,
-                  boxShadow: isCyber ? `0 0 20px rgba(34,211,238,0.08)` : "4px 4px 0 rgba(0,0,0,1)",
-                }}
-                whileHover={{
-                  boxShadow: isCyber ? `0 0 40px rgba(34,211,238,0.25), 0 0 80px rgba(244,114,182,0.1)` : "7px 7px 0 rgba(0,0,0,1)",
-                  y: isCyber ? 0 : -3,
-                  transition: { duration: 0.2 },
-                }}
-              >
-                {/* Holographic shimmer line */}
-                {isCyber && <motion.div className="absolute top-0 left-0 right-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${KR.cyber.accent}, ${KR.cyber.accent2}, transparent)` }} animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2.5, repeat: Infinity }} />}
-                {!isCyber && <div className="absolute top-0 left-0 right-0 h-1 rounded-t-xl" style={{ background: `linear-gradient(90deg, ${KR.brutal.accent}, ${KR.brutal.gold}, ${KR.brutal.accent2})` }} />}
+                className="absolute inset-0"
+                style={{ background: "linear-gradient(45deg, transparent 30%, rgba(34,211,238,0.04) 50%, transparent 70%)" }}
+                animate={{ backgroundPosition: ["0% 0%","100% 100%","0% 0%"] }}
+                transition={{ duration: 3, repeat: Infinity }}
+              />
+            )}
+          </div>
 
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-black text-base leading-snug flex-1" style={{ color: p.text }}>{drama.title}</h3>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full"
-                      style={{ backgroundColor: isCompleted ? (isCyber ? "rgba(57,255,20,0.15)" : "rgba(6,214,160,0.12)") : (isCyber ? `${KR.cyber.accent}20` : `${KR.brutal.accent}15`), color: isCompleted ? (isCyber ? "#39FF14" : "#06D6A0") : (isCyber ? KR.cyber.accent : KR.brutal.accent) }}>
-                      {drama.status}
-                    </span>
-                    {drama.id.startsWith("drama-") && (
-                      <button
-                        onClick={() => {
-                          if (confirm(`Remove "${drama.title}" from watchlist?`)) {
-                            deleteDramaLog(drama.id);
-                          }
-                        }}
-                        className="text-xs opacity-40 hover:opacity-100 hover:text-red-500 transition-all p-0.5 rounded"
-                        title="Delete Drama"
-                      >
-                        🗑️
-                      </button>
-                    )}
-                  </div>
-                </div>
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold tracking-[0.25em] uppercase mb-2" style={{ color: p.accent }}>
+                {isCyber ? "// K-DRAMA.ARCHIVE" : "K-Drama Collection"}
+              </p>
+              <h1 className="font-black text-3xl md:text-5xl mb-1"
+                style={{ color: p.text, fontFamily: isCyber ? "var(--font-orbitron)" : "inherit", textShadow: isCyber ? `0 0 20px ${p.accent}, 0 0 60px ${p.accent2}` : "none" }}>
+                {isCyber ? "한국 DRAMA" : "🇰🇷 Korean Drama"}
+              </h1>
+              <p className="text-sm opacity-70" style={{ color: p.text }}>Romance, survival, and superhero sagas from the Korean Wave</p>
 
-                <div className="flex flex-wrap gap-1.5">
-                  {[drama.genre, String(drama.year), drama.platform].filter(Boolean).map((tag) => (
-                    <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ background: isCyber ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.06)", color: isCyber ? "#94A3B8" : "#6B7280" }}>{tag}</span>
-                  ))}
-                </div>
+              <div className="flex gap-4 mt-3">
+                <div><p className="font-black text-xl" style={{ color: p.accent }}>{allMerged.length}</p><p className="text-xs opacity-60" style={{ color: p.text }}>Total</p></div>
+                <div><p className="font-black text-xl" style={{ color: isCyber ? "#39FF14" : "#06D6A0" }}>{allMerged.filter(d => d.status === "Completed").length}</p><p className="text-xs opacity-60" style={{ color: p.text }}>Completed</p></div>
+                <div><p className="font-black text-xl" style={{ color: p.accent2 }}>{allMerged.filter(d => d.status === "Watching").length}</p><p className="text-xs opacity-60" style={{ color: p.text }}>Watching</p></div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
-                {drama.cast && <p className="text-xs" style={{ color: isCyber ? "rgba(224,247,250,0.4)" : "rgba(0,51,102,0.45)" }}>✦ {drama.cast.join(" · ")}</p>}
-
-                {/* Rating */}
-                <div className="flex gap-0.5 items-center">
-                  {Array.from({ length: 5 }).map((_, j) => (
-                    <span key={j} style={{ color: j < Math.round(drama.rating / 2) ? (isCyber ? KR.cyber.gold : KR.brutal.gold) : "rgba(128,128,128,0.3)", fontSize: "11px" }}>★</span>
-                  ))}
-                  <span className="font-mono text-xs ml-1" style={{ color: isCyber ? KR.cyber.gold : KR.brutal.gold }}>{drama.rating}/10</span>
-                </div>
-
-                {/* Progress */}
-                <div>
-                  <div className="h-2 rounded-full overflow-hidden mb-1" style={{ background: isCyber ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)" }}>
-                    <motion.div className="h-full rounded-full" initial={{ scaleX: 0 }} animate={{ scaleX: pct / 100 }}
-                      transition={{ type: "spring", stiffness: 70, damping: 18, delay: 0.4 + i * 0.05 }}
-                      style={{ transformOrigin: "left", background: isCyber ? `linear-gradient(90deg, ${KR.cyber.accent}, ${KR.cyber.accent2})` : `linear-gradient(90deg, ${KR.brutal.accent}, ${KR.brutal.accent2})`, boxShadow: isCyber ? `0 0 8px ${KR.cyber.accent}` : "none" }}
-                    />
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-xs" style={{ color: isCyber ? "rgba(224,247,250,0.4)" : "rgba(0,51,102,0.4)" }}>{drama.episodesWatched}/{drama.episodes} eps</span>
-                    <span className="text-xs font-mono font-bold" style={{ color: isCyber ? KR.cyber.accent : KR.brutal.accent }}>{pct}%</span>
-                  </div>
-                </div>
-              </motion.div>
+        {/* ── Drama Grid ── */}
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
+          variants={gridContainerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {allMerged.map((drama, i) => (
+            <motion.div key={drama.id} variants={cardVariants} custom={i}>
+              <MediaCard
+                id={drama.id}
+                title={drama.title}
+                category="korean"
+                status={drama.status}
+                episodesWatched={drama.episodesWatched}
+                totalEpisodes={drama.episodes}
+                rating={drama.rating}
+                genre={drama.genre}
+                year={drama.year}
+                platform={drama.platform}
+                cast={drama.cast}
+                synopsis={drama.synopsis}
+                posterUrl={drama.posterUrl}
+                isEditable={drama.isEditable}
+                onStatusChange={drama.isEditable ? handleStatusChange : undefined}
+                onEpisodeChange={drama.isEditable ? handleEpisodeChange : undefined}
+                onDelete={!drama.isEditable ? handleDelete : undefined}
+                index={i}
+              />
             </motion.div>
-          );
-        })}
-      </motion.div>
+          ))}
+        </motion.div>
+
+        {allMerged.length === 0 && (
+          <div className="text-center py-20 opacity-40">
+            <p className="text-4xl mb-3">🇰🇷</p>
+            <p className="font-bold text-sm" style={{ color: p.text }}>No K-Dramas logged yet</p>
+          </div>
+        )}
       </AppShell>
 
-      {/* Floating Drama Search */}
       <DramaSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} defaultCountry="korean" />
-
-      {/* Manual Drama Add Overlay */}
       <ManualDramaModal isOpen={manualOpen} onClose={() => setManualOpen(false)} defaultCountry="korean" />
-
-      {/* Floating Search FAB */}
-      <motion.button
-        className="fixed bottom-[76px] right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-sm shadow-2xl"
-        style={{
-          background: isCyber
-            ? "linear-gradient(135deg, rgba(34,211,238,0.9), rgba(244,114,182,0.7))"
-            : KR.brutal.accent,
-          color: "#fff",
-          border: isCyber ? "1px solid rgba(34,211,238,0.6)" : "2.5px solid #000",
-          boxShadow: isCyber ? "0 0 24px rgba(34,211,238,0.4)" : "4px 4px 0 #000",
-          fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
-        }}
-        whileHover={{ scale: 1.06, y: -2 }}
-        whileTap={{ scale: 0.97 }}
-        onClick={() => setSearchOpen(true)}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, type: "spring" as const, stiffness: 300, damping: 22 }}
-      >
-        <span>🔍</span>
-        <span>{isCyber ? "SEARCH" : "Search Drama"}</span>
-      </motion.button>
-
-      {/* Floating Manual Add FAB */}
-      <motion.button
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-sm shadow-2xl"
-        style={{
-          background: isCyber
-            ? "linear-gradient(135deg, #00F5FF, #bf5fff)"
-            : KR.brutal.accent2,
-          color: "#fff",
-          border: isCyber ? "1px solid rgba(0,245,255,0.4)" : "2.5px solid #000",
-          boxShadow: isCyber ? "0 0 24px rgba(0,245,255,0.3)" : "4px 4px 0 #000",
-          fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
-        }}
-        whileHover={{ scale: 1.06, y: -2 }}
-        whileTap={{ scale: 0.97 }}
-        onClick={() => setManualOpen(true)}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.7, type: "spring" as const, stiffness: 300, damping: 22 }}
-      >
-        <span>＋</span>
-        <span>{isCyber ? "MANUAL.ADD" : "Add Manually"}</span>
-      </motion.button>
+      <FloatingFAB category="korean" onSearch={() => setSearchOpen(true)} onManualAdd={() => setManualOpen(true)} />
     </>
   );
 }

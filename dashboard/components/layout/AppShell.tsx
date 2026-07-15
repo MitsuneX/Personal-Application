@@ -82,6 +82,8 @@ export function AppShell({ children }: AppShellProps) {
               exit={{ x: "-100%" }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
+              {/* Swipe handle indicator */}
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-white/20 z-10" />
               <Sidebar isMobileDrawer onClose={() => setMobileOpen(false)} />
             </motion.div>
           </>
@@ -100,7 +102,7 @@ export function AppShell({ children }: AppShellProps) {
         </AnimatePresence>
 
         {/* Header topbar */}
-        <Header onMenuToggle={() => setMobileOpen(true)} />
+        <Header onMenuToggle={() => setMobileOpen((v) => !v)} mobileOpen={mobileOpen} />
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto relative z-10" style={{ scrollbarWidth: "thin" }}>

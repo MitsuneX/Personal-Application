@@ -13,6 +13,7 @@ import { BentoCard } from "@/components/cards/BentoCard";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants";
+import { RecommendationWidget } from "@/components/ui/RecommendationWidget";
 import Link from "next/link";
 
 export default function DashboardPage() {
@@ -135,6 +136,11 @@ export default function DashboardPage() {
           </BentoCard>
         </motion.div>
       </motion.div>
+
+      {/* ── AI Recommendations ── */}
+      <div className="mb-5">
+        <RecommendationWidget />
+      </div>
 
       {/* ── Bottom Grid ── */}
       <motion.div

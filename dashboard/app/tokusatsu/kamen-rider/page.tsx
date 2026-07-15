@@ -8,6 +8,7 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { gridContainerVariants } from "@/lib/theme/motionVariants";
 import { HofEditorModal } from "@/components/ui/HofEditorModal";
 import { HofEntryCard, getGroupForEntry, getGroupDetails } from "@/components/cards/HofEntryCard";
+import { CharacterVotePanel } from "@/components/ui/CharacterVotePanel";
 import type { HallOfFameEntry } from "@/lib/store/dashboardStore";
 import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
 
@@ -163,6 +164,13 @@ export default function KamenRiderPage() {
           })}
         </motion.div>
       )}
+
+      {/* ── Voting Leaderboard ── */}
+      <CharacterVotePanel
+        entries={kamenRiderEntries}
+        franchise="Kamen Rider"
+        accentColor="#22C55E"
+      />
 
       {/* ── Editor Modal ── */}
       <AnimatePresence>

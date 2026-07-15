@@ -14,6 +14,7 @@ import Link from "next/link";
 
 interface HeaderProps {
   onMenuToggle: () => void;
+  mobileOpen?: boolean;
 }
 
 const PAGE_TITLES: Record<string, { title: string; icon: string }> = {
@@ -32,7 +33,7 @@ const PAGE_TITLES: Record<string, { title: string; icon: string }> = {
   "/gallery":           { title: "Media Gallery", icon: "🖼️" },
 };
 
-export function Header({ onMenuToggle }: HeaderProps) {
+export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const pathname = usePathname();
@@ -117,17 +118,43 @@ export function Header({ onMenuToggle }: HeaderProps) {
       >
         {/* Left Section: Hamburger & Icon */}
         <div className="flex items-center gap-3 shrink-0">
+          {/* Animated Hamburger / Close button */}
           <motion.button
-            className="md:hidden p-2 rounded-lg"
+            className="md:hidden p-2 rounded-lg flex flex-col items-center justify-center gap-[4px] w-9 h-9"
             onClick={onMenuToggle}
-            whileTap={{ scale: 0.9 }}
+            whileTap={{ scale: 0.88 }}
             animate={{ color: isCyber ? "#94A3B8" : "#4A4A4A" }}
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
           >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
-              <rect y="2" width="18" height="2" rx="1" />
-              <rect y="8" width="18" height="2" rx="1" />
-              <rect y="14" width="18" height="2" rx="1" />
-            </svg>
+            <motion.span
+              className="block h-0.5 w-5 rounded-full origin-center"
+              animate={mobileOpen ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 28 }}
+              style={{ backgroundColor: "currentColor" }}
+            />
+            <motion.span
+              className="block h-0.5 w-5 rounded-full"
+              animate={mobileOpen ? { opacity: 0, scaleX: 0 } : { opacity: 1, scaleX: 1 }}
+              transition={{ duration: 0.15 }}
+              style={{ backgroundColor: "currentColor" }}
+            />
+            <motion.span
+              className="block h-0.5 w-5 rounded-full origin-center"
+              animate={mobileOpen ? { rotate: -45, y: -6 } : { rotate: 0, y: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 28 }}
+              style={{ backgroundColor: "currentColor" }}
+            />
+          </motion.button>
+
+          {/* Mobile search icon (sm and below only) */}
+          <motion.button
+            className="sm:hidden p-2 rounded-lg"
+            onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
+            whileTap={{ scale: 0.88 }}
+            animate={{ color: isCyber ? "#00F5FF" : "#4A4A4A" }}
+            aria-label="Search"
+          >
+            <span className="text-base">🔍</span>
           </motion.button>
 
           <motion.div

@@ -238,6 +238,7 @@ interface DashboardState {
   // HOF Actions
   updateHof: (id: string, data: Partial<HallOfFameEntry>) => Promise<void>;
   likeHof: (id: string) => Promise<void>;
+  rankHof: (id: string, rank: number) => Promise<void>;
   deleteHof: (id: string) => Promise<void>;
 
   // Notepad Actions
@@ -615,6 +616,23 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
     } catch (err) {
       console.error("Failed to delete HOF item:", err);
+    }
+  },
+
+  rankHof: async (id, rank) => {
+    set((s) => ({
+      hallOfFame: s.hallOfFame.map((h) =>
+        h.id === id ? { ...h, rank } : h
+      ),
+    }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "RANK_HOF", payload: { id, rank } }),
+      });
+    } catch (err) {
+      console.error("Failed to rank HOF:", err);
     }
   },
 
