@@ -30,6 +30,9 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   const [note, setNote] = useState("");
   const [rank, setRank] = useState<number | null>(null);
   const [isChampion, setIsChampion] = useState(false);
+  const [tokusatsuFranchise, setTokusatsuFranchise] = useState("");
+  const [tokusatsuShow, setTokusatsuShow] = useState("");
+  const [associatedDramas, setAssociatedDramas] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [imgError, setImgError] = useState(false);
@@ -53,6 +56,9 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       setNote(entryToEdit.note || "");
       setRank(entryToEdit.rank !== undefined ? entryToEdit.rank : null);
       setIsChampion(entryToEdit.isChampion || false);
+      setTokusatsuFranchise(entryToEdit.tokusatsuFranchise || "");
+      setTokusatsuShow(entryToEdit.tokusatsuShow || "");
+      setAssociatedDramas(entryToEdit.associatedDramas ? entryToEdit.associatedDramas.join(", ") : "");
       
       // Auto-detect image source
       if (entryToEdit.imageUrl && entryToEdit.imageUrl.startsWith("/uploads/")) {
@@ -73,6 +79,9 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       setNote("");
       setRank(null);
       setIsChampion(false);
+      setTokusatsuFranchise("");
+      setTokusatsuShow("");
+      setAssociatedDramas("");
     }
     setImgError(false);
     setCropImageSrc(null); // Reset crop state on open
@@ -142,6 +151,9 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
         note: note.trim() || undefined,
         rank: rank === null ? null : Number(rank),
         isChampion,
+        tokusatsuFranchise: tokusatsuFranchise || null,
+        tokusatsuShow: tokusatsuShow.trim() || null,
+        associatedDramas: associatedDramas.split(",").map(d => d.trim()).filter(Boolean),
       });
       onClose();
     } catch (err) {
@@ -481,6 +493,54 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                       className={inputClass + " resize-none"}
                       style={inputStyle}
                     />
+                  </div>
+
+                  {/* Tokusatsu Ecosystem (Relational tag fields) */}
+                  <div className="border border-adaptive-unique p-3 rounded-xl space-y-3 bg-black/5 dark:bg-white/5">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#00F5FF]">📺 Tokusatsu Ecosystem</p>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>Franchise</label>
+                        <select
+                          value={tokusatsuFranchise}
+                          onChange={(e) => setTokusatsuFranchise(e.target.value)}
+                          className={inputClass}
+                          style={inputStyle}
+                        >
+                          <option value="">None (Standard HOF)</option>
+                          <option value="Ultraman">Ultraman</option>
+                          <option value="Kamen Rider">Kamen Rider</option>
+                          <option value="Power Rangers">Power Rangers</option>
+                        </select>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>Specific Show</label>
+                        <input
+                          type="text"
+                          value={tokusatsuShow}
+                          onChange={(e) => setTokusatsuShow(e.target.value)}
+                          placeholder="e.g. Kamen Rider W"
+                          className={inputClass}
+                          style={inputStyle}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
+                        Associated J-Dramas <span className="normal-case font-normal opacity-60">(comma separated titles)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={associatedDramas}
+                        onChange={(e) => setAssociatedDramas(e.target.value)}
+                        placeholder="e.g. Rikokatsu, Shitsuren Chocolatier"
+                        className={inputClass}
+                        style={inputStyle}
+                      />
+                    </div>
                   </div>
 
                   {/* Champion Toggle */}

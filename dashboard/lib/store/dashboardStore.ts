@@ -116,6 +116,9 @@ export interface HallOfFameEntry {
   rank: number | null;
   likes: number;
   isChampion: boolean;
+  tokusatsuFranchise?: string | null;
+  tokusatsuShow?: string | null;
+  associatedDramas?: string[];
 }
 
 // ─── Misc Section Types ─────────────────────────────────────────────────────────

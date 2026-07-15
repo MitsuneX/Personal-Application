@@ -93,8 +93,11 @@ model HallOfFame {
   imageUrl    String?
   rank        Int?     @default(0)
   likes       Int      @default(0)
-  isChampion  Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  isChampion         Boolean  @default(false)
+  tokusatsuFranchise String?
+  tokusatsuShow      String?
+  associatedDramas   String[]
+  createdAt          DateTime @default(now())
 }
 
 model Note {

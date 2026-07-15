@@ -283,6 +283,36 @@ export function HofEntryCard({ entry, idx, isCyber, group, onEdit, onDelete, sho
             </p>
           )}
 
+          {/* Tokusatsu Show Tag */}
+          {entry.tokusatsuShow && (
+            <p className="text-[10px] font-bold text-[#00F5FF] flex items-center gap-1">
+              <span>🎭 Show:</span>
+              <span className="opacity-90">{entry.tokusatsuShow}</span>
+            </p>
+          )}
+
+          {/* Associated J-Dramas */}
+          {entry.associatedDramas && entry.associatedDramas.length > 0 && (
+            <div className="flex flex-col gap-1 mt-1">
+              <span className="text-[9px] font-black uppercase tracking-wider theme-text-muted">Associated J-Dramas</span>
+              <div className="flex flex-wrap gap-1">
+                {entry.associatedDramas.map((drama) => (
+                  <span
+                    key={drama}
+                    className="text-[9px] font-bold px-1.5 py-0.5 rounded border"
+                    style={{
+                      backgroundColor: isCyber ? "rgba(255,20,147,0.05)" : "#FFF0F6",
+                      borderColor: isCyber ? "rgba(255,20,147,0.2)" : "#CC3377",
+                      color: isCyber ? "#FF1493" : "#C9184A",
+                    }}
+                  >
+                    🎬 {drama}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Known For tags */}
           <div className="flex flex-wrap gap-1.5 mt-auto pt-1">
             {entry.knownFor.slice(0, 3).map((work) => (

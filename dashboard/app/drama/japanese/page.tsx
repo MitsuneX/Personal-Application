@@ -32,10 +32,40 @@ function StarRow({ rating }: { rating: number }) {
   );
 }
 
+const getDramaTokusatsuCategory = (drama: any, hofEntries: any[]) => {
+  const title = drama.title.toLowerCase();
+  if (title.includes("ultraman")) return "Ultraman";
+  if (title.includes("kamen rider")) return "Kamen Rider";
+  if (title.includes("power rangers") || title.includes("sentai")) return "Power Rangers";
+
+  const genre = drama.genre?.toLowerCase() || "";
+  if (genre.includes("tokusatsu") || genre.includes("toku")) {
+    if (genre.includes("ultraman")) return "Ultraman";
+    if (genre.includes("kamen rider") || genre.includes("rider")) return "Kamen Rider";
+    if (genre.includes("power rangers") || genre.includes("sentai") || genre.includes("ranger")) return "Power Rangers";
+    return "Tokusatsu";
+  }
+
+  const associatedActors = hofEntries.filter(actor => 
+    actor.tokusatsuFranchise &&
+    ((actor.associatedDramas && actor.associatedDramas.includes(drama.title)) ||
+     (drama.cast && drama.cast.includes(actor.name)))
+  );
+
+  if (associatedActors.length > 0) {
+    const franchise = associatedActors.find(a => a.tokusatsuFranchise)?.tokusatsuFranchise;
+    return franchise || "Tokusatsu";
+  }
+
+  return "Actual Drama";
+};
+
 export default function JapaneseDramaPage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { dramas: allDramas, dramaLog, deleteDramaLog } = useDashboardStore();
+  const { dramas: allDramas, dramaLog, deleteDramaLog, hallOfFame } = useDashboardStore();
+  const [filterType, setFilterType] = useState<"all" | "actual" | "ultraman" | "kamen-rider" | "power-rangers" | "tokusatsu">("all");
+
   const dramas = [
     ...allDramas.filter((d) => d.country === "japanese"),
     ...dramaLog
@@ -54,6 +84,18 @@ export default function JapaneseDramaPage() {
         cast: d.mainActors,
       })),
   ];
+
+  const filteredDramas = dramas.filter((drama) => {
+    const category = getDramaTokusatsuCategory(drama, hallOfFame);
+    if (filterType === "all") return true;
+    if (filterType === "actual") return category === "Actual Drama";
+    if (filterType === "ultraman") return category === "Ultraman";
+    if (filterType === "kamen-rider") return category === "Kamen Rider";
+    if (filterType === "power-rangers") return category === "Power Rangers";
+    if (filterType === "tokusatsu") return category !== "Actual Drama";
+    return true;
+  });
+
   const p = isCyber ? JP.cyber : JP.brutal;
   const [searchOpen, setSearchOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
@@ -105,9 +147,49 @@ export default function JapaneseDramaPage() {
         </div>
       </motion.div>
 
+      {/* Category Filter Toolbar */}
+      <div 
+        className="mb-6 p-1.5 rounded-xl flex flex-wrap gap-1.5 text-xs font-bold w-fit border"
+        style={{
+          backgroundColor: isCyber ? "rgba(0,0,0,0.3)" : "#FFFFFF",
+          borderColor: isCyber ? "rgba(255,105,180,0.15)" : "#000000",
+          borderWidth: isCyber ? "1.5px" : "3px",
+          boxShadow: isCyber ? "none" : "4px 4px 0 #000"
+        }}
+      >
+        {[
+          { id: "all", label: "All Shows" },
+          { id: "actual", label: "Actual Dramas" },
+          { id: "ultraman", label: "🔴 Ultraman" },
+          { id: "kamen-rider", label: "🟢 Kamen Rider" },
+          { id: "power-rangers", label: "⚡ Power Rangers" },
+          { id: "tokusatsu", label: "🦸 All Tokusatsu" }
+        ].map((btn) => {
+          const isActive = filterType === btn.id;
+          return (
+            <button
+              key={btn.id}
+              onClick={() => setFilterType(btn.id as any)}
+              className="py-1.5 px-3 rounded-lg transition-all uppercase tracking-wider text-[10px]"
+              style={{
+                backgroundColor: isActive
+                  ? isCyber ? "rgba(255,105,180,0.2)" : "#FFB7C5"
+                  : "transparent",
+                color: isActive 
+                  ? isCyber ? "#FF69B4" : "#000"
+                  : isCyber ? "rgba(255,209,232,0.6)" : "#444",
+                border: isActive && !isCyber ? "2px solid #000" : "2px solid transparent",
+              }}
+            >
+              {btn.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Drama grid */}
       <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-4" variants={gridContainerVariants} initial="hidden" animate="visible">
-        {dramas.map((drama, i) => {
+        {filteredDramas.map((drama, i) => {
           const pct = Math.round((drama.episodesWatched / drama.episodes) * 100);
           const isCompleted = drama.status === "Completed";
 
@@ -160,6 +242,36 @@ export default function JapaneseDramaPage() {
                 </div>
 
                 {drama.cast && <p className="text-xs" style={{ color: isCyber ? "rgba(255,209,232,0.5)" : "rgba(45,27,36,0.5)" }}>✦ {drama.cast.join(" · ")}</p>}
+
+                {(() => {
+                  const associatedHofActors = hallOfFame.filter(actor => 
+                    (actor.associatedDramas && actor.associatedDramas.includes(drama.title)) ||
+                    (drama.cast && drama.cast.includes(actor.name))
+                  );
+                  if (associatedHofActors.length === 0) return null;
+                  return (
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1 select-none">
+                      <span className="text-[9px] uppercase tracking-wider font-black opacity-60" style={{ color: isCyber ? JP.cyber.accent : JP.brutal.accent }}>
+                        HOF Stars:
+                      </span>
+                      {associatedHofActors.map(actor => (
+                        <span 
+                          key={actor.id}
+                          className="text-[9px] font-bold px-1.5 py-0.5 rounded border flex items-center gap-1 bg-black/10 dark:bg-white/5"
+                          style={{ borderColor: isCyber ? JP.cyber.border : JP.brutal.border, color: p.text }}
+                          title={actor.tokusatsuFranchise ? `${actor.name} (${actor.tokusatsuFranchise})` : actor.name}
+                        >
+                          {actor.tokusatsuFranchise && (
+                            <span className="text-[10px]" title={actor.tokusatsuFranchise}>
+                              {actor.tokusatsuFranchise === "Ultraman" ? "🔴" : actor.tokusatsuFranchise === "Kamen Rider" ? "🟢" : "⚡"}
+                            </span>
+                          )}
+                          {actor.name}
+                        </span>
+                      ))}
+                    </div>
+                  );
+                })()}
 
                 <StarRow rating={drama.rating} />
 

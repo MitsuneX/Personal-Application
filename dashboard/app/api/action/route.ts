@@ -139,6 +139,9 @@ export async function POST(req: Request) {
             imageUrl: payload.imageUrl ?? null,
             rank: resolvedRank,
             isChampion: payload.isChampion ?? false,
+            tokusatsuFranchise: payload.tokusatsuFranchise ?? null,
+            tokusatsuShow: payload.tokusatsuShow ?? null,
+            associatedDramas: payload.associatedDramas ?? [],
           },
           create: {
             id: payload.id,
@@ -151,6 +154,9 @@ export async function POST(req: Request) {
             imageUrl: payload.imageUrl || null,
             rank: resolvedRank,
             isChampion: payload.isChampion || false,
+            tokusatsuFranchise: payload.tokusatsuFranchise || null,
+            tokusatsuShow: payload.tokusatsuShow || null,
+            associatedDramas: payload.associatedDramas || [],
           },
         });
         return NextResponse.json({ success: true, data: hof });

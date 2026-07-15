@@ -33,6 +33,7 @@ const NAV_SECTIONS = [
       { href: "/music", icon: "🎵", label: "Music" },
       { href: "/hall-of-fame", icon: "🏆", label: "Hall of Fame" },
       { href: "/characters", icon: "📖", label: "Characters" },
+      { href: "/tokusatsu", icon: "🦸", label: "Tokusatsu" },
     ],
   },
   {
@@ -61,17 +62,25 @@ const DRAMA_SUB = [
   { href: "/drama/hollywood", icon: "🎬", label: "Hollywood"  },
 ];
 
+const TOKUSATSU_SUB = [
+  { href: "/tokusatsu/ultraman",      icon: "🔴", label: "Ultraman" },
+  { href: "/tokusatsu/kamen-rider",    icon: "🟢", label: "Kamen Rider" },
+  { href: "/tokusatsu/power-rangers",  icon: "⚡", label: "Power Rangers" },
+];
+
 export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, onToggleCollapse }: SidebarProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const pathname = usePathname();
   const [dramaOpen, setDramaOpen] = useState(pathname.startsWith("/drama"));
+  const [tokusatsuOpen, setTokusatsuOpen] = useState(pathname.startsWith("/tokusatsu"));
   const [editorOpen, setEditorOpen] = useState(false);
   const [aestheticsOpen, setAestheticsOpen] = useState(false);
 
   const { profile } = useDashboardStore();
   const avatar = profile.avatar || "/avatar.png";
   const isDramaActive = pathname.startsWith("/drama");
+  const isTokusatsuActive = pathname.startsWith("/tokusatsu");
 
   return (
     <>
@@ -196,7 +205,7 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
                         {/* Drama accordion toggle */}
                         <motion.button
                           onClick={() => setDramaOpen((o) => !o)}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold"
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold relative"
                           animate={{
                             backgroundColor: isDramaActive
                               ? isCyber ? "rgba(0,245,255,0.1)" : "rgba(255,107,53,0.12)"
@@ -243,6 +252,64 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
                               style={{ borderLeft: isCyber ? "1px solid rgba(0,245,255,0.15)" : "2px solid rgba(0,0,0,0.1)" }}
                             >
                               {DRAMA_SUB.map((sub) => (
+                                <NavLink key={sub.href} href={sub.href} icon={sub.icon} label={sub.label} onClick={onClose} />
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </>
+                    ) : item.href === "/tokusatsu" ? (
+                      <>
+                        {/* Tokusatsu accordion toggle */}
+                        <motion.button
+                          onClick={() => setTokusatsuOpen((o) => !o)}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold relative"
+                          animate={{
+                            backgroundColor: isTokusatsuActive
+                              ? isCyber ? "rgba(0,245,255,0.1)" : "rgba(255,107,53,0.12)"
+                              : "rgba(0,0,0,0)",
+                            color: isTokusatsuActive
+                              ? isCyber ? "#00F5FF" : "#FF6B35"
+                              : isCyber ? "#94A3B8" : "#4A4A4A",
+                          }}
+                          whileHover={{ backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          {isTokusatsuActive && (
+                            <motion.div
+                              layoutId="nav-active-bar"
+                              className="absolute left-2 w-0.5 h-5 rounded-full"
+                              style={{ backgroundColor: isCyber ? "#00F5FF" : "#FF6B35", boxShadow: isCyber ? "0 0 8px rgba(0,245,255,0.9)" : "none" }}
+                              transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                            />
+                          )}
+                          <span className="text-lg w-6 text-center">{item.icon}</span>
+                          {!collapsed && (
+                            <>
+                              <span className="flex-1 text-left">{item.label}</span>
+                              <motion.span
+                                animate={{ rotate: tokusatsuOpen ? 180 : 0 }}
+                                transition={{ duration: 0.25 }}
+                                className="text-xs opacity-60"
+                              >
+                                ▼
+                              </motion.span>
+                            </>
+                          )}
+                        </motion.button>
+
+                        {/* Sub-items */}
+                        <AnimatePresence initial={false}>
+                          {tokusatsuOpen && !collapsed && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.25, ease: "easeInOut" }}
+                              className="overflow-hidden ml-4 pl-3 mt-1 space-y-0.5"
+                              style={{ borderLeft: isCyber ? "1px solid rgba(0,245,255,0.15)" : "2px solid rgba(0,0,0,0.1)" }}
+                            >
+                              {TOKUSATSU_SUB.map((sub) => (
                                 <NavLink key={sub.href} href={sub.href} icon={sub.icon} label={sub.label} onClick={onClose} />
                               ))}
                             </motion.div>

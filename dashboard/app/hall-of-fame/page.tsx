@@ -11,13 +11,18 @@ import type { HallOfFameEntry } from "@/lib/store/dashboardStore";
 import { useRouter } from "next/navigation";
 import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
 
+type RankingTab = 
+  | "overall" | "korean" | "japanese" | "chinese" | "hollywood" // Group 1: Dramas
+  | "singer" // Group 2: Singers
+  | "toku_overall" | "ultraman" | "kamen_rider" | "power_rangers"; // Group 3: Tokusatsu
+
 export default function HallOfFamePage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { hallOfFame, deleteHof, likeHof } = useDashboardStore();
   const router = useRouter();
 
-  const [subTab, setSubTab] = useState<"overall" | "korean" | "japanese" | "chinese" | "hollywood">("overall");
+  const [subTab, setSubTab] = useState<RankingTab>("overall");
   const [editorOpen, setEditorOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<HallOfFameEntry | null>(null);
 
@@ -49,35 +54,62 @@ export default function HallOfFamePage() {
     router.push(`/characters?id=${id}`);
   };
 
-  // Sorting purely by Dynamic Like Counts Descending
-  const sortedByLikes = [...hallOfFame].sort((a, b) => {
-    const aLikes = a.likes || 0;
-    const bLikes = b.likes || 0;
-    if (aLikes !== bLikes) return bLikes - aLikes;
-    return a.name.localeCompare(b.name);
-  });
-
-  // Filter based on subTab (Leaderboard)
-  const filterBySubTab = (itemsList: HallOfFameEntry[]) => {
-    if (subTab === "overall") return itemsList;
-    if (subTab === "korean") return itemsList.filter((e) => getGroupForEntry(e) === "Korea");
-    if (subTab === "japanese") return itemsList.filter((e) => getGroupForEntry(e) === "Japan");
-    if (subTab === "chinese") return itemsList.filter((e) => getGroupForEntry(e) === "China");
-    if (subTab === "hollywood") return itemsList.filter((e) => getGroupForEntry(e) === "Hollywood");
-    return itemsList;
+  // ── Helper functions to identify and isolate HOF entries ──
+  const isSingerEntry = (entry: HallOfFameEntry) => {
+    const group = getGroupForEntry(entry);
+    return group === "__other__" || entry.nationality?.toLowerCase() === "singer";
   };
 
-  // Derived Sorted lists
-  const currentFilteredList = sortHofEntries(filterBySubTab(hallOfFame));
+  const isTokusatsuEntry = (entry: HallOfFameEntry) => {
+    return !!entry.tokusatsuFranchise;
+  };
 
-  function sortHofEntries(entriesList: HallOfFameEntry[]) {
+  // Sorting helper
+  const sortHofEntries = (entriesList: HallOfFameEntry[]) => {
     return [...entriesList].sort((a, b) => {
       const aLikes = a.likes || 0;
       const bLikes = b.likes || 0;
       if (aLikes !== bLikes) return bLikes - aLikes;
       return a.name.localeCompare(b.name);
     });
-  }
+  };
+
+  // Filter based on selected subTab (purely isolated)
+  const filterBySubTab = (itemsList: HallOfFameEntry[]) => {
+    // 1. Group 1: Drama Rankings (strictly EXCLUDE Singers and Tokusatsu entries)
+    if (["overall", "korean", "japanese", "chinese", "hollywood"].includes(subTab)) {
+      const dramaBase = itemsList.filter((e) => !isSingerEntry(e) && !isTokusatsuEntry(e));
+      if (subTab === "overall") return dramaBase;
+      if (subTab === "korean") return dramaBase.filter((e) => getGroupForEntry(e) === "Korea");
+      if (subTab === "japanese") return dramaBase.filter((e) => getGroupForEntry(e) === "Japan");
+      if (subTab === "chinese") return dramaBase.filter((e) => getGroupForEntry(e) === "China");
+      if (subTab === "hollywood") return dramaBase.filter((e) => getGroupForEntry(e) === "Hollywood");
+    }
+
+    // 2. Group 2: Singer Rankings (strictly query Singers)
+    if (subTab === "singer") {
+      return itemsList.filter((e) => isSingerEntry(e));
+    }
+
+    // 3. Group 3: Tokusatsu Rankings (strictly query Tokusatsu)
+    if (subTab === "toku_overall") {
+      return itemsList.filter((e) => isTokusatsuEntry(e));
+    }
+    if (subTab === "ultraman") {
+      return itemsList.filter((e) => e.tokusatsuFranchise?.toLowerCase() === "ultraman");
+    }
+    if (subTab === "kamen_rider") {
+      return itemsList.filter((e) => e.tokusatsuFranchise?.toLowerCase() === "kamen rider");
+    }
+    if (subTab === "power_rangers") {
+      return itemsList.filter((e) => e.tokusatsuFranchise?.toLowerCase() === "power rangers");
+    }
+
+    return itemsList;
+  };
+
+  // Derived Sorted lists
+  const currentFilteredList = sortHofEntries(filterBySubTab(hallOfFame));
 
   // Top 3 Podium Selection
   const rank1 = currentFilteredList[0];
@@ -87,14 +119,31 @@ export default function HallOfFamePage() {
   // Contenders (Ranks 4+)
   const restOfList = currentFilteredList.slice(3);
 
-  // Leaderboard sub-tabs switcher details
-  const subTabs = [
-    { id: "overall", label: "Overall", flag: "🌐" },
-    { id: "korean", label: "Korean", flag: "🇰🇷" },
-    { id: "japanese", label: "Japanese", flag: "🇯🇵" },
-    { id: "chinese", label: "Chinese", flag: "🇨🇳" },
-    { id: "hollywood", label: "Hollywood", flag: "🎬" },
-  ];
+  // Group Details Helper for theme button rendering
+  const getTabTheme = (tabId: RankingTab) => {
+    if (["overall", "korean", "japanese", "chinese", "hollywood"].includes(tabId)) {
+      return {
+        activeBgCyber: "rgba(255, 105, 180, 0.15)",
+        activeTextCyber: "#FF69B4",
+        activeBgBrutal: "#FFB7C5",
+        labelColorCyber: "rgba(255, 209, 232, 0.6)"
+      };
+    }
+    if (tabId === "singer") {
+      return {
+        activeBgCyber: "rgba(0, 245, 255, 0.15)",
+        activeTextCyber: "#00F5FF",
+        activeBgBrutal: "#A5F3FC",
+        labelColorCyber: "rgba(224, 232, 255, 0.6)"
+      };
+    }
+    return {
+      activeBgCyber: "rgba(250, 204, 21, 0.15)",
+      activeTextCyber: "#FEF08A",
+      activeBgBrutal: "#FEF08A",
+      labelColorCyber: "rgba(254, 240, 138, 0.6)"
+    };
+  };
 
   return (
     <AppShell>
@@ -152,54 +201,162 @@ export default function HallOfFamePage() {
         </div>
       </motion.div>
 
-      {/* ── Regional Sub-Navigation Leaderboard Switcher ── */}
+      {/* ── VISUALLY-DIVIDED CATEGORY FILTER TOOLBAR ── */}
       <div 
-        className="mb-8 p-1.5 rounded-xl flex flex-wrap gap-1.5 text-xs font-bold w-fit border-adaptive-unique"
+        className="mb-8 p-4 rounded-2xl flex flex-col md:flex-row gap-6 border border-adaptive-unique select-none relative z-20"
         style={{
-          backgroundColor: isCyber ? "rgba(0,0,0,0.4)" : "#FFFFFF",
+          backgroundColor: isCyber ? "rgba(0,0,0,0.3)" : "#FFFFFF",
           borderColor: isCyber ? "rgba(0,245,255,0.15)" : "#000000",
           borderWidth: isCyber ? "1px" : "3px",
-          boxShadow: isCyber ? "none" : "4px 4px 0 #000"
+          boxShadow: isCyber ? "none" : "6px 6px 0 #000"
         }}
       >
-        {subTabs.map((tab) => {
-          const isActive = subTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setSubTab(tab.id as any)}
-              className="flex-1 min-w-[100px] py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all"
-              style={{
-                backgroundColor: isActive
-                  ? isCyber 
-                    ? "rgba(0, 245, 255, 0.15)"
-                    : "#FFD700"
-                  : "transparent",
-                color: isActive 
-                  ? isCyber 
-                    ? "#00F5FF" 
-                    : "#000"
-                  : isCyber
-                    ? "#94A3B8"
-                    : "#666",
-                border: isActive && !isCyber ? "2px solid #000" : "2px solid transparent",
-                transform: isActive && !isCyber ? "translate(-2px, -2px)" : "none",
-                boxShadow: isActive && !isCyber ? "2px 2px 0 #000" : "none",
-              }}
-            >
-              <span>{tab.flag}</span>
-              <span className="uppercase tracking-wider text-[10px]">{tab.label}</span>
-            </button>
-          );
-        })}
+        {/* dramas section */}
+        <div className="flex-1 space-y-2">
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-[#FFB7C5] dark:text-[#FF69B4] flex items-center gap-1.5">
+            <span>🎭</span> Drama Rankings (Group 1)
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { id: "overall", label: "Overall", flag: "🌐" },
+              { id: "korean", label: "Korean", flag: "🇰🇷" },
+              { id: "japanese", label: "Japanese", flag: "🇯🇵" },
+              { id: "chinese", label: "Chinese", flag: "🇨🇳" },
+              { id: "hollywood", label: "Hollywood", flag: "🎬" },
+            ].map((tab) => {
+              const isActive = subTab === tab.id;
+              const t = getTabTheme(tab.id as RankingTab);
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setSubTab(tab.id as RankingTab)}
+                  className="relative py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all text-[10px] font-black uppercase tracking-wider border border-transparent"
+                  style={{
+                    backgroundColor: isActive && !isCyber ? t.activeBgBrutal : "transparent",
+                    color: isActive 
+                      ? isCyber ? t.activeTextCyber : "#000"
+                      : isCyber ? t.labelColorCyber : "#444",
+                    border: isActive && !isCyber ? "2px solid #000" : "2px solid transparent",
+                    transform: isActive && !isCyber ? "translate(-1px, -1px)" : "none",
+                    boxShadow: isActive && !isCyber ? "2px 2px 0 #000" : "none",
+                  }}
+                >
+                  {isActive && isCyber && (
+                    <motion.div
+                      layoutId="activeRankingGlow"
+                      className="absolute inset-0 rounded-lg -z-10 border border-[#FF69B4]/30"
+                      style={{ backgroundColor: t.activeBgCyber }}
+                      transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                    />
+                  )}
+                  <span>{tab.flag}</span>
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* divider line */}
+        <div className="hidden md:block w-px bg-adaptive-unique self-stretch opacity-30" />
+
+        {/* singers section */}
+        <div className="space-y-2">
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-[#A5F3FC] dark:text-[#00F5FF] flex items-center gap-1.5">
+            <span>🎤</span> Singer Rankings (Group 2)
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { id: "singer", label: "Singers Only", flag: "🎵" },
+            ].map((tab) => {
+              const isActive = subTab === tab.id;
+              const t = getTabTheme(tab.id as RankingTab);
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setSubTab(tab.id as RankingTab)}
+                  className="relative py-1.5 px-4 rounded-lg flex items-center justify-center gap-1.5 transition-all text-[10px] font-black uppercase tracking-wider border border-transparent"
+                  style={{
+                    backgroundColor: isActive && !isCyber ? t.activeBgBrutal : "transparent",
+                    color: isActive 
+                      ? isCyber ? t.activeTextCyber : "#000"
+                      : isCyber ? t.labelColorCyber : "#444",
+                    border: isActive && !isCyber ? "2px solid #000" : "2px solid transparent",
+                    transform: isActive && !isCyber ? "translate(-1px, -1px)" : "none",
+                    boxShadow: isActive && !isCyber ? "2px 2px 0 #000" : "none",
+                  }}
+                >
+                  {isActive && isCyber && (
+                    <motion.div
+                      layoutId="activeRankingGlow"
+                      className="absolute inset-0 rounded-lg -z-10 border border-[#00F5FF]/30"
+                      style={{ backgroundColor: t.activeBgCyber }}
+                      transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                    />
+                  )}
+                  <span>{tab.flag}</span>
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* divider line */}
+        <div className="hidden md:block w-px bg-adaptive-unique self-stretch opacity-30" />
+
+        {/* tokusatsu section */}
+        <div className="flex-1 space-y-2">
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-[#FEF08A] dark:text-[#FBBF24] flex items-center gap-1.5">
+            <span>🦸</span> Tokusatsu Rankings (Group 3)
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { id: "toku_overall", label: "Toku Overall", flag: "💥" },
+              { id: "ultraman", label: "Ultraman", flag: "🔴" },
+              { id: "kamen_rider", label: "Kamen Rider", flag: "🟢" },
+              { id: "power_rangers", label: "Power Rangers", flag: "⚡" },
+            ].map((tab) => {
+              const isActive = subTab === tab.id;
+              const t = getTabTheme(tab.id as RankingTab);
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setSubTab(tab.id as RankingTab)}
+                  className="relative py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all text-[10px] font-black uppercase tracking-wider border border-transparent"
+                  style={{
+                    backgroundColor: isActive && !isCyber ? t.activeBgBrutal : "transparent",
+                    color: isActive 
+                      ? isCyber ? t.activeTextCyber : "#000"
+                      : isCyber ? t.labelColorCyber : "#444",
+                    border: isActive && !isCyber ? "2px solid #000" : "2px solid transparent",
+                    transform: isActive && !isCyber ? "translate(-1px, -1px)" : "none",
+                    boxShadow: isActive && !isCyber ? "2px 2px 0 #000" : "none",
+                  }}
+                >
+                  {isActive && isCyber && (
+                    <motion.div
+                      layoutId="activeRankingGlow"
+                      className="absolute inset-0 rounded-lg -z-10 border border-[#FEF08A]/30"
+                      style={{ backgroundColor: t.activeBgCyber }}
+                      transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                    />
+                  )}
+                  <span>{tab.flag}</span>
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* ── 3-Position Podium Layout with physical pedestal blocks ── */}
       {currentFilteredList.length === 0 ? (
         <div className="py-20 text-center flex flex-col items-center">
           <div className="text-4xl mb-4 grayscale opacity-50">🏆</div>
-          <h3 className="font-black text-lg theme-text-primary mb-2">No Legends Yet</h3>
-          <p className="text-sm theme-text-muted">Use the directory page to enshrine your first entry!</p>
+          <h3 className="font-black text-lg theme-text-primary mb-2">No Ranked Legends</h3>
+          <p className="text-sm theme-text-muted">Use the directory page to enshrine your first entry in this category!</p>
         </div>
       ) : (
         <div className="mb-16">
