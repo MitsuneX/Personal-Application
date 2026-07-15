@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, JetBrains_Mono, Orbitron } from "next/font/google";
-import { ThemeProvider } from "@/lib/theme";
+import { RootProviders } from "@/components/providers/RootProviders";
 import "./globals.css";
 
 // ─── Fonts ────────────────────────────────────────────────────────────────────
@@ -92,7 +92,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="font-[family-name:var(--font-space-grotesk)] antialiased">
-        <ThemeProvider>{children}</ThemeProvider>
+        <RootProviders>{children}</RootProviders>
       </body>
     </html>
   );
