@@ -5,6 +5,7 @@ import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
 import type { GameEntry, GameCategory } from "@/lib/store/dashboardStore";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 interface GameEditorModalProps {
   isOpen: boolean;
@@ -199,19 +200,11 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary">CATEGORY</label>
-              <select
+              <CustomSelect
                 value={category}
-                onChange={(e) => setCategory(e.target.value as GameCategory)}
-                className="w-full p-2 rounded-xl border text-sm font-semibold focus:outline-none cursor-pointer"
-                style={{
-                  ...inputStyles,
-                  backgroundColor: isCyber ? "#050816" : "#fff",
-                }}
-              >
-                {CATEGORY_OPTIONS.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
+                onChange={(val) => setCategory(val as GameCategory)}
+                options={CATEGORY_OPTIONS}
+              />
             </div>
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary">SUB-CATEGORY / ROLE</label>
@@ -229,19 +222,11 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary">PLATFORM</label>
-              <select
+              <CustomSelect
                 value={platform}
-                onChange={(e) => setPlatform(e.target.value as GameEntry["platform"])}
-                className="w-full p-2 rounded-xl border text-sm font-semibold focus:outline-none cursor-pointer"
-                style={{
-                  ...inputStyles,
-                  backgroundColor: isCyber ? "#050816" : "#fff",
-                }}
-              >
-                {PLATFORM_OPTIONS.map((plat) => (
-                  <option key={plat} value={plat}>{plat}</option>
-                ))}
-              </select>
+                onChange={(val) => setPlatform(val as any)}
+                options={PLATFORM_OPTIONS}
+              />
             </div>
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary">RANK VALUE</label>

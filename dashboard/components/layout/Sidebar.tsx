@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { NavLink } from "@/components/ui/NavLink";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { ProfileEditorModal } from "@/components/ui/ProfileEditorModal";
 import { ProfileHoverPopover } from "@/components/ui/ProfileHoverPopover";
@@ -76,6 +76,7 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
   const [tokusatsuOpen, setTokusatsuOpen] = useState(pathname.startsWith("/tokusatsu"));
   const [editorOpen, setEditorOpen] = useState(false);
   const [aestheticsOpen, setAestheticsOpen] = useState(false);
+  const router = useRouter();
 
   const { profile } = useDashboardStore();
   const avatar = profile.avatar || "/avatar.png";
@@ -338,7 +339,7 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
             className="shrink-0 relative overflow-visible"
             style={{
               borderTop: isCyber ? "1px solid rgba(0,245,255,0.12)" : "2px solid rgba(0,0,0,0.1)",
-              height: 56,
+              height: 154,
               background: isCyber ? "rgba(5, 8, 22, 0.95)" : "#FFFDEB",
             }}
           >
@@ -365,33 +366,83 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
             )}
 
             {/* Sidebar Bottom Bar Container */}
-            <div className="absolute inset-0 z-10 flex items-center justify-between px-3.5 gap-2 min-w-0">
+            <div className="absolute inset-0 z-10 flex flex-col justify-between p-3.5 min-w-0 gap-1.5">
               <ProfileHoverPopover
                 onOpenAesthetics={() => setAestheticsOpen(true)}
                 placement="up"
-                className="min-w-0 flex-1 relative"
+                className="min-w-0 w-full relative"
               >
-                <div className="flex items-center gap-2 cursor-pointer min-w-0">
-                  {/* Avatar */}
-                  <div className="relative w-8 h-8 rounded-full overflow-hidden border shrink-0"
-                    style={{
-                      borderColor: isCyber ? "#00F5FF" : "#FF6B35",
-                    }}
-                  >
-                    <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+                <div className="flex flex-col gap-1.5 cursor-pointer min-w-0">
+                  {/* Top Row: Avatar & Name */}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {/* Avatar with status dot */}
+                    <div className="relative shrink-0">
+                      <div className="w-9 h-9 rounded-full overflow-hidden border"
+                        style={{
+                          borderColor: isCyber ? "#00F5FF" : "#FF6B35",
+                        }}
+                      >
+                        <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+                      </div>
+                      {/* Active Status Dot */}
+                      <span 
+                        className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border bg-[#22c55e]"
+                        style={{
+                          borderColor: isCyber ? "#050816" : "#FFFFFF",
+                          boxShadow: "0 0 6px #22c55e",
+                        }}
+                      />
+                    </div>
+
+                    {/* Name & tagline/customTag */}
+                    <div className="min-w-0 flex-1 leading-tight">
+                      <p className="font-black text-xs truncate" style={{ color: isCyber ? "#E0E8FF" : "#1A1A1A" }}>
+                        {profile.name}
+                      </p>
+                      <p className="text-[9px] theme-text-muted truncate font-bold font-mono">
+                        {profile.customTag ? profile.customTag : (isCyber ? `STATUS::${profile.status.toUpperCase()}` : profile.tagline)}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Name Info */}
-                  <div className="min-w-0 flex-1 leading-tight">
-                    <p className="font-black text-xs truncate" style={{ color: isCyber ? "#E0E8FF" : "#1A1A1A" }}>
-                      {profile.name}
+                  {/* Bio snippet */}
+                  {profile.bio && (
+                    <p className="text-[10px] theme-text-secondary line-clamp-2 leading-normal">
+                      {profile.bio}
                     </p>
-                    <p className="text-[9px] theme-text-muted truncate font-bold font-mono">
-                      {profile.customTag ? profile.customTag : (isCyber ? `STATUS::${profile.status.toUpperCase()}` : profile.tagline)}
-                    </p>
-                  </div>
+                  )}
                 </div>
               </ProfileHoverPopover>
+
+              {/* Action Buttons Row */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setAestheticsOpen(true)}
+                  className="flex-1 py-1 px-1.5 text-[9px] font-black uppercase tracking-wider rounded transition-all hover:scale-[1.03]"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(0, 245, 255, 0.12)" : "#FFF9C4",
+                    borderColor: isCyber ? "rgba(0, 245, 255, 0.4)" : "#000",
+                    borderWidth: isCyber ? "1px" : "2px",
+                    color: isCyber ? "#00F5FF" : "#1A1A1A",
+                    boxShadow: isCyber ? "none" : "2px 2px 0px #000",
+                  }}
+                >
+                  🎨 Edit Aesthetic
+                </button>
+                <button
+                  onClick={() => router.push("/profile")}
+                  className="flex-1 py-1 px-1.5 text-[9px] font-black uppercase tracking-wider rounded transition-all hover:scale-[1.03]"
+                  style={{
+                    backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
+                    borderColor: isCyber ? "transparent" : "#000",
+                    borderWidth: isCyber ? "0px" : "2px",
+                    color: isCyber ? "#050816" : "#FFF",
+                    boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.3)" : "2px 2px 0px #000",
+                  }}
+                >
+                  👤 View Profile
+                </button>
+              </div>
             </div>
           </div>
         ) : (
@@ -399,15 +450,24 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
             onOpenAesthetics={() => setAestheticsOpen(true)}
             placement="right"
           >
-            <Link
-              href="/profile"
+            <div
+              onClick={() => router.push("/profile")}
               className="py-4 shrink-0 flex justify-center cursor-pointer block"
               style={{ borderTop: isCyber ? "1px solid rgba(0,245,255,0.12)" : "2px solid rgba(0,0,0,0.1)" }}
             >
-              <div className="w-8 h-8 rounded-full overflow-hidden border-2" style={{ borderColor: isCyber ? "#00F5FF" : "#FF6B35" }}>
-                <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+              <div className="relative">
+                <div className="w-8 h-8 rounded-full overflow-hidden border-2" style={{ borderColor: isCyber ? "#00F5FF" : "#FF6B35" }}>
+                  <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+                </div>
+                <span 
+                  className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border bg-[#22c55e]"
+                  style={{
+                    borderColor: isCyber ? "#050816" : "#FFFFFF",
+                    boxShadow: "0 0 6px #22c55e",
+                  }}
+                />
               </div>
-            </Link>
+            </div>
           </ProfileHoverPopover>
         )}
       </motion.aside>

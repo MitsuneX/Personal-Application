@@ -8,6 +8,7 @@ import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
 import type { HallOfFameEntry, MediaStatus } from "@/lib/store/dashboardStore";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 interface HofEditorModalProps {
   isOpen: boolean;
@@ -401,30 +402,28 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1">
                       <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>Type</label>
-                      <select
+                      <CustomSelect
                         value={type}
-                        onChange={(e) => setType(e.target.value as any)}
-                        className={inputClass + " cursor-pointer"}
-                        style={inputStyle}
-                      >
-                        <option value="actress">💫 Actress</option>
-                        <option value="actor">🎭 Actor</option>
-                        <option value="anime">⛩️ Anime</option>
-                      </select>
+                        onChange={(val) => setType(val as any)}
+                        options={[
+                          { value: "actress", label: "Actress", icon: "💫" },
+                          { value: "actor", label: "Actor", icon: "🎭" },
+                          { value: "anime", label: "Anime", icon: "⛩️" },
+                        ]}
+                      />
                     </div>
                     <div className="flex flex-col gap-1">
                       <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>Status Tier</label>
-                      <select
+                      <CustomSelect
                         value={status}
-                        onChange={(e) => setStatus(e.target.value as any)}
-                        className={inputClass + " cursor-pointer"}
-                        style={inputStyle}
-                      >
-                        <option value="GOAT Status">👑 GOAT Status</option>
-                        <option value="All-Star">⭐ All-Star</option>
-                        <option value="Rising">🚀 Rising</option>
-                        <option value="Classic">💎 Classic</option>
-                      </select>
+                        onChange={(val) => setStatus(val as any)}
+                        options={[
+                          { value: "GOAT Status", label: "GOAT Status", icon: "👑" },
+                          { value: "All-Star", label: "All-Star", icon: "⭐" },
+                          { value: "Rising", label: "Rising", icon: "🚀" },
+                          { value: "Classic", label: "Classic", icon: "💎" },
+                        ]}
+                      />
                     </div>
                   </div>
 
@@ -432,21 +431,20 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1">
                       <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>Nationality</label>
-                      <select
+                      <CustomSelect
                         value={nationality}
-                        onChange={(e) => setNationality(e.target.value)}
-                        className={inputClass + " cursor-pointer"}
-                        style={inputStyle}
-                      >
-                        <option value="">— Select —</option>
-                        <option value="Korea">🇰🇷 Korea</option>
-                        <option value="China">🇨🇳 China</option>
-                        <option value="Japan">🇯🇵 Japan</option>
-                        <option value="Hollywood">🎬 Hollywood</option>
-                        <option value="American">🇺🇸 American</option>
-                        <option value="Canadian">🇨🇦 Canadian</option>
-                        <option value="Singer">🎤 Singer</option>
-                      </select>
+                        onChange={(val) => setNationality(val)}
+                        options={[
+                          { value: "", label: "— Select —" },
+                          { value: "Korea", label: "Korea", icon: "🇰🇷" },
+                          { value: "China", label: "China", icon: "🇨🇳" },
+                          { value: "Japan", label: "Japan", icon: "🇯🇵" },
+                          { value: "Hollywood", label: "Hollywood", icon: "🎬" },
+                          { value: "American", label: "American", icon: "🇺🇸" },
+                          { value: "Canadian", label: "Canadian", icon: "🇨🇦" },
+                          { value: "Singer", label: "Singer", icon: "🎤" },
+                        ]}
+                      />
                     </div>
                     <div className="flex flex-col gap-1">
                       <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>Official Rank</label>

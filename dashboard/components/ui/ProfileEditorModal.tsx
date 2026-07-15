@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 interface ProfileEditorModalProps {
   isOpen: boolean;
@@ -84,24 +85,18 @@ export function ProfileEditorModal({ isOpen, onClose }: ProfileEditorModalProps)
                     />
                   </div>
 
-                  {/* Status */}
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">Status</label>
-                    <select
+                    <CustomSelect
                       value={status}
-                      onChange={(e) => setStatus(e.target.value as any)}
-                      className="px-3 py-2 text-sm font-semibold rounded-lg outline-none border cursor-pointer"
-                      style={{
-                        backgroundColor: isCyber ? "rgba(5, 8, 22, 0.95)" : "#FFF9F0",
-                        borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000000",
-                        color: isCyber ? "#fff" : "#1a1a1a",
-                      }}
-                    >
-                      <option value="online">Online</option>
-                      <option value="away">Away</option>
-                      <option value="busy">Busy</option>
-                      <option value="offline">Offline</option>
-                    </select>
+                      onChange={(val) => setStatus(val as any)}
+                      options={[
+                        { value: "online", label: "Online", icon: "🟢" },
+                        { value: "away", label: "Away", icon: "🟡" },
+                        { value: "busy", label: "Busy", icon: "🔴" },
+                        { value: "offline", label: "Offline", icon: "⚪" },
+                      ]}
+                    />
                   </div>
                 </div>
 

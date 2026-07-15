@@ -9,6 +9,7 @@ import { ProfileEditorModal } from "@/components/ui/ProfileEditorModal";
 import { ThemeSwitcherToggle } from "@/components/ui/ThemeSwitcherToggle";
 import { ProfileHoverPopover } from "@/components/ui/ProfileHoverPopover";
 import { AestheticsModal } from "@/components/ui/AestheticsModal";
+import { CommandPalette } from "@/components/ui/CommandPalette";
 import Link from "next/link";
 
 interface HeaderProps {
@@ -151,76 +152,32 @@ export function Header({ onMenuToggle }: HeaderProps) {
           </motion.div>
         </div>
 
-        {/* Middle Section: Search Bar */}
-        <div className="flex-1 max-w-md mx-6 hidden sm:block relative" ref={searchRef}>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder={isCyber ? "SEARCH_REGISTRY..." : "Search dashboard..."}
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setShowResults(true);
-              }}
-              onFocus={() => setShowResults(true)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs font-mono font-bold tracking-wide rounded-lg border outline-none transition-all"
+        {/* Middle Section: Search Bar Triggering Command Palette */}
+        <div className="flex-1 max-w-md mx-6 hidden sm:block relative">
+          <div 
+            onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
+            className="w-full pl-9 pr-3 py-1.5 text-xs font-mono font-bold tracking-wide rounded-lg border outline-none transition-all flex items-center justify-between cursor-pointer"
+            style={{
+              backgroundColor: isCyber ? "rgba(0,245,255,0.03)" : "#FFF9F0",
+              borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#000000",
+              color: isCyber ? "#00F5FF" : "#1A1A1A",
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="opacity-70">🔍</span>
+              <span className="opacity-50">{isCyber ? "SEARCH_REGISTRY..." : "Search dashboard..."}</span>
+            </div>
+            <span 
+              className="text-[9px] px-1.5 py-0.5 rounded font-black border uppercase tracking-wider shrink-0"
               style={{
-                backgroundColor: isCyber ? "rgba(0,245,255,0.03)" : "#FFF9F0",
-                borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#000000",
-                color: isCyber ? "#00F5FF" : "#1A1A1A",
-                boxShadow: isCyber && showResults && searchQuery ? "0 0 15px rgba(0,245,255,0.15)" : "none",
+                backgroundColor: isCyber ? "rgba(0,245,255,0.1)" : "#E5E7EB",
+                borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#D1D5DB",
+                color: isCyber ? "#00F5FF" : "#4B5563"
               }}
-            />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs" style={{ color: isCyber ? "#00F5FF" : "#888" }}>
-              🔍
+            >
+              Ctrl + K
             </span>
           </div>
-
-          {/* Search Dropdown Panel */}
-          <AnimatePresence>
-            {showResults && searchQuery.trim().length > 1 && (
-              <motion.div
-                className="absolute left-0 right-0 mt-2 rounded-xl p-2 z-50 border max-h-80 overflow-y-auto"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                style={{
-                  backgroundColor: isCyber ? "#0A0F2C" : "#FFFFFF",
-                  border: isCyber ? "1px solid rgba(0,245,255,0.3)" : "2.5px solid #000000",
-                  boxShadow: isCyber ? "0 0 30px rgba(0,245,255,0.2)" : "4px 4px 0px 0px rgba(0,0,0,1)",
-                }}
-              >
-                {searchResults.length === 0 ? (
-                  <p className="text-xs p-3 text-center theme-text-muted font-bold font-mono">
-                    {isCyber ? "NO_MATCHES_FOUND" : "No results found"}
-                  </p>
-                ) : (
-                  <div className="space-y-0.5">
-                    {searchResults.map((res) => (
-                      <div
-                        key={res.id}
-                        onClick={() => handleResultClick(res.url)}
-                        className="p-2 rounded-lg cursor-pointer flex items-center justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                      >
-                        <div>
-                          <p className="text-xs font-black theme-text-primary">{res.name}</p>
-                          {res.detail && <p className="text-[10px] theme-text-muted mt-0.5">{res.detail}</p>}
-                        </div>
-                        <span className="text-[10px] uppercase font-black tracking-wider px-2 py-0.5 rounded-full"
-                          style={{
-                            backgroundColor: isCyber ? "rgba(0,245,255,0.1)" : "rgba(0,0,0,0.06)",
-                            color: isCyber ? "#00F5FF" : "#FF6B35",
-                          }}
-                        >
-                          {res.type}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
 
         {/* Right Section: customizable profile and clock */}
@@ -284,6 +241,9 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
       {/* Aesthetics Dialog */}
       <AestheticsModal isOpen={aestheticsOpen} onClose={() => setAestheticsOpen(false)} />
+
+      {/* Global Command Palette */}
+      <CommandPalette />
     </>
   );
 }

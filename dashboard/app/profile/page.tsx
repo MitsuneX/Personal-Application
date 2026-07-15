@@ -7,6 +7,7 @@ import { ProfileCard, BORDER_CONFIGS } from "@/components/cards/ProfileCard";
 import { GamifiedStatsWidget } from "@/components/cards/GamifiedStatsWidget";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 const PLATFORMS = ["GitHub", "Twitter/X", "Discord", "Instagram", "LinkedIn", "Tiktok"];
 
@@ -212,17 +213,16 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">Status Tier</label>
-                  <select
+                  <CustomSelect
                     value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                    className={inputClass + " cursor-pointer"}
-                    style={inputStyle}
-                  >
-                    <option value="online">🟢 Online</option>
-                    <option value="away">🟡 Away</option>
-                    <option value="busy">🔴 Busy</option>
-                    <option value="offline">⚪ Offline</option>
-                  </select>
+                    onChange={(val) => setStatus(val)}
+                    options={[
+                      { value: "online", label: "Online", icon: "🟢" },
+                      { value: "away", label: "Away", icon: "🟡" },
+                      { value: "busy", label: "Busy", icon: "🔴" },
+                      { value: "offline", label: "Offline", icon: "⚪" },
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -274,44 +274,38 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">MBTI Type</label>
-                  <select
+                  <CustomSelect
                     value={mbti}
-                    onChange={(e) => setMbti(e.target.value)}
-                    className={inputClass + " cursor-pointer"}
-                    style={inputStyle}
-                  >
-                    <option value="">Select MBTI...</option>
-                    {["INTJ", "ENTJ", "INFJ", "ENFJ", "INFP", "ENFP", "INTP", "ENTP", "ISTJ", "ESTJ", "ISFJ", "ESFJ", "ISTP", "ESTP", "ISFP", "ESFP"].map((type) => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => setMbti(val)}
+                    options={[
+                      { value: "", label: "Select MBTI..." },
+                      ...["INTJ", "ENTJ", "INFJ", "ENFJ", "INFP", "ENFP", "INTP", "ENTP", "ISTJ", "ESTJ", "ISFJ", "ESFJ", "ISTP", "ESTP", "ISFP", "ESFP"].map(t => ({ value: t, label: t }))
+                    ]}
+                  />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">Zodiac Sign</label>
-                  <select
+                  <CustomSelect
                     value={zodiac}
-                    onChange={(e) => setZodiac(e.target.value)}
-                    className={inputClass + " cursor-pointer"}
-                    style={inputStyle}
-                  >
-                    <option value="">Select Zodiac...</option>
-                    {[
-                      { name: "Aries", symbol: "♈" },
-                      { name: "Taurus", symbol: "♉" },
-                      { name: "Gemini", symbol: "♊" },
-                      { name: "Cancer", symbol: "♋" },
-                      { name: "Leo", symbol: "♌" },
-                      { name: "Virgo", symbol: "♍" },
-                      { name: "Libra", symbol: "♎" },
-                      { name: "Scorpio", symbol: "♏" },
-                      { name: "Sagittarius", symbol: "♐" },
-                      { name: "Capricorn", symbol: "♑" },
-                      { name: "Aquarius", symbol: "♒" },
-                      { name: "Pisces", symbol: "♓" }
-                    ].map((z) => (
-                      <option key={z.name} value={z.name}>{z.symbol} {z.name}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => setZodiac(val)}
+                    options={[
+                      { value: "", label: "Select Zodiac..." },
+                      ...[
+                        { name: "Aries", symbol: "♈" },
+                        { name: "Taurus", symbol: "♉" },
+                        { name: "Gemini", symbol: "♊" },
+                        { name: "Cancer", symbol: "♋" },
+                        { name: "Leo", symbol: "♌" },
+                        { name: "Virgo", symbol: "♍" },
+                        { name: "Libra", symbol: "♎" },
+                        { name: "Scorpio", symbol: "♏" },
+                        { name: "Sagittarius", symbol: "♐" },
+                        { name: "Capricorn", symbol: "♑" },
+                        { name: "Aquarius", symbol: "♒" },
+                        { name: "Pisces", symbol: "♓" }
+                      ].map(z => ({ value: z.name, label: z.name, icon: z.symbol }))
+                    ]}
+                  />
                 </div>
               </div>
             </div>

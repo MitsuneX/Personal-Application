@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { AuthProvider, useAuth } from "@/lib/auth/AuthProvider";
 import { SplashGuard } from "@/components/ui/SplashGuard";
 import { ThemeProvider } from "@/lib/theme";
+import { useRealtimeSync } from "@/lib/hooks/useRealtimeSync";
 
 // Public routes that don't need the splash auth guard
 const PUBLIC_PATHS = ["/login", "/signup", "/auth"];
@@ -14,6 +15,9 @@ const PUBLIC_PATHS = ["/login", "/signup", "/auth"];
 function AuthGateInner({ children }: { children: React.ReactNode }) {
   const { isLoading } = useAuth();
   const pathname = usePathname();
+
+  // Activate realtime sync globally
+  useRealtimeSync();
 
   // Skip splash guard on public/auth routes — show them immediately
   const isPublic = PUBLIC_PATHS.some((p) => pathname?.startsWith(p));
