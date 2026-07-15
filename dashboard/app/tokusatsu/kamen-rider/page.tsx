@@ -11,7 +11,16 @@ import { HofEntryCard, getGroupForEntry, getGroupDetails } from "@/components/ca
 import type { HallOfFameEntry } from "@/lib/store/dashboardStore";
 import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
 
-const KAMEN_RIDER_THEME = {
+// Define a strict type for the theme object so TypeScript compilation passes
+interface ThemeStyles {
+  banner: string;
+  border: string;
+  accent: string;
+  accent2: string;
+  textShadow: string;
+}
+
+const KAMEN_RIDER_THEME: { cyber: ThemeStyles; brutal: ThemeStyles } = {
   cyber: {
     banner: "linear-gradient(135deg, #0A0A0A 0%, rgba(34,197,94,0.15) 50%, #0A0A0A 100%)",
     border: "rgba(34,197,94,0.4)",
@@ -36,7 +45,7 @@ export default function KamenRiderPage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<HallOfFameEntry | null>(null);
 
-  const t = isCyber ? KAMEN_RIDER_THEME.cyber : KAMEN_RIDER_THEME.brutal;
+  const t: ThemeStyles = isCyber ? KAMEN_RIDER_THEME.cyber : KAMEN_RIDER_THEME.brutal;
 
   // Filter for Kamen Rider franchise entries
   const kamenRiderEntries = hallOfFame.filter(
@@ -93,7 +102,7 @@ export default function KamenRiderPage() {
               style={{ 
                 color: isCyber ? "#E2E8F0" : "#1A1A1A", 
                 fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
-                textShadow: isCyber ? t.textShadow : "none" 
+                textShadow: t.textShadow 
               }}
             >
               {isCyber ? "KAMEN_RIDER_ROSTER" : "Kamen Rider Franchise Roster"}
