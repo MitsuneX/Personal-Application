@@ -66,7 +66,7 @@ function GameCard({
             e.stopPropagation();
             onEditClick(game);
           }}
-          className="absolute top-3 right-3 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-black/10 dark:hover:bg-white/10 z-20 cursor-pointer"
+          className="absolute top-10 right-5 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-black/10 dark:hover:bg-white/10 z-20 cursor-pointer"
           style={{
             color: isCyber ? "#00F5FF" : "#000",
           }}
