@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -109,7 +109,7 @@ function ToastNotification({
 
 // ─── Main Login Page ───────────────────────────────────────────────────────────
 
-export default function LoginPage() {
+function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -680,5 +680,15 @@ export default function LoginPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+// Suspense wrapper required because useSearchParams() is used inside LoginPageInner.
+// Without this, Next.js cannot statically pre-render /login and the build fails.
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#020817" }} />}>
+      <LoginPageInner />
+    </Suspense>
   );
 }
