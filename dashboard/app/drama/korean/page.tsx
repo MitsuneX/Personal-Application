@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, Suspense, useEffect } from "react";
 import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
@@ -10,13 +10,14 @@ import { DramaSearchModal } from "@/components/ui/DramaSearchModal";
 import { ManualDramaModal } from "@/components/ui/ManualDramaModal";
 import { MediaCard } from "@/components/cards/MediaCard";
 import { FloatingFAB } from "@/components/ui/FloatingFAB";
+import { useSearchParams } from "next/navigation";
 
 const KR = {
   brutal: { text: "#003366", accent: "#2EC4B6", accent2: "#E84855" },
   cyber:  { text: "#E0F7FA", accent: "#22D3EE", accent2: "#F472B6" },
 };
 
-export default function KoreanDramaPage() {
+function KoreanDramaPageContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { dramas: allDramas, dramaLog, deleteDramaLog, updateDrama } = useDashboardStore();
@@ -70,6 +71,26 @@ export default function KoreanDramaPage() {
       deleteDramaLog(id);
     }
   }, [logEntries, deleteDramaLog]);
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const targetId = searchParams?.get("id");
+    if (targetId) {
+      setTimeout(() => {
+        const el = document.getElementById(`media-card-${targetId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.style.outline = isCyber ? `3px solid ${p.accent}` : `3.5px solid ${p.accent}`;
+          el.style.outlineOffset = "4px";
+          el.style.borderRadius = "12px";
+          setTimeout(() => {
+            el.style.outline = "none";
+          }, 3000);
+        }
+      }, 600);
+    }
+  }, [searchParams, isCyber, p.accent]);
 
   return (
     <>
@@ -172,5 +193,13 @@ export default function KoreanDramaPage() {
       <ManualDramaModal isOpen={manualOpen} onClose={() => setManualOpen(false)} defaultCountry="korean" />
       <FloatingFAB category="korean" onSearch={() => setSearchOpen(true)} onManualAdd={() => setManualOpen(true)} />
     </>
+  );
+}
+
+export default function KoreanDramaPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center opacity-40">Loading workspace...</div>}>
+      <KoreanDramaPageContent />
+    </Suspense>
   );
 }

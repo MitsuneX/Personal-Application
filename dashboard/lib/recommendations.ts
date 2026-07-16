@@ -120,7 +120,7 @@ export function computeRecommendations(
         : "In your watchlist — pick it back up!",
       score,
       matchTags,
-      url: "/anime",
+      url: `/anime?id=${a.id}`,
     });
   });
 
@@ -150,7 +150,7 @@ export function computeRecommendations(
       reason: `You love ${dramaCountries[0] || "drama"} content — finish this one!`,
       score,
       matchTags,
-      url: `/drama/${d.country}`,
+      url: `/drama/${d.country}?id=${d.id}`,
     });
   });
 

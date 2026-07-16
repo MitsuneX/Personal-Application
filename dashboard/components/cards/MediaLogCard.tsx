@@ -101,10 +101,73 @@ export function MediaLogCard() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const media = useDashboardStore((s) => s.media);
+  const dramas = useDashboardStore((s) => s.dramas);
+  const dramaLog = useDashboardStore((s) => s.dramaLog);
   const [searchOpen, setSearchOpen] = useState(false);
 
+  // Map local + OMDb dramas to a unified structure
+  const unifiedDramas = React.useMemo(() => {
+    return [
+      ...dramas.map((d) => ({
+        title: d.title,
+        episodes: d.episodes,
+        episodesWatched: d.episodesWatched,
+        status: d.status,
+        rating: d.rating,
+        genre: d.genre,
+        year: d.year,
+        platform: d.platform || "Local",
+        type: "Series",
+      })),
+      ...dramaLog.map((d) => {
+        const isCompleted = d.statusBadge === "Classic" || d.statusBadge === "GOAT Status";
+        return {
+          title: d.title,
+          episodes: d.type === "Movie" ? 1 : 16,
+          episodesWatched: isCompleted ? (d.type === "Movie" ? 1 : 16) : 0,
+          status: isCompleted ? ("Completed" as const) : ("Watching" as const),
+          rating: d.rating ? Math.round(parseFloat(d.rating)) : 8,
+          genre: d.type || "Series",
+          year: d.releaseYear || 2026,
+          platform: "OMDb Log",
+          type: d.type,
+        };
+      }),
+    ];
+  }, [dramas, dramaLog]);
+
+  // Find the current active watching series
+  const currentWatching = React.useMemo(() => {
+    return unifiedDramas.find((d) => d.status === "Watching" && d.type !== "Movie");
+  }, [unifiedDramas]);
+
+  // Find the top-rated completed show/movie
+  const topRatedDrama = React.useMemo(() => {
+    const completed = unifiedDramas.filter((d) => d.status === "Completed");
+    if (completed.length === 0) return null;
+    return [...completed].sort((a, b) => b.rating - a.rating)[0];
+  }, [unifiedDramas]);
+
+  const activeSeries = currentWatching || {
+    title: media.currentSeries.title,
+    episodesWatched: media.currentSeries.episode,
+    episodes: media.currentSeries.totalEpisodes,
+    platform: media.currentSeries.platform,
+  };
+
+  const activeTopFilm = topRatedDrama || {
+    title: media.topFilm.title,
+    year: media.topFilm.year,
+    genre: media.topFilm.genre,
+    rating: media.topFilm.rating,
+  };
+
+  const topFilmLabel = topRatedDrama
+    ? topRatedDrama.type === "Movie" ? "Top Film" : "Top Show"
+    : "Top Film";
+
   const seriesProgress = Math.round(
-    (media.currentSeries.episode / media.currentSeries.totalEpisodes) * 100
+    (activeSeries.episodesWatched / Math.max(1, activeSeries.episodes)) * 100
   );
 
   return (
@@ -172,14 +235,16 @@ export function MediaLogCard() {
                   className="text-xs font-bold tracking-widest uppercase mb-1"
                   style={{ color: isCyber ? "rgba(0,245,255,0.6)" : "rgba(0,0,0,0.5)" }}
                 >
-                  Top Film
+                  {topFilmLabel}
                 </p>
-                <p className="theme-text-primary font-black text-sm leading-tight">
-                  {media.topFilm.title}
+                <p className="theme-text-primary font-black text-sm leading-tight truncate">
+                  {activeTopFilm.title}
                 </p>
-                <p className="theme-text-muted text-xs">{media.topFilm.year} · {media.topFilm.genre}</p>
+                <p className="theme-text-muted text-xs truncate">
+                  {activeTopFilm.year} · {activeTopFilm.genre}
+                </p>
                 <div className="mt-1.5">
-                  <StarRating rating={media.topFilm.rating} />
+                  <StarRating rating={activeTopFilm.rating} />
                 </div>
               </div>
             </div>
@@ -202,11 +267,11 @@ export function MediaLogCard() {
             >
               Now Streaming
             </p>
-            <p className="theme-text-primary font-black text-sm leading-tight mb-0.5">
-              {media.currentSeries.title}
+            <p className="theme-text-primary font-black text-sm leading-tight mb-0.5 truncate">
+              {activeSeries.title}
             </p>
-            <p className="theme-text-muted text-xs mb-2">
-              Ep. {media.currentSeries.episode} / {media.currentSeries.totalEpisodes} · {media.currentSeries.platform}
+            <p className="theme-text-muted text-xs mb-2 truncate">
+              Ep. {activeSeries.episodesWatched} / {activeSeries.episodes} · {activeSeries.platform}
             </p>
 
             {/* Progress bar */}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, Suspense, useEffect } from "react";
 import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
@@ -10,13 +10,14 @@ import { DramaSearchModal } from "@/components/ui/DramaSearchModal";
 import { ManualDramaModal } from "@/components/ui/ManualDramaModal";
 import { MediaCard } from "@/components/cards/MediaCard";
 import { FloatingFAB } from "@/components/ui/FloatingFAB";
+import { useSearchParams } from "next/navigation";
 
 const HW = {
   brutal: { text: "#1E1B4B", accent: "#7C3AED", accent2: "#D97706" },
   cyber:  { text: "#EDE9FE", accent: "#A78BFA", accent2: "#FCD34D" },
 };
 
-export default function HollywoodDramaPage() {
+function HollywoodDramaPageContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { dramas: allDramas, dramaLog, deleteDramaLog, updateDrama } = useDashboardStore();
@@ -70,6 +71,26 @@ export default function HollywoodDramaPage() {
       deleteDramaLog(id);
     }
   }, [logEntries, deleteDramaLog]);
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const targetId = searchParams?.get("id");
+    if (targetId) {
+      setTimeout(() => {
+        const el = document.getElementById(`media-card-${targetId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.style.outline = isCyber ? `3px solid ${p.accent}` : `3.5px solid ${p.accent}`;
+          el.style.outlineOffset = "4px";
+          el.style.borderRadius = "12px";
+          setTimeout(() => {
+            el.style.outline = "none";
+          }, 3000);
+        }
+      }, 600);
+    }
+  }, [searchParams, isCyber, p.accent]);
 
   return (
     <>
@@ -177,5 +198,13 @@ export default function HollywoodDramaPage() {
       <ManualDramaModal isOpen={manualOpen} onClose={() => setManualOpen(false)} defaultCountry="hollywood" />
       <FloatingFAB category="hollywood" onSearch={() => setSearchOpen(true)} onManualAdd={() => setManualOpen(true)} />
     </>
+  );
+}
+
+export default function HollywoodDramaPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center opacity-40">Loading workspace...</div>}>
+      <HollywoodDramaPageContent />
+    </Suspense>
   );
 }

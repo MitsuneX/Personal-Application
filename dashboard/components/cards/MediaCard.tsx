@@ -3,6 +3,7 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
+import { usePathname, useRouter } from "next/navigation";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -282,7 +283,28 @@ export function MediaCard({
   const [localStatus, setLocalStatus] = useState(status);
   const [localEps, setLocalEps] = useState(episodesWatched);
   const [imgError, setImgError] = useState(false);
+  const [popSide, setPopSide] = useState<"left" | "right">("right");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const handleViewDetails = useCallback(() => {
+    const targetUrl = category === "anime" ? `/anime?id=${id}` : `/drama/${category}?id=${id}`;
+    if (pathname === (category === "anime" ? "/anime" : `/drama/${category}`)) {
+      const el = document.getElementById(`media-card-${id}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.style.outline = isCyber ? `3px solid ${accent}` : `3px solid ${accent2}`;
+        el.style.outlineOffset = "4px";
+        setTimeout(() => {
+          el.style.outline = "none";
+        }, 3000);
+      }
+    } else {
+      router.push(targetUrl);
+    }
+  }, [id, category, pathname, router, accent, accent2, isCyber]);
 
   useEffect(() => { setLocalStatus(status); }, [status]);
   useEffect(() => { setLocalEps(episodesWatched); }, [episodesWatched]);
@@ -294,18 +316,28 @@ export function MediaCard({
   const sc = STATUS_COLORS[statusColorKey] ?? { cyber: "#94A3B8", brutal: "#6B7280" };
   const statusColor = isCyber ? sc.cyber : sc.brutal;
 
-  // 3D tilt on mouse move
+  // 3D tilt on mouse move + horizontal popout side detector
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!cardRef.current) return;
     const r = cardRef.current.getBoundingClientRect();
     const x = ((e.clientX - r.left) / r.width - 0.5) * 7;
     const y = ((e.clientY - r.top) / r.height - 0.5) * -6;
     setTilt({ x, y });
+
+    // Dynamically choose left or right depending on coordinates
+    if (typeof window !== "undefined") {
+      if (e.clientX > window.innerWidth * 0.55) {
+        setPopSide("left");
+      } else {
+        setPopSide("right");
+      }
+    }
   }, []);
 
   const handleMouseLeave = useCallback(() => {
     setTilt({ x: 0, y: 0 });
     setHovered(false);
+    setDropdownOpen(false);
   }, []);
 
   const handleStatusCycle = useCallback((e: React.MouseEvent) => {
@@ -347,206 +379,327 @@ export function MediaCard({
 
   return (
     <div
-      ref={cardRef}
-      className="relative rounded-xl overflow-hidden"
-      style={{ ...baseStyle, minHeight: "230px" }}
+      id={`media-card-${id}`}
+      className="relative w-full h-full"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={handleMouseLeave}
-      onMouseMove={handleMouseMove}
     >
-      {/* ── Poster layer ── */}
-      {hasPoster && (
-        <>
-          <img
-            src={posterUrl}
-            alt={title}
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ objectPosition: "center 20%" }}
-            onError={() => setImgError(true)}
-          />
-          {/* Gradient overlay */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background: isCyber
-                ? `linear-gradient(to top, ${(THEMES[category].cyber as typeof THEMES["japanese"]["cyber"]).gradFrom} 0%, rgba(0,0,0,0.78) 45%, rgba(0,0,0,0.15) 100%)`
-                : `linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.6) 45%, rgba(0,0,0,0.08) 100%)`,
-            }}
-          />
-        </>
-      )}
-
-      {/* ── Cultural decorative overlay ── */}
-      <CulturalOverlay category={category} isCyber={isCyber} />
-
-      {/* ── Top accent strip ── */}
-      {isCyber ? (
-        <motion.div
-          className="absolute top-0 left-0 right-0 z-10"
-          style={{ height: "1.5px", background: `linear-gradient(90deg, transparent, ${accent}, ${accent2}, transparent)` }}
-          animate={{ opacity: [0.5, 1, 0.5] }}
-          transition={{ duration: 2.2, repeat: Infinity }}
-        />
-      ) : (
-        <div
-          className="absolute top-0 left-0 right-0 z-10"
-          style={{ height: "3px", background: `linear-gradient(90deg, ${accent} 0%, ${accent2} 100%)` }}
-        />
-      )}
-
-      {/* ── Content ── */}
-      <div className="relative z-20 p-4 flex flex-col gap-2 h-full" style={{ minHeight: "230px" }}>
-
-        {/* Title + status badge */}
-        <div className="flex items-start justify-between gap-2">
-          <h3
-            className="font-black text-sm leading-snug flex-1"
-            style={{ color: hasPoster ? "#fff" : cardText }}
-          >
-            {title}
-          </h3>
-          <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-            {/* Clickable status badge */}
-            <motion.button
-              onClick={handleStatusCycle}
-              whileTap={{ scale: 0.9 }}
-              title="Click to cycle status"
-              className="text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap select-none cursor-pointer"
+      {/* ── Base Card (rounded, overflow-hidden) ── */}
+      <div
+        ref={cardRef}
+        className="relative rounded-xl overflow-hidden w-full h-full"
+        style={{ ...baseStyle, minHeight: "230px" }}
+        onMouseMove={handleMouseMove}
+      >
+        {/* ── Poster layer ── */}
+        {hasPoster && (
+          <>
+            <img
+              src={posterUrl}
+              alt={title}
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ objectPosition: "center 20%" }}
+              onError={() => setImgError(true)}
+            />
+            {/* Gradient overlay */}
+            <div
+              className="absolute inset-0"
               style={{
-                backgroundColor: `${statusColor}22`,
-                color: statusColor,
-                border: `1.5px solid ${statusColor}55`,
-              }}
-            >
-              {localStatus}
-            </motion.button>
-            {/* Lock icon for read-only */}
-            {!isEditable && (
-              <span className="text-[9px] opacity-35 select-none" title="OMDb import — read only">🔒</span>
-            )}
-            {/* Delete button */}
-            {onDelete && (
-              <motion.button
-                whileTap={{ scale: 0.85 }}
-                onClick={(e) => { e.stopPropagation(); onDelete(id); }}
-                className="text-[10px] opacity-25 hover:opacity-90 transition-opacity"
-                title="Remove"
-              >🗑️</motion.button>
-            )}
-          </div>
-        </div>
-
-        {/* Genre / year / platform tags */}
-        <div className="flex flex-wrap gap-1">
-          {[genre, year ? String(year) : null, platform]
-            .filter(Boolean)
-            .map((tag) => (
-              <span
-                key={tag}
-                className="text-[9px] px-1.5 py-0.5 rounded-md"
-                style={{
-                  background: hasPoster ? "rgba(255,255,255,0.12)" : (isCyber ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)"),
-                  color: hasPoster ? "rgba(255,255,255,0.75)" : (isCyber ? "#94A3B8" : "#6B7280"),
-                }}
-              >{tag}</span>
-            ))}
-        </div>
-
-        {/* HOF Stars tags */}
-        {hofStars && hofStars.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {hofStars.slice(0, 3).map((star) => (
-              <span
-                key={star.id}
-                className="text-[9px] font-bold px-1.5 py-0.5 rounded border"
-                style={{
-                  borderColor: `${accent}50`,
-                  color: hasPoster ? "#fff" : accent,
-                  background: `${accent}10`,
-                }}
-                title={star.tokusatsuFranchise ? `${star.name} · ${star.tokusatsuFranchise}` : star.name}
-              >
-                {star.tokusatsuFranchise === "Ultraman" ? "🔴 "
-                  : star.tokusatsuFranchise === "Kamen Rider" ? "🟢 "
-                  : star.tokusatsuFranchise ? "⚡ " : ""}
-                {star.name}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Star rating */}
-        <div className="flex gap-0.5 items-center">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <span
-              key={i}
-              style={{
-                color: i < Math.round(rating / 2) ? accent : "rgba(128,128,128,0.25)",
-                fontSize: "10px",
-              }}
-            >★</span>
-          ))}
-          <span
-            className="font-mono text-[10px] ml-1"
-            style={{ color: hasPoster ? "rgba(255,255,255,0.6)" : accent, opacity: 0.9 }}
-          >{rating}/10</span>
-        </div>
-
-        {/* Spacer */}
-        <div className="flex-1 min-h-0" />
-
-        {/* ── HOVER: Synopsis / cast reveal ── */}
-        <AnimatePresence>
-          {hovered && (synopsis || (cast && cast.length > 0)) && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 4 }}
-              transition={{ type: "spring", stiffness: 320, damping: 28 }}
-              className="text-[10px] leading-relaxed"
-              style={{ color: hasPoster ? "rgba(255,255,255,0.75)" : (isCyber ? "#94A3B8" : "#555") }}
-            >
-              {synopsis
-                ? synopsis.slice(0, 175) + (synopsis.length > 175 ? "…" : "")
-                : (cast ? `✦ ${cast.slice(0, 4).join(" · ")}` : "")}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ── Progress bar + episode tracker ── */}
-        <div className="mt-1">
-          <div
-            className="h-1.5 rounded-full overflow-hidden mb-1.5"
-            style={{
-              background: hasPoster
-                ? "rgba(255,255,255,0.15)"
-                : (isCyber ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.1)"),
-            }}
-          >
-            <motion.div
-              className="h-full rounded-full"
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: pct / 100 }}
-              transition={{ type: "spring", stiffness: 65, damping: 18, delay: 0.2 + index * 0.04 }}
-              style={{
-                transformOrigin: "left",
-                background: `linear-gradient(90deg, ${accent}, ${accent2})`,
-                boxShadow: isCyber ? `0 0 8px ${accent}` : "none",
+                background: isCyber
+                  ? `linear-gradient(to top, ${(THEMES[category].cyber as typeof THEMES["japanese"]["cyber"]).gradFrom} 0%, rgba(0,0,0,0.78) 45%, rgba(0,0,0,0.15) 100%)`
+                  : `linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.6) 45%, rgba(0,0,0,0.08) 100%)`,
               }}
             />
+          </>
+        )}
+
+        {/* ── Cultural decorative overlay ── */}
+        <CulturalOverlay category={category} isCyber={isCyber} />
+
+        {/* ── Top accent strip ── */}
+        {isCyber ? (
+          <motion.div
+            className="absolute top-0 left-0 right-0 z-10"
+            style={{ height: "1.5px", background: `linear-gradient(90deg, transparent, ${accent}, ${accent2}, transparent)` }}
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2.2, repeat: Infinity }}
+          />
+        ) : (
+          <div
+            className="absolute top-0 left-0 right-0 z-10"
+            style={{ height: "3px", background: `linear-gradient(90deg, ${accent} 0%, ${accent2} 100%)` }}
+          />
+        )}
+
+        {/* ── Content ── */}
+        <div className="relative z-20 p-4 flex flex-col gap-2 h-full" style={{ minHeight: "230px" }}>
+
+          {/* Title + status badge */}
+          <div className="flex items-start justify-between gap-2">
+            <h3
+              className="font-black text-sm leading-snug flex-1"
+              style={{ color: hasPoster ? "#fff" : cardText }}
+            >
+              {title}
+            </h3>
+            <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+              {/* Clickable status badge */}
+              <motion.button
+                onClick={handleStatusCycle}
+                whileTap={{ scale: 0.9 }}
+                title="Click to cycle status"
+                className="text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap select-none cursor-pointer"
+                style={{
+                  backgroundColor: `${statusColor}22`,
+                  color: statusColor,
+                  border: `1.5px solid ${statusColor}55`,
+                }}
+              >
+                {localStatus}
+              </motion.button>
+              {/* Lock icon for read-only */}
+              {!isEditable && (
+                <span className="text-[9px] opacity-35 select-none" title="OMDb import — read only">🔒</span>
+              )}
+              {/* Delete button */}
+              {onDelete && (
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  onClick={(e) => { e.stopPropagation(); onDelete(id); }}
+                  className="text-[10px] opacity-25 hover:opacity-90 transition-opacity"
+                  title="Remove"
+                >🗑️</motion.button>
+              )}
+            </div>
           </div>
 
-          {/* Episode counter / stepper */}
-          <div className="flex items-center justify-between min-h-[22px]">
-            <AnimatePresence mode="wait">
-              {hovered && isEditable ? (
-                <motion.div
-                  key="stepper"
-                  initial={{ opacity: 0, x: -6 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -4 }}
-                  transition={{ duration: 0.15 }}
+          {/* Genre / year / platform tags */}
+          <div className="flex flex-wrap gap-1">
+            {[genre, year ? String(year) : null, platform]
+              .filter(Boolean)
+              .map((tag) => (
+                <span
+                  key={tag}
+                  className="text-[9px] px-1.5 py-0.5 rounded-md"
+                  style={{
+                    background: hasPoster ? "rgba(255,255,255,0.12)" : (isCyber ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)"),
+                    color: hasPoster ? "rgba(255,255,255,0.75)" : (isCyber ? "#94A3B8" : "#6B7280"),
+                  }}
+                >{tag}</span>
+              ))}
+          </div>
+
+          {/* HOF Stars tags */}
+          {hofStars && hofStars.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {hofStars.slice(0, 3).map((star) => (
+                <span
+                  key={star.id}
+                  className="text-[9px] font-bold px-1.5 py-0.5 rounded border"
+                  style={{
+                    borderColor: `${accent}50`,
+                    color: hasPoster ? "#fff" : accent,
+                    background: `${accent}10`,
+                  }}
+                  title={star.tokusatsuFranchise ? `${star.name} · ${star.tokusatsuFranchise}` : star.name}
                 >
+                  {star.tokusatsuFranchise === "Ultraman" ? "🔴 "
+                    : star.tokusatsuFranchise === "Kamen Rider" ? "🟢 "
+                    : star.tokusatsuFranchise ? "⚡ " : ""}
+                  {star.name}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Star rating */}
+          <div className="flex gap-0.5 items-center">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <span
+                key={i}
+                style={{
+                  color: i < Math.round(rating / 2) ? accent : "rgba(128,128,128,0.25)",
+                  fontSize: "10px",
+                }}
+              >★</span>
+            ))}
+            <span
+              className="font-mono text-[10px] ml-1"
+              style={{ color: hasPoster ? "rgba(255,255,255,0.6)" : accent, opacity: 0.9 }}
+            >{rating}/10</span>
+          </div>
+
+          {/* Spacer */}
+          <div className="flex-1 min-h-0" />
+
+          {/* ── Progress bar + episode tracker ── */}
+          <div className="mt-1">
+            <div
+              className="h-1.5 rounded-full overflow-hidden mb-1.5"
+              style={{
+                background: hasPoster
+                  ? "rgba(255,255,255,0.15)"
+                  : (isCyber ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.1)"),
+              }}
+            >
+              <motion.div
+                className="h-full rounded-full"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: pct / 100 }}
+                transition={{ type: "spring", stiffness: 65, damping: 18, delay: 0.2 + index * 0.04 }}
+                style={{
+                  transformOrigin: "left",
+                  background: `linear-gradient(90deg, ${accent}, ${accent2})`,
+                  boxShadow: isCyber ? `0 0 8px ${accent}` : "none",
+                }}
+              />
+            </div>
+
+            {/* Episode counter / stepper */}
+            <div className="flex items-center justify-between min-h-[22px]">
+              <span
+                className="text-[10px] font-mono"
+                style={{
+                  color: hasPoster
+                    ? "rgba(255,255,255,0.45)"
+                    : (isCyber ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.4)"),
+                }}
+              >
+                {localEps}/{totalEpisodes}&nbsp;{EP_LABELS[category]}
+              </span>
+              <span
+                className="text-[10px] font-mono font-black tabular-nums"
+                style={{ color: hasPoster ? "rgba(255,255,255,0.9)" : accent }}
+              >{pct}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Horizontal Pop-out Details Overlay ── */}
+      <AnimatePresence>
+        {hovered && (
+          <motion.div
+            initial={{
+              opacity: 0,
+              scale: 0.9,
+              x: popSide === "right" ? -25 : 25,
+              rotateY: popSide === "right" ? -15 : 15,
+            }}
+            animate={{ opacity: 1, scale: 1, x: 0, rotateY: 0 }}
+            exit={{
+              opacity: 0,
+              scale: 0.9,
+              x: popSide === "right" ? -15 : 15,
+              rotateY: popSide === "right" ? -10 : 10,
+            }}
+            transition={{ type: "spring", stiffness: 350, damping: 22 }}
+            className={`absolute z-50 p-4 flex flex-col gap-2 rounded-xl backdrop-blur-md overflow-visible
+                       top-0 bottom-0 left-0 right-0 md:bottom-auto md:min-h-full md:w-[280px]
+                       ${
+                         popSide === "right"
+                           ? "md:left-[103%] md:right-auto"
+                           : "md:right-[103%] md:left-auto"
+                       }`}
+            style={{
+              transformOrigin: popSide === "right" ? "left center" : "right center",
+              perspective: 1200,
+              background: isCyber
+                ? `rgba(${(THEMES[category].cyber as any).gradFrom === "rgba(5,8,22,0.96)" ? "5,8,22" : "13,6,22"}, 0.96)`
+                : "rgba(255, 255, 255, 0.99)",
+              border: isCyber ? `1px solid ${accent}70` : `2.5px solid ${accent}`,
+              boxShadow: isCyber
+                ? `0 0 35px ${accent}45, 0 12px 30px rgba(0,0,0,0.5)`
+                : "6px 6px 0 #000",
+            }}
+          >
+            {/* Pop-down select status dropdown */}
+            <div className="flex justify-between items-center shrink-0">
+              <div className="relative">
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={(e) => { e.stopPropagation(); setDropdownOpen(!dropdownOpen); }}
+                  className="text-[9px] font-black px-2.5 py-1 rounded-lg select-none cursor-pointer flex items-center gap-1 uppercase tracking-wider"
+                  style={{
+                    backgroundColor: `${statusColor}22`,
+                    color: statusColor,
+                    border: `1.5px solid ${statusColor}55`,
+                  }}
+                  title="Change status category"
+                >
+                  <span>{localStatus}</span>
+                  <span className="text-[7px]">▼</span>
+                </motion.button>
+
+                <AnimatePresence>
+                  {dropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -6, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -4, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute left-0 mt-1.5 z-[60] w-36 rounded-lg py-1 shadow-2xl text-[10px]"
+                      style={{
+                        background: isCyber ? "#0D111A" : "#FFF",
+                        border: isCyber ? `1px solid ${accent}50` : "2px solid #000",
+                        boxShadow: isCyber ? `0 0 15px ${accent}30` : "3px 3px 0 #000",
+                      }}
+                    >
+                      {STATUS_CYCLE.map((st) => {
+                        const sCol = (STATUS_COLORS[st as keyof typeof STATUS_COLORS] || { cyber: "#94a3b8", brutal: "#6B7280" });
+                        const bulletColor = isCyber ? sCol.cyber : sCol.brutal;
+                        return (
+                          <button
+                            key={st}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLocalStatus(st);
+                              onStatusChange?.(id, st);
+                              setDropdownOpen(false);
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 flex items-center gap-1.5 hover:bg-white/5 transition-all text-xs font-bold"
+                            style={{
+                              color: isCyber ? "#CBD5E1" : "#222",
+                            }}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: bulletColor }} />
+                            <span>{st}</span>
+                            {localStatus === st && (
+                              <span className="ml-auto text-[8px]" style={{ color: accent }}>✓</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <span className="text-[10px] font-mono font-black" style={{ color: accent }}>
+                ★ {rating}/10
+              </span>
+            </div>
+
+            <div className="min-w-0 shrink-0">
+              <h4 className="font-black text-sm leading-tight truncate" style={{ color: isCyber ? "#fff" : "#1A1A1A" }}>
+                {title}
+              </h4>
+              <p className="text-[9px] opacity-60 font-mono mt-0.5" style={{ color: isCyber ? "#94A3B8" : "#555" }}>
+                {year ? `${year} · ` : ""}{genre || ""}
+              </p>
+            </div>
+
+            <div className="h-px w-full shrink-0" style={{ background: isCyber ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)" }} />
+
+            {/* Synopsis / Cast */}
+            <div className="flex-1 text-[10px] leading-relaxed overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-rounded" style={{ color: isCyber ? "#CBD5E1" : "#333" }}>
+              {synopsis || (cast && cast.length > 0 ? `Cast: ${cast.join(" · ")}` : "No synopsis loaded for this title.")}
+            </div>
+
+            {/* Stepper + Progress */}
+            <div className="my-1 shrink-0">
+              <div className="flex items-center justify-between mb-1">
+                {isEditable ? (
                   <EpisodeStepper
                     watched={localEps}
                     total={totalEpisodes}
@@ -555,31 +708,37 @@ export function MediaCard({
                     accent={accent}
                     onChange={handleEpisodeChange}
                   />
-                </motion.div>
-              ) : (
-                <motion.span
-                  key="static"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="text-[10px] font-mono"
-                  style={{
-                    color: hasPoster
-                      ? "rgba(255,255,255,0.45)"
-                      : (isCyber ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.4)"),
-                  }}
-                >
-                  {localEps}/{totalEpisodes}&nbsp;{EP_LABELS[category]}
-                </motion.span>
-              )}
-            </AnimatePresence>
-            <span
-              className="text-[10px] font-mono font-black tabular-nums"
-              style={{ color: hasPoster ? "rgba(255,255,255,0.9)" : accent }}
-            >{pct}%</span>
-          </div>
-        </div>
-      </div>
+                ) : (
+                  <span className="text-[10px] font-mono opacity-50">
+                    {localEps}/{totalEpisodes} {EP_LABELS[category]}
+                  </span>
+                )}
+                <span className="text-[10px] font-mono font-black" style={{ color: accent }}>{pct}%</span>
+              </div>
+            </div>
+
+            {/* View details action button */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleViewDetails();
+              }}
+              className="w-full py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 cursor-pointer mt-auto"
+              style={{
+                background: isCyber ? `linear-gradient(135deg, ${accent}, ${accent2})` : accent,
+                color: "#fff",
+                border: isCyber ? "none" : "2px solid #000",
+                boxShadow: isCyber ? `0 0 10px ${accent}40` : "2px 2px 0 #000",
+              }}
+            >
+              <span>View Details</span>
+              <span>➔</span>
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

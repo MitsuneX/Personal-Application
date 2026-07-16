@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, Suspense, useEffect } from "react";
 import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
@@ -10,6 +10,7 @@ import { DramaSearchModal } from "@/components/ui/DramaSearchModal";
 import { ManualDramaModal } from "@/components/ui/ManualDramaModal";
 import { MediaCard } from "@/components/cards/MediaCard";
 import { FloatingFAB } from "@/components/ui/FloatingFAB";
+import { useSearchParams } from "next/navigation";
 
 // ── Japanese Palette (banner only) ───────────────────────────────────────────
 const JP = {
@@ -41,7 +42,7 @@ const getDramaCategory = (drama: { title: string; genre?: string; cast?: string[
   return "Actual Drama";
 };
 
-export default function JapaneseDramaPage() {
+function JapaneseDramaPageContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { dramas: allDramas, dramaLog, deleteDramaLog, updateDrama, hallOfFame } = useDashboardStore();
@@ -118,6 +119,26 @@ export default function JapaneseDramaPage() {
     }
   }, [logEntries, deleteDramaLog]);
 
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const targetId = searchParams?.get("id");
+    if (targetId) {
+      setTimeout(() => {
+        const el = document.getElementById(`media-card-${targetId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.style.outline = isCyber ? `3px solid ${p.accent}` : `3.5px solid ${p.accent}`;
+          el.style.outlineOffset = "4px";
+          el.style.borderRadius = "12px";
+          setTimeout(() => {
+            el.style.outline = "none";
+          }, 3000);
+        }
+      }, 600);
+    }
+  }, [searchParams, isCyber, p.accent]);
+
   return (
     <>
       <AppShell>
@@ -171,7 +192,7 @@ export default function JapaneseDramaPage() {
           className="mb-6 p-1.5 rounded-xl flex flex-wrap gap-1.5 text-xs font-bold w-fit max-w-full border overflow-x-auto"
           style={{
             backgroundColor: isCyber ? "rgba(0,0,0,0.3)" : "#FFFFFF",
-            borderColor: isCyber ? "rgba(255,105,180,0.15)" : "#000",
+            borderColor: isCyber ? "rgba(255,105,180,0.15)" : "#00",
             borderWidth: isCyber ? "1.5px" : "3px",
             boxShadow: isCyber ? "none" : "4px 4px 0 #000",
           }}
@@ -252,5 +273,13 @@ export default function JapaneseDramaPage() {
         onManualAdd={() => setManualOpen(true)}
       />
     </>
+  );
+}
+
+export default function JapaneseDramaPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center opacity-40">Loading workspace...</div>}>
+      <JapaneseDramaPageContent />
+    </Suspense>
   );
 }

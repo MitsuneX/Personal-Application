@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, Suspense, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { TabSwitcher } from "@/components/ui/TabSwitcher";
@@ -11,6 +11,7 @@ import { AnimeSearchModal } from "@/components/ui/AnimeSearchModal";
 import { ManualAnimeModal } from "@/components/ui/ManualAnimeModal";
 import { MediaCard } from "@/components/cards/MediaCard";
 import { FloatingFAB } from "@/components/ui/FloatingFAB";
+import { useSearchParams } from "next/navigation";
 
 const STATUS_TABS = [
   { id: "all",             label: "All",          icon: "◈" },
@@ -20,7 +21,7 @@ const STATUS_TABS = [
   { id: "Plan to Watch",   label: "Plan to Watch", icon: "🕐" },
 ];
 
-export default function AnimePage() {
+function AnimePageContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { animeList, favoriteCharacters, removeAnime, updateAnime } = useDashboardStore();
@@ -58,6 +59,26 @@ export default function AnimePage() {
       removeAnime(id);
     }
   }, [animeList, removeAnime]);
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const targetId = searchParams?.get("id");
+    if (targetId) {
+      setTimeout(() => {
+        const el = document.getElementById(`media-card-${targetId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.style.outline = isCyber ? `3px solid #BF5FFF` : `3.5px solid #FF6B35`;
+          el.style.outlineOffset = "4px";
+          el.style.borderRadius = "12px";
+          setTimeout(() => {
+            el.style.outline = "none";
+          }, 3000);
+        }
+      }, 600);
+    }
+  }, [searchParams, isCyber]);
 
   return (
     <>
@@ -190,5 +211,13 @@ export default function AnimePage() {
         onManualAdd={() => setManualOpen(true)}
       />
     </>
+  );
+}
+
+export default function AnimePage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center opacity-40">Loading workspace...</div>}>
+      <AnimePageContent />
+    </Suspense>
   );
 }
