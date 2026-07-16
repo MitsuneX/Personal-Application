@@ -57,6 +57,9 @@ export async function POST(req: Request) {
             genre: payload.genre,
             studio: payload.studio,
             year: payload.year,
+            posterUrl: payload.posterUrl,
+            synopsis: payload.synopsis,
+            cast: payload.cast,
           },
           create: {
             id: payload.id,
@@ -68,6 +71,9 @@ export async function POST(req: Request) {
             genre: payload.genre || null,
             studio: payload.studio || null,
             year: payload.year || null,
+            posterUrl: payload.posterUrl || null,
+            synopsis: payload.synopsis || null,
+            cast: payload.cast || [],
           },
         });
         return NextResponse.json({ success: true, data: anime });
@@ -111,6 +117,31 @@ export async function POST(req: Request) {
           data: { isFavorite: payload.isFavorite },
         });
         return NextResponse.json({ success: true, data: char });
+      }
+
+      case "SAVE_CHARACTER": {
+        const char = await prisma.favoriteCharacter.upsert({
+          where: { id: payload.id },
+          update: {
+            name: payload.name,
+            anime: payload.anime,
+            isFavorite: payload.isFavorite ?? true,
+          },
+          create: {
+            id: payload.id,
+            name: payload.name,
+            anime: payload.anime,
+            isFavorite: payload.isFavorite ?? true,
+          },
+        });
+        return NextResponse.json({ success: true, data: char });
+      }
+
+      case "DELETE_CHARACTER": {
+        await prisma.favoriteCharacter.delete({
+          where: { id: payload.id },
+        });
+        return NextResponse.json({ success: true });
       }
 
       // ─── Hall Of Fame Actions ──────────────────────────────────────────────────
@@ -316,6 +347,11 @@ export async function POST(req: Request) {
 
       case "DELETE_ANIME": {
         await prisma.anime.delete({ where: { id: payload.id } });
+        return NextResponse.json({ success: true });
+      }
+
+      case "DELETE_DRAMA": {
+        await prisma.drama.delete({ where: { id: payload.id } });
         return NextResponse.json({ success: true });
       }
 

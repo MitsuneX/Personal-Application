@@ -45,7 +45,7 @@ const getDramaCategory = (drama: { title: string; genre?: string; cast?: string[
 function JapaneseDramaPageContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { dramas: allDramas, dramaLog, deleteDramaLog, updateDrama, hallOfFame } = useDashboardStore();
+  const { dramas: allDramas, dramaLog, deleteDramaLog, removeDrama, updateDrama, hallOfFame } = useDashboardStore();
 
   const [filterType, setFilterType] = useState<"all"|"actual"|"ultraman"|"kamen-rider"|"power-rangers"|"tokusatsu">("all");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -113,18 +113,23 @@ function JapaneseDramaPageContent() {
   }, [updateDrama]);
 
   const handleDelete = useCallback((id: string) => {
-    const drama = logEntries.find(d => d.id === id);
+    const drama = allMerged.find(d => d.id === id);
     if (drama && confirm(`Remove "${drama.title}" from watchlist?`)) {
-      deleteDramaLog(id);
+      if (drama.isEditable) {
+        removeDrama(id);
+      } else {
+        deleteDramaLog(id);
+      }
     }
-  }, [logEntries, deleteDramaLog]);
+  }, [allMerged, removeDrama, deleteDramaLog]);
 
   const searchParams = useSearchParams();
 
+  const targetId = searchParams?.get("id");
+
   useEffect(() => {
-    const targetId = searchParams?.get("id");
     if (targetId) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         const el = document.getElementById(`media-card-${targetId}`);
         if (el) {
           el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -136,8 +141,10 @@ function JapaneseDramaPageContent() {
           }, 3000);
         }
       }, 600);
+      return () => clearTimeout(timer);
     }
-  }, [searchParams, isCyber, p.accent]);
+  }, [targetId, isCyber, p.accent]);
+
 
   return (
     <>
@@ -246,7 +253,7 @@ function JapaneseDramaPageContent() {
                 isEditable={drama.isEditable}
                 onStatusChange={drama.isEditable ? handleStatusChange : undefined}
                 onEpisodeChange={drama.isEditable ? handleEpisodeChange : undefined}
-                onDelete={!drama.isEditable ? handleDelete : undefined}
+                onDelete={handleDelete}
                 hofStars={getHofStars(drama)}
                 index={i}
               />

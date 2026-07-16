@@ -32,12 +32,24 @@ export async function proxy(request: NextRequest) {
     },
   });
 
+  const { pathname } = request.nextUrl;
+
+  // Strict routing check: if no auth-token cookie exists for a protected route, abort immediately
+  if (!isPublicRoute(pathname)) {
+    const allCookies = request.cookies.getAll();
+    const hasAuthCookie = allCookies.some(c => c.name.includes("auth-token"));
+    if (!hasAuthCookie) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/login";
+      loginUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
   // IMPORTANT: Do not add logic between createServerClient and getUser()
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
 
   // Redirect unauthenticated users trying to access protected routes
   if (!user && !isPublicRoute(pathname)) {

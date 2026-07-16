@@ -16,7 +16,10 @@ const TYPE_FILTERS = [
   { id: "all", label: "All Types" },
   { id: "actor", label: "Actors" },
   { id: "actress", label: "Actresses" },
-  { id: "anime", label: "Anime" }
+  { id: "anime", label: "Anime" },
+  { id: "ultraman", label: "Ultraman" },
+  { id: "kamen-rider", label: "Kamen Rider" },
+  { id: "power-rangers", label: "Power Rangers" }
 ];
 
 // Region/Specialty filters
@@ -26,6 +29,7 @@ const REGION_SPECIALTY_FILTERS = [
   { id: "Japan", label: "🇯🇵 Japanese" },
   { id: "China", label: "🇨🇳 Chinese" },
   { id: "Hollywood", label: "🎬 Hollywood" },
+  { id: "Anime", label: "⛩️ Anime Ranked" },
   { id: "Singer", label: "🎤 Singer" }
 ];
 
@@ -44,27 +48,35 @@ function CharactersContent() {
   const [selectedEntry, setSelectedEntry] = useState<HallOfFameEntry | null>(null);
 
   // ── Auto-scroll & Highlight from Deep Link ──
-  useEffect(() => {
-    const targetId = searchParams.get("id");
-    const targetSearch = searchParams.get("search");
+ // ── Auto-scroll & Highlight from Deep Link ──
 
-    if (targetSearch) {
-      setSearchQuery(targetSearch);
-    }
+const targetSearch = searchParams.get("search");
+const targetId = searchParams.get("id");
 
-    if (targetId) {
-      setTimeout(() => {
-        const el = document.getElementById(`entry-${targetId}`);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-          el.animate([
-            { filter: 'brightness(1.5)', transform: 'scale(1.05)' },
-            { filter: 'brightness(1)', transform: 'scale(1)' }
-          ], { duration: 800, easing: 'ease-out' });
-        }
-      }, 500);
-    }
-  }, [searchParams, hallOfFame]);
+// Fix 1: Only update state if the actual search string changes
+useEffect(() => {
+  if (targetSearch) {
+    setSearchQuery(targetSearch);
+  }
+}, [targetSearch]); // Depend on the primitive string, not the object
+
+// Fix 2: Only trigger scroll if the actual ID string changes
+useEffect(() => {
+  if (targetId) {
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`entry-${targetId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.animate([
+          { filter: 'brightness(1.5)', transform: 'scale(1.05)' },
+          { filter: 'brightness(1)', transform: 'scale(1)' }
+        ], { duration: 800, easing: 'ease-out' });
+      }
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }
+}, [targetId]); // Depend on the primitive string, not the object
 
   // ── Handlers ──
   const handleEdit = useCallback((entry: HallOfFameEntry) => {
@@ -107,7 +119,18 @@ function CharactersContent() {
       entry.knownFor.some(work => work.toLowerCase().includes(searchQuery.toLowerCase()));
 
     // 2. Type Filter
-    const matchesType = selectedType === "all" || entry.type === selectedType;
+    let matchesType = false;
+    if (selectedType === "all") {
+      matchesType = true;
+    } else if (selectedType === "ultraman") {
+      matchesType = entry.tokusatsuFranchise === "Ultraman";
+    } else if (selectedType === "kamen-rider") {
+      matchesType = entry.tokusatsuFranchise === "Kamen Rider";
+    } else if (selectedType === "power-rangers") {
+      matchesType = entry.tokusatsuFranchise === "Power Rangers";
+    } else {
+      matchesType = entry.type === selectedType;
+    }
 
     // 3. Region/Specialty Filter
     let matchesRegionSpecialty = true;
@@ -309,9 +332,25 @@ function CharactersContent() {
   );
 }
 
+const SkeletonHofCard = () => (
+  <div className="rounded-2xl border p-4 h-[350px] animate-pulse flex flex-col bg-slate-900/5 dark:bg-white/5 border-black/10 dark:border-white/10">
+    <div className="w-full h-[230px] rounded-xl bg-black/10 dark:bg-white/10 mb-4" />
+    <div className="h-4 bg-black/15 dark:bg-white/15 rounded w-2/3 mb-2" />
+    <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-1/2" />
+  </div>
+);
+
+const HofSkeletonGrid = () => (
+  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+    {[...Array(8)].map((_, i) => (
+      <SkeletonHofCard key={i} />
+    ))}
+  </div>
+);
+
 export default function CharactersPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs theme-text-muted">Loading Directory...</div>}>
+    <Suspense fallback={<HofSkeletonGrid />}>
       <CharactersContent />
     </Suspense>
   );

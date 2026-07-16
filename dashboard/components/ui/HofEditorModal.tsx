@@ -22,7 +22,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   const { updateHof } = useDashboardStore();
 
   const [name, setName] = useState("");
-  const [type, setType] = useState<"actor" | "actress" | "anime">("actress");
+  const [type, setType] = useState<"actor" | "actress" | "anime" | "none">("actress");
   const [status, setStatus] = useState<MediaStatus>("GOAT Status");
   const [knownFor, setKnownFor] = useState("");
   const [nationality, setNationality] = useState("");
@@ -409,6 +409,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                           { value: "actress", label: "Actress", icon: "💫" },
                           { value: "actor", label: "Actor", icon: "🎭" },
                           { value: "anime", label: "Anime", icon: "⛩️" },
+                          { value: "none", label: "None (Tokusatsu)", icon: "🦸" },
                         ]}
                       />
                     </div>
@@ -502,7 +503,13 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                         <label className="text-[10px] font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>Franchise</label>
                         <select
                           value={tokusatsuFranchise}
-                          onChange={(e) => setTokusatsuFranchise(e.target.value)}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setTokusatsuFranchise(val);
+                            if (val === "Ultraman" || val === "Kamen Rider" || val === "Power Rangers") {
+                              setType("none");
+                            }
+                          }}
                           className={inputClass}
                           style={inputStyle}
                         >

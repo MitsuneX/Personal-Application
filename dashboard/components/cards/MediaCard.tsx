@@ -4,6 +4,7 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { usePathname, useRouter } from "next/navigation";
+import { useDashboardStore } from "@/lib/store/dashboardStore";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -272,6 +273,7 @@ export function MediaCard({
 }: MediaCardProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
+  const { hallOfFame } = useDashboardStore();
 
   const t = isCyber ? THEMES[category].cyber : THEMES[category].brutal;
   const accent = t.accent;
@@ -316,22 +318,28 @@ export function MediaCard({
   const sc = STATUS_COLORS[statusColorKey] ?? { cyber: "#94A3B8", brutal: "#6B7280" };
   const statusColor = isCyber ? sc.cyber : sc.brutal;
 
-  // 3D tilt on mouse move + horizontal popout side detector
+  // Lock popSide once when mouse enters card bounds
+  const handleMouseEnter = useCallback((e: React.MouseEvent) => {
+    setHovered(true);
+    if (cardRef.current && typeof window !== "undefined") {
+      const rect = cardRef.current.getBoundingClientRect();
+      const cardMidX = rect.left + rect.width / 2;
+      // If the card center is on the right half of the screen, open left; otherwise open right.
+      if (cardMidX > window.innerWidth * 0.52) {
+        setPopSide("left");
+      } else {
+        setPopSide("right");
+      }
+    }
+  }, []);
+
+  // 3D tilt on mouse move only
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!cardRef.current) return;
     const r = cardRef.current.getBoundingClientRect();
     const x = ((e.clientX - r.left) / r.width - 0.5) * 7;
     const y = ((e.clientY - r.top) / r.height - 0.5) * -6;
     setTilt({ x, y });
-
-    // Dynamically choose left or right depending on coordinates
-    if (typeof window !== "undefined") {
-      if (e.clientX > window.innerWidth * 0.55) {
-        setPopSide("left");
-      } else {
-        setPopSide("right");
-      }
-    }
   }, []);
 
   const handleMouseLeave = useCallback(() => {
@@ -367,6 +375,7 @@ export function MediaCard({
           : `0 0 16px ${(THEMES[category].cyber as typeof THEMES["japanese"]["cyber"]).glow}50`,
         transform: `perspective(900px) rotateX(${tilt.y}deg) rotateY(${tilt.x}deg)`,
         transition: "box-shadow 0.3s ease, transform 0.15s ease",
+        contentVisibility: "auto",
       }
     : {
         background: hasPoster
@@ -375,20 +384,21 @@ export function MediaCard({
         border: `2.5px solid ${(THEMES[category].brutal as typeof THEMES["japanese"]["brutal"]).border}`,
         boxShadow: hovered ? "8px 8px 0 #000" : "4px 4px 0 #000",
         transition: "box-shadow 0.15s ease",
+        contentVisibility: "auto",
       };
 
   return (
     <div
       id={`media-card-${id}`}
       className="relative w-full h-full"
-      onMouseEnter={() => setHovered(true)}
+      onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       {/* ── Base Card (rounded, overflow-hidden) ── */}
       <div
         ref={cardRef}
         className="relative rounded-xl overflow-hidden w-full h-full"
-        style={{ ...baseStyle, minHeight: "230px" }}
+        style={{ ...baseStyle, minHeight: "250px" }}
         onMouseMove={handleMouseMove}
       >
         {/* ── Poster layer ── */}
@@ -692,8 +702,54 @@ export function MediaCard({
             <div className="h-px w-full shrink-0" style={{ background: isCyber ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)" }} />
 
             {/* Synopsis / Cast */}
-            <div className="flex-1 text-[10px] leading-relaxed overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-rounded" style={{ color: isCyber ? "#CBD5E1" : "#333" }}>
-              {synopsis || (cast && cast.length > 0 ? `Cast: ${cast.join(" · ")}` : "No synopsis loaded for this title.")}
+            <div className="flex-1 text-[10px] leading-relaxed overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-rounded flex flex-col gap-2" style={{ color: isCyber ? "#CBD5E1" : "#333" }}>
+              {synopsis && (
+                <p>{synopsis}</p>
+              )}
+              {cast && cast.length > 0 && (
+                <div>
+                  <span className="font-black block mb-1 text-[9px] uppercase tracking-wider" style={{ color: isCyber ? "#00F5FF" : "#2EC4B6" }}>Cast:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {cast.map((actor) => {
+                      const matchingHof = hallOfFame.find(h => h.name.toLowerCase() === actor.toLowerCase());
+                      if (matchingHof) {
+                        return (
+                          <button
+                            key={actor}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/characters?id=${matchingHof.id}`);
+                            }}
+                            className="px-1.5 py-0.5 rounded text-[9px] font-bold border transition-all hover:underline cursor-pointer flex items-center gap-0.5"
+                            style={{
+                              backgroundColor: isCyber ? "rgba(0,245,255,0.12)" : "rgba(46,196,182,0.1)",
+                              borderColor: isCyber ? "rgba(0,245,255,0.3)" : "rgba(46,196,182,0.5)",
+                              color: isCyber ? "#00F5FF" : "#0d6e65",
+                            }}
+                          >
+                            🔗 {actor}
+                          </button>
+                        );
+                      }
+                      return (
+                        <span
+                          key={actor}
+                          className="px-1.5 py-0.5 rounded text-[9px] border opacity-85"
+                          style={{
+                            backgroundColor: isCyber ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
+                            borderColor: isCyber ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
+                          }}
+                        >
+                          {actor}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {!synopsis && (!cast || cast.length === 0) && (
+                <p className="opacity-50 italic">No synopsis loaded for this title.</p>
+              )}
             </div>
 
             {/* Stepper + Progress */}

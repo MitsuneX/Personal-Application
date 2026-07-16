@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
 import type { AnimeEntry } from "@/lib/store/dashboardStore";
+import { useToast } from "@/components/ui/ToastProvider";
 
 interface ManualAnimeModalProps {
   isOpen: boolean;
@@ -22,6 +24,7 @@ export function ManualAnimeModal({ isOpen, onClose }: ManualAnimeModalProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { addAnime } = useDashboardStore();
+  const { toast } = useToast();
 
   // Form states
   const [title, setTitle] = useState("");
@@ -32,14 +35,65 @@ export function ManualAnimeModal({ isOpen, onClose }: ManualAnimeModalProps) {
   const [genre, setGenre] = useState("");
   const [year, setYear] = useState("");
   const [studio, setStudio] = useState("");
+  const [posterUrl, setPosterUrl] = useState("");
+  const [synopsis, setSynopsis] = useState("");
+  const [actorsString, setActorsString] = useState("");
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isFetchingWiki, setIsFetchingWiki] = useState(false);
+  const [scrapeError, setScrapeError] = useState<string | null>(null);
+
+  const handleFetchWiki = async () => {
+    if (!title.trim()) {
+      toast({ type: "warning", title: "Missing Title", message: "Please enter a title to fetch wiki data." });
+      return;
+    }
+    setIsFetchingWiki(true);
+    setScrapeError(null);
+    try {
+      const res = await fetch(`/api/scrape-wiki?title=${encodeURIComponent(title.trim())}&mainCategory=Anime`);
+      if (!res.ok) {
+        throw new Error("No exact metadata match found on Wiki endpoints.");
+      }
+      const data = await res.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (data.synopsis) setSynopsis(data.synopsis);
+      if (data.posterUrl) setPosterUrl(data.posterUrl);
+      if (data.cast && data.cast.length > 0) setActorsString(data.cast.slice(0, 8).join(", "));
+      if (data.year) setYear(String(data.year));
+
+      toast({
+        type: "success",
+        title: "Wiki Scrape Successful",
+        message: `Hydrated fields for "${data.title}" successfully.`
+      });
+      setScrapeError(null);
+    } catch (err: any) {
+      console.warn("Wiki auto-fill failed:", err);
+      setScrapeError(err.message || "No exact match found. Please proceed manually.");
+      toast({
+        type: "info",
+        title: "Wiki Scrape Info",
+        message: err.message || "No exact match found. Please proceed manually."
+      });
+    } finally {
+      setIsFetchingWiki(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title) return;
 
     setIsSaving(true);
+
+    const actors = actorsString
+      .split(",")
+      .map((a) => a.trim())
+      .filter(Boolean);
 
     const anime: AnimeEntry = {
       id: `anime-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -51,6 +105,9 @@ export function ManualAnimeModal({ isOpen, onClose }: ManualAnimeModalProps) {
       genre: genre || undefined,
       year: year ? parseInt(year) : undefined,
       studio: studio || undefined,
+      posterUrl: posterUrl || undefined,
+      synopsis: synopsis || undefined,
+      cast: actors,
     };
 
     await addAnime(anime);
@@ -66,6 +123,10 @@ export function ManualAnimeModal({ isOpen, onClose }: ManualAnimeModalProps) {
     setGenre("");
     setYear("");
     setStudio("");
+    setPosterUrl("");
+    setSynopsis("");
+    setActorsString("");
+    setScrapeError(null);
   };
 
   const inputStyles = {
@@ -90,16 +151,52 @@ export function ManualAnimeModal({ isOpen, onClose }: ManualAnimeModalProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold mb-1 theme-text-secondary">ANIME TITLE</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-xs font-bold theme-text-secondary">ANIME TITLE</label>
+              <button
+                type="button"
+                disabled={isFetchingWiki || !title.trim()}
+                onClick={handleFetchWiki}
+                className="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded transition-all cursor-pointer select-none"
+                style={{
+                  background: isCyber ? "rgba(0,245,255,0.15)" : "#E2E8F0",
+                  color: isCyber ? "#00F5FF" : "#475569",
+                  border: isCyber ? "1px solid rgba(0,245,255,0.4)" : "1.5px solid #000",
+                  boxShadow: isCyber ? "none" : "1.5px 1.5px 0 #000",
+                  opacity: !title.trim() ? 0.55 : 1,
+                }}
+              >
+                {isFetchingWiki ? "Searching..." : "✨ Auto-Fill"}
+              </button>
+            </div>
             <input
               type="text"
               required
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => { setTitle(e.target.value); setScrapeError(null); }}
               placeholder="Enter Anime Title"
               className="w-full p-2 rounded-xl border text-sm font-semibold focus:outline-none"
               style={inputStyles}
             />
+            {scrapeError && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-2 p-2.5 rounded-lg text-xs font-mono select-none"
+                style={{
+                  background: isCyber ? "rgba(239, 68, 68, 0.08)" : "#FFF0F0",
+                  border: isCyber ? "1px solid rgba(239, 68, 68, 0.3)" : "2px solid #000",
+                  color: isCyber ? "#EF4444" : "#990000",
+                  boxShadow: isCyber ? "0 0 10px rgba(239, 68, 68, 0.1)" : "2.5px 2.5px 0px 0px #000",
+                }}
+              >
+                <div className="flex items-center gap-1.5 font-bold">
+                  <span>⚠️</span>
+                  <span>{isCyber ? "AUTO_FILL::WARNING" : "Auto-Fill Warning"}</span>
+                </div>
+                <p className="mt-1 opacity-90 leading-normal">{scrapeError}</p>
+              </motion.div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -182,6 +279,42 @@ export function ManualAnimeModal({ isOpen, onClose }: ManualAnimeModalProps) {
                 style={inputStyles}
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold mb-1 theme-text-secondary">MAIN CAST (Comma-separated)</label>
+            <input
+              type="text"
+              value={actorsString}
+              onChange={(e) => setActorsString(e.target.value)}
+              placeholder="e.g. Natsuki Hanae, Yoshitsugu Matsuoka"
+              className="w-full p-2 rounded-xl border text-sm font-semibold focus:outline-none"
+              style={inputStyles}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold mb-1 theme-text-secondary">POSTER IMAGE URL</label>
+            <input
+              type="url"
+              value={posterUrl}
+              onChange={(e) => setPosterUrl(e.target.value)}
+              placeholder="https://example.com/poster.jpg"
+              className="w-full p-2 rounded-xl border text-sm font-semibold focus:outline-none"
+              style={inputStyles}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold mb-1 theme-text-secondary">PLOT SUMMARY / SYNOPSIS</label>
+            <textarea
+              value={synopsis}
+              onChange={(e) => setSynopsis(e.target.value)}
+              placeholder="Enter brief synopsis"
+              rows={2}
+              className="w-full p-2 rounded-xl border text-sm font-semibold focus:outline-none"
+              style={inputStyles}
+            />
           </div>
 
           {/* Watch Status */}

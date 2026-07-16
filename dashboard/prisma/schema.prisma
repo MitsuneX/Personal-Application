@@ -59,6 +59,9 @@ model Anime {
   genre           String?
   studio          String?
   year            Int?
+  posterUrl       String?
+  synopsis        String?
+  cast            String[]
   createdAt       DateTime @default(now())
 }
 

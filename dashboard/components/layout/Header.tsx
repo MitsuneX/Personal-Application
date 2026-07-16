@@ -11,6 +11,7 @@ import { ProfileHoverPopover } from "@/components/ui/ProfileHoverPopover";
 import { AestheticsModal } from "@/components/ui/AestheticsModal";
 import { CommandPalette } from "@/components/ui/CommandPalette";
 import Link from "next/link";
+import Image from "next/image";
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -234,7 +235,15 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
                     boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.5)" : "none",
                   }}
                 >
-                  <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+                  <Image
+                    src={avatar}
+                    alt="Profile"
+                    width={32}
+                    height={32}
+                    className="w-full h-full object-cover"
+                    priority
+                    sizes="32px"
+                  />
                 </div>
 
                 {/* Custom Name */}

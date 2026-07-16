@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
 import type { DramaLogEntry, DramaLogStatus } from "@/lib/store/dashboardStore";
+import { useToast } from "@/components/ui/ToastProvider";
 
 interface ManualDramaModalProps {
   isOpen: boolean;
@@ -31,6 +33,7 @@ export function ManualDramaModal({ isOpen, onClose, defaultCountry = "other" }: 
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { saveDramaLog } = useDashboardStore();
+  const { toast } = useToast();
 
   // Form states
   const [title, setTitle] = useState("");
@@ -44,6 +47,59 @@ export function ManualDramaModal({ isOpen, onClose, defaultCountry = "other" }: 
   const [rating, setRating] = useState("8.0");
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isFetchingWiki, setIsFetchingWiki] = useState(false);
+  const [scrapeError, setScrapeError] = useState<string | null>(null);
+
+  const handleFetchWiki = async () => {
+    if (!title.trim()) {
+      toast({ type: "warning", title: "Missing Title", message: "Please enter a title to fetch wiki data." });
+      return;
+    }
+    setIsFetchingWiki(true);
+    setScrapeError(null);
+    try {
+      const isTokusatsu = country === "japanese" && (
+        title.toLowerCase().includes("ultraman") || 
+        title.toLowerCase().includes("kamen rider") || 
+        title.toLowerCase().includes("power rangers")
+      );
+      const mainCat = isTokusatsu ? "Tokusatsu" : "Drama";
+      const subCat = isTokusatsu 
+        ? (title.toLowerCase().includes("ultraman") ? "Ultraman" : title.toLowerCase().includes("kamen rider") ? "Kamen Rider" : "Power Rangers")
+        : country;
+
+      const res = await fetch(`/api/scrape-wiki?title=${encodeURIComponent(title.trim())}&mainCategory=${mainCat}&subCategory=${encodeURIComponent(subCat)}`);
+      if (!res.ok) {
+        throw new Error("No exact metadata match found on OMDb or Wiki endpoints.");
+      }
+      const data = await res.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (data.synopsis) setPlotSummary(data.synopsis);
+      if (data.posterUrl) setPosterUrl(data.posterUrl);
+      if (data.cast && data.cast.length > 0) setActorsString(data.cast.join(", "));
+      if (data.year) setReleaseYear(String(data.year));
+
+      toast({
+        type: "success",
+        title: "Wiki Scrape Successful",
+        message: `Hydrated fields for "${data.title}" successfully.`
+      });
+      setScrapeError(null);
+    } catch (err: any) {
+      console.warn("Wiki auto-fill failed:", err);
+      setScrapeError(err.message || "No exact match found. Please proceed manually.");
+      toast({
+        type: "info",
+        title: "Wiki Scrape Info",
+        message: err.message || "No exact match found. Please proceed manually."
+      });
+    } finally {
+      setIsFetchingWiki(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +139,7 @@ export function ManualDramaModal({ isOpen, onClose, defaultCountry = "other" }: 
     setActorsString("");
     setStatusBadge("All-Star");
     setRating("8.0");
+    setScrapeError(null);
   };
 
   const inputStyles = {
@@ -107,16 +164,52 @@ export function ManualDramaModal({ isOpen, onClose, defaultCountry = "other" }: 
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold mb-1 theme-text-secondary">DRAMA TITLE</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-xs font-bold theme-text-secondary">DRAMA TITLE</label>
+              <button
+                type="button"
+                disabled={isFetchingWiki || !title.trim()}
+                onClick={handleFetchWiki}
+                className="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded transition-all cursor-pointer select-none"
+                style={{
+                  background: isCyber ? "rgba(0,245,255,0.15)" : "#E2E8F0",
+                  color: isCyber ? "#00F5FF" : "#475569",
+                  border: isCyber ? "1px solid rgba(0,245,255,0.4)" : "1.5px solid #000",
+                  boxShadow: isCyber ? "none" : "1.5px 1.5px 0 #000",
+                  opacity: !title.trim() ? 0.55 : 1,
+                }}
+              >
+                {isFetchingWiki ? "Searching..." : "✨ Auto-Fill"}
+              </button>
+            </div>
             <input
               type="text"
               required
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => { setTitle(e.target.value); setScrapeError(null); }}
               placeholder="Enter Title"
               className="w-full p-2 rounded-xl border text-sm font-semibold focus:outline-none"
               style={inputStyles}
             />
+            {scrapeError && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-2 p-2.5 rounded-lg text-xs font-mono select-none"
+                style={{
+                  background: isCyber ? "rgba(239, 68, 68, 0.08)" : "#FFF0F0",
+                  border: isCyber ? "1px solid rgba(239, 68, 68, 0.3)" : "2px solid #000",
+                  color: isCyber ? "#EF4444" : "#990000",
+                  boxShadow: isCyber ? "0 0 10px rgba(239, 68, 68, 0.1)" : "2.5px 2.5px 0px 0px #000",
+                }}
+              >
+                <div className="flex items-center gap-1.5 font-bold">
+                  <span>⚠️</span>
+                  <span>{isCyber ? "AUTO_FILL::WARNING" : "Auto-Fill Warning"}</span>
+                </div>
+                <p className="mt-1 opacity-90 leading-normal">{scrapeError}</p>
+              </motion.div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">

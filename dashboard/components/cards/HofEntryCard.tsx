@@ -6,6 +6,7 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { cardVariants } from "@/lib/theme/motionVariants";
 import type { MediaStatus, HallOfFameEntry } from "@/lib/store/dashboardStore";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 // ─── Constants & Styles ────────────────────────────────────────────────────────
 
@@ -63,6 +64,17 @@ export const OTHER_GROUP = {
   brutalBg: "#F0FFFE",
 };
 
+export const ANIME_GROUP = {
+  code: "Anime",
+  title: "⛩️ Anime Ranked",
+  description: "Ranked anime characters and legendary heroes",
+  accentColor: "#FF5E97",
+  accentBg: "rgba(255,94,151,0.06)",
+  accentBorder: "rgba(255,94,151,0.3)",
+  brutalBorder: "#CC2D63",
+  brutalBg: "#FFF0F4",
+};
+
 export const STATUS_STYLE: Record<MediaStatus, { bg: string; color: string; label: string; cyberGlow: string }> = {
   "GOAT Status": { bg: "rgba(255,215,0,0.15)",  color: "#FFD700", label: "👑 GOAT",     cyberGlow: "rgba(255,215,0,0.5)"   },
   "All-Star":    { bg: "rgba(0,245,255,0.1)",   color: "#00BFFF", label: "⭐ All-Star",  cyberGlow: "rgba(0,191,255,0.4)"   },
@@ -78,6 +90,7 @@ export const BRUTAL_STATUS_STYLE: Record<MediaStatus, { bg: string; border: stri
 };
 
 export const getGroupForEntry = (entry: HallOfFameEntry) => {
+  if (entry.type === "anime") return "Anime";
   const nat = entry.nationality;
   if (nat === "Korea" || nat === "Korean") return "Korea";
   if (nat === "China" || nat === "Chinese") return "China";
@@ -91,7 +104,18 @@ export const getGroupDetails = (code: string) => {
   if (code === "China") return NATIONALITY_GROUPS[1];
   if (code === "Japan") return NATIONALITY_GROUPS[2];
   if (code === "Hollywood") return NATIONALITY_GROUPS[3];
+  if (code === "Anime") return ANIME_GROUP;
   return OTHER_GROUP;
+};
+
+export const getTypeLabel = (entry: HallOfFameEntry) => {
+  if (entry.tokusatsuFranchise) {
+    return `🦸 ${entry.tokusatsuFranchise}`;
+  }
+  if (entry.type === "actor") return "🎭 Actor";
+  if (entry.type === "actress") return "💫 Actress";
+  if (entry.type === "anime") return "⛩️ Anime";
+  return "👤 Entity";
 };
 
 export const getTrend = (id: string) => {
@@ -120,7 +144,7 @@ interface CardProps {
 export function HofEntryCard({ entry, idx, isCyber, group, onEdit, onDelete, showType = false, podiumRank = null, onDoubleTap }: CardProps) {
   const [imgError, setImgError] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
-  const { likeHof } = useDashboardStore();
+  const { likeHof, dramas, dramaLog, animeList } = useDashboardStore();
   const router = useRouter();
 
   // Clean Double tap and Click handlers
@@ -201,10 +225,13 @@ export function HofEntryCard({ entry, idx, isCyber, group, onEdit, onDelete, sho
           }}
         >
           {hasImage ? (
-            <img
+            <Image
               src={entry.imageUrl!}
               alt={entry.name}
-              className="w-full h-full object-cover object-[center_30%]"
+              fill
+              priority={idx < 4}
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 250px"
+              className="object-cover object-[center_30%]"
               onError={() => setImgError(true)}
             />
           ) : (
@@ -256,7 +283,7 @@ export function HofEntryCard({ entry, idx, isCyber, group, onEdit, onDelete, sho
                 color: isCyber ? "#94A3B8" : "#555",
               }}
             >
-              {entry.type === "actor" ? "🎭 Actor" : entry.type === "actress" ? "💫 Actress" : "⛩️ Anime"}
+              {getTypeLabel(entry)}
             </span>
           )}
 
@@ -296,19 +323,65 @@ export function HofEntryCard({ entry, idx, isCyber, group, onEdit, onDelete, sho
             <div className="flex flex-col gap-1 mt-1">
               <span className="text-[9px] font-black uppercase tracking-wider theme-text-muted">Associated J-Dramas</span>
               <div className="flex flex-wrap gap-1">
-                {entry.associatedDramas.map((drama) => (
-                  <span
-                    key={drama}
-                    className="text-[9px] font-bold px-1.5 py-0.5 rounded border"
-                    style={{
-                      backgroundColor: isCyber ? "rgba(255,20,147,0.05)" : "#FFF0F6",
-                      borderColor: isCyber ? "rgba(255,20,147,0.2)" : "#CC3377",
-                      color: isCyber ? "#FF1493" : "#C9184A",
-                    }}
-                  >
-                    🎬 {drama}
-                  </span>
-                ))}
+                {entry.associatedDramas.map((drama) => {
+                  const matchedDrama = dramas.find(d => d.title.toLowerCase() === drama.toLowerCase()) ||
+                                       dramaLog.find(d => d.title.toLowerCase() === drama.toLowerCase());
+                  const matchedAnime = animeList.find(a => a.title.toLowerCase() === drama.toLowerCase());
+                  
+                  if (matchedDrama) {
+                    return (
+                      <button
+                        key={drama}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/drama/${matchedDrama.country}?id=${matchedDrama.id}`);
+                        }}
+                        className="text-[9px] font-bold px-1.5 py-0.5 rounded border cursor-pointer hover:underline flex items-center gap-0.5"
+                        style={{
+                          backgroundColor: isCyber ? "rgba(0,245,255,0.08)" : "#E8F7F7",
+                          borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#2EC4B6",
+                          color: isCyber ? "#00F5FF" : "#0d6e65",
+                        }}
+                      >
+                        🎬 {drama}
+                      </button>
+                    );
+                  }
+                  
+                  if (matchedAnime) {
+                    return (
+                      <button
+                        key={drama}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/anime?id=${matchedAnime.id}`);
+                        }}
+                        className="text-[9px] font-bold px-1.5 py-0.5 rounded border cursor-pointer hover:underline flex items-center gap-0.5"
+                        style={{
+                          backgroundColor: isCyber ? "rgba(191,95,255,0.08)" : "#FFF5EE",
+                          borderColor: isCyber ? "rgba(191,95,255,0.25)" : "#FF6B35",
+                          color: isCyber ? "#BF5FFF" : "#b24013",
+                        }}
+                      >
+                        ⛩️ {drama}
+                      </button>
+                    );
+                  }
+
+                  return (
+                    <span
+                      key={drama}
+                      className="text-[9px] font-bold px-1.5 py-0.5 rounded border opacity-75"
+                      style={{
+                        backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#F5F5F5",
+                        borderColor: isCyber ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)",
+                        color: isCyber ? "#94A3B8" : "#666",
+                      }}
+                    >
+                      📺 {drama}
+                    </span>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -396,7 +469,7 @@ export function HofEntryCard({ entry, idx, isCyber, group, onEdit, onDelete, sho
               <div>
                 <h4 className="font-black text-sm theme-text-primary leading-tight px-1 py-0.5 rounded border border-transparent hover:border-adaptive-unique inline-block">{entry.name}</h4>
                 <p className="text-[8px] theme-text-muted mt-0.5 uppercase tracking-widest font-mono">
-                  {entry.type === "actor" ? "🎭 Actor" : entry.type === "actress" ? "💫 Actress" : "⛩️ Anime"}
+                  {getTypeLabel(entry)}
                 </p>
               </div>
 

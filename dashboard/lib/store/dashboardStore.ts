@@ -84,6 +84,9 @@ export interface AnimeEntry {
   genre?: string;
   studio?: string;
   year?: number;
+  posterUrl?: string;
+  synopsis?: string;
+  cast?: string[];
 }
 
 export interface FavoriteCharacter {
@@ -110,7 +113,7 @@ export interface DramaEntry {
 export interface HallOfFameEntry {
   id: string;
   name: string;
-  type: "actor" | "actress" | "anime";
+  type: "actor" | "actress" | "anime" | "none";
   status: MediaStatus;
   knownFor: string[];
   nationality?: string;
@@ -231,6 +234,8 @@ interface DashboardState {
   updateAnime: (id: string, data: Partial<AnimeEntry>) => Promise<void>;
   removeAnime: (id: string) => Promise<void>;
   toggleFavoriteCharacter: (id: string) => Promise<void>;
+  saveFavoriteCharacter: (id: string, name: string, anime: string, isFavorite?: boolean) => Promise<void>;
+  deleteFavoriteCharacter: (id: string) => Promise<void>;
   addDrama: (drama: DramaEntry) => Promise<void>;
   updateDrama: (id: string, data: Partial<DramaEntry>) => Promise<void>;
   removeDrama: (id: string) => Promise<void>;
@@ -514,6 +519,48 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
   },
 
+  saveFavoriteCharacter: async (id, name, anime, isFavorite = true) => {
+    const newChar = { id, name, anime, isFavorite, createdAt: new Date() };
+    set((s) => {
+      const exists = s.favoriteCharacters.some((c) => c.id === id);
+      return {
+        favoriteCharacters: exists
+          ? s.favoriteCharacters.map((c) => (c.id === id ? { ...c, name, anime, isFavorite } : c))
+          : [...s.favoriteCharacters, newChar],
+      };
+    });
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "SAVE_CHARACTER",
+          payload: { id, name, anime, isFavorite },
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to save favorite character:", err);
+    }
+  },
+
+  deleteFavoriteCharacter: async (id) => {
+    set((s) => ({
+      favoriteCharacters: s.favoriteCharacters.filter((c) => c.id !== id),
+    }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "DELETE_CHARACTER",
+          payload: { id },
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to delete favorite character:", err);
+    }
+  },
+
   addDrama: async (drama) => {
     set((s) => ({ dramas: [...s.dramas, drama] }));
     try {
@@ -547,6 +594,15 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
   removeDrama: async (id) => {
     set((s) => ({ dramas: s.dramas.filter((d) => d.id !== id) }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_DRAMA", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to delete drama:", err);
+    }
   },
 
   // ─── HOF Actions ───────────────────────────────────────────────────────────

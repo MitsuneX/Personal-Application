@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { BentoCard } from "@/components/cards/BentoCard";
 import { useTheme } from "@/lib/theme";
-import { useDashboardStore, LinkEntry } from "@/lib/store/dashboardStore";
+import { useDashboardStore, type LinkEntry } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
 
 export default function LinksPage() {
@@ -20,6 +20,7 @@ export default function LinksPage() {
   const [url, setUrl] = useState("");
   const [category, setCategory] = useState("Watch");
   const [customCategory, setCustomCategory] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState("All");
 
   const handleAddLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +58,13 @@ export default function LinksPage() {
     acc[link.category].push(link);
     return acc;
   }, {} as Record<string, LinkEntry[]>);
+
+  const allCategories = ["All", ...Object.keys(categoriesMap)];
+
+  const displayedCategories = Object.entries(categoriesMap).filter(([cat]) => {
+    if (selectedFilter === "All") return true;
+    return cat === selectedFilter;
+  });
 
   return (
     <AppShell>
@@ -101,19 +109,77 @@ export default function LinksPage() {
         </div>
       </motion.div>
 
+      {/* Category Filter */}
+      {allCategories.length > 1 && (
+        <div
+          className="mb-6 p-1.5 rounded-xl flex flex-wrap gap-1.5 text-xs font-bold w-fit max-w-full border overflow-x-auto"
+          style={{
+            backgroundColor: isCyber ? "rgba(0,0,0,0.3)" : "#FFFFFF",
+            borderColor: isCyber ? "rgba(0,245,255,0.15)" : "#000",
+            borderWidth: isCyber ? "1.5px" : "3px",
+            boxShadow: isCyber ? "none" : "4px 4px 0 #000",
+          }}
+        >
+          {allCategories.map(cat => {
+            const isActive = selectedFilter === cat;
+            return (
+              <button key={cat}
+                onClick={() => setSelectedFilter(cat)}
+                className="py-1.5 px-3 rounded-lg transition-all uppercase tracking-wider text-[10px] whitespace-nowrap cursor-pointer"
+                style={{
+                  backgroundColor: isActive ? (isCyber ? "rgba(0,245,255,0.2)" : "#FF6B35") : "transparent",
+                  color: isActive ? (isCyber ? "#00F5FF" : "#FFF") : (isCyber ? "rgba(0,245,255,0.6)" : "#444"),
+                  border: isActive && !isCyber ? "2px solid #000" : "2px solid transparent",
+                }}
+              >
+                {cat === "All" ? "📂 All Tags" : cat}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Bookmark Sections */}
       <div className="space-y-8">
-        {Object.entries(categoriesMap).map(([cat, list]) => (
+        {displayedCategories.map(([cat, list]) => (
           <div key={cat} className="space-y-4">
-            <h2 className="text-sm font-black uppercase tracking-widest px-3 py-1 rounded inline-block"
-              style={{
-                backgroundColor: isCyber ? "rgba(0,245,255,0.08)" : "rgba(0,0,0,0.05)",
-                color: isCyber ? "#00F5FF" : "#FF6B35",
-                border: isCyber ? "1px solid rgba(0,245,255,0.15)" : "1.5px solid #000"
-              }}
-            >
-              📂 {cat}
-            </h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-sm font-black uppercase tracking-widest px-3 py-1 rounded inline-block animate-fade-in"
+                style={{
+                  backgroundColor: isCyber ? "rgba(0,245,255,0.08)" : "rgba(0,0,0,0.05)",
+                  color: isCyber ? "#00F5FF" : "#FF6B35",
+                  border: isCyber ? "1px solid rgba(0,245,255,0.15)" : "1.5px solid #000"
+                }}
+              >
+                📂 {cat}
+              </h2>
+              <button
+                onClick={() => {
+                  setEditId(null);
+                  setTitle("");
+                  setUrl("");
+                  if (["Watch", "Entertainment", "Book", "Productivity", "Misc"].includes(cat)) {
+                    setCategory(cat);
+                    setCustomCategory("");
+                  } else {
+                    setCategory("Custom");
+                    setCustomCategory(cat);
+                  }
+                  setIsOpen(true);
+                }}
+                className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black border transition-transform active:scale-95 cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 shrink-0"
+                style={{
+                  backgroundColor: isCyber ? "rgba(0,245,255,0.1)" : "#E2E8F0",
+                  borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000",
+                  borderWidth: isCyber ? "1px" : "2px",
+                  color: isCyber ? "#00F5FF" : "#000",
+                  boxShadow: isCyber ? "none" : "1.5px 1.5px 0 #000",
+                }}
+                title={`Add bookmark to ${cat}`}
+              >
+                ＋
+              </button>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {list.map((link) => (
@@ -155,7 +221,7 @@ export default function LinksPage() {
                         setEditId(link.id);
                         setTitle(link.title);
                         setUrl(link.url);
-                        if (["Watch", "Entertainment", "Book", "Productivity"].includes(link.category)) {
+                        if (["Watch", "Entertainment", "Book", "Productivity", "Misc"].includes(link.category)) {
                           setCategory(link.category);
                           setCustomCategory("");
                         } else {
@@ -241,11 +307,12 @@ export default function LinksPage() {
                 onChange={(e) => setCategory(e.target.value)}
                 className="px-3 py-2 text-xs font-semibold rounded-lg border outline-none bg-transparent border-adaptive-unique theme-text-primary cursor-pointer"
               >
-                <option value="Watch">Watch</option>
-                <option value="Entertainment">Entertainment</option>
-                <option value="Book">Book</option>
-                <option value="Productivity">Productivity</option>
-                <option value="Custom">Custom Category...</option>
+                <option value="Watch" className={isCyber ? "bg-[#0b0f2a] text-[#E0E8FF]" : "bg-white text-black"}>Watch</option>
+                <option value="Entertainment" className={isCyber ? "bg-[#0b0f2a] text-[#E0E8FF]" : "bg-white text-black"}>Entertainment</option>
+                <option value="Book" className={isCyber ? "bg-[#0b0f2a] text-[#E0E8FF]" : "bg-white text-black"}>Book</option>
+                <option value="Productivity" className={isCyber ? "bg-[#0b0f2a] text-[#E0E8FF]" : "bg-white text-black"}>Productivity</option>
+                <option value="Misc" className={isCyber ? "bg-[#0b0f2a] text-[#E0E8FF]" : "bg-white text-black"}>Misc</option>
+                <option value="Custom" className={isCyber ? "bg-[#0b0f2a] text-[#E0E8FF]" : "bg-white text-black"}>Custom Category...</option>
               </select>
             </div>
 

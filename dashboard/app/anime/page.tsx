@@ -12,6 +12,7 @@ import { ManualAnimeModal } from "@/components/ui/ManualAnimeModal";
 import { MediaCard } from "@/components/cards/MediaCard";
 import { FloatingFAB } from "@/components/ui/FloatingFAB";
 import { useSearchParams } from "next/navigation";
+import { Modal } from "@/components/ui/modal";
 
 const STATUS_TABS = [
   { id: "all",             label: "All",          icon: "◈" },
@@ -24,12 +25,25 @@ const STATUS_TABS = [
 function AnimePageContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { animeList, favoriteCharacters, removeAnime, updateAnime } = useDashboardStore();
-  const characters = favoriteCharacters.filter(c => c.isFavorite);
+  const { 
+    animeList, 
+    favoriteCharacters, 
+    removeAnime, 
+    updateAnime, 
+    saveFavoriteCharacter, 
+    deleteFavoriteCharacter,
+    toggleFavoriteCharacter
+  } = useDashboardStore();
 
   const [activeTab, setActiveTab] = useState("all");
   const [searchOpen, setSearchOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+
+  // Favorite Character States
+  const [charModalOpen, setCharModalOpen] = useState(false);
+  const [charEditId, setCharEditId] = useState<string | null>(null);
+  const [charName, setCharName] = useState("");
+  const [charAnime, setCharAnime] = useState("");
 
   const filtered = activeTab === "all"
     ? animeList
@@ -61,11 +75,11 @@ function AnimePageContent() {
   }, [animeList, removeAnime]);
 
   const searchParams = useSearchParams();
+  const targetId = searchParams?.get("id");
 
   useEffect(() => {
-    const targetId = searchParams?.get("id");
     if (targetId) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         const el = document.getElementById(`media-card-${targetId}`);
         if (el) {
           el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -77,8 +91,10 @@ function AnimePageContent() {
           }, 3000);
         }
       }, 600);
+      return () => clearTimeout(timer);
     }
-  }, [searchParams, isCyber]);
+  }, [targetId, isCyber]);
+
 
   return (
     <>
@@ -148,6 +164,9 @@ function AnimePageContent() {
                   genre={anime.genre}
                   year={anime.year}
                   platform={anime.studio}
+                  posterUrl={anime.posterUrl}
+                  synopsis={anime.synopsis}
+                  cast={anime.cast}
                   isEditable={true}
                   onStatusChange={handleStatusChange}
                   onEpisodeChange={handleEpisodeChange}
@@ -169,40 +188,174 @@ function AnimePageContent() {
         )}
 
         {/* ── Favourite characters ── */}
-        {characters.length > 0 && (
-          <div className="mt-10">
+        <div className="mt-12 border-t pt-8" style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.15)" }}>
+          <div className="flex justify-between items-center mb-6">
             <motion.h2
-              className="font-black text-lg mb-4 theme-text-primary"
+              className="font-black text-lg theme-text-primary"
               animate={{ fontFamily: isCyber ? "var(--font-orbitron)" : "inherit" }}
               transition={{ duration: 0.4 }}
             >
-              {isCyber ? "♥ FAV.CHARACTERS" : "♥ Favourite Characters"}
+              {isCyber ? "♥ FAV.CHARACTERS" : "♥ Favorite Characters"}
             </motion.h2>
+            <button
+              onClick={() => {
+                setCharEditId(null);
+                setCharName("");
+                setCharAnime("");
+                setCharModalOpen(true);
+              }}
+              className="px-3 py-1.5 text-xs font-black rounded-lg transition-transform active:scale-95 border-adaptive-unique cursor-pointer"
+              style={{
+                backgroundColor: isCyber ? "#BF5FFF" : "#FF6B35",
+                color: "#fff",
+              }}
+            >
+              ＋ Add Character
+            </button>
+          </div>
+
+          {favoriteCharacters.length === 0 ? (
+            <div className="text-center py-10 border-adaptive-unique rounded-2xl opacity-60 bg-black/5 dark:bg-white/5">
+              <p className="text-2xl mb-2">♥</p>
+              <p className="text-xs font-bold theme-text-muted">No characters saved yet. Add your favorite characters above!</p>
+            </div>
+          ) : (
             <motion.div className="flex flex-wrap gap-3" variants={listContainerVariants} initial="hidden" animate="visible">
-              {characters.map((c, i) => (
+              {favoriteCharacters.map((c, i) => (
                 <motion.div
                   key={c.id}
                   variants={listItemVariants}
                   custom={i}
-                  className="px-4 py-2.5 rounded-xl"
+                  className="px-4 py-2.5 rounded-xl relative group flex items-center justify-between min-w-[200px]"
                   style={{
                     background: isCyber ? "rgba(191,95,255,0.08)" : "rgba(255,107,53,0.08)",
-                    border: isCyber ? "1px solid rgba(191,95,255,0.3)" : "2px solid rgba(0,0,0,0.2)",
+                    border: isCyber ? "1px solid rgba(191,95,255,0.3)" : "2.5px solid #000",
+                    boxShadow: isCyber ? "none" : "4px 4px 0 #000",
                   }}
-                  whileHover={{ scale: 1.04, boxShadow: isCyber ? "0 0 14px rgba(191,95,255,0.5)" : "3px 3px 0 rgba(0,0,0,1)" }}
+                  whileHover={{ scale: 1.02 }}
                 >
-                  <p className="font-bold text-sm theme-text-primary">{c.name}</p>
-                  <p className="text-xs theme-text-muted">{c.anime}</p>
+                  <div className="pr-16">
+                    <p className="font-bold text-sm theme-text-primary leading-tight">{c.name}</p>
+                    <p className="text-[10px] theme-text-muted mt-1 truncate max-w-[140px]">{c.anime}</p>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {/* Toggle Favorite Heart Button */}
+                    <button
+                      onClick={() => toggleFavoriteCharacter(c.id)}
+                      className="p-1 text-xs hover:scale-110 active:scale-90 transition-transform cursor-pointer"
+                      title={c.isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+                    >
+                      {c.isFavorite ? "❤️" : "🤍"}
+                    </button>
+
+                    {/* Edit/Delete controls */}
+                    <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => {
+                          setCharEditId(c.id);
+                          setCharName(c.name);
+                          setCharAnime(c.anime);
+                          setCharModalOpen(true);
+                        }}
+                        className="p-1 text-[10px] bg-cyan-600 text-white rounded hover:bg-cyan-700 cursor-pointer"
+                        title="Edit Character"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Delete "${c.name}"?`)) {
+                            deleteFavoriteCharacter(c.id);
+                          }
+                        }}
+                        className="p-1 text-[10px] bg-red-500 text-white rounded hover:bg-red-600 cursor-pointer"
+                        title="Delete Character"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
                 </motion.div>
               ))}
             </motion.div>
-          </div>
-        )}
+          )}
+        </div>
       </AppShell>
 
       {/* Modals */}
       <AnimeSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
       <ManualAnimeModal isOpen={manualOpen} onClose={() => setManualOpen(false)} />
+
+      {/* Favorite Character Modal */}
+      <Modal isOpen={charModalOpen} onClose={() => setCharModalOpen(false)} maxWidth="max-w-md">
+        <div className="p-6 relative">
+          {isCyber && <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#BF5FFF]" />}
+          
+          <div className="flex justify-between items-center mb-4 pb-2" style={{ borderBottom: isCyber ? "1px solid rgba(255,255,255,0.1)" : "2px dashed #000" }}>
+            <h3 className="font-black text-base theme-text-primary">{charEditId ? "Edit Character" : "New Favorite Character"}</h3>
+            <button onClick={() => setCharModalOpen(false)} className="text-xs opacity-60">✕</button>
+          </div>
+
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            if (!charName.trim() || !charAnime.trim()) return;
+            const id = charEditId || "char-" + Math.random().toString(36).substr(2, 9);
+            await saveFavoriteCharacter(id, charName.trim(), charAnime.trim());
+            setCharModalOpen(false);
+          }} className="space-y-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-black uppercase tracking-wider theme-text-secondary">Character Name</label>
+              <input
+                type="text"
+                required
+                value={charName}
+                onChange={(e) => setCharName(e.target.value)}
+                placeholder="e.g. Kurisu Makise"
+                className="px-3 py-2 text-xs font-semibold rounded-lg border outline-none bg-black/5 dark:bg-white/5 border-adaptive-unique theme-text-primary"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-black uppercase tracking-wider theme-text-secondary">Anime Source</label>
+              <input
+                type="text"
+                required
+                value={charAnime}
+                onChange={(e) => setCharAnime(e.target.value)}
+                placeholder="e.g. Steins;Gate"
+                list="anime-suggestions"
+                className="px-3 py-2 text-xs font-semibold rounded-lg border outline-none bg-black/5 dark:bg-white/5 border-adaptive-unique theme-text-primary"
+              />
+              <datalist id="anime-suggestions">
+                {animeList.map(a => (
+                  <option key={a.id} value={a.title} />
+                ))}
+              </datalist>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setCharModalOpen(false)}
+                className="px-3 py-1.5 text-xs font-bold rounded-lg border border-adaptive-unique bg-transparent theme-text-muted"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-1.5 text-xs font-black rounded-lg transition-transform active:scale-95 cursor-pointer"
+                style={{
+                  backgroundColor: isCyber ? "#BF5FFF" : "#FF6B35",
+                  color: "#fff",
+                }}
+              >
+                {charEditId ? "Save Changes" : "Enshrine Character"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </Modal>
 
       {/* Consolidated FAB */}
       <FloatingFAB
