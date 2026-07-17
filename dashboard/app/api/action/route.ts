@@ -273,6 +273,8 @@ export async function POST(req: Request) {
             url: payload.url,
             caption: payload.caption ?? null,
             tags: payload.tags ?? [],
+            category: payload.category ?? "General",
+            folder: payload.folder ?? "Root",
           },
         });
         return NextResponse.json({ success: true, data: item });

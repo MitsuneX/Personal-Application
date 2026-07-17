@@ -11,7 +11,7 @@ function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 }
 
-// ─── Proxy (Next.js 16+ replacement for middleware.ts) ────────────────────────
+// ─── Next.js 16 Proxy (Replaces middleware) ───────────────────────────────────
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 

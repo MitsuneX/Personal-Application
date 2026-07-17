@@ -130,6 +130,8 @@ model GalleryItem {
   url       String
   caption   String?
   tags      Json?    // string[]
+  category  String   @default("General")
+  folder    String   @default("Root")
   createdAt DateTime @default(now())
 }
 

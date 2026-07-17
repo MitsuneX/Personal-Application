@@ -151,6 +151,8 @@ export interface GalleryEntry {
   url: string;
   caption?: string | null;
   tags?: string[] | null;
+  category?: string;
+  folder?: string;
 }
 
 export interface SavedPromptEntry {
@@ -255,7 +257,7 @@ interface DashboardState {
   deleteLink: (id: string) => Promise<void>;
 
   // Gallery Actions
-  addGalleryItem: (id: string, title: string, url: string, caption?: string, tags?: string[]) => Promise<void>;
+  addGalleryItem: (id: string, title: string, url: string, caption?: string, tags?: string[], category?: string, folder?: string) => Promise<void>;
   deleteGalleryItem: (id: string) => Promise<void>;
 
   // Music Actions
@@ -763,13 +765,13 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
   // ─── Gallery Actions ───────────────────────────────────────────────────────
 
-  addGalleryItem: async (id, title, url, caption = undefined, tags = []) => {
-    set((s) => ({ gallery: [{ id, title, url, caption, tags }, ...s.gallery] }));
+  addGalleryItem: async (id, title, url, caption = undefined, tags = [], category = "General", folder = "Root") => {
+    set((s) => ({ gallery: [{ id, title, url, caption, tags, category, folder }, ...s.gallery] }));
     try {
       await fetch("/api/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "ADD_GALLERY", payload: { id, title, url, caption, tags } }),
+        body: JSON.stringify({ action: "ADD_GALLERY", payload: { id, title, url, caption, tags, category, folder } }),
       });
     } catch (err) {
       console.error("Failed to sync gallery item:", err);

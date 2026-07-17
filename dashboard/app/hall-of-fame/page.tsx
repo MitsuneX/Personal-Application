@@ -1,6 +1,5 @@
 "use client";
-
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
@@ -13,7 +12,7 @@ import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
 
 type RankingTab = 
   | "overall" | "korean" | "japanese" | "chinese" | "hollywood" // Group 1: Dramas
-  | "singer" // Group 2: Singers
+  | "singer" | "anime_ranked" // Group 2: Singers & Anime
   | "toku_overall" | "ultraman" | "kamen_rider" | "power_rangers"; // Group 3: Tokusatsu
 
 export default function HallOfFamePage() {
@@ -21,10 +20,13 @@ export default function HallOfFamePage() {
   const isCyber = theme === "cyber";
   const { hallOfFame, deleteHof, likeHof } = useDashboardStore();
   const router = useRouter();
-
+  
   const [subTab, setSubTab] = useState<RankingTab>("overall");
   const [editorOpen, setEditorOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<HallOfFameEntry | null>(null);
+  
+  // Ref tracking system for precise double tap detection on mobile
+  const lastTapRef = useRef<{ [key: string]: number }>({});
 
   // ── Handlers ──
   const handleEdit = useCallback((entry: HallOfFameEntry) => {
@@ -38,17 +40,29 @@ export default function HallOfFamePage() {
     }
   }, [deleteHof]);
 
-  const handleDoubleTap = (e: React.MouseEvent | React.TouchEvent, id: string) => {
-    let clientX = 0, clientY = 0;
-    if ('touches' in e && e.touches.length > 0) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else if ('clientX' in e) {
-      clientX = (e as React.MouseEvent).clientX;
-      clientY = (e as React.MouseEvent).clientY;
+  const handleInteractionTap = useCallback((e: React.MouseEvent | React.TouchEvent, id: string) => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+    const lastTap = lastTapRef.current[id] || 0;
+
+    // Detect double tap
+    if (now - lastTap < DOUBLE_TAP_DELAY) {
+      let clientX = 0, clientY = 0;
+      if ('touches' in e && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else if ('clientX' in e) {
+        clientX = (e as React.MouseEvent).clientX;
+        clientY = (e as React.MouseEvent).clientY;
+      }
+      
+      triggerHeartEffect(clientX, clientY);
+      likeHof(id); // Directly triggers mutation inside the global dashboard state
+      delete lastTapRef.current[id];
+    } else {
+      lastTapRef.current[id] = now;
     }
-    triggerHeartEffect(clientX, clientY);
-  };
+  }, [likeHof]);
 
   const handleLeaderboardClick = (id: string) => {
     router.push(`/characters?id=${id}`);
@@ -58,6 +72,10 @@ export default function HallOfFamePage() {
   const isSingerEntry = (entry: HallOfFameEntry) => {
     const group = getGroupForEntry(entry);
     return group === "__other__" || entry.nationality?.toLowerCase() === "singer";
+  };
+
+  const isAnimeEntry = (entry: HallOfFameEntry) => {
+    return entry.type === "anime";
   };
 
   const isTokusatsuEntry = (entry: HallOfFameEntry) => {
@@ -76,22 +94,20 @@ export default function HallOfFamePage() {
 
   // Filter based on selected subTab (purely isolated)
   const filterBySubTab = (itemsList: HallOfFameEntry[]) => {
-    // 1. Group 1: Drama Rankings (strictly EXCLUDE Singers and Tokusatsu entries)
     if (["overall", "korean", "japanese", "chinese", "hollywood"].includes(subTab)) {
-      const dramaBase = itemsList.filter((e) => !isSingerEntry(e) && !isTokusatsuEntry(e));
+      const dramaBase = itemsList.filter((e) => !isSingerEntry(e) && !isTokusatsuEntry(e) && !isAnimeEntry(e));
       if (subTab === "overall") return dramaBase;
       if (subTab === "korean") return dramaBase.filter((e) => getGroupForEntry(e) === "Korea");
       if (subTab === "japanese") return dramaBase.filter((e) => getGroupForEntry(e) === "Japan");
       if (subTab === "chinese") return dramaBase.filter((e) => getGroupForEntry(e) === "China");
       if (subTab === "hollywood") return dramaBase.filter((e) => getGroupForEntry(e) === "Hollywood");
     }
-
-    // 2. Group 2: Singer Rankings (strictly query Singers)
     if (subTab === "singer") {
-      return itemsList.filter((e) => isSingerEntry(e));
+      return itemsList.filter((e) => isSingerEntry(e) && !isAnimeEntry(e));
     }
-
-    // 3. Group 3: Tokusatsu Rankings (strictly query Tokusatsu)
+    if (subTab === "anime_ranked") {
+      return itemsList.filter((e) => isAnimeEntry(e) && !isTokusatsuEntry(e));
+    }
     if (subTab === "toku_overall") {
       return itemsList.filter((e) => isTokusatsuEntry(e));
     }
@@ -104,22 +120,14 @@ export default function HallOfFamePage() {
     if (subTab === "power_rangers") {
       return itemsList.filter((e) => e.tokusatsuFranchise?.toLowerCase() === "power rangers");
     }
-
     return itemsList;
   };
 
   // Derived Sorted lists
   const currentFilteredList = sortHofEntries(filterBySubTab(hallOfFame));
-
-  // Top 3 Podium Selection
-  const rank1 = currentFilteredList[0];
-  const rank2 = currentFilteredList[1];
-  const rank3 = currentFilteredList[2];
-
-  // Contenders (Ranks 4+)
+  const [rank1, rank2, rank3] = currentFilteredList;
   const restOfList = currentFilteredList.slice(3);
 
-  // Group Details Helper for theme button rendering
   const getTabTheme = (tabId: RankingTab) => {
     if (["overall", "korean", "japanese", "chinese", "hollywood"].includes(tabId)) {
       return {
@@ -135,6 +143,14 @@ export default function HallOfFamePage() {
         activeTextCyber: "#00F5FF",
         activeBgBrutal: "#A5F3FC",
         labelColorCyber: "rgba(224, 232, 255, 0.6)"
+      };
+    }
+    if (tabId === "anime_ranked") {
+      return {
+        activeBgCyber: "rgba(191, 95, 255, 0.15)",
+        activeTextCyber: "#BF5FFF",
+        activeBgBrutal: "#E9D5FF",
+        labelColorCyber: "rgba(233, 213, 255, 0.6)"
       };
     }
     return {
@@ -189,7 +205,6 @@ export default function HallOfFamePage() {
               The ultimate gamified podium ranking for the elite Hall of Fame characters.
             </p>
           </div>
-
           <div className="flex gap-3">
             <button
               onClick={() => router.push("/characters")}
@@ -232,7 +247,6 @@ export default function HallOfFamePage() {
                   onClick={() => setSubTab(tab.id as RankingTab)}
                   className="relative py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all text-[10px] font-black uppercase tracking-wider border border-transparent"
                   style={{
-                    backgroundColor: isActive && !isCyber ? t.activeBgBrutal : "transparent",
                     color: isActive 
                       ? isCyber ? t.activeTextCyber : "#000"
                       : isCyber ? t.labelColorCyber : "#444",
@@ -241,11 +255,14 @@ export default function HallOfFamePage() {
                     boxShadow: isActive && !isCyber ? "2px 2px 0 #000" : "none",
                   }}
                 >
-                  {isActive && isCyber && (
+                  {isActive && (
                     <motion.div
-                      layoutId="activeRankingGlow"
-                      className="absolute inset-0 rounded-lg -z-10 border border-[#FF69B4]/30"
-                      style={{ backgroundColor: t.activeBgCyber }}
+                      layoutId={`activeRankingGlow-${subTab}`}
+                      className="absolute inset-0 rounded-lg -z-10"
+                      style={{ 
+                        backgroundColor: isCyber ? t.activeBgCyber : t.activeBgBrutal,
+                        border: isCyber ? "1px solid rgba(255, 105, 180, 0.3)" : "none"
+                      }}
                       transition={{ type: "spring", stiffness: 350, damping: 25 }}
                     />
                   )}
@@ -257,27 +274,27 @@ export default function HallOfFamePage() {
           </div>
         </div>
 
-        {/* divider line */}
         <div className="hidden md:block w-px bg-adaptive-unique self-stretch opacity-30" />
 
-        {/* singers section */}
+        {/* Group 2: Singer + Anime Rankings */}
         <div className="space-y-2">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-[#A5F3FC] dark:text-[#00F5FF] flex items-center gap-1.5">
-            <span>🎤</span> Singer Rankings (Group 2)
+          <h3 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5" style={{ color: isCyber ? "#00F5FF" : "#0284C7" }}>
+            <span>🎤</span> Singer & Anime Rankings (Group 2)
           </h3>
           <div className="flex flex-wrap gap-1.5">
             {[
               { id: "singer", label: "Singers Only", flag: "🎵" },
+              { id: "anime_ranked", label: "Anime Ranked", flag: "⛩️" },
             ].map((tab) => {
               const isActive = subTab === tab.id;
               const t = getTabTheme(tab.id as RankingTab);
+              const borderGlowColor = tab.id === "anime_ranked" ? "#BF5FFF" : "#00F5FF";
               return (
                 <button
                   key={tab.id}
                   onClick={() => setSubTab(tab.id as RankingTab)}
                   className="relative py-1.5 px-4 rounded-lg flex items-center justify-center gap-1.5 transition-all text-[10px] font-black uppercase tracking-wider border border-transparent"
                   style={{
-                    backgroundColor: isActive && !isCyber ? t.activeBgBrutal : "transparent",
                     color: isActive 
                       ? isCyber ? t.activeTextCyber : "#000"
                       : isCyber ? t.labelColorCyber : "#444",
@@ -286,11 +303,14 @@ export default function HallOfFamePage() {
                     boxShadow: isActive && !isCyber ? "2px 2px 0 #000" : "none",
                   }}
                 >
-                  {isActive && isCyber && (
+                  {isActive && (
                     <motion.div
-                      layoutId="activeRankingGlow"
-                      className="absolute inset-0 rounded-lg -z-10 border border-[#00F5FF]/30"
-                      style={{ backgroundColor: t.activeBgCyber }}
+                      layoutId={`activeRankingGlow-${subTab}`}
+                      className="absolute inset-0 rounded-lg -z-10"
+                      style={{ 
+                        backgroundColor: isCyber ? t.activeBgCyber : t.activeBgBrutal, 
+                        border: isCyber ? `1px solid ${borderGlowColor}30` : "none" 
+                      }}
                       transition={{ type: "spring", stiffness: 350, damping: 25 }}
                     />
                   )}
@@ -302,7 +322,6 @@ export default function HallOfFamePage() {
           </div>
         </div>
 
-        {/* divider line */}
         <div className="hidden md:block w-px bg-adaptive-unique self-stretch opacity-30" />
 
         {/* tokusatsu section */}
@@ -325,7 +344,6 @@ export default function HallOfFamePage() {
                   onClick={() => setSubTab(tab.id as RankingTab)}
                   className="relative py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all text-[10px] font-black uppercase tracking-wider border border-transparent"
                   style={{
-                    backgroundColor: isActive && !isCyber ? t.activeBgBrutal : "transparent",
                     color: isActive 
                       ? isCyber ? t.activeTextCyber : "#000"
                       : isCyber ? t.labelColorCyber : "#444",
@@ -334,11 +352,14 @@ export default function HallOfFamePage() {
                     boxShadow: isActive && !isCyber ? "2px 2px 0 #000" : "none",
                   }}
                 >
-                  {isActive && isCyber && (
+                  {isActive && (
                     <motion.div
-                      layoutId="activeRankingGlow"
-                      className="absolute inset-0 rounded-lg -z-10 border border-[#FEF08A]/30"
-                      style={{ backgroundColor: t.activeBgCyber }}
+                      layoutId={`activeRankingGlow-${subTab}`}
+                      className="absolute inset-0 rounded-lg -z-10"
+                      style={{ 
+                        backgroundColor: isCyber ? t.activeBgCyber : t.activeBgBrutal,
+                        border: isCyber ? "1px solid rgba(254, 240, 138, 0.3)" : "none"
+                      }}
                       transition={{ type: "spring", stiffness: 350, damping: 25 }}
                     />
                   )}
@@ -369,7 +390,6 @@ export default function HallOfFamePage() {
           >
             {isCyber ? "👑 APEX_PODIUM_SLOTS" : "👑 The Championship Podium"}
           </h2>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-4 items-end justify-items-center max-w-5xl mx-auto px-4">
             
             {/* Rank 2 (Left, Mid height Pedestal) */}
@@ -378,7 +398,7 @@ export default function HallOfFamePage() {
                 🥈 2nd Place
               </div>
               {rank2 ? (
-                <>
+                <div className="w-full" onClick={(e) => handleInteractionTap(e, rank2.id)} onTouchEnd={(e) => handleInteractionTap(e, rank2.id)}>
                   <HofEntryCard
                     entry={rank2}
                     idx={1}
@@ -387,31 +407,33 @@ export default function HallOfFamePage() {
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     podiumRank={2}
-                    onDoubleTap={handleDoubleTap}
+                    onDoubleTap={handleInteractionTap}
                   />
-                  {/* Pedestal block */}
-                  <motion.div
-                    initial={{ scaleY: 0 }}
-                    animate={{ scaleY: 1 }}
-                    transition={{ type: "spring", stiffness: 100, delay: 0.1 }}
-                    className="w-full h-24 mt-4 rounded-xl flex flex-col items-center justify-center relative overflow-hidden shrink-0 origin-bottom"
-                    style={{
-                      backgroundColor: isCyber ? "rgba(148, 163, 184, 0.15)" : "#E2E8F0",
-                      border: isCyber ? "2px solid rgba(148, 163, 184, 0.4)" : "4px solid #000",
-                      boxShadow: isCyber ? "0 0 20px rgba(148, 163, 184, 0.15)" : "6px 6px 0px #000",
-                      backgroundImage: isCyber ? "radial-gradient(rgba(148, 163, 184, 0.25) 1px, transparent 1px)" : "none",
-                      backgroundSize: isCyber ? "10px 10px" : "none",
-                    }}
-                  >
-                    <span className="text-4xl font-black text-[#94A3B8] tracking-tighter">2</span>
-                    <span className="text-[9px] uppercase tracking-wider font-bold opacity-60">Contender</span>
-                  </motion.div>
-                </>
+                </div>
               ) : (
-                <div className="h-60 border-2 border-dashed border-adaptive-unique rounded-2xl w-full flex items-center justify-center text-xs theme-text-muted">
-                  Vacancy
+                <div 
+                  className="h-48 border-2 border-dashed border-adaptive-unique rounded-xl w-full flex flex-col items-center justify-center text-xs opacity-40 font-black tracking-widest uppercase"
+                  style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#FAFAFA" }}
+                >
+                  <span>🚫 Vacant Slot</span>
                 </div>
               )}
+              <motion.div
+                initial={{ scaleY: 0 }}
+                animate={{ scaleY: 1 }}
+                transition={{ type: "spring", stiffness: 100, delay: 0.1 }}
+                className="w-full h-24 mt-4 rounded-xl flex flex-col items-center justify-center relative overflow-hidden shrink-0 origin-bottom"
+                style={{
+                  backgroundColor: isCyber ? "rgba(148, 163, 184, 0.15)" : "#E2E8F0",
+                  border: isCyber ? "2px solid rgba(148, 163, 184, 0.4)" : "4px solid #000",
+                  boxShadow: isCyber ? "0 0 20px rgba(148, 163, 184, 0.15)" : "6px 6px 0px #000",
+                  backgroundImage: isCyber ? "radial-gradient(rgba(148, 163, 184, 0.25) 1px, transparent 1px)" : "none",
+                  backgroundSize: isCyber ? "10px 10px" : "none",
+                }}
+              >
+                <span className="text-4xl font-black text-[#94A3B8] tracking-tighter">2</span>
+                <span className="text-[9px] uppercase tracking-wider font-bold opacity-60">Contender</span>
+              </motion.div>
             </div>
 
             {/* Rank 1 (Center, Elevated/Tallest Pedestal) */}
@@ -421,27 +443,18 @@ export default function HallOfFamePage() {
               </div>
               {rank1 ? (
                 <>
-                  {/* Crown Icon above card */}
                   <motion.div
-                    animate={{
-                      y: [0, -8, 0],
-                      rotate: [0, 3, -3, 0]
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
+                    animate={{ y: [0, -8, 0], rotate: [0, 3, -3, 0] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                     className="text-4xl absolute -top-10 z-20 pointer-events-none filter drop-shadow-[0_0_8px_rgba(250,204,21,0.9)]"
                   >
                     👑
                   </motion.div>
-
                   <div 
                     className="w-full flex justify-center relative"
-                    style={{
-                      filter: isCyber ? "drop-shadow(0 0 25px rgba(250, 204, 21, 0.35))" : "none"
-                    }}
+                    style={{ filter: isCyber ? "drop-shadow(0 0 25px rgba(250, 204, 21, 0.35))" : "none" }}
+                    onClick={(e) => handleInteractionTap(e, rank1.id)}
+                    onTouchEnd={(e) => handleInteractionTap(e, rank1.id)}
                   >
                     <HofEntryCard
                       entry={rank1}
@@ -451,43 +464,43 @@ export default function HallOfFamePage() {
                       onEdit={handleEdit}
                       onDelete={handleDelete}
                       podiumRank={1}
-                      onDoubleTap={handleDoubleTap}
+                      onDoubleTap={handleInteractionTap}
                     />
                   </div>
-
-                  {/* Pedestal block */}
-                  <motion.div
-                    initial={{ scaleY: 0 }}
-                    animate={{ scaleY: 1 }}
-                    transition={{ type: "spring", stiffness: 100 }}
-                    className="w-full h-36 mt-4 rounded-xl flex flex-col items-center justify-center relative overflow-hidden shrink-0 origin-bottom"
-                    style={{
-                      backgroundColor: isCyber ? "rgba(255, 215, 0, 0.15)" : "#FEF08A",
-                      border: isCyber ? "3px solid #EAB308" : "4px solid #000",
-                      boxShadow: isCyber ? "0 0 35px rgba(250, 204, 21, 0.4)" : "8px 8px 0px #000",
-                      backgroundImage: isCyber 
-                        ? "radial-gradient(rgba(250, 204, 21, 0.3) 1px, transparent 1px)"
-                        : "repeating-linear-gradient(45deg, #FEF9C3, #FEF9C3 12px, #FEF08A 12px, #FEF08A 24px)",
-                      backgroundSize: isCyber ? "12px 12px" : "auto",
-                    }}
-                  >
-                    {/* Retro patterns */}
-                    {!isCyber && (
-                      <div className="absolute top-2 left-2 right-2 flex justify-between pointer-events-none opacity-40 font-black text-xs select-none">
-                        <span>★</span>
-                        <span>CHAMPION</span>
-                        <span>★</span>
-                      </div>
-                    )}
-                    <span className="text-6xl font-black text-[#EAB308] dark:text-[#FBBF24] tracking-tighter">1</span>
-                    <span className="text-[9px] uppercase tracking-widest font-black opacity-80 text-amber-700 dark:text-amber-400">THE APEX</span>
-                  </motion.div>
                 </>
               ) : (
-                <div className="h-60 border-2 border-dashed border-adaptive-unique rounded-2xl w-full flex items-center justify-center text-xs theme-text-muted">
-                  Vacancy
+                <div 
+                  className="h-48 border-2 border-dashed border-adaptive-unique rounded-xl w-full flex flex-col items-center justify-center text-xs opacity-40 font-black tracking-widest uppercase"
+                  style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#FAFAFA" }}
+                >
+                  <span>🚫 Vacant Slot</span>
                 </div>
               )}
+              <motion.div
+                initial={{ scaleY: 0 }}
+                animate={{ scaleY: 1 }}
+                transition={{ type: "spring", stiffness: 100 }}
+                className="w-full h-36 mt-4 rounded-xl flex flex-col items-center justify-center relative overflow-hidden shrink-0 origin-bottom"
+                style={{
+                  backgroundColor: isCyber ? "rgba(255, 215, 0, 0.15)" : "#FEF08A",
+                  border: isCyber ? "3px solid #EAB308" : "4px solid #000",
+                  boxShadow: isCyber ? "0 0 35px rgba(250, 204, 21, 0.4)" : "8px 8px 0px #000",
+                  backgroundImage: isCyber 
+                    ? "radial-gradient(rgba(250, 204, 21, 0.3) 1px, transparent 1px)"
+                    : "repeating-linear-gradient(45deg, #FEF9C3, #FEF9C3 12px, #FEF08A 12px, #FEF08A 24px)",
+                  backgroundSize: isCyber ? "12px 12px" : "auto",
+                }}
+              >
+                {!isCyber && (
+                  <div className="absolute top-2 left-2 right-2 flex justify-between pointer-events-none opacity-40 font-black text-xs select-none">
+                    <span>★</span>
+                    <span>CHAMPION</span>
+                    <span>★</span>
+                  </div>
+                )}
+                <span className="text-6xl font-black text-[#EAB308] dark:text-[#FBBF24] tracking-tighter">1</span>
+                <span className="text-[9px] uppercase tracking-widest font-black opacity-80 text-amber-700 dark:text-amber-400">THE APEX</span>
+              </motion.div>
             </div>
 
             {/* Rank 3 (Right, Shortest Pedestal) */}
@@ -496,7 +509,7 @@ export default function HallOfFamePage() {
                 🥉 3rd Place
               </div>
               {rank3 ? (
-                <>
+                <div className="w-full" onClick={(e) => handleInteractionTap(e, rank3.id)} onTouchEnd={(e) => handleInteractionTap(e, rank3.id)}>
                   <HofEntryCard
                     entry={rank3}
                     idx={2}
@@ -505,33 +518,34 @@ export default function HallOfFamePage() {
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     podiumRank={3}
-                    onDoubleTap={handleDoubleTap}
+                    onDoubleTap={handleInteractionTap}
                   />
-                  {/* Pedestal block */}
-                  <motion.div
-                    initial={{ scaleY: 0 }}
-                    animate={{ scaleY: 1 }}
-                    transition={{ type: "spring", stiffness: 100, delay: 0.2 }}
-                    className="w-full h-16 mt-4 rounded-xl flex flex-col items-center justify-center relative overflow-hidden shrink-0 origin-bottom"
-                    style={{
-                      backgroundColor: isCyber ? "rgba(180, 83, 9, 0.15)" : "#FFEDD5",
-                      border: isCyber ? "2px solid rgba(180, 83, 9, 0.4)" : "4px solid #000",
-                      boxShadow: isCyber ? "0 0 20px rgba(180, 83, 9, 0.15)" : "6px 6px 0px #000",
-                      backgroundImage: isCyber ? "radial-gradient(rgba(180, 83, 9, 0.25) 1px, transparent 1px)" : "none",
-                      backgroundSize: isCyber ? "10px 10px" : "none",
-                    }}
-                  >
-                    <span className="text-3xl font-black text-[#B45309] tracking-tighter">3</span>
-                    <span className="text-[9px] uppercase tracking-wider font-bold opacity-60">Finalist</span>
-                  </motion.div>
-                </>
+                </div>
               ) : (
-                <div className="h-60 border-2 border-dashed border-adaptive-unique rounded-2xl w-full flex items-center justify-center text-xs theme-text-muted">
-                  Vacancy
+                <div 
+                  className="h-48 border-2 border-dashed border-adaptive-unique rounded-xl w-full flex flex-col items-center justify-center text-xs opacity-40 font-black tracking-widest uppercase"
+                  style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#FAFAFA" }}
+                >
+                  <span>🚫 Vacant Slot</span>
                 </div>
               )}
+              <motion.div
+                initial={{ scaleY: 0 }}
+                animate={{ scaleY: 1 }}
+                transition={{ type: "spring", stiffness: 100, delay: 0.2 }}
+                className="w-full h-16 mt-4 rounded-xl flex flex-col items-center justify-center relative overflow-hidden shrink-0 origin-bottom"
+                style={{
+                  backgroundColor: isCyber ? "rgba(180, 83, 9, 0.15)" : "#FFEDD5",
+                  border: isCyber ? "2px solid rgba(180, 83, 9, 0.4)" : "4px solid #000",
+                  boxShadow: isCyber ? "0 0 20px rgba(180, 83, 9, 0.15)" : "6px 6px 0px #000",
+                  backgroundImage: isCyber ? "radial-gradient(rgba(180, 83, 9, 0.25) 1px, transparent 1px)" : "none",
+                  backgroundSize: isCyber ? "10px 10px" : "none",
+                }}
+              >
+                <span className="text-3xl font-black text-[#B45309] tracking-tighter">3</span>
+                <span className="text-[9px] uppercase tracking-wider font-bold opacity-60">Finalist</span>
+              </motion.div>
             </div>
-
           </div>
         </div>
       )}
@@ -553,17 +567,16 @@ export default function HallOfFamePage() {
           <h2 className="text-sm font-black uppercase tracking-widest mb-6 border-b border-dashed border-adaptive-unique pb-2 theme-text-primary">
             Top Contenders (Ranks 4+)
           </h2>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {restOfList.map((entry, idx) => {
               const trend = getTrend(entry.id);
               const groupDetails = getGroupDetails(getGroupForEntry(entry));
-
               return (
                 <div 
                   key={entry.id} 
                   onClick={() => handleLeaderboardClick(entry.id)}
-                  onDoubleClick={(e) => { e.stopPropagation(); handleDoubleTap(e, entry.id); likeHof(entry.id); }}
+                  onClickCapture={(e) => handleInteractionTap(e, entry.id)}
+                  onTouchEndCapture={(e) => handleInteractionTap(e, entry.id)}
                   className="flex items-center justify-between p-3 rounded-xl border border-adaptive-unique bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-all cursor-pointer group hover:scale-[1.02] shrink-0"
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -594,14 +607,12 @@ export default function HallOfFamePage() {
                       </p>
                     </div>
                   </div>
-
                   <div className="flex items-center gap-3 text-right shrink-0">
                     <div className="flex flex-col items-end">
                       <span className={`text-[10px] font-black flex items-center gap-0.5 ${trend.text}`}>
                         {trend.icon} {trend.label}
                       </span>
                     </div>
-
                     <div className="flex flex-col items-end bg-black/5 dark:bg-white/5 border border-adaptive-unique px-2 py-0.5 rounded">
                       <span className="text-xs font-black theme-text-primary font-mono">{entry.likes || 0} ❤️</span>
                     </div>

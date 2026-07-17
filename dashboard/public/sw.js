@@ -1,8 +1,7 @@
-const CACHE_NAME = "dashboard-v1";
+const CACHE_NAME = "dashboard-v2";
 const OFFLINE_URL = "/";
 
 const STATIC_ASSETS = [
-  "/",
   "/manifest.json",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
@@ -43,6 +42,9 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   if (!event.request.url.startsWith(self.location.origin)) return;
 
+  // Skip navigation requests to prevent caching auth redirects or the login page HTML under app routes
+  if (event.request.mode === "navigate") return;
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const networkFetch = fetch(event.request)
@@ -55,10 +57,8 @@ self.addEventListener("fetch", (event) => {
           return response;
         })
         .catch(() => {
-          // Network failed — return offline page for navigation
-          if (event.request.mode === "navigate") {
-            return caches.match(OFFLINE_URL);
-          }
+          // Network failed
+          return undefined;
         });
 
       return cachedResponse || networkFetch;
