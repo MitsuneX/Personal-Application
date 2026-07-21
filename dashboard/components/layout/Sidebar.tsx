@@ -9,7 +9,6 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { ProfileEditorModal } from "@/components/ui/ProfileEditorModal";
 import { ProfileHoverPopover } from "@/components/ui/ProfileHoverPopover";
 import { AestheticsModal } from "@/components/ui/AestheticsModal";
-import Link from "next/link";
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -339,7 +338,7 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
             className="shrink-0 relative overflow-visible"
             style={{
               borderTop: isCyber ? "1px solid rgba(0,245,255,0.12)" : "2px solid rgba(0,0,0,0.1)",
-              height: 154,
+              height: "auto",
               background: isCyber ? "rgba(5, 8, 22, 0.95)" : "#FFFDEB",
             }}
           >
@@ -366,7 +365,7 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
             )}
 
             {/* Sidebar Bottom Bar Container */}
-            <div className="absolute inset-0 z-10 flex flex-col justify-between p-3.5 min-w-0 gap-1.5">
+            <div className="relative z-10 flex flex-col justify-between p-3.5 min-w-0 gap-1.5">
               <ProfileHoverPopover
                 onOpenAesthetics={() => setAestheticsOpen(true)}
                 placement="up"
@@ -413,7 +412,6 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
                   )}
                 </div>
               </ProfileHoverPopover>
-
             </div>
           </div>
         ) : (

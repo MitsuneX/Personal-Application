@@ -825,7 +825,7 @@ export function MediaCard({
             {/* Stepper + Progress */}
             <div className="my-1 shrink-0">
               <div className="flex items-center justify-between mb-1">
-                {isEditable ? (
+                {onEpisodeChange ? (
                   <EpisodeStepper
                     watched={localEps}
                     total={totalEpisodes}

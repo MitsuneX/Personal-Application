@@ -45,7 +45,7 @@ const getDramaCategory = (drama: { title: string; genre?: string; cast?: string[
 function JapaneseDramaPageContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { dramas: allDramas, dramaLog, deleteDramaLog, removeDrama, updateDrama, hallOfFame } = useDashboardStore();
+  const { dramas: allDramas, dramaLog, deleteDramaLog, removeDrama, updateDrama, updateDramaLog, hallOfFame } = useDashboardStore();
 
   const [filterType, setFilterType] = useState<"all"|"actual"|"ultraman"|"kamen-rider"|"power-rangers"|"tokusatsu">("all");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -71,13 +71,14 @@ function JapaneseDramaPageContent() {
     .filter(d => d.country === "japanese")
     .map(d => ({
       id: d.id, title: d.title,
-      episodes: d.type === "Movie" ? 1 : 16,
-      episodesWatched: d.statusBadge === "Classic" || d.statusBadge === "GOAT Status" ? (d.type === "Movie" ? 1 : 16) : 0,
+      episodes: d.totalEpisodes && d.totalEpisodes > 0 ? d.totalEpisodes : (d.type === "Movie" ? 1 : 16),
+      episodesWatched: d.episodesWatched ?? (d.statusBadge === "Classic" || d.statusBadge === "GOAT Status" ? (d.type === "Movie" ? 1 : 16) : 0),
       status: d.statusBadge === "Classic" || d.statusBadge === "GOAT Status" ? "Completed" : "Watching",
       rating: d.rating ? Math.round(parseFloat(d.rating)) : 8,
       genre: d.type ?? "Series", year: d.releaseYear ?? 2026, platform: "OMDb Log",
       cast: d.mainActors,
       isEditable: false,
+      isLogEntry: true,
       posterUrl: d.posterUrl ?? undefined,
       synopsis: d.plotSummary ?? undefined,
     }));
@@ -115,6 +116,14 @@ function JapaneseDramaPageContent() {
   const handleTotalEpisodesChange = useCallback((id: string, total: number) => {
     updateDrama(id, { episodes: total });
   }, [updateDrama]);
+
+  const handleDramaLogEpisodeChange = useCallback((id: string, watched: number, newStatus: string) => {
+    updateDramaLog(id, { episodesWatched: watched });
+  }, [updateDramaLog]);
+
+  const handleDramaLogTotalChange = useCallback((id: string, total: number) => {
+    updateDramaLog(id, { totalEpisodes: total });
+  }, [updateDramaLog]);
 
   const handleDelete = useCallback((id: string) => {
     const drama = allMerged.find(d => d.id === id);
@@ -256,8 +265,8 @@ function JapaneseDramaPageContent() {
                 posterUrl={drama.posterUrl}
                 isEditable={drama.isEditable}
                 onStatusChange={drama.isEditable ? handleStatusChange : undefined}
-                onEpisodeChange={drama.isEditable ? handleEpisodeChange : undefined}
-                onTotalEpisodesChange={drama.isEditable ? handleTotalEpisodesChange : undefined}
+                onEpisodeChange={drama.isEditable ? handleEpisodeChange : handleDramaLogEpisodeChange}
+                onTotalEpisodesChange={drama.isEditable ? handleTotalEpisodesChange : handleDramaLogTotalChange}
                 onDelete={handleDelete}
                 hofStars={getHofStars(drama)}
                 index={i}

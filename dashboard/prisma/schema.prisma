@@ -89,16 +89,17 @@ model Drama {
 }
 
 model HallOfFame {
-  id          String   @id @default(uuid())
-  name        String
-  type        String   // "actor" | "actress" | "anime"
-  status      String   // "GOAT Status" | "All-Star" | "Rising" | "Classic"
-  knownFor    String[]
-  nationality String?
-  note        String?
-  imageUrl    String?
-  rank        Int?     @default(0)
-  likes       Int      @default(0)
+  id                 String   @id @default(uuid())
+  name               String
+  type               String   // "actor" | "actress" | "anime" | "singer" | "tokusatsu"
+  status             String   // "GOAT Status" | "All-Star" | "Rising" | "Classic"
+  knownFor           String[]
+  nationality        String?
+  singerType         String?  // "Solo Artist" | "Band / Group" | "Idol" | "VTuber" | "Vocalist"
+  note               String?
+  imageUrl           String?
+  rank               Int?     @default(0)
+  likes              Int      @default(0)
   isChampion         Boolean  @default(false)
   tokusatsuFranchise String?
   tokusatsuShow      String?
@@ -136,29 +137,45 @@ model GalleryItem {
 }
 
 model Song {
-  id        String   @id @default(uuid())
-  title     String
-  artist    String
-  album     String?
-  imageUrl  String?
-  category  String   // e.g. "All-Time Favorites", "Chill Beats", "Hype/J-Pop", "K-Osts"
-  duration  String?
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid())
+  title      String
+  artist     String
+  album      String?
+  imageUrl   String?
+  category   String   // e.g. "All-Time Favorites", "Chill Beats", "Hype/J-Pop", "K-Osts"
+  duration   String?
+  audioUrl   String?
+  youtubeId  String?
+  lyrics     String?
+  geniusId   String?
+  playlistId String?
+  createdAt  DateTime @default(now())
+}
+
+model Playlist {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  coverUrl    String?
+  songs       Json?    // array of song IDs or track objects
+  createdAt   DateTime @default(now())
 }
 
 model DramaLog {
-  id          String   @id @default(uuid())
-  title       String
-  type        String   // "Movie" | "Series"
-  releaseYear Int?
-  plotSummary String?
-  posterUrl   String?
-  mainActors  Json     // string[]
-  statusBadge String   @default("All-Star") // "GOAT Status" | "All-Star" | "Rising" | "Classic"
-  omdbId      String?  // imdbID for deduplication
-  country     String?  // "korean" | "japanese" | "hollywood" | "chinese" | "other"
-  rating      String?  // e.g. "8.5"
-  createdAt   DateTime @default(now())
+  id              String   @id @default(uuid())
+  title           String
+  type            String   // "Movie" | "Series"
+  releaseYear     Int?
+  plotSummary     String?
+  posterUrl       String?
+  mainActors      Json     // string[]
+  statusBadge     String   @default("All-Star") // "GOAT Status" | "All-Star" | "Rising" | "Classic"
+  omdbId          String?  // imdbID for deduplication
+  country         String?  // "korean" | "japanese" | "hollywood" | "chinese" | "other"
+  rating          String?  // e.g. "8.5"
+  episodesWatched Int      @default(0)
+  totalEpisodes   Int      @default(0)
+  createdAt       DateTime @default(now())
 }
 
 model SavedPrompt {

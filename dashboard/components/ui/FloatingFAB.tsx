@@ -8,19 +8,21 @@ import type { MediaCategory } from "@/components/cards/MediaCard";
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 export interface FloatingFABProps {
-  category: MediaCategory;
-  onSearch: () => void;
-  onManualAdd: () => void;
+  category?: MediaCategory | "music";
+  onSearch?: () => void;
+  onManualAdd?: () => void;
+  customActions?: Array<{ icon: string; label: string; onClick: () => void }>;
 }
 
 // ─── Cultural accent map ──────────────────────────────────────────────────────────
 
-const ACCENTS: Record<MediaCategory, { cyber: string; brutal: string; label: string }> = {
+const ACCENTS: Record<MediaCategory | "music", { cyber: string; brutal: string; label: string }> = {
   japanese:  { cyber: "#FF69B4", brutal: "#C9184A", label: "J-Drama" },
   korean:    { cyber: "#22D3EE", brutal: "#2EC4B6", label: "K-Drama" },
   chinese:   { cyber: "#FFD700", brutal: "#C8102E", label: "C-Drama" },
   hollywood: { cyber: "#A78BFA", brutal: "#7C3AED", label: "Hollywood" },
   anime:     { cyber: "#BF5FFF", brutal: "#FF6B35", label: "Anime" },
+  music:     { cyber: "#00F5FF", brutal: "#FF6B35", label: "Music Vault" },
 };
 
 // ─── Sub-action item ──────────────────────────────────────────────────────────────
@@ -64,7 +66,7 @@ function FABAction({
 
 // ─── Main FAB ───────────────────────────────────────────────────────────────────
 
-export function FloatingFAB({ category, onSearch, onManualAdd }: FloatingFABProps) {
+export function FloatingFAB({ category = "music", onSearch, onManualAdd, customActions }: FloatingFABProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const [open, setOpen] = useState(false);
@@ -85,10 +87,18 @@ export function FloatingFAB({ category, onSearch, onManualAdd }: FloatingFABProp
     return () => document.removeEventListener("mousedown", handleOutside);
   }, [open, handleOutside]);
 
-  const actions = [
-    { icon: "🔍", label: `Search ${acc.label} DB`, onClick: () => { onSearch(); setOpen(false); } },
-    { icon: "＋", label: "Add Manual Log",          onClick: () => { onManualAdd(); setOpen(false); } },
-  ];
+  const actions = customActions
+    ? customActions.map((act) => ({
+        ...act,
+        onClick: () => {
+          act.onClick();
+          setOpen(false);
+        },
+      }))
+    : [
+        { icon: "🔍", label: `Search ${acc.label} DB`, onClick: () => { onSearch?.(); setOpen(false); } },
+        { icon: "＋", label: "Add Manual Log",          onClick: () => { onManualAdd?.(); setOpen(false); } },
+      ];
 
   return (
     <div

@@ -9,6 +9,8 @@ import { PageWrapper } from "./PageWrapper";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { TopLoader } from "@/components/ui/TopLoader";
 import { FloatingHeartEngine } from "@/components/ui/FloatingHeartEngine";
+import { GlobalMusicPlayer } from "@/components/ui/GlobalMusicPlayer";
+
 interface AppShellProps {
   children: React.ReactNode;
 }
@@ -45,6 +47,7 @@ export function AppShell({ children }: AppShellProps) {
     <>
       <FloatingHeartEngine />
       <TopLoader />
+      <GlobalMusicPlayer />
       <motion.div
         className="h-screen overflow-hidden flex flex-row"
         animate={{ backgroundColor: isCyber ? "#050816" : "#FFF5E4" }}

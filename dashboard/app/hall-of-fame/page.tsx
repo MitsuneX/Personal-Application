@@ -12,7 +12,7 @@ import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
 
 type RankingTab = 
   | "overall" | "korean" | "japanese" | "chinese" | "hollywood" // Group 1: Dramas
-  | "singer" | "anime_ranked" // Group 2: Singers & Anime
+  | "singer" | "actor_only" | "actress_only" | "anime_ranked" // Group 2: Singers, Actors, Actresses & Anime
   | "toku_overall" | "ultraman" | "kamen_rider" | "power_rangers"; // Group 3: Tokusatsu
 
 export default function HallOfFamePage() {
@@ -105,6 +105,12 @@ export default function HallOfFamePage() {
     if (subTab === "singer") {
       return itemsList.filter((e) => isSingerEntry(e) && !isAnimeEntry(e));
     }
+    if (subTab === "actor_only") {
+      return itemsList.filter((e) => e.type === "actor");
+    }
+    if (subTab === "actress_only") {
+      return itemsList.filter((e) => e.type === "actress");
+    }
     if (subTab === "anime_ranked") {
       return itemsList.filter((e) => isAnimeEntry(e) && !isTokusatsuEntry(e));
     }
@@ -143,6 +149,14 @@ export default function HallOfFamePage() {
         activeTextCyber: "#00F5FF",
         activeBgBrutal: "#A5F3FC",
         labelColorCyber: "rgba(224, 232, 255, 0.6)"
+      };
+    }
+    if (subTab === "actor_only" || subTab === "actress_only") {
+      return {
+        activeBgCyber: "rgba(255, 20, 147, 0.15)",
+        activeTextCyber: "#FF1493",
+        activeBgBrutal: "#FFB7C5",
+        labelColorCyber: "rgba(255, 192, 203, 0.6)"
       };
     }
     if (tabId === "anime_ranked") {
@@ -284,6 +298,8 @@ export default function HallOfFamePage() {
           <div className="flex flex-wrap gap-1.5">
             {[
               { id: "singer", label: "Singers Only", flag: "🎵" },
+              { id: "actor_only", label: "Actor Only", flag: "🎭" },
+              { id: "actress_only", label: "Actress Only", flag: "💫" },
               { id: "anime_ranked", label: "Anime Ranked", flag: "⛩️" },
             ].map((tab) => {
               const isActive = subTab === tab.id;

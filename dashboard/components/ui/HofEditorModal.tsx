@@ -22,10 +22,11 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   const { updateHof } = useDashboardStore();
 
   const [name, setName] = useState("");
-  const [type, setType] = useState<"actor" | "actress" | "anime" | "none">("actress");
+  const [type, setType] = useState<"actor" | "actress" | "anime" | "singer" | "tokusatsu" | "none">("actress");
   const [status, setStatus] = useState<MediaStatus>("GOAT Status");
   const [knownFor, setKnownFor] = useState("");
   const [nationality, setNationality] = useState("");
+  const [singerType, setSingerType] = useState("Solo Artist");
   const [imageUrl, setImageUrl] = useState("");
   const [imageSource, setImageSource] = useState<"upload" | "url">("upload");
   const [note, setNote] = useState("");
@@ -53,6 +54,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       setStatus(entryToEdit.status);
       setKnownFor(entryToEdit.knownFor.join(", "));
       setNationality(entryToEdit.nationality || "");
+      setSingerType(entryToEdit.singerType || "Solo Artist");
       setImageUrl(entryToEdit.imageUrl || "");
       setNote(entryToEdit.note || "");
       setRank(entryToEdit.rank !== undefined ? entryToEdit.rank : null);
@@ -75,6 +77,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       setStatus("GOAT Status");
       setKnownFor("");
       setNationality("");
+      setSingerType("Solo Artist");
       setImageUrl("");
       setImageSource("upload");
       setNote("");
@@ -146,15 +149,16 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
         name: name.trim(),
         type,
         status,
-        knownFor: knownFor.split(",").map((s) => s.trim()).filter(Boolean),
-        nationality: nationality.trim() || undefined,
+        knownFor: type === "singer" ? [] : knownFor.split(",").map((s) => s.trim()).filter(Boolean),
+        nationality: type === "singer" ? "Singer" : (nationality.trim() || undefined),
+        singerType: type === "singer" ? singerType : undefined,
         imageUrl: imageUrl.trim() || undefined,
         note: note.trim() || undefined,
         rank: rank === null ? null : Number(rank),
         isChampion,
-        tokusatsuFranchise: tokusatsuFranchise || null,
-        tokusatsuShow: tokusatsuShow.trim() || null,
-        associatedDramas: associatedDramas.split(",").map(d => d.trim()).filter(Boolean),
+        tokusatsuFranchise: (type === "tokusatsu" || type === "none") ? (tokusatsuFranchise || null) : null,
+        tokusatsuShow: (type === "tokusatsu" || type === "none") ? (tokusatsuShow.trim() || null) : null,
+        associatedDramas: (type === "tokusatsu" || type === "none") ? associatedDramas.split(",").map(d => d.trim()).filter(Boolean) : [],
       });
       onClose();
     } catch (err) {
@@ -408,8 +412,9 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                         options={[
                           { value: "actress", label: "Actress", icon: "💫" },
                           { value: "actor", label: "Actor", icon: "🎭" },
+                          { value: "singer", label: "Singer", icon: "🎤" },
                           { value: "anime", label: "Anime", icon: "⛩️" },
-                          { value: "none", label: "None (Tokusatsu)", icon: "🦸" },
+                          { value: "tokusatsu", label: "Tokusatsu", icon: "🦸" },
                         ]}
                       />
                     </div>
@@ -428,25 +433,41 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                     </div>
                   </div>
 
-                  {/* Nationality + Rank */}
+                  {/* Nationality / Singer Type + Rank */}
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>Nationality</label>
-                      <CustomSelect
-                        value={nationality}
-                        onChange={(val) => setNationality(val)}
-                        options={[
-                          { value: "", label: "— Select —" },
-                          { value: "Korea", label: "Korea", icon: "🇰🇷" },
-                          { value: "China", label: "China", icon: "🇨🇳" },
-                          { value: "Japan", label: "Japan", icon: "🇯🇵" },
-                          { value: "Hollywood", label: "Hollywood", icon: "🎬" },
-                          { value: "American", label: "American", icon: "🇺🇸" },
-                          { value: "Canadian", label: "Canadian", icon: "🇨🇦" },
-                          { value: "Singer", label: "Singer", icon: "🎤" },
-                        ]}
-                      />
-                    </div>
+                    {type === "singer" ? (
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>Singer Type</label>
+                        <CustomSelect
+                          value={singerType}
+                          onChange={(val) => setSingerType(val)}
+                          options={[
+                            { value: "Solo Artist", label: "Solo Artist", icon: "🎤" },
+                            { value: "Band / Group", label: "Band / Group", icon: "🎸" },
+                            { value: "Idol", label: "Idol", icon: "✨" },
+                            { value: "VTuber", label: "VTuber", icon: "👾" },
+                            { value: "Vocalist", label: "Vocalist", icon: "🎵" },
+                          ]}
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>Nationality</label>
+                        <CustomSelect
+                          value={nationality}
+                          onChange={(val) => setNationality(val)}
+                          options={[
+                            { value: "", label: "— Select —" },
+                            { value: "Korea", label: "Korea", icon: "🇰🇷" },
+                            { value: "China", label: "China", icon: "🇨🇳" },
+                            { value: "Japan", label: "Japan", icon: "🇯🇵" },
+                            { value: "Hollywood", label: "Hollywood", icon: "🎬" },
+                            { value: "American", label: "American", icon: "🇺🇸" },
+                            { value: "Canadian", label: "Canadian", icon: "🇨🇦" },
+                          ]}
+                        />
+                      </div>
+                    )}
                     <div className="flex flex-col gap-1">
                       <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>Official Rank</label>
                       <input
@@ -465,21 +486,23 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                     </div>
                   </div>
 
-                  {/* Known For */}
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
-                      Known For <span className="normal-case font-normal opacity-60">(comma separated)</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={knownFor}
-                      onChange={(e) => setKnownFor(e.target.value)}
-                      placeholder="e.g. Produce 101, Hotel Del Luna"
-                      className={inputClass}
-                      style={inputStyle}
-                    />
-                  </div>
+                  {/* Known For (Hidden for Singer) */}
+                  {type !== "singer" && (
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
+                        Known For <span className="normal-case font-normal opacity-60">(comma separated)</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={knownFor}
+                        onChange={(e) => setKnownFor(e.target.value)}
+                        placeholder="e.g. Produce 101, Hotel Del Luna"
+                        className={inputClass}
+                        style={inputStyle}
+                      />
+                    </div>
+                  )}
 
                   {/* Note */}
                   <div className="flex flex-col gap-1">
@@ -494,59 +517,61 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                     />
                   </div>
 
-                  {/* Tokusatsu Ecosystem (Relational tag fields) */}
-                  <div className="border border-adaptive-unique p-3 rounded-xl space-y-3 bg-black/5 dark:bg-white/5">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[#00F5FF]">📺 Tokusatsu Ecosystem</p>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>Franchise</label>
-                        <select
-                          value={tokusatsuFranchise}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setTokusatsuFranchise(val);
-                            if (val === "Ultraman" || val === "Kamen Rider" || val === "Power Rangers") {
-                              setType("none");
-                            }
-                          }}
-                          className={inputClass}
-                          style={inputStyle}
-                        >
-                          <option value="">None (Standard HOF)</option>
-                          <option value="Ultraman">Ultraman</option>
-                          <option value="Kamen Rider">Kamen Rider</option>
-                          <option value="Power Rangers">Power Rangers</option>
-                        </select>
+                  {/* Tokusatsu Ecosystem (Shown only for Tokusatsu / none) */}
+                  {(type === "tokusatsu" || type === "none" || tokusatsuFranchise) && (
+                    <div className="border border-adaptive-unique p-3 rounded-xl space-y-3 bg-black/5 dark:bg-white/5">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#00F5FF]">📺 Tokusatsu Ecosystem</p>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>Franchise</label>
+                          <select
+                            value={tokusatsuFranchise}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setTokusatsuFranchise(val);
+                              if (val === "Ultraman" || val === "Kamen Rider" || val === "Power Rangers") {
+                                setType("tokusatsu");
+                              }
+                            }}
+                            className={inputClass}
+                            style={inputStyle}
+                          >
+                            <option value="">None (Standard HOF)</option>
+                            <option value="Ultraman">Ultraman</option>
+                            <option value="Kamen Rider">Kamen Rider</option>
+                            <option value="Power Rangers">Power Rangers</option>
+                          </select>
+                        </div>
+
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>Specific Show</label>
+                          <input
+                            type="text"
+                            value={tokusatsuShow}
+                            onChange={(e) => setTokusatsuShow(e.target.value)}
+                            placeholder="e.g. Kamen Rider W"
+                            className={inputClass}
+                            style={inputStyle}
+                          />
+                        </div>
                       </div>
 
                       <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>Specific Show</label>
+                        <label className="text-[10px] font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
+                          Associated J-Dramas <span className="normal-case font-normal opacity-60">(comma separated titles)</span>
+                        </label>
                         <input
                           type="text"
-                          value={tokusatsuShow}
-                          onChange={(e) => setTokusatsuShow(e.target.value)}
-                          placeholder="e.g. Kamen Rider W"
+                          value={associatedDramas}
+                          onChange={(e) => setAssociatedDramas(e.target.value)}
+                          placeholder="e.g. Rikokatsu, Shitsuren Chocolatier"
                           className={inputClass}
                           style={inputStyle}
                         />
                       </div>
                     </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
-                        Associated J-Dramas <span className="normal-case font-normal opacity-60">(comma separated titles)</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={associatedDramas}
-                        onChange={(e) => setAssociatedDramas(e.target.value)}
-                        placeholder="e.g. Rikokatsu, Shitsuren Chocolatier"
-                        className={inputClass}
-                        style={inputStyle}
-                      />
-                    </div>
-                  </div>
+                  )}
 
                   {/* Champion Toggle */}
                   <div

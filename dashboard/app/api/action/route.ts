@@ -166,6 +166,7 @@ export async function POST(req: Request) {
             status: payload.status,
             knownFor: payload.knownFor,
             nationality: payload.nationality ?? null,
+            singerType: payload.singerType ?? null,
             note: payload.note ?? null,
             imageUrl: payload.imageUrl ?? null,
             rank: resolvedRank,
@@ -181,6 +182,7 @@ export async function POST(req: Request) {
             status: payload.status,
             knownFor: payload.knownFor,
             nationality: payload.nationality || null,
+            singerType: payload.singerType || null,
             note: payload.note || null,
             imageUrl: payload.imageUrl || null,
             rank: resolvedRank,
@@ -296,6 +298,11 @@ export async function POST(req: Request) {
             imageUrl: payload.imageUrl ?? null,
             category: payload.category,
             duration: payload.duration ?? null,
+            audioUrl: payload.audioUrl ?? null,
+            youtubeId: payload.youtubeId ?? null,
+            lyrics: payload.lyrics ?? null,
+            geniusId: payload.geniusId ?? null,
+            playlistId: payload.playlistId ?? null,
           },
           create: {
             id: payload.id,
@@ -305,6 +312,11 @@ export async function POST(req: Request) {
             imageUrl: payload.imageUrl || null,
             category: payload.category,
             duration: payload.duration || null,
+            audioUrl: payload.audioUrl || null,
+            youtubeId: payload.youtubeId || null,
+            lyrics: payload.lyrics || null,
+            geniusId: payload.geniusId || null,
+            playlistId: payload.playlistId || null,
           },
         });
         return NextResponse.json({ success: true, data: song });
@@ -312,6 +324,31 @@ export async function POST(req: Request) {
 
       case "DELETE_SONG": {
         await prisma.song.delete({ where: { id: payload.id } });
+        return NextResponse.json({ success: true });
+      }
+
+      case "UPDATE_PLAYLIST": {
+        const playlist = await prisma.playlist.upsert({
+          where: { id: payload.id },
+          update: {
+            name: payload.name,
+            description: payload.description ?? null,
+            coverUrl: payload.coverUrl ?? null,
+            songs: payload.songs ?? [],
+          },
+          create: {
+            id: payload.id,
+            name: payload.name,
+            description: payload.description ?? null,
+            coverUrl: payload.coverUrl ?? null,
+            songs: payload.songs ?? [],
+          },
+        });
+        return NextResponse.json({ success: true, data: playlist });
+      }
+
+      case "DELETE_PLAYLIST": {
+        await prisma.playlist.delete({ where: { id: payload.id } });
         return NextResponse.json({ success: true });
       }
 
@@ -329,6 +366,8 @@ export async function POST(req: Request) {
             omdbId: payload.omdbId ?? null,
             country: payload.country ?? null,
             rating: payload.rating ?? null,
+            episodesWatched: payload.episodesWatched ?? 0,
+            totalEpisodes: payload.totalEpisodes ?? 0,
           },
           create: {
             id: payload.id,
@@ -342,6 +381,8 @@ export async function POST(req: Request) {
             omdbId: payload.omdbId ?? null,
             country: payload.country ?? null,
             rating: payload.rating ?? null,
+            episodesWatched: payload.episodesWatched ?? 0,
+            totalEpisodes: payload.totalEpisodes ?? 0,
           },
         });
         return NextResponse.json({ success: true, data: entry });
@@ -355,6 +396,17 @@ export async function POST(req: Request) {
       case "DELETE_DRAMA": {
         await prisma.drama.delete({ where: { id: payload.id } });
         return NextResponse.json({ success: true });
+      }
+
+      case "UPDATE_DRAMA_LOG_EPISODES": {
+        const logEntry = await prisma.dramaLog.update({
+          where: { id: payload.id },
+          data: {
+            episodesWatched: payload.episodesWatched ?? 0,
+            totalEpisodes: payload.totalEpisodes ?? 0,
+          },
+        });
+        return NextResponse.json({ success: true, data: logEntry });
       }
 
       case "DELETE_DRAMA_LOG": {

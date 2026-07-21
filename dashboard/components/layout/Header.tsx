@@ -10,6 +10,7 @@ import { ThemeSwitcherToggle } from "@/components/ui/ThemeSwitcherToggle";
 import { ProfileHoverPopover } from "@/components/ui/ProfileHoverPopover";
 import { AestheticsModal } from "@/components/ui/AestheticsModal";
 import { CommandPalette } from "@/components/ui/CommandPalette";
+import { TopbarMiniPlayer } from "@/components/ui/TopbarMiniPlayer";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -208,8 +209,9 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
           </div>
         </div>
 
-        {/* Right Section: customizable profile and clock */}
+        {/* Right Section: customizable profile, topbar player, and clock */}
         <div className="flex items-center gap-3 shrink-0">
+          <TopbarMiniPlayer />
           {isCyber && <CyberClock />}
 
           {/* Theme switcher toggle added in the Header */}

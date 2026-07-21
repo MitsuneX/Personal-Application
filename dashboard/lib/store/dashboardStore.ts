@@ -113,10 +113,11 @@ export interface DramaEntry {
 export interface HallOfFameEntry {
   id: string;
   name: string;
-  type: "actor" | "actress" | "anime" | "none";
+  type: "actor" | "actress" | "anime" | "singer" | "tokusatsu" | "none";
   status: MediaStatus;
   knownFor: string[];
   nationality?: string;
+  singerType?: string; // "Solo Artist" | "Band / Group" | "Idol" | "VTuber" | "Vocalist"
   note?: string;
   imageUrl?: string;
   rank: number | null;
@@ -171,6 +172,20 @@ export interface SongEntry {
   imageUrl?: string;
   category: string;
   duration?: string;
+  audioUrl?: string;
+  youtubeId?: string;
+  lyrics?: string;
+  geniusId?: string;
+  playlistId?: string;
+}
+
+export interface PlaylistEntry {
+  id: string;
+  name: string;
+  description?: string;
+  coverUrl?: string;
+  songs?: (SongEntry | string)[];
+  createdAt?: string;
 }
 
 export type DramaLogStatus = "GOAT Status" | "All-Star" | "Rising" | "Classic";
@@ -188,6 +203,8 @@ export interface DramaLogEntry {
   country?: string | null;
   rating?: string | null;
   createdAt?: string;
+  episodesWatched?: number;
+  totalEpisodes?: number;
 }
 
 export interface HobbySkillEntry {
@@ -221,7 +238,6 @@ interface DashboardState {
   notes: NoteEntry[];
   links: LinkEntry[];
   gallery: GalleryEntry[];
-  songs: SongEntry[];
   savedPrompts: SavedPromptEntry[];
   isLoading: boolean;
   isHydrated: boolean;
@@ -261,12 +277,29 @@ interface DashboardState {
   deleteGalleryItem: (id: string) => Promise<void>;
 
   // Music Actions
+  songs: SongEntry[];
+  playlists: PlaylistEntry[];
+  activeTrack: SongEntry | null;
+  isPlaying: boolean;
+  playlistQueue: SongEntry[];
+  isShuffle: boolean;
+  loopMode: "off" | "one" | "all";
   saveSong: (id: string, data: Omit<SongEntry, "id">) => Promise<void>;
   deleteSong: (id: string) => Promise<void>;
+  playTrack: (track: SongEntry, queue?: SongEntry[]) => void;
+  togglePlay: () => void;
+  setIsPlaying: (playing: boolean) => void;
+  toggleShuffle: () => void;
+  cycleLoopMode: () => void;
+  nextTrack: () => void;
+  prevTrack: () => void;
+  savePlaylist: (playlist: PlaylistEntry) => Promise<void>;
+  deletePlaylist: (id: string) => Promise<void>;
 
   // Drama Log Actions
   dramaLog: DramaLogEntry[];
   saveDramaLog: (entry: DramaLogEntry) => Promise<void>;
+  updateDramaLog: (id: string, data: Partial<Pick<DramaLogEntry, "episodesWatched" | "totalEpisodes">>) => Promise<void>;
   deleteDramaLog: (id: string) => Promise<void>;
 
   // Saved Prompts Actions
@@ -341,6 +374,12 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   links: [],
   gallery: [],
   songs: [],
+  playlists: [],
+  activeTrack: null,
+  isPlaying: false,
+  playlistQueue: [],
+  isShuffle: false,
+  loopMode: "off",
   dramaLog: [],
   savedPrompts: [],
   hobbySkills: [],
@@ -370,6 +409,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           links: data.links || [],
           gallery: data.gallery || [],
           songs: data.songs || [],
+          playlists: data.playlists || [],
           dramaLog: (data.dramaLog || []).map((d: any) => ({
             ...d,
             mainActors: Array.isArray(d.mainActors) ? d.mainActors : [],
@@ -835,6 +875,91 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
   },
 
+  playTrack: (track, queue) => {
+    const q = queue && queue.length > 0 ? queue : get().songs;
+    set({ activeTrack: track, isPlaying: true, playlistQueue: q });
+  },
+
+  togglePlay: () => {
+    set((s) => ({ isPlaying: !s.isPlaying }));
+  },
+
+  setIsPlaying: (playing) => set({ isPlaying: playing }),
+
+  toggleShuffle: () => set((s) => ({ isShuffle: !s.isShuffle })),
+
+  cycleLoopMode: () => set((s) => {
+    const nextMode = s.loopMode === "off" ? "one" : s.loopMode === "one" ? "all" : "off";
+    return { loopMode: nextMode };
+  }),
+
+  nextTrack: () => {
+    const { activeTrack, playlistQueue, isShuffle, loopMode } = get();
+    if (!activeTrack || playlistQueue.length === 0) return;
+    if (loopMode === "one") {
+      set({ isPlaying: true });
+      return;
+    }
+    if (isShuffle) {
+      const randIdx = Math.floor(Math.random() * playlistQueue.length);
+      set({ activeTrack: playlistQueue[randIdx], isPlaying: true });
+      return;
+    }
+    const currIdx = playlistQueue.findIndex((t) => t.id === activeTrack.id);
+    const isLast = currIdx === playlistQueue.length - 1;
+    if (isLast && loopMode === "off") {
+      set({ isPlaying: false });
+      return;
+    }
+    const nextIdx = (currIdx + 1) % playlistQueue.length;
+    set({ activeTrack: playlistQueue[nextIdx], isPlaying: true });
+  },
+
+  prevTrack: () => {
+    const { activeTrack, playlistQueue, isShuffle } = get();
+    if (!activeTrack || playlistQueue.length === 0) return;
+    if (isShuffle) {
+      const randIdx = Math.floor(Math.random() * playlistQueue.length);
+      set({ activeTrack: playlistQueue[randIdx], isPlaying: true });
+      return;
+    }
+    const currIdx = playlistQueue.findIndex((t) => t.id === activeTrack.id);
+    const prevIdx = (currIdx - 1 + playlistQueue.length) % playlistQueue.length;
+    set({ activeTrack: playlistQueue[prevIdx], isPlaying: true });
+  },
+
+  savePlaylist: async (playlist) => {
+    set((s) => {
+      const exists = s.playlists.some((p) => p.id === playlist.id);
+      const updated = exists
+        ? s.playlists.map((p) => (p.id === playlist.id ? playlist : p))
+        : [playlist, ...s.playlists];
+      return { playlists: updated };
+    });
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "UPDATE_PLAYLIST", payload: playlist }),
+      });
+    } catch (err) {
+      console.error("Failed to sync playlist:", err);
+    }
+  },
+
+  deletePlaylist: async (id) => {
+    set((s) => ({ playlists: s.playlists.filter((p) => p.id !== id) }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_PLAYLIST", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to delete playlist:", err);
+    }
+  },
+
   // ─── Drama Log Actions ──────────────────────────────────────────────────────
 
   saveDramaLog: async (entry) => {
@@ -866,6 +991,27 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
     } catch (err) {
       console.error("Failed to delete drama log:", err);
+    }
+  },
+
+  updateDramaLog: async (id, data) => {
+    set((s) => ({
+      dramaLog: s.dramaLog.map((d) => (d.id === id ? { ...d, ...data } : d)),
+    }));
+    try {
+      const entry = get().dramaLog.find((d) => d.id === id);
+      if (entry) {
+        await fetch("/api/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "UPDATE_DRAMA_LOG_EPISODES",
+            payload: { id, episodesWatched: entry.episodesWatched ?? 0, totalEpisodes: entry.totalEpisodes ?? 0, ...data },
+          }),
+        });
+      }
+    } catch (err) {
+      console.error("Failed to update drama log episodes:", err);
     }
   },
 
