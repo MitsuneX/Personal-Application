@@ -8,13 +8,14 @@ import { GamifiedStatsWidget } from "@/components/cards/GamifiedStatsWidget";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { ImageCropModal } from "@/components/ui/ImageCropModal";
 
 const PLATFORMS = ["GitHub", "Twitter/X", "Discord", "Instagram", "LinkedIn", "Tiktok"];
 
 export default function ProfilePage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { profile, updateProfile } = useDashboardStore();
+  const { profile, updateProfile, profileHistory } = useDashboardStore();
 
   const [name, setName] = useState("");
   const [tagline, setTagline] = useState("");
@@ -35,6 +36,8 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [isCropOpen, setIsCropOpen] = useState(false);
 
   // Sync state with store profile on load or when profile updates
   useEffect(() => {
@@ -61,13 +64,22 @@ export default function ProfilePage() {
     }
   }, [profile]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string);
+      setIsCropOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
 
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setIsCropOpen(false);
     setIsUploading(true);
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", croppedBlob, "avatar-cropped.jpg");
 
     try {
       const res = await fetch("/api/upload", {
@@ -87,6 +99,8 @@ export default function ProfilePage() {
       alert("Error uploading image");
     } finally {
       setIsUploading(false);
+      setCropImageSrc(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -400,7 +414,7 @@ export default function ProfilePage() {
                         <input
                           type="file"
                           ref={fileInputRef}
-                          onChange={handleFileUpload}
+                          onChange={handleFileSelect}
                           accept="image/*"
                           className="hidden"
                         />
@@ -483,6 +497,35 @@ export default function ProfilePage() {
                   })}
                 </div>
               </div>
+
+              {/* Profile Pictures Library / History */}
+              {profileHistory && profileHistory.filter(h => h.assetType === "avatar").length > 0 && (
+                <div className="mt-6 pt-6 border-t border-adaptive-unique">
+                  <h3 className="text-xs font-black uppercase tracking-wider theme-text-secondary mb-3 flex items-center gap-1.5">
+                    <span>⏳</span> Past Profile Pictures
+                  </h3>
+                  <div className="flex gap-3 flex-wrap">
+                    {Array.from(new Set(profileHistory.filter(h => h.assetType === "avatar").map(h => h.url))).map((url, i) => (
+                      <div
+                        key={i}
+                        onClick={async () => {
+                          if (confirm("Restore this past profile picture?")) {
+                            setAvatar(url);
+                            await updateProfile({ ...profile, avatar: url });
+                          }
+                        }}
+                        className="w-14 h-14 rounded-lg overflow-hidden border-2 cursor-pointer transition-all hover:scale-[1.08] active:scale-95 relative group"
+                        style={{ borderColor: avatar === url ? (isCyber ? "#00F5FF" : "#FF6B35") : "transparent" }}
+                      >
+                        <img src={url} alt="past avatar" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                          <span className="text-[10px] text-white font-bold">Restore</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 3. Tech Stack & Skills Editor */}
@@ -606,6 +649,19 @@ export default function ProfilePage() {
         </div>
 
       </div>
+
+      <ImageCropModal
+        isOpen={isCropOpen}
+        imageSrc={cropImageSrc}
+        aspect={1}
+        title="Crop Profile Picture"
+        onClose={() => {
+          setIsCropOpen(false);
+          setCropImageSrc(null);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        }}
+        onCropComplete={handleCropComplete}
+      />
     </AppShell>
   );
 }

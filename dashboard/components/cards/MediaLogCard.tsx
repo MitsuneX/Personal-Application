@@ -166,9 +166,11 @@ export function MediaLogCard() {
     ? topRatedDrama.type === "Movie" ? "Top Film" : "Top Show"
     : "Top Film";
 
-  const seriesProgress = Math.round(
-    (activeSeries.episodesWatched / Math.max(1, activeSeries.episodes)) * 100
-  );
+  const seriesProgress = (activeSeries as any).status === "Completed"
+    ? 100
+    : Math.round(
+        (activeSeries.episodesWatched / Math.max(1, activeSeries.episodes)) * 100
+      );
 
   return (
     <motion.div layout className="col-span-1 md:col-span-1 lg:col-span-2 xl:col-span-2">

@@ -27,6 +27,7 @@ export interface MediaCardProps {
   isEditable?: boolean;
   onStatusChange?: (id: string, status: string) => void;
   onEpisodeChange?: (id: string, watched: number, newStatus: string) => void;
+  onTotalEpisodesChange?: (id: string, total: number) => void;
   onDelete?: (id: string) => void;
   hofStars?: { id: string; name: string; tokusatsuFranchise?: string | null }[];
   index?: number;
@@ -216,24 +217,45 @@ function CulturalOverlay({ category, isCyber }: { category: MediaCategory; isCyb
 // ─── Episode Stepper ─────────────────────────────────────────────────────────────
 
 function EpisodeStepper({
-  watched, total, category, isCyber, accent, onChange,
+  watched, total, category, isCyber, accent, onChange, onTotalChange,
 }: {
   watched: number; total: number; category: MediaCategory;
   isCyber: boolean; accent: string;
   onChange: (v: number) => void;
+  onTotalChange?: (t: number) => void;
 }) {
   const [local, setLocal] = useState(watched);
+  const [localTotal, setLocalTotal] = useState(total);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const totalTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => { setLocal(watched); }, [watched]);
-  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  useEffect(() => { setLocalTotal(total); }, [total]);
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+    if (totalTimer.current) clearTimeout(totalTimer.current);
+  }, []);
 
   const commit = useCallback((v: number) => {
-    const clamped = Math.max(0, Math.min(total, v));
+    const clamped = Math.max(0, Math.min(localTotal, v));
     setLocal(clamped);
     clearTimeout(timer.current);
     timer.current = setTimeout(() => onChange(clamped), 500);
-  }, [total, onChange]);
+  }, [localTotal, onChange]);
+
+  const commitTotal = useCallback((t: number) => {
+    const clampedTotal = Math.max(1, t);
+    setLocalTotal(clampedTotal);
+    if (local > clampedTotal) {
+      setLocal(clampedTotal);
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => onChange(clampedTotal), 500);
+    }
+    clearTimeout(totalTimer.current);
+    if (onTotalChange) {
+      totalTimer.current = setTimeout(() => onTotalChange(clampedTotal), 500);
+    }
+  }, [local, onChange, onTotalChange]);
 
   const btnStyle = {
     background: `${accent}22`,
@@ -241,17 +263,59 @@ function EpisodeStepper({
     border: `1.5px solid ${accent}55`,
   };
 
+  const inputStyle: React.CSSProperties = {
+    width: "36px",
+    background: "transparent",
+    border: "none",
+    borderBottom: isCyber ? `1px solid ${accent}40` : "1px solid rgba(0,0,0,0.2)",
+    color: accent,
+    textAlign: "center",
+    fontFamily: "monospace",
+    fontWeight: "900",
+    fontSize: "12px",
+    padding: "0 2px",
+    outline: "none",
+  };
+
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
       <motion.button
         whileTap={{ scale: 0.8 }}
         onClick={(e) => { e.stopPropagation(); commit(local - 1); }}
         className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black leading-none"
         style={btnStyle}
       >−</motion.button>
-      <span className="font-mono font-black text-xs tabular-nums" style={{ color: accent }}>
-        {local}/{total}&nbsp;{EP_LABELS[category]}
-      </span>
+      
+      <div className="flex items-center gap-0.5">
+        <input
+          type="number"
+          value={local}
+          min={0}
+          max={localTotal}
+          onChange={(e) => {
+            const val = parseInt(e.target.value);
+            commit(isNaN(val) ? 0 : val);
+          }}
+          style={inputStyle}
+          className="no-spinners"
+        />
+        <span className="opacity-60 text-xs" style={{ color: accent }}>/</span>
+        <input
+          type="number"
+          value={localTotal}
+          min={1}
+          onChange={(e) => {
+            const val = parseInt(e.target.value);
+            commitTotal(isNaN(val) ? 1 : val);
+          }}
+          style={inputStyle}
+          className="no-spinners"
+        />
+        <span className="text-[10px] opacity-60 font-black ml-0.5" style={{ color: accent }}>
+          {EP_LABELS[category]}
+        </span>
+      </div>
+
       <motion.button
         whileTap={{ scale: 0.8 }}
         onClick={(e) => { e.stopPropagation(); commit(local + 1); }}
@@ -268,7 +332,7 @@ export function MediaCard({
   id, title, category, status, episodesWatched, totalEpisodes, rating,
   genre, year, platform, cast, synopsis, posterUrl,
   isEditable = false,
-  onStatusChange, onEpisodeChange, onDelete,
+  onStatusChange, onEpisodeChange, onTotalEpisodesChange, onDelete,
   hofStars, index = 0,
 }: MediaCardProps) {
   const { theme } = useTheme();
@@ -312,7 +376,11 @@ export function MediaCard({
   useEffect(() => { setLocalEps(episodesWatched); }, [episodesWatched]);
 
   const hasPoster = !!posterUrl && !imgError;
-  const pct = Math.min(100, Math.round((localEps / Math.max(1, totalEpisodes)) * 100));
+  const isCompleted = localStatus === "Completed";
+  const isDrama = category !== "anime";
+  const pct = (isDrama && isCompleted)
+    ? 100
+    : Math.min(100, Math.round((localEps / Math.max(1, totalEpisodes)) * 100));
 
   const statusColorKey = localStatus as keyof typeof STATUS_COLORS;
   const sc = STATUS_COLORS[statusColorKey] ?? { cyber: "#94A3B8", brutal: "#6B7280" };
@@ -358,7 +426,9 @@ export function MediaCard({
 
   const handleEpisodeChange = useCallback((v: number) => {
     setLocalEps(v);
-    const newStatus = v >= totalEpisodes ? "Completed" : (v > 0 && localStatus === "Plan to Watch" ? "Watching" : localStatus);
+    const newStatus = v >= totalEpisodes
+      ? "Completed"
+      : (localStatus === "Completed" ? "Watching" : (v > 0 && localStatus === "Plan to Watch" ? "Watching" : localStatus));
     if (newStatus !== localStatus) setLocalStatus(newStatus);
     onEpisodeChange?.(id, v, newStatus);
   }, [id, totalEpisodes, localStatus, onEpisodeChange]);
@@ -763,6 +833,7 @@ export function MediaCard({
                     isCyber={isCyber}
                     accent={accent}
                     onChange={handleEpisodeChange}
+                    onTotalChange={(t) => onTotalEpisodesChange?.(id, t)}
                   />
                 ) : (
                   <span className="text-[10px] font-mono opacity-50">

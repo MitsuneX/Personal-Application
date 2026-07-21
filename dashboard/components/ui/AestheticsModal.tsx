@@ -6,6 +6,7 @@ import { useTheme } from "@/lib/theme";
 import { useDashboardStore, ProfileHistoryEntry } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
 import { BORDER_CONFIGS } from "@/components/cards/ProfileCard";
+import { ImageCropModal } from "@/components/ui/ImageCropModal";
 
 interface GifResult {
   id: string;
@@ -106,6 +107,9 @@ export function AestheticsModal({ isOpen, onClose }: AestheticsModalProps) {
   const [borderStyle, setBorderStyle] = useState(profile.borderStyle ?? "default");
   const [isSaving, setIsSaving] = useState(false);
   const [uploadType, setUploadType] = useState<"none" | "avatar" | "banner" | "nameplate">("none");
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [cropTarget, setCropTarget] = useState<"avatar" | "banner" | "nameplate" | null>(null);
+  const [cropAspect, setCropAspect] = useState<number>(1);
 
   // ── GIF Search state ───────────────────────────────────────────────────────
   const [showGifSearch, setShowGifSearch] = useState(false);
@@ -156,12 +160,56 @@ export function AestheticsModal({ isOpen, onClose }: AestheticsModalProps) {
   }, [profile]);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: "avatar" | "banner" | "nameplate") => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, target: "avatar" | "banner" | "nameplate") => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.type.startsWith("video/")) {
+      setUploadType(target);
+      const formData = new FormData();
+      formData.append("file", file);
+      fetch("/api/upload", { method: "POST", body: formData })
+        .then(res => res.json())
+        .then(data => {
+          if (data.url) {
+            if (target === "avatar") setAvatar(data.url);
+            if (target === "banner") setBanner(data.url);
+            if (target === "nameplate") setNameplate(data.url);
+          }
+        })
+        .catch(err => console.error("Upload error:", err))
+        .finally(() => {
+          setUploadType("none");
+          if (e.target) e.target.value = "";
+        });
+      return;
+    }
+
+    let aspect = 1;
+    if (target === "banner") aspect = 3;
+    if (target === "nameplate") aspect = 1.55;
+
+    setCropAspect(aspect);
+    setCropTarget(target);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    if (!cropTarget) return;
+
+    const target = cropTarget;
+    setCropImageSrc(null);
+    setCropTarget(null);
     setUploadType(target);
+
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", croppedBlob, `${target}-cropped.jpg`);
+
     try {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       const data = await res.json();
@@ -174,6 +222,9 @@ export function AestheticsModal({ isOpen, onClose }: AestheticsModalProps) {
       console.error("Upload error:", err);
     } finally {
       setUploadType("none");
+      if (avatarInputRef.current) avatarInputRef.current.value = "";
+      if (bannerInputRef.current) bannerInputRef.current.value = "";
+      if (nameplateInputRef.current) nameplateInputRef.current.value = "";
     }
   };
 
@@ -230,7 +281,8 @@ export function AestheticsModal({ isOpen, onClose }: AestheticsModalProps) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-xl">
+    <>
+      <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-xl">
       {/* Cyber corner accents */}
       {isCyber && (
         <>
@@ -347,7 +399,7 @@ export function AestheticsModal({ isOpen, onClose }: AestheticsModalProps) {
                   style={inputStyle}
                 />
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "avatar")} />
+                  <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFileSelect(e, "avatar")} />
                   <button
                     type="button"
                     onClick={() => avatarInputRef.current?.click()}
@@ -394,7 +446,7 @@ export function AestheticsModal({ isOpen, onClose }: AestheticsModalProps) {
                 style={inputStyle}
               />
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                <input ref={bannerInputRef} type="file" accept="image/*,video/*" className="hidden" onChange={(e) => handleFileUpload(e, "banner")} />
+                <input ref={bannerInputRef} type="file" accept="image/*,video/*" className="hidden" onChange={(e) => handleFileSelect(e, "banner")} />
                 <button
                   type="button"
                   onClick={() => bannerInputRef.current?.click()}
@@ -636,7 +688,7 @@ export function AestheticsModal({ isOpen, onClose }: AestheticsModalProps) {
                 style={inputStyle}
               />
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <input ref={nameplateInputRef} type="file" accept="image/*,video/*" className="hidden" onChange={(e) => handleFileUpload(e, "nameplate")} />
+                <input ref={nameplateInputRef} type="file" accept="image/*,video/*" className="hidden" onChange={(e) => handleFileSelect(e, "nameplate")} />
                 <button
                   type="button"
                   onClick={() => nameplateInputRef.current?.click()}
@@ -843,5 +895,21 @@ export function AestheticsModal({ isOpen, onClose }: AestheticsModalProps) {
         </div>
       </form>
     </Modal>
+
+      <ImageCropModal
+        isOpen={!!cropImageSrc}
+        imageSrc={cropImageSrc}
+        aspect={cropAspect}
+        title={`Crop ${cropTarget ? cropTarget.toUpperCase() : "Image"}`}
+        onClose={() => {
+          setCropImageSrc(null);
+          setCropTarget(null);
+          if (avatarInputRef.current) avatarInputRef.current.value = "";
+          if (bannerInputRef.current) bannerInputRef.current.value = "";
+          if (nameplateInputRef.current) nameplateInputRef.current.value = "";
+        }}
+        onCropComplete={handleCropComplete}
+      />
+    </>
   );
 }

@@ -67,6 +67,10 @@ function AnimePageContent() {
     updateAnime(id, { episodesWatched: watched, status: newStatus as any });
   }, [updateAnime]);
 
+  const handleTotalEpisodesChange = useCallback((id: string, total: number) => {
+    updateAnime(id, { totalEpisodes: total });
+  }, [updateAnime]);
+
   const handleDelete = useCallback((id: string) => {
     const anime = animeList.find(a => a.id === id);
     if (anime && confirm(`Remove "${anime.title}" from watchlist?`)) {
@@ -170,6 +174,7 @@ function AnimePageContent() {
                   isEditable={true}
                   onStatusChange={handleStatusChange}
                   onEpisodeChange={handleEpisodeChange}
+                  onTotalEpisodesChange={handleTotalEpisodesChange}
                   onDelete={handleDelete}
                   index={i}
                 />

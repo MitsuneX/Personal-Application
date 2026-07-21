@@ -5,6 +5,14 @@ export async function POST(req: Request) {
   try {
     const data = await req.json();
     
+    // Retrieve existing profile to track avatar changes
+    const existing = await prisma.profile.findUnique({ where: { id: "profile" } });
+    if (existing && data.avatar && data.avatar !== existing.avatar && existing.avatar) {
+      await prisma.profileHistory.create({
+        data: { assetType: "avatar", url: existing.avatar },
+      });
+    }
+
     // Clean fields to avoid schema mismatch
     const updated = await prisma.profile.upsert({
       where: { id: "profile" },
@@ -39,7 +47,16 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json(updated);
+    // Retrieve updated profile history
+    const history = await prisma.profileHistory.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: updated,
+      history,
+    });
   } catch (error: any) {
     console.error("API POST Profile Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -27,7 +27,7 @@ const REGION_SPECIALTY_FILTERS = [
   { id: "Japan", label: "🇯🇵 Japanese" },
   { id: "China", label: "🇨🇳 Chinese" },
   { id: "Hollywood", label: "🎬 Hollywood" },
-  { id: "Anime", label: "⛩️ Anime Ranked" },
+  { id: "Anime", label: "⛩️ Anime" },
   { id: "Singer", label: "🎤 Singer" }
 ];
  

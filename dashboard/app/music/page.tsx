@@ -8,6 +8,7 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import type { SongEntry } from "@/lib/store/dashboardStore";
 import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants";
 import { Modal } from "@/components/ui/modal";
+import { ImageCropModal } from "@/components/ui/ImageCropModal";
 
 const MUSIC_TABS = [
   { id: "all", label: "All Tracks", icon: "◈" },
@@ -432,6 +433,8 @@ function SongEditorModal({ isOpen, onClose, songToEdit, isCyber, saveSong }: Son
   const [imgError, setImgError] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [isCropOpen, setIsCropOpen] = useState(false);
 
   useEffect(() => {
     if (songToEdit) {
@@ -454,13 +457,22 @@ function SongEditorModal({ isOpen, onClose, songToEdit, isCyber, saveSong }: Son
     setImgError(false);
   }, [songToEdit, isOpen]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string);
+      setIsCropOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
 
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setIsCropOpen(false);
     setIsUploading(true);
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", croppedBlob, "music-cropped.jpg");
 
     try {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
@@ -475,6 +487,8 @@ function SongEditorModal({ isOpen, onClose, songToEdit, isCyber, saveSong }: Son
       alert("Error uploading cover image");
     } finally {
       setIsUploading(false);
+      setCropImageSrc(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -558,7 +572,7 @@ function SongEditorModal({ isOpen, onClose, songToEdit, isCyber, saveSong }: Son
                     placeholder="https://..." className={inp} style={inpStyle} />
                 ) : (
                   <div className="flex gap-2 items-center">
-                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
+                    <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" className="hidden" />
                     <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isUploading}
                       className="px-3 py-1.5 text-xs font-black rounded border"
                       style={{ backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#E5E7EB", borderColor: isCyber ? "#00F5FF" : "#9CA3AF", color: isCyber ? "#00F5FF" : "#374151" }}>
@@ -611,6 +625,19 @@ function SongEditorModal({ isOpen, onClose, songToEdit, isCyber, saveSong }: Son
           </div>
         </form>
       </div>
+
+      <ImageCropModal
+        isOpen={isCropOpen}
+        imageSrc={cropImageSrc}
+        aspect={1}
+        title="Crop Song Cover Art"
+        onClose={() => {
+          setIsCropOpen(false);
+          setCropImageSrc(null);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        }}
+        onCropComplete={handleCropComplete}
+      />
     </Modal>
   );
 }

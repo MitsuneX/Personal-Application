@@ -178,6 +178,9 @@ export function AnimeSearchModal({ isOpen, onClose }: AnimeSearchModalProps) {
       genre: selected.genre ? selected.genre.split(",")[0].trim() : "Action",
       studio: selected.director || "Unknown Studio",
       year: selected.year ? parseInt(selected.year.slice(0, 4)) : undefined,
+      posterUrl: selected.poster || undefined,
+      synopsis: selected.overview || undefined,
+      cast: selected.cast || [],
     };
 
     await addAnime(entry);

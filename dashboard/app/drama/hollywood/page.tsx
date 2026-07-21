@@ -65,6 +65,10 @@ function HollywoodDramaPageContent() {
     updateDrama(id, { episodesWatched: watched, status: newStatus as any });
   }, [updateDrama]);
 
+  const handleTotalEpisodesChange = useCallback((id: string, total: number) => {
+    updateDrama(id, { episodes: total });
+  }, [updateDrama]);
+
   const handleDelete = useCallback((id: string) => {
     const drama = allMerged.find(d => d.id === id);
     if (drama && confirm(`Remove "${drama.title}" from watchlist?`)) {
@@ -190,6 +194,7 @@ function HollywoodDramaPageContent() {
                   isEditable={drama.isEditable}
                   onStatusChange={drama.isEditable ? handleStatusChange : undefined}
                   onEpisodeChange={drama.isEditable ? handleEpisodeChange : undefined}
+                  onTotalEpisodesChange={drama.isEditable ? handleTotalEpisodesChange : undefined}
                   onDelete={handleDelete}
                   index={i}
                 />

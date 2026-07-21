@@ -402,9 +402,19 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(get().profile),
       });
-      const updated = await res.json();
-      if (updated && !updated.error) {
-        set({ profile: updated });
+      const result = await res.json();
+      if (result && !result.error) {
+        if (result.success) {
+          set({
+            profile: result.data,
+            profileHistory: (result.history || []).map((h: any) => ({
+              ...h,
+              createdAt: h.createdAt ?? new Date().toISOString(),
+            })),
+          });
+        } else {
+          set({ profile: result });
+        }
       }
     } catch (err) {
       console.error("Failed to sync profile:", err);

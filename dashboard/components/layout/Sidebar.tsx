@@ -414,35 +414,6 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
                 </div>
               </ProfileHoverPopover>
 
-              {/* Action Buttons Row */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setAestheticsOpen(true)}
-                  className="flex-1 py-1 px-1.5 text-[9px] font-black uppercase tracking-wider rounded transition-all hover:scale-[1.03]"
-                  style={{
-                    backgroundColor: isCyber ? "rgba(0, 245, 255, 0.12)" : "#FFF9C4",
-                    borderColor: isCyber ? "rgba(0, 245, 255, 0.4)" : "#000",
-                    borderWidth: isCyber ? "1px" : "2px",
-                    color: isCyber ? "#00F5FF" : "#1A1A1A",
-                    boxShadow: isCyber ? "none" : "2px 2px 0px #000",
-                  }}
-                >
-                  🎨 Edit Aesthetic
-                </button>
-                <button
-                  onClick={() => router.push("/profile")}
-                  className="flex-1 py-1 px-1.5 text-[9px] font-black uppercase tracking-wider rounded transition-all hover:scale-[1.03]"
-                  style={{
-                    backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
-                    borderColor: isCyber ? "transparent" : "#000",
-                    borderWidth: isCyber ? "0px" : "2px",
-                    color: isCyber ? "#050816" : "#FFF",
-                    boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.3)" : "2px 2px 0px #000",
-                  }}
-                >
-                  👤 View Profile
-                </button>
-              </div>
             </div>
           </div>
         ) : (

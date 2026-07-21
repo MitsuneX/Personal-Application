@@ -5,6 +5,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
+import { ImageCropModal } from "@/components/ui/ImageCropModal";
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 interface FolderTreeNode {
@@ -47,6 +48,8 @@ export default function GalleryPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [isCropOpen, setIsCropOpen] = useState(false);
 
   // Autocomplete state
   const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
@@ -198,14 +201,25 @@ export default function GalleryPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-      setUploadError(null);
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCropImageSrc(reader.result as string);
+        setIsCropOpen(true);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const uploadFileToServer = async (file: File): Promise<string> => {
+  const handleCropComplete = (croppedBlob: Blob) => {
+    setIsCropOpen(false);
+    setSelectedFile(croppedBlob as any);
+    setCropImageSrc(null);
+  };
+
+  const uploadFileToServer = async (file: File | Blob): Promise<string> => {
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", file, "gallery-cropped.jpg");
     const response = await fetch("/api/upload", {
       method: "POST",
       body: formData,
@@ -1105,6 +1119,19 @@ export default function GalleryPage() {
           </div>
         </div>
       </Modal>
+
+      <ImageCropModal
+        isOpen={isCropOpen}
+        imageSrc={cropImageSrc}
+        aspect={16 / 9}
+        title="Crop Gallery Image"
+        onClose={() => {
+          setIsCropOpen(false);
+          setCropImageSrc(null);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        }}
+        onCropComplete={handleCropComplete}
+      />
     </AppShell>
   );
 }
