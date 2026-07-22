@@ -35,14 +35,14 @@ export const metadata: Metadata = {
   },
   description:
     "A highly personal command-center dashboard tracking games, media, anime, and more. Built with Next.js, Tailwind CSS, and Framer Motion.",
-  keywords: ["dashboard", "personal", "gaming", "anime", "media tracker"],
+  keywords: ["dashboard", "personal", "gaming", "anime", "media tracker", "PWA"],
   authors: [{ name: "Dashboard User" }],
   creator: "Dashboard",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Dashboard",
+    title: "Nexus Xenon",
   },
   formatDetection: {
     telephone: false,
@@ -50,9 +50,10 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    title: "Dashboard — Personal Hub",
+    title: "Nexus Xenon — Personal Hub",
     description: "Personal command-center dashboard",
-    siteName: "Dashboard",
+    siteName: "Nexus Xenon",
+    images: [{ url: "/icons/icon-512.png", width: 512, height: 512 }],
   },
 };
 
@@ -91,15 +92,27 @@ export default function RootLayout({
           Reads the stored theme from localStorage and sets data-theme + CSS class
           on <html> immediately so no flash of wrong theme occurs on hard refresh.
         */}
+        {/* ⚡ Synchronous theme injection — runs before first paint */}
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('dashboard-theme');var root=document.documentElement;if(t==='cyber'){root.setAttribute('data-theme','cyber');root.classList.add('theme-cyber');root.classList.remove('theme-neo-brutal');}else{root.setAttribute('data-theme','brutal');root.classList.add('theme-neo-brutal');root.classList.remove('theme-cyber');}}catch(e){}})();`,
           }}
         />
-        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        {/* 📱 PWA — Service Worker registration */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(function(e){console.warn('SW registration failed:',e);});});}`
+          }}
+        />
+        <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Nexus Xenon" />
+        <meta name="application-name" content="Nexus Xenon" />
+        <meta name="msapplication-TileColor" content="#FF6B35" />
+        <meta name="msapplication-TileImage" content="/icons/icon-192.png" />
       </head>
       <body className="font-[family-name:var(--font-space-grotesk)] antialiased">
         <RootProviders>{children}</RootProviders>

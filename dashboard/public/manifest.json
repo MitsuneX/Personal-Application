@@ -1,14 +1,25 @@
 {
-  "name": "Dashboard — Personal Hub",
-  "short_name": "Dashboard",
-  "description": "Personal command-center for games, media, and anime tracking",
+  "name": "Nexus Xenon — Personal Hub",
+  "short_name": "Nexus Xenon",
+  "description": "A highly personal command-center dashboard tracking games, media, anime, and more.",
   "start_url": "/",
+  "id": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#FFF5E4",
   "theme_color": "#FF6B35",
-  "orientation": "portrait-primary",
+  "orientation": "any",
+  "lang": "en-US",
+  "dir": "ltr",
+  "scope": "/",
   "categories": ["productivity", "entertainment", "personalization"],
   "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
@@ -19,7 +30,44 @@
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "maskable"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Anime Vault",
+      "short_name": "Anime",
+      "description": "Browse your anime collection",
+      "url": "/anime",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Drama Vault",
+      "short_name": "Drama",
+      "description": "Browse your drama collection",
+      "url": "/drama",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Music",
+      "short_name": "Music",
+      "description": "Open the music player",
+      "url": "/music",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Hall of Fame",
+      "short_name": "HOF",
+      "description": "View your hall of fame rankings",
+      "url": "/hall-of-fame",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
 }

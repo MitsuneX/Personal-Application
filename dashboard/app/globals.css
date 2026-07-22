@@ -392,3 +392,129 @@ body {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   PWA & CROSS-DEVICE PERFORMANCE
+   Touch acceleration · Safe areas · Scroll physics · Reduced motion · Viewport
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Safe-Area Insets (notched phones / Dynamic Island) ──────────────────── */
+html {
+  /* Use dvh (dynamic viewport height) for accurate mobile height */
+  min-height: 100dvh;
+}
+
+body {
+  min-height: 100dvh;
+  /* Respect iOS/Android safe areas so content isn't hidden by notch or nav bar */
+  padding-top:    env(safe-area-inset-top,    0px);
+  padding-right:  env(safe-area-inset-right,  0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left:   env(safe-area-inset-left,   0px);
+  /* Prevent elastic over-scroll on iOS from revealing a white background */
+  overscroll-behavior: none;
+  /* Smooth scrolling globally */
+  scroll-behavior: smooth;
+}
+
+/* ── Touch Acceleration (eliminates 300ms tap delay on mobile) ───────────── */
+a,
+button,
+[role="button"],
+input,
+label,
+select,
+textarea,
+summary {
+  touch-action: manipulation;
+}
+
+/* ── Momentum Scrolling on iOS for scroll containers ────────────────────── */
+.overflow-y-auto,
+.overflow-y-scroll,
+.overflow-x-auto,
+.overflow-x-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Performance hints for animated/transformed elements ────────────────── */
+.fixed,
+.sticky,
+[data-framer-motion],
+.will-animate {
+  will-change: transform;
+  /* GPU layer promotion */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* ── Prevent text size adjustment on orientation change (iOS) ────────────── */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* ── Reduced Motion: Suppress heavy animations for users who prefer it ───── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration:   0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration:  0.01ms !important;
+    scroll-behavior:      auto !important;
+  }
+
+  /* Keep Lottie visible but frozen */
+  lottie-player,
+  [class*="lottie"] {
+    animation-play-state: paused !important;
+  }
+}
+
+/* ── Tap highlight (Android) — replace default with theme colour ─────────── */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+[data-theme="brutal"] a:active,
+[data-theme="brutal"] button:active {
+  -webkit-tap-highlight-color: rgba(255, 107, 53, 0.15);
+}
+
+[data-theme="cyber"] a:active,
+[data-theme="cyber"] button:active {
+  -webkit-tap-highlight-color: rgba(0, 245, 255, 0.15);
+}
+
+/* ── PWA Standalone mode: hide browser chrome artifacts ─────────────────── */
+@media (display-mode: standalone) {
+  /* Prevent double-tap zoom in standalone mode */
+  * { touch-action: manipulation; }
+
+  /* Extra bottom padding for home indicator (iPhone X+ in standalone) */
+  body {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.5rem);
+  }
+}
+
+/* ── Mobile Viewport Utilities ───────────────────────────────────────────── */
+
+/* Full dynamic viewport height (avoids mobile browser chrome collapse) */
+.h-screen-dvh {
+  height: 100dvh;
+}
+
+.min-h-screen-dvh {
+  min-height: 100dvh;
+}
+
+/* ── Image rendering optimisation for high-DPI displays ─────────────────── */
+img {
+  -webkit-user-drag: none;
+  user-select: none;
+  image-rendering: -webkit-optimize-contrast;
+}
+
