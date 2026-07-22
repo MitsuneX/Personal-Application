@@ -242,14 +242,53 @@ export function CommandPalette() {
               )}
 
               {!loading && query.trim() === "" && (
-                <div className="text-center py-8">
-                  <p className="text-xl mb-1.5">⌨️</p>
-                  <p className="text-xs font-bold uppercase tracking-wider opacity-50">
-                    {isCyber ? "ENTER_OPERATOR_QUERY_SIGNAL" : "Search files, entries, users, and logs"}
-                  </p>
-                  <p className="text-[10px] opacity-40 mt-1 font-mono">
-                    Use Up/Down Arrows to scroll through selections, Press Enter to navigate
-                  </p>
+                <div className="space-y-4 py-2">
+                  <div className="text-center py-4">
+                    <p className="text-xl mb-1.5">⌨️</p>
+                    <p className="text-xs font-bold uppercase tracking-wider opacity-50">
+                      {isCyber ? "ENTER_OPERATOR_QUERY_SIGNAL" : "Search files, entries, users, and logs"}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="text-[9px] font-black tracking-widest uppercase pb-1 border-b"
+                      style={{
+                        color: isCyber ? "rgba(0,245,255,0.4)" : "#6B7280",
+                        borderColor: isCyber ? "rgba(0,245,255,0.1)" : "rgba(0,0,0,0.06)",
+                      }}
+                    >
+                      ⚡ Quick System Shortcuts
+                    </div>
+
+                    {[
+                      { title: "📜 Log Updates (Changelog)", subtitle: "View system release notes, v2.5.0 features & bug fixes", url: "/changelog" },
+                      { title: "🎵 Music Vault & Player", subtitle: "Open music workspace, search & synced lyrics", url: "/music" },
+                      { title: "🏆 Hall of Fame", subtitle: "Browse GOAT status rankings & champion entries", url: "/hall-of-fame" },
+                      { title: "👤 Profile Settings", subtitle: "Customize your avatar, banner, bio & tags", url: "/profile" },
+                    ].map((item, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => {
+                          router.push(item.url);
+                          setIsOpen(false);
+                        }}
+                        className="p-2.5 rounded-lg cursor-pointer flex justify-between items-center transition-all duration-100 hover:bg-cyan-500/10"
+                        style={{
+                          border: isCyber ? "1px solid rgba(0,245,255,0.15)" : "2px solid #000",
+                        }}
+                      >
+                        <div className="min-w-0 flex-1 pr-4">
+                          <p className="text-xs font-black truncate" style={{ color: isCyber ? "#00F5FF" : "#000" }}>
+                            {item.title}
+                          </p>
+                          <p className="text-[10px] opacity-70 truncate font-medium">{item.subtitle}</p>
+                        </div>
+                        <span className="text-[9px] font-mono tracking-wider opacity-60 uppercase shrink-0">
+                          GO ↵
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 

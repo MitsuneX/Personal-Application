@@ -11,6 +11,7 @@ import { ProfileHoverPopover } from "@/components/ui/ProfileHoverPopover";
 import { AestheticsModal } from "@/components/ui/AestheticsModal";
 import { CommandPalette } from "@/components/ui/CommandPalette";
 import { TopbarMiniPlayer } from "@/components/ui/TopbarMiniPlayer";
+import { SettingsDropdown } from "@/components/ui/SettingsDropdown";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -217,6 +218,9 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
 
           {/* Theme switcher toggle added in the Header */}
           <ThemeSwitcherToggle />
+
+          {/* Settings gear dropdown menu */}
+          <SettingsDropdown onOpenAesthetics={() => setAestheticsOpen(true)} />
 
           {/* Customizable Profile Header Item */}
           <ProfileHoverPopover
