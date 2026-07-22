@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.nexusxenon.app",
+    "sha256_cert_fingerprints": [
+      "97:D9:DF:E1:76:94:19:CD:DB:2D:D6:FB:01:B5:45:5E:13:8A:C5:24:4B:50:F3:D3:C5:29:F3:F3:44:B6:1F:5F"
+    ]
+  }
+}]

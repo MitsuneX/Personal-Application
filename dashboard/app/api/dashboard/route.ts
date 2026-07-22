@@ -1,11 +1,44 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const dbProfile = await prisma.profile.findUnique({ where: { id: "profile" } });
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const profileId = user?.id || "profile";
+
+    let dbProfile = await prisma.profile.findUnique({ where: { id: profileId } });
+
+    // If authenticated user does not have a profile record yet, create an isolated user profile
+    if (!dbProfile && user) {
+      const userMeta = user.user_metadata || {};
+      dbProfile = await prisma.profile.create({
+        data: {
+          id: profileId,
+          name: userMeta.full_name || user.email?.split("@")[0] || "User",
+          tagline: "Personal Command Center",
+          bio: "Welcome to Nexus Xenon",
+          status: "online",
+          location: "Earth",
+          skills: [],
+          socials: [],
+          avatar: userMeta.avatar_url || "/avatar.png",
+          borderStyle: "default",
+        },
+      });
+    }
+
+    // If still no profile, fallback to default "profile"
+    if (!dbProfile) {
+      dbProfile = await prisma.profile.findUnique({ where: { id: "profile" } });
+    }
+
     const dbGames = await prisma.game.findMany({ orderBy: { createdAt: "asc" } });
     const dbAnime = await prisma.anime.findMany({ orderBy: { createdAt: "asc" } });
     const dbCharacters = await prisma.favoriteCharacter.findMany({ orderBy: { createdAt: "asc" } });

@@ -894,38 +894,60 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   }),
 
   nextTrack: () => {
-    const { activeTrack, playlistQueue, isShuffle, loopMode } = get();
-    if (!activeTrack || playlistQueue.length === 0) return;
+    const { activeTrack, playlistQueue, songs, isShuffle, loopMode } = get();
+    const queue = playlistQueue.length > 0 ? playlistQueue : songs;
+    if (!activeTrack || queue.length === 0) return;
+
     if (loopMode === "one") {
-      set({ isPlaying: true });
+      set({ activeTrack: { ...activeTrack }, isPlaying: true });
       return;
     }
+
     if (isShuffle) {
-      const randIdx = Math.floor(Math.random() * playlistQueue.length);
-      set({ activeTrack: playlistQueue[randIdx], isPlaying: true });
+      const randIdx = Math.floor(Math.random() * queue.length);
+      set({ activeTrack: queue[randIdx], isPlaying: true });
       return;
     }
-    const currIdx = playlistQueue.findIndex((t) => t.id === activeTrack.id);
-    const isLast = currIdx === playlistQueue.length - 1;
+
+    let currIdx = queue.findIndex(
+      (t) =>
+        t.id === activeTrack.id ||
+        (t.youtubeId && t.youtubeId === activeTrack.youtubeId) ||
+        t.title === activeTrack.title
+    );
+    if (currIdx === -1) currIdx = 0;
+
+    const isLast = currIdx === queue.length - 1;
     if (isLast && loopMode === "off") {
       set({ isPlaying: false });
       return;
     }
-    const nextIdx = (currIdx + 1) % playlistQueue.length;
-    set({ activeTrack: playlistQueue[nextIdx], isPlaying: true });
+
+    const nextIdx = (currIdx + 1) % queue.length;
+    set({ activeTrack: queue[nextIdx], isPlaying: true });
   },
 
   prevTrack: () => {
-    const { activeTrack, playlistQueue, isShuffle } = get();
-    if (!activeTrack || playlistQueue.length === 0) return;
+    const { activeTrack, playlistQueue, songs, isShuffle } = get();
+    const queue = playlistQueue.length > 0 ? playlistQueue : songs;
+    if (!activeTrack || queue.length === 0) return;
+
     if (isShuffle) {
-      const randIdx = Math.floor(Math.random() * playlistQueue.length);
-      set({ activeTrack: playlistQueue[randIdx], isPlaying: true });
+      const randIdx = Math.floor(Math.random() * queue.length);
+      set({ activeTrack: queue[randIdx], isPlaying: true });
       return;
     }
-    const currIdx = playlistQueue.findIndex((t) => t.id === activeTrack.id);
-    const prevIdx = (currIdx - 1 + playlistQueue.length) % playlistQueue.length;
-    set({ activeTrack: playlistQueue[prevIdx], isPlaying: true });
+
+    let currIdx = queue.findIndex(
+      (t) =>
+        t.id === activeTrack.id ||
+        (t.youtubeId && t.youtubeId === activeTrack.youtubeId) ||
+        t.title === activeTrack.title
+    );
+    if (currIdx === -1) currIdx = 0;
+
+    const prevIdx = (currIdx - 1 + queue.length) % queue.length;
+    set({ activeTrack: queue[prevIdx], isPlaying: true });
   },
 
   savePlaylist: async (playlist) => {

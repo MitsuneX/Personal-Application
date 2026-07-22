@@ -35,7 +35,7 @@ export function TopbarMiniPlayer() {
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(180);
 
-  // Sync HTML5 Audio element
+  // ── Sync HTML5 Audio element ───────────────────────────────────────────────
   useEffect(() => {
     if (!audioRef.current) return;
     if (activeTrack?.audioUrl && !activeTrack.youtubeId) {
@@ -47,7 +47,21 @@ export function TopbarMiniPlayer() {
     }
   }, [isPlaying, activeTrack]);
 
-  // YouTube mock progress timer when YouTube stream is playing
+  // ── Sync YouTube player state via postMessage ──────────────────────────────
+  useEffect(() => {
+    if (!activeTrack?.youtubeId || !iframeRef.current?.contentWindow) return;
+
+    iframeRef.current.contentWindow.postMessage(
+      JSON.stringify({
+        event: "command",
+        func: isPlaying ? "playVideo" : "pauseVideo",
+        args: [],
+      }),
+      "*"
+    );
+  }, [isPlaying, activeTrack]);
+
+  // ── YouTube Progress Timer ─────────────────────────────────────────────────
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (activeTrack?.youtubeId && isPlaying) {
@@ -66,7 +80,7 @@ export function TopbarMiniPlayer() {
     };
   }, [activeTrack, isPlaying, duration, nextTrack]);
 
-  // Reset progress when track changes
+  // ── Reset progress when track changes ─────────────────────────────────────
   useEffect(() => {
     setProgress(0);
     if (activeTrack?.duration) {
@@ -80,7 +94,7 @@ export function TopbarMiniPlayer() {
     }
   }, [activeTrack]);
 
-  // Close popover when clicking outside
+  // ── Close popover when clicking outside ────────────────────────────────────
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -103,7 +117,9 @@ export function TopbarMiniPlayer() {
   const handleTimeUpdate = () => {
     if (audioRef.current) {
       setProgress(audioRef.current.currentTime);
-      setDuration(audioRef.current.duration || 180);
+      if (audioRef.current.duration && !isNaN(audioRef.current.duration)) {
+        setDuration(audioRef.current.duration);
+      }
     }
   };
 
@@ -111,11 +127,11 @@ export function TopbarMiniPlayer() {
     const seconds = Number(e.target.value);
     setProgress(seconds);
 
-    if (audioRef.current && activeTrack.audioUrl) {
+    if (audioRef.current && activeTrack.audioUrl && !activeTrack.youtubeId) {
       audioRef.current.currentTime = seconds;
     }
 
-    if (iframeRef.current && iframeRef.current.contentWindow && activeTrack.youtubeId) {
+    if (iframeRef.current?.contentWindow && activeTrack.youtubeId) {
       iframeRef.current.contentWindow.postMessage(
         JSON.stringify({ event: "command", func: "seekTo", args: [seconds, true] }),
         "*"
@@ -132,15 +148,14 @@ export function TopbarMiniPlayer() {
           src={activeTrack.audioUrl}
           onTimeUpdate={handleTimeUpdate}
           onEnded={nextTrack}
-          autoPlay={isPlaying}
         />
       )}
 
-      {/* YouTube Background Player Iframe */}
-      {activeTrack.youtubeId && isPlaying && (
+      {/* YouTube Background Player Iframe — KEEP MOUNTED to preserve timestamp */}
+      {activeTrack.youtubeId && (
         <iframe
           ref={iframeRef}
-          src={`https://www.youtube.com/embed/${activeTrack.youtubeId}?autoplay=1&enablejsapi=1`}
+          src={`https://www.youtube.com/embed/${activeTrack.youtubeId}?enablejsapi=1&autoplay=1`}
           allow="autoplay"
           className="hidden"
           title="Background YouTube Player"
@@ -225,8 +240,10 @@ export function TopbarMiniPlayer() {
           >
             {/* Header Track Info */}
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border bg-slate-800 flex items-center justify-center font-bold text-xs"
-                style={{ borderColor: isCyber ? "rgba(0, 245, 255, 0.3)" : "#000" }}>
+              <div
+                className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border bg-slate-800 flex items-center justify-center font-bold text-xs"
+                style={{ borderColor: isCyber ? "rgba(0, 245, 255, 0.3)" : "#000" }}
+              >
                 {activeTrack.imageUrl ? (
                   <img src={activeTrack.imageUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -258,7 +275,10 @@ export function TopbarMiniPlayer() {
             </div>
 
             {/* Control Suite Row */}
-            <div className="flex items-center justify-between pt-1 border-t" style={{ borderColor: isCyber ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)" }}>
+            <div
+              className="flex items-center justify-between pt-1 border-t"
+              style={{ borderColor: isCyber ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)" }}
+            >
               <button
                 onClick={toggleShuffle}
                 className="p-1 rounded text-xs"
@@ -267,18 +287,18 @@ export function TopbarMiniPlayer() {
               >
                 🔀
               </button>
-              <button onClick={prevTrack} className="p-1 text-xs">⏮</button>
+              <button onClick={prevTrack} className="p-1 text-xs cursor-pointer">⏮</button>
               <button
                 onClick={togglePlay}
-                className="px-3 py-1 text-xs font-black rounded-lg"
+                className="px-3 py-1 text-xs font-black rounded-lg cursor-pointer"
                 style={{ backgroundColor: isCyber ? "#00F5FF" : "#FF6B35", color: isCyber ? "#050816" : "#FFF" }}
               >
                 {isPlaying ? "⏸ Pause" : "▶ Play"}
               </button>
-              <button onClick={nextTrack} className="p-1 text-xs">⏭</button>
+              <button onClick={nextTrack} className="p-1 text-xs cursor-pointer">⏭</button>
               <button
                 onClick={cycleLoopMode}
-                className="p-1 rounded text-xs font-bold"
+                className="p-1 rounded text-xs font-bold cursor-pointer"
                 style={{ color: loopMode !== "off" ? (isCyber ? "#00F5FF" : "#FF6B35") : "inherit" }}
               >
                 {loopMode === "one" ? "🔂 1" : loopMode === "all" ? "🔁 All" : "🔁"}
@@ -323,7 +343,7 @@ export function TopbarMiniPlayer() {
         )}
       </AnimatePresence>
 
-      {/* Lyrics Drawer Modal */}
+      {/* Synchronized Lyrics Drawer Modal */}
       <LyricsModal
         isOpen={lyricsOpen}
         onClose={() => setLyricsOpen(false)}

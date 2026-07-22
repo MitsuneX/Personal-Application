@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
   try {
     const data = await req.json();
-    
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const profileId = user?.id || "profile";
+
     // Retrieve existing profile to track avatar changes
-    const existing = await prisma.profile.findUnique({ where: { id: "profile" } });
+    const existing = await prisma.profile.findUnique({ where: { id: profileId } });
     if (existing && data.avatar && data.avatar !== existing.avatar && existing.avatar) {
       await prisma.profileHistory.create({
         data: { assetType: "avatar", url: existing.avatar },
@@ -15,7 +22,7 @@ export async function POST(req: Request) {
 
     // Clean fields to avoid schema mismatch
     const updated = await prisma.profile.upsert({
-      where: { id: "profile" },
+      where: { id: profileId },
       update: {
         name: data.name,
         tagline: data.tagline,
@@ -31,8 +38,8 @@ export async function POST(req: Request) {
         zodiac: data.zodiac,
       },
       create: {
-        id: "profile",
-        name: data.name || "Default User",
+        id: profileId,
+        name: data.name || user?.email?.split("@")[0] || "Default User",
         tagline: data.tagline || "",
         bio: data.bio || "",
         status: data.status || "online",

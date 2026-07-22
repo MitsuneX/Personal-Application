@@ -12,6 +12,17 @@ export interface LyricLine {
   romanized?: string;
 }
 
+function decodeHTMLEntities(text: string): string {
+  return text
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&nbsp;/g, " ");
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -44,10 +55,12 @@ export async function GET(req: Request) {
 
       const rawLyrics = lyricsData?.lyrics?.lyrics?.body?.html || lyricsData?.lyrics?.lyrics?.body?.plain || "";
       if (rawLyrics) {
-        cleanLyricsText = rawLyrics
-          .replace(/<br\s*\/?>/gi, "\n")
-          .replace(/<[^>]+>/g, "")
-          .trim();
+        cleanLyricsText = decodeHTMLEntities(
+          rawLyrics
+            .replace(/<br\s*\/?>/gi, "\n")
+            .replace(/<[^>]+>/g, "")
+            .trim()
+        );
       }
     }
 
@@ -61,23 +74,41 @@ export async function GET(req: Request) {
       .map((l) => l.trim())
       .filter((l) => l.length > 0);
 
-    const ESTIMATED_LINE_DURATION = 4.5; // seconds per line estimate
+    const lrcRegex = /^\[(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?\]\s*(.*)$/;
+    let hasLrcTimestamps = false;
+    const parsedLines: { time: number; text: string }[] = [];
 
-    // Format lines with timestamps and Romanization detection
-    const lines: LyricLine[] = rawLines.map((lineText, idx) => {
+    rawLines.forEach((lineText) => {
+      const match = lineText.match(lrcRegex);
+      if (match) {
+        hasLrcTimestamps = true;
+        const mins = parseInt(match[1], 10);
+        const secs = parseInt(match[2], 10);
+        const ms = match[3] ? parseInt(match[3].padEnd(3, "0"), 10) / 1000 : 0;
+        const timeInSeconds = mins * 60 + secs + ms;
+        parsedLines.push({ time: timeInSeconds, text: match[4] || lineText });
+      } else {
+        parsedLines.push({ time: 0, text: lineText });
+      }
+    });
+
+    const ESTIMATED_LINE_DURATION = 4.2; // average line duration
+
+    const lines: LyricLine[] = parsedLines.map((item, idx) => {
+      const lineText = item.text;
       const isHeader = lineText.startsWith("[") && lineText.endsWith("]");
       const isAsianText = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]/.test(lineText);
 
       let romanized: string | undefined = undefined;
-
       if (isAsianText && !isHeader) {
-        // Sample Romanized transcription helper
         romanized = `~ ${lineText} ~ (Romaji / Pinyin)`;
       }
 
+      const calculatedTime = hasLrcTimestamps ? item.time : idx * ESTIMATED_LINE_DURATION;
+
       return {
         id: idx,
-        time: idx * ESTIMATED_LINE_DURATION,
+        time: calculatedTime,
         original: lineText,
         romanized: romanized,
       };

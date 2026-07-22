@@ -11,10 +11,10 @@ export function GlobalMusicPlayer() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const pathname = usePathname();
+
   const {
     activeTrack,
     isPlaying,
-    setIsPlaying,
     nextTrack,
     prevTrack,
     togglePlay,
@@ -28,30 +28,61 @@ export function GlobalMusicPlayer() {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(180);
+  const [duration, setDuration] = useState(210);
   const [volume, setVolume] = useState(0.8);
   const [isMuted, setIsMuted] = useState(false);
   const [lyricsOpen, setLyricsOpen] = useState(false);
 
-  // Sync HTML5 Audio element
+  // ── Sync HTML5 Audio playback & volume ─────────────────────────────────────
   useEffect(() => {
     if (!audioRef.current) return;
     if (activeTrack?.audioUrl && !activeTrack.youtubeId) {
+      audioRef.current.volume = isMuted ? 0 : volume;
       if (isPlaying) {
         audioRef.current.play().catch(() => {});
       } else {
         audioRef.current.pause();
       }
     }
-  }, [isPlaying, activeTrack]);
+  }, [isPlaying, activeTrack, volume, isMuted]);
 
+  // ── Sync YouTube player state via postMessage (Play/Pause/Volume/Mute) ──────
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = isMuted ? 0 : volume;
-    }
-  }, [volume, isMuted]);
+    if (!activeTrack?.youtubeId || !iframeRef.current?.contentWindow) return;
 
-  // YouTube mock progress timer when YouTube stream is playing
+    const win = iframeRef.current.contentWindow;
+
+    // Send play/pause command
+    win.postMessage(
+      JSON.stringify({
+        event: "command",
+        func: isPlaying ? "playVideo" : "pauseVideo",
+        args: [],
+      }),
+      "*"
+    );
+
+    // Send volume & mute commands
+    win.postMessage(
+      JSON.stringify({
+        event: "command",
+        func: isMuted ? "mute" : "unMute",
+        args: [],
+      }),
+      "*"
+    );
+
+    win.postMessage(
+      JSON.stringify({
+        event: "command",
+        func: "setVolume",
+        args: [isMuted ? 0 : Math.round(volume * 100)],
+      }),
+      "*"
+    );
+  }, [isPlaying, activeTrack, volume, isMuted]);
+
+  // ── YouTube Progress Timer ─────────────────────────────────────────────────
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (activeTrack?.youtubeId && isPlaying) {
@@ -70,7 +101,7 @@ export function GlobalMusicPlayer() {
     };
   }, [activeTrack, isPlaying, duration, nextTrack]);
 
-  // Reset progress when track changes
+  // ── Reset & update duration when track changes ────────────────────────────
   useEffect(() => {
     setProgress(0);
     if (activeTrack?.duration) {
@@ -96,7 +127,9 @@ export function GlobalMusicPlayer() {
   const handleTimeUpdate = () => {
     if (audioRef.current) {
       setProgress(audioRef.current.currentTime);
-      setDuration(audioRef.current.duration || 180);
+      if (audioRef.current.duration && !isNaN(audioRef.current.duration)) {
+        setDuration(audioRef.current.duration);
+      }
     }
   };
 
@@ -105,17 +138,27 @@ export function GlobalMusicPlayer() {
     setProgress(seconds);
 
     // HTML5 Audio Seek
-    if (audioRef.current && activeTrack.audioUrl) {
+    if (audioRef.current && activeTrack.audioUrl && !activeTrack.youtubeId) {
       audioRef.current.currentTime = seconds;
     }
 
     // YouTube IFrame PostMessage Seek
-    if (iframeRef.current && iframeRef.current.contentWindow && activeTrack.youtubeId) {
+    if (iframeRef.current?.contentWindow && activeTrack.youtubeId) {
       iframeRef.current.contentWindow.postMessage(
         JSON.stringify({ event: "command", func: "seekTo", args: [seconds, true] }),
         "*"
       );
     }
+  };
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Number(e.target.value);
+    setVolume(val);
+    if (val > 0) setIsMuted(false);
+  };
+
+  const toggleMute = () => {
+    setIsMuted((prev) => !prev);
   };
 
   return (
@@ -140,15 +183,14 @@ export function GlobalMusicPlayer() {
               src={activeTrack.audioUrl}
               onTimeUpdate={handleTimeUpdate}
               onEnded={nextTrack}
-              autoPlay={isPlaying}
             />
           )}
 
-          {/* YouTube Background Player Iframe */}
-          {activeTrack.youtubeId && isPlaying && (
+          {/* YouTube Background Player Iframe — KEEP MOUNTED to preserve timestamp */}
+          {activeTrack.youtubeId && (
             <iframe
               ref={iframeRef}
-              src={`https://www.youtube.com/embed/${activeTrack.youtubeId}?autoplay=1&enablejsapi=1`}
+              src={`https://www.youtube.com/embed/${activeTrack.youtubeId}?enablejsapi=1&autoplay=1`}
               allow="autoplay"
               className="hidden"
               title="Background YouTube Player"
@@ -271,40 +313,42 @@ export function GlobalMusicPlayer() {
                 borderColor: isCyber ? "#00F5FF" : "#000000",
                 color: isCyber ? "#00F5FF" : "#000000",
               }}
-              title="View Lyrics"
+              title="View Synced Lyrics"
             >
               🎤 Lyrics
             </button>
 
-            {/* Volume slider */}
+            {/* Mute button */}
             <button
-              onClick={() => setIsMuted(!isMuted)}
+              onClick={toggleMute}
               className="text-xs font-bold opacity-80 hover:opacity-100 cursor-pointer"
+              title={isMuted ? "Unmute" : "Mute"}
             >
               {isMuted ? "🔇" : "🔊"}
             </button>
+
+            {/* Volume slider */}
             <input
               type="range"
               min={0}
               max={1}
               step={0.05}
               value={isMuted ? 0 : volume}
-              onChange={(e) => {
-                setVolume(Number(e.target.value));
-                setIsMuted(false);
-              }}
+              onChange={handleVolumeChange}
               className="w-16 h-1 accent-cyan-400 cursor-pointer"
+              title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
             />
           </div>
         </motion.div>
       </AnimatePresence>
 
-      {/* Lyrics Drawer Modal */}
+      {/* Synchronized Lyrics Modal */}
       <LyricsModal
         isOpen={lyricsOpen}
         onClose={() => setLyricsOpen(false)}
         trackTitle={activeTrack.title}
         artistName={activeTrack.artist}
+        currentTime={progress}
       />
     </>
   );
