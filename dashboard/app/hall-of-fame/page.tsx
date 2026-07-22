@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
 
 type RankingTab = 
-  | "overall" | "korean" | "japanese" | "chinese" | "hollywood" // Group 1: Dramas
+  | "overall" | "korean" | "japanese" | "chinese" | "indonesia" | "hollywood" // Group 1: Dramas
   | "singer" | "actor_only" | "actress_only" | "anime_ranked" // Group 2: Singers, Actors, Actresses & Anime
   | "toku_overall" | "ultraman" | "kamen_rider" | "power_rangers"; // Group 3: Tokusatsu
 
@@ -94,12 +94,13 @@ export default function HallOfFamePage() {
 
   // Filter based on selected subTab (purely isolated)
   const filterBySubTab = (itemsList: HallOfFameEntry[]) => {
-    if (["overall", "korean", "japanese", "chinese", "hollywood"].includes(subTab)) {
+    if (["overall", "korean", "japanese", "chinese", "indonesia", "hollywood"].includes(subTab)) {
       const dramaBase = itemsList.filter((e) => !isSingerEntry(e) && !isTokusatsuEntry(e) && !isAnimeEntry(e));
       if (subTab === "overall") return dramaBase;
       if (subTab === "korean") return dramaBase.filter((e) => getGroupForEntry(e) === "Korea");
       if (subTab === "japanese") return dramaBase.filter((e) => getGroupForEntry(e) === "Japan");
       if (subTab === "chinese") return dramaBase.filter((e) => getGroupForEntry(e) === "China");
+      if (subTab === "indonesia") return dramaBase.filter((e) => getGroupForEntry(e) === "Indonesia");
       if (subTab === "hollywood") return dramaBase.filter((e) => getGroupForEntry(e) === "Hollywood");
     }
     if (subTab === "singer") {
@@ -135,7 +136,7 @@ export default function HallOfFamePage() {
   const restOfList = currentFilteredList.slice(3);
 
   const getTabTheme = (tabId: RankingTab) => {
-    if (["overall", "korean", "japanese", "chinese", "hollywood"].includes(tabId)) {
+    if (["overall", "korean", "japanese", "chinese", "indonesia", "hollywood"].includes(tabId)) {
       return {
         activeBgCyber: "rgba(255, 105, 180, 0.15)",
         activeTextCyber: "#FF69B4",
@@ -251,6 +252,7 @@ export default function HallOfFamePage() {
               { id: "korean", label: "Korean", flag: "🇰🇷" },
               { id: "japanese", label: "Japanese", flag: "🇯🇵" },
               { id: "chinese", label: "Chinese", flag: "🇨🇳" },
+              { id: "indonesia", label: "Indonesia", flag: "🇮🇩" },
               { id: "hollywood", label: "Hollywood", flag: "🎬" },
             ].map((tab) => {
               const isActive = subTab === tab.id;

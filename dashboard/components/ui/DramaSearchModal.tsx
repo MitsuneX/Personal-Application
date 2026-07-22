@@ -41,6 +41,7 @@ const COUNTRY_OPTIONS = [
   { value: "korean",    label: "🇰🇷 Korean" },
   { value: "japanese",  label: "🇯🇵 Japanese" },
   { value: "chinese",   label: "🇨🇳 Chinese" },
+  { value: "indonesia", label: "🇮🇩 Indonesia" },
   { value: "hollywood", label: "🎬 Hollywood" },
   { value: "other",     label: "🌐 Other" },
 ];

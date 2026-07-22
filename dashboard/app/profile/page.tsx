@@ -9,10 +9,12 @@ import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { ImageCropModal } from "@/components/ui/ImageCropModal";
+import { useRouter } from "next/navigation";
 
 const PLATFORMS = ["GitHub", "Twitter/X", "Discord", "Instagram", "LinkedIn", "Tiktok"];
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { profile, updateProfile, profileHistory } = useDashboardStore();
@@ -194,6 +196,49 @@ export default function ProfilePage() {
           </div>
           <div className="w-full max-w-md">
             <GamifiedStatsWidget />
+          </div>
+
+          {/* Account Session / Log Out Section */}
+          <div className="w-full max-w-md">
+            <div
+              className="p-6 rounded-2xl border-adaptive-unique relative overflow-hidden"
+              style={{
+                backgroundColor: isCyber ? "rgba(10,15,44,0.6)" : "#FFFFFF",
+                boxShadow: isCyber ? "none" : "4px 4px 0px 0px #000000",
+              }}
+            >
+              <h2 className="text-base font-black uppercase tracking-wider mb-2" style={{ color: isCyber ? "#00F5FF" : "#000000" }}>
+                🚪 Account Session
+              </h2>
+              <p className="text-xs theme-text-secondary font-medium mb-4">
+                Sign out of your personal dashboard session securely.
+              </p>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (confirm("Are you sure you want to log out?")) {
+                    try {
+                      const { createClient } = await import("@/utils/supabase/client");
+                      const supabase = createClient();
+                      await supabase.auth.signOut();
+                    } catch (err) {
+                      console.error(err);
+                    }
+                    localStorage.removeItem("supabase.auth.token");
+                    router.push("/login");
+                  }
+                }}
+                className="w-full py-3 px-4 text-xs font-black rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
+                style={{
+                  backgroundColor: isCyber ? "rgba(239, 68, 68, 0.15)" : "#FEE2E2",
+                  border: isCyber ? "1px solid rgba(239, 68, 68, 0.4)" : "2px solid #000000",
+                  color: isCyber ? "#EF4444" : "#991B1B",
+                  boxShadow: isCyber ? "none" : "3px 3px 0px #000000",
+                }}
+              >
+                🚪 Log Out
+              </button>
+            </div>
           </div>
         </div>
 

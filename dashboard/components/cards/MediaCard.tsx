@@ -8,7 +8,7 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
-export type MediaCategory = "japanese" | "korean" | "chinese" | "hollywood" | "anime";
+export type MediaCategory = "japanese" | "korean" | "chinese" | "hollywood" | "indonesia" | "anime";
 
 export interface MediaCardProps {
   id: string;
@@ -91,6 +91,17 @@ const THEMES = {
       border: "#1A1A1A", surface: "#FFF5EE", text: "#1A1A1A",
     },
   },
+  indonesia: {
+    cyber: {
+      accent: "#FF2A2A", accent2: "#FFFFFF",
+      glow: "rgba(255,42,42,0.4)", border: "rgba(255,42,42,0.3)",
+      text: "#FFE6E6", gradFrom: "rgba(18,4,4,0.96)",
+    },
+    brutal: {
+      accent: "#E60000", accent2: "#FFFFFF",
+      border: "#000000", surface: "#FFE6E6", text: "#1F2937",
+    },
+  },
 } as const;
 
 // ─── Episode unit labels ─────────────────────────────────────────────────────────
@@ -99,6 +110,7 @@ const EP_LABELS: Record<MediaCategory, string> = {
   korean:   "회",
   chinese:  "集",
   hollywood: "ep",
+  indonesia: "eps",
   anime:    "eps",
 };
 

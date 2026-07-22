@@ -9,6 +9,7 @@ import React, {
   useReducer,
   type ReactNode,
 } from "react";
+import themeConfig from "@/theme-config.json";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,12 +29,28 @@ interface ThemeContextValue {
   isTransitioning: boolean;
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
+  config: typeof themeConfig;
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Constants & Synchronous Helper ──────────────────────────────────────────
 
 const STORAGE_KEY = "dashboard-theme";
-const DEFAULT_THEME: Theme = "brutal";
+const DEFAULT_THEME: Theme =
+  themeConfig.defaultTheme === "neo-brutalism" ? "brutal" : "brutal";
+
+function getInitialTheme(): Theme {
+  if (typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
+      if (stored === "brutal" || stored === "cyber") {
+        return stored;
+      }
+    } catch {
+      // Fallback if localStorage access fails
+    }
+  }
+  return DEFAULT_THEME;
+}
 
 // ─── Reducer ──────────────────────────────────────────────────────────────────
 
@@ -55,24 +72,40 @@ export const ThemeContext = createContext<ThemeContextValue | null>(null);
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(themeReducer, {
-    theme: DEFAULT_THEME,
+  const [state, dispatch] = useReducer(themeReducer, null, () => ({
+    theme: getInitialTheme(),
     isTransitioning: false,
-  });
+  }));
 
-  // Hydrate from localStorage — runs synchronously before paint
+  // Synchronously set initial root data attribute & theme classes before paint
   useLayoutEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
-    const initial: Theme =
-      stored === "brutal" || stored === "cyber" ? stored : DEFAULT_THEME;
+    const initial = getInitialTheme();
     dispatch({ type: "SET_THEME", payload: initial });
-    document.documentElement.setAttribute("data-theme", initial);
+
+    const root = document.documentElement;
+    root.setAttribute("data-theme", initial);
+    if (initial === "brutal") {
+      root.classList.add("theme-neo-brutal");
+      root.classList.remove("theme-cyber");
+    } else {
+      root.classList.add("theme-cyber");
+      root.classList.remove("theme-neo-brutal");
+    }
   }, []);
 
-  // Keep data-theme in sync with state
+  // Sync data-theme and CSS root classes with theme state
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", state.theme);
+    const root = document.documentElement;
+    root.setAttribute("data-theme", state.theme);
     localStorage.setItem(STORAGE_KEY, state.theme);
+
+    if (state.theme === "brutal") {
+      root.classList.add("theme-neo-brutal");
+      root.classList.remove("theme-cyber");
+    } else {
+      root.classList.add("theme-cyber");
+      root.classList.remove("theme-neo-brutal");
+    }
   }, [state.theme]);
 
   const setTheme = useCallback(
@@ -81,7 +114,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "SET_TRANSITIONING", payload: true });
       dispatch({ type: "SET_THEME", payload: theme });
 
-      // Clear transitioning flag after CSS transitions complete
       const timer = setTimeout(() => {
         dispatch({ type: "SET_TRANSITIONING", payload: false });
       }, 700);
@@ -102,6 +134,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         isTransitioning: state.isTransitioning,
         toggleTheme,
         setTheme,
+        config: themeConfig,
       }}
     >
       {children}

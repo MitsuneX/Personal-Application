@@ -86,6 +86,16 @@ export default function RootLayout({
       `}
     >
       <head>
+        {/*
+          ⚡ CRITICAL: Synchronous theme injection — must run before first paint.
+          Reads the stored theme from localStorage and sets data-theme + CSS class
+          on <html> immediately so no flash of wrong theme occurs on hard refresh.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('dashboard-theme');var root=document.documentElement;if(t==='cyber'){root.setAttribute('data-theme','cyber');root.classList.add('theme-cyber');root.classList.remove('theme-neo-brutal');}else{root.setAttribute('data-theme','brutal');root.classList.add('theme-neo-brutal');root.classList.remove('theme-cyber');}}catch(e){}})();`,
+          }}
+        />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />

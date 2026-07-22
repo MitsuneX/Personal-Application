@@ -51,6 +51,16 @@ export const NATIONALITY_GROUPS = [
     brutalBorder: "#B59300",
     brutalBg: "#FFFDF0",
   },
+  {
+    code: "Indonesia",
+    title: "🇮🇩 Indonesian",
+    description: "Indonesian film stars and legendary screen talents",
+    accentColor: "#E60000",
+    accentBg: "rgba(230,0,0,0.06)",
+    accentBorder: "rgba(230,0,0,0.3)",
+    brutalBorder: "#800000",
+    brutalBg: "#FFE6E6",
+  },
 ];
 
 export const OTHER_GROUP = {
@@ -95,6 +105,7 @@ export const getGroupForEntry = (entry: HallOfFameEntry) => {
   if (nat === "Korea" || nat === "Korean") return "Korea";
   if (nat === "China" || nat === "Chinese") return "China";
   if (nat === "Japan" || nat === "Japanese") return "Japan";
+  if (nat === "Indonesia" || nat === "Indonesian") return "Indonesia";
   if (nat === "Hollywood" || nat === "American" || nat === "Canadian") return "Hollywood";
   return "__other__";
 };
@@ -104,6 +115,7 @@ export const getGroupDetails = (code: string) => {
   if (code === "China") return NATIONALITY_GROUPS[1];
   if (code === "Japan") return NATIONALITY_GROUPS[2];
   if (code === "Hollywood") return NATIONALITY_GROUPS[3];
+  if (code === "Indonesia") return NATIONALITY_GROUPS[4];
   if (code === "Anime") return ANIME_GROUP;
   return OTHER_GROUP;
 };

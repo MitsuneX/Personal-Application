@@ -1,0 +1,93 @@
+{
+  "name": "Nexus Xenon Theme System Configuration",
+  "version": "1.0.0",
+  "defaultTheme": "neo-brutalism",
+  "supportedThemes": [
+    {
+      "id": "neo-brutalism",
+      "alias": "brutal",
+      "displayName": "Neo-Brutalism",
+      "rootClass": "theme-neo-brutal",
+      "dataTheme": "brutal",
+      "description": "Bold borders, stark high-contrast colors, sharp drop shadows, raw geometry",
+      "colors": {
+        "background": "#FFF5E4",
+        "card": "#FFFFFF",
+        "primary": "#FF6B35",
+        "accent": "#FFD700",
+        "border": "#000000",
+        "text": "#1A1A1A"
+      },
+      "loadingAnimation": "Neo-Brutalism-Loading.json"
+    },
+    {
+      "id": "cyberpunk",
+      "alias": "cyber",
+      "displayName": "Cyberpunk",
+      "rootClass": "theme-cyber",
+      "dataTheme": "cyber",
+      "description": "Neon accents, dark futuristic gradients, glowing elements, sci-fi borders",
+      "colors": {
+        "background": "#050816",
+        "card": "rgba(15, 23, 42, 0.8)",
+        "primary": "#00F5FF",
+        "accent": "#BF5FFF",
+        "border": "rgba(0, 245, 255, 0.4)",
+        "text": "#E0FFFF"
+      },
+      "loadingAnimation": "Nexus-Xenon-Loading.json"
+    }
+  ],
+  "databaseConfig": {
+    "table": "User",
+    "userProfileIdField": "id",
+    "themeStateField": "theme",
+    "fallbackTheme": "neo-brutalism"
+  },
+  "loadingWorkflow": {
+    "preLogin": {
+      "neo-brutalism": {
+        "title": "NEXUS XEON",
+        "statusText": "AUTHENTICATING SESSION...",
+        "lottieSource": "Neo-Brutalism-Loading.json",
+        "containerStyle": {
+          "backgroundColor": "#FFFEF0",
+          "borderColor": "#000000",
+          "boxShadow": "6px 6px 0px #000000"
+        }
+      },
+      "cyberpunk": {
+        "title": "NEXUS XEON",
+        "statusText": "AUTHENTICATING SESSION...",
+        "lottieSource": "Nexus-Xenon-Loading.json",
+        "containerStyle": {
+          "backgroundColor": "#050816",
+          "borderColor": "#00F5FF",
+          "boxShadow": "0 0 20px rgba(0, 245, 255, 0.6)"
+        }
+      }
+    },
+    "postLogin": {
+      "neo-brutalism": {
+        "title": "LOADING HUB",
+        "statusText": "HYDRATING USER DATABASE...",
+        "lottieSource": "Neo-Brutalism-Loading.json",
+        "containerStyle": {
+          "backgroundColor": "#FFF5E4",
+          "borderColor": "#000000",
+          "boxShadow": "4px 4px 0px #000000"
+        }
+      },
+      "cyberpunk": {
+        "title": "LOAD_NEXUS",
+        "statusText": "SYS::SYNCING_POSTGRES_CACHE...",
+        "lottieSource": "Nexus-Xenon-Loading.json",
+        "containerStyle": {
+          "backgroundColor": "#050816",
+          "borderColor": "rgba(0, 245, 255, 0.4)",
+          "boxShadow": "0 0 25px rgba(0, 245, 255, 0.25)"
+        }
+      }
+    }
+  }
+}

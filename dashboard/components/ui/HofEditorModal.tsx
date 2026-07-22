@@ -461,6 +461,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                             { value: "Korea", label: "Korea", icon: "🇰🇷" },
                             { value: "China", label: "China", icon: "🇨🇳" },
                             { value: "Japan", label: "Japan", icon: "🇯🇵" },
+                            { value: "Indonesia", label: "Indonesia", icon: "🇮🇩" },
                             { value: "Hollywood", label: "Hollywood", icon: "🎬" },
                             { value: "American", label: "American", icon: "🇺🇸" },
                             { value: "Canadian", label: "Canadian", icon: "🇨🇦" },

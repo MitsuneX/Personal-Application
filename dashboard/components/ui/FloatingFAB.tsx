@@ -21,6 +21,7 @@ const ACCENTS: Record<MediaCategory | "music", { cyber: string; brutal: string; 
   korean:    { cyber: "#22D3EE", brutal: "#2EC4B6", label: "K-Drama" },
   chinese:   { cyber: "#FFD700", brutal: "#C8102E", label: "C-Drama" },
   hollywood: { cyber: "#A78BFA", brutal: "#7C3AED", label: "Hollywood" },
+  indonesia: { cyber: "#FF2A2A", brutal: "#E60000", label: "Indonesian" },
   anime:     { cyber: "#BF5FFF", brutal: "#FF6B35", label: "Anime" },
   music:     { cyber: "#00F5FF", brutal: "#FF6B35", label: "Music Vault" },
 };

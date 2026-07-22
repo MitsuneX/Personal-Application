@@ -58,6 +58,7 @@ const DRAMA_SUB = [
   { href: "/drama/japanese",  icon: "🇯🇵", label: "Japanese"  },
   { href: "/drama/korean",    icon: "🇰🇷", label: "Korean"    },
   { href: "/drama/chinese",   icon: "🇨🇳", label: "Chinese"   },
+  { href: "/drama/indonesia", icon: "🇮🇩", label: "Indonesia" },
   { href: "/drama/hollywood", icon: "🎬", label: "Hollywood"  },
 ];
 

@@ -45,6 +45,15 @@ const REGIONS = [
     desc: "Blockbuster series, prestige TV, and cinematic universes from the West",
     palette: { brutal: { bg: "#F3E8FF", border: "#4C1D95", accent: "#7C3AED" }, cyber: { glow: "#A78BFA", bg: "rgba(124,58,237,0.08)" } },
   },
+  {
+    id: "indonesia",
+    flag: "🇮🇩",
+    label: "Indonesian Drama",
+    sublabel: "Indonesian",
+    href: "/drama/indonesia",
+    desc: "Iconic serials, web series, and blockbuster cinema from Indonesia",
+    palette: { brutal: { bg: "#FFE6E6", border: "#800000", accent: "#E60000" }, cyber: { glow: "#FF2A2A", bg: "rgba(255,42,42,0.08)" } },
+  },
 ];
 
 
