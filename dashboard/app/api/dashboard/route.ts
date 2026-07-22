@@ -11,30 +11,48 @@ export async function GET() {
     const supabase = createClient(cookieStore);
     const { data: { user } } = await supabase.auth.getUser();
 
-    const profileId = user?.id || "profile";
+    let dbProfile = null;
 
-    let dbProfile = await prisma.profile.findUnique({ where: { id: profileId } });
-
-    // If authenticated user does not have a profile record yet, create an isolated user profile
-    if (!dbProfile && user) {
-      const userMeta = user.user_metadata || {};
-      dbProfile = await prisma.profile.create({
-        data: {
-          id: profileId,
-          name: userMeta.full_name || user.email?.split("@")[0] || "User",
-          tagline: "Personal Command Center",
-          bio: "Welcome to Nexus Xenon",
-          status: "online",
-          location: "Earth",
-          skills: [],
-          socials: [],
-          avatar: userMeta.avatar_url || "/avatar.png",
-          borderStyle: "default",
-        },
-      });
+    // 1. Check if profile exists for this authenticated user ID
+    if (user?.id) {
+      dbProfile = await prisma.profile.findUnique({ where: { id: user.id } });
     }
 
-    // If still no profile, fallback to default "profile"
+    // 2. If no profile exists for this user yet
+    if (!dbProfile && user) {
+      const userMeta = user.user_metadata || {};
+      const mainProfile = await prisma.profile.findUnique({ where: { id: "profile" } });
+      const isNelvin = user.email?.toLowerCase().includes("nelvin") || userMeta.full_name?.toLowerCase().includes("nelvin");
+
+      if (isNelvin && mainProfile) {
+        // Copy main Nelvin profile onto user session record
+        const { id, updatedAt, ...rest } = mainProfile;
+        dbProfile = await prisma.profile.create({
+          data: {
+            id: user.id,
+            ...(rest as any),
+          },
+        });
+      } else {
+        // Clean isolated default profile for any NEW account (zero data contamination)
+        dbProfile = await prisma.profile.create({
+          data: {
+            id: user.id,
+            name: userMeta.full_name || user.email?.split("@")[0] || "New User",
+            tagline: "Personal Command Center",
+            bio: "Welcome to Nexus Xenon",
+            status: "online",
+            location: "Earth",
+            skills: [],
+            socials: [],
+            avatar: userMeta.avatar_url || "/avatar.png",
+            borderStyle: "default",
+          },
+        });
+      }
+    }
+
+    // 3. Fallback to main profile ("profile") if unauthenticated
     if (!dbProfile) {
       dbProfile = await prisma.profile.findUnique({ where: { id: "profile" } });
     }

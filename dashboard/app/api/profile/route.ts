@@ -10,7 +10,14 @@ export async function POST(req: Request) {
     const supabase = createClient(cookieStore);
     const { data: { user } } = await supabase.auth.getUser();
 
-    const profileId = user?.id || "profile";
+    // Prefer existing user-specific profile if it exists, otherwise update default "profile"
+    let profileId = "profile";
+    if (user?.id) {
+      const userProf = await prisma.profile.findUnique({ where: { id: user.id } });
+      if (userProf) {
+        profileId = user.id;
+      }
+    }
 
     // Retrieve existing profile to track avatar changes
     const existing = await prisma.profile.findUnique({ where: { id: profileId } });
