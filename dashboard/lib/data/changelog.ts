@@ -13,6 +13,111 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v2.5.5",
+    date: "2026-07-23",
+    title: "Clean HTML Web Scraper & Frontend Lyrics Cache",
+    badge: "PERFORMANCE FIX",
+    type: "patch",
+    summary: "Fixed web scraper HTML tag leakage bug and added in-memory lyrics caching to prevent duplicate API requests and save API quota.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "Updated public Genius web scraper in app/api/music/lyrics/route.ts to extract inner container HTML and strip all tags and <br> elements cleanly.",
+          "Implemented in-memory Map caching in LyricsModal.tsx — reopening lyrics for the active track displays instantly with 0 network calls.",
+          "Bypasses cache on manual 'Retry Search' button click for fresh API fetch.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.5.4",
+    date: "2026-07-23",
+    title: "Lyrics Search Short-Circuit & Web Scrape Fallback",
+    badge: "BUG FIX",
+    type: "patch",
+    summary: "Fixed search loop overwrite bug by adding early short-circuit exit on valid Genius/Musixmatch song IDs and public web page scraping for empty API bodies.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "Implemented short-circuit early exit in candidate search loop so valid song matches are returned immediately without being overwritten by subsequent passes.",
+          "Added public Genius web page HTML scraper fallback for song IDs where RapidAPI returns an empty body payload.",
+          "Strict final validation ensuring error states only trigger when every provider pass returns zero hits.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.5.3",
+    date: "2026-07-23",
+    title: "Musixmatch Primary Provider & Subtitles/RichSync Integration",
+    badge: "PROVIDER UPGRADE",
+    type: "patch",
+    summary: "Integrated Musixmatch API (Matcher, Track Search & Subtitles/RichSync LRC format) as primary lyrics provider, backed by Genius API fallback.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "Primary Musixmatch API integration with matcher.lyrics.get and track.search endpoints for global foreign script matching.",
+          "ID-based time-synced LRC subtitle parsing (track.subtitle.get) enabling native karaoke auto-scrolling.",
+          "Multi-provider fallback architecture querying Musixmatch first, then Genius candidate queries if needed.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "Enhanced diagnostic logging specifying active provider hit (Musixmatch vs Genius).",
+          "Graceful dual-provider fallback UI when both Musixmatch and Genius return zero hits.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.5.2",
+    date: "2026-07-23",
+    title: "Fuzzy Multi-Search & Mixed-Script Query Isolator",
+    badge: "API UPGRADE",
+    type: "patch",
+    summary: "Integrated Genius multi-search fuzzy endpoint and candidate query isolation for Korean, Mandarin, and Japanese tracks with complex brackets.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "Switched backend lyrics API to use Genius fuzzy multi-search lookup for high matching accuracy on foreign scripts.",
+          "Implemented intelligent candidate query generator splitting mixed artist/title strings (e.g., '이희상 (LEEHEESANG) - 예일 (Love Shine)').",
+          "Enhanced diagnostic logging printing raw input track, raw artist, and exact URL query strings for each search pass.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.5.1",
+    date: "2026-07-23",
+    title: "Multi-Pass Lyrics Search & Real-Time Karaoke Sync",
+    badge: "FEATURE ENHANCEMENT",
+    type: "patch",
+    summary: "Upgraded backend lyrics lookup with 3-pass search strategy (retaining CJK scripts), time-synced auto-scroll highlighting, and graceful error fallback UI.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "Intelligent 3-pass backend lyrics search algorithm stripping streaming noise while preserving Chinese, Japanese, and Korean text.",
+          "Real-time synchronized karaoke line tracking with automatic centering scroll as music plays.",
+          "Graceful fallback UI for missing lyrics with direct Retry and Genius search buttons.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "Eliminated static template freezes when lyrics API searches return 0 hits.",
+          "Added detailed multi-pass console logging for API diagnostic tracking.",
+          "Full-screen centered overlay layout for Log Updates (Changelog) modal.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.5.0",
     date: "2026-07-22",
     title: "Synchronized Lyrics Engine & Native Android APK",
