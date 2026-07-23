@@ -518,3 +518,63 @@ img {
   image-rendering: -webkit-optimize-contrast;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════
+   TACTILE INTERACTIVE BUTTONS & CARD UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.btn-interactive {
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  user-select: none;
+  outline: none;
+}
+
+/* Neo-Brutalism Button Tactile Feedback */
+[data-theme="brutal"] .btn-interactive {
+  border: 2.5px solid #000000;
+  box-shadow: 3px 3px 0px 0px #000000;
+}
+[data-theme="brutal"] .btn-interactive:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px 0px #000000;
+}
+[data-theme="brutal"] .btn-interactive:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px 0px #000000;
+}
+
+/* Cyberpunk Button Glow & Glass Physics */
+[data-theme="cyber"] .btn-interactive {
+  border: 1px solid rgba(0, 245, 255, 0.35);
+  background: rgba(0, 245, 255, 0.05);
+  box-shadow: 0 0 12px rgba(0, 245, 255, 0.15);
+  backdrop-filter: blur(10px);
+}
+[data-theme="cyber"] .btn-interactive:hover {
+  border-color: rgba(0, 245, 255, 0.8);
+  background: rgba(0, 245, 255, 0.15);
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.4), 0 0 40px rgba(191, 95, 255, 0.2);
+  transform: translateY(-1px);
+}
+[data-theme="cyber"] .btn-interactive:active {
+  transform: translateY(1px) scale(0.97);
+  box-shadow: 0 0 8px rgba(0, 245, 255, 0.3);
+}
+
+/* Theme Card Interactive Hover Lift */
+[data-theme="brutal"] .theme-card-interactive {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+[data-theme="brutal"] .theme-card-interactive:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 7px 7px 0px 0px #000000 !important;
+}
+[data-theme="cyber"] .theme-card-interactive {
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+[data-theme="cyber"] .theme-card-interactive:hover {
+  transform: translateY(-3px);
+  border-color: rgba(0, 245, 255, 0.6) !important;
+  box-shadow: 0 0 25px rgba(0, 245, 255, 0.25), inset 0 0 15px rgba(0, 245, 255, 0.05) !important;
+}
+
+

@@ -13,6 +13,23 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v2.5.8",
+    date: "2026-07-23",
+    title: "Loading Screen Modal Refactor",
+    badge: "UI FIX",
+    type: "patch",
+    summary: "Refactored SplashGuard and LoadingOverlay to use full-screen outer wrappers with cleanly centered modal cards.",
+    categories: [
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "Updated loading components to apply the JSON containerStyle directly to an inner modal box rather than the fullscreen background.",
+          "Added full-screen backdrop using the theme's core background color to properly frame the loading modal.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.5.7",
     date: "2026-07-23",
     title: "Global Command Palette & Links Indexing Engine",

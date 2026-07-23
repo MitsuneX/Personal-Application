@@ -111,14 +111,13 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
   return (
     <>
       <motion.header
-        className="flex items-center justify-between px-4 md:px-6 h-16 shrink-0 relative z-30"
+        className="flex items-center justify-between px-4 md:px-6 h-16 shrink-0 relative z-30 border-b-2 border-solid"
         animate={{
           backgroundColor: isCyber ? "rgba(5,8,22,0.85)" : "rgba(255,245,228,0.92)",
           borderBottomColor: isCyber ? "rgba(0,245,255,0.15)" : "#000000",
           backdropFilter: isCyber ? "blur(20px)" : "blur(0px)",
         }}
         transition={{ duration: 0.4 }}
-        style={{ borderBottomWidth: "2px", borderBottomStyle: "solid" }}
       >
         {/* Left Section: Hamburger & Icon */}
         <div className="flex items-center gap-3 shrink-0">
@@ -185,12 +184,17 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
 
         {/* Middle Section: Search Bar Triggering Command Palette */}
         <div className="flex-1 max-w-md mx-6 hidden sm:block relative">
-          <div 
+          <motion.div 
             onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
-            className="w-full pl-9 pr-3 py-1.5 text-xs font-mono font-bold tracking-wide rounded-lg border outline-none transition-all flex items-center justify-between cursor-pointer"
+            whileHover={{ scale: 1.015, y: -1 }}
+            whileTap={{ scale: 0.98, y: 1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            suppressHydrationWarning
+            className="w-full pl-9 pr-3 py-1.5 text-xs font-mono font-bold tracking-wide rounded-lg border outline-none transition-colors flex items-center justify-between cursor-pointer"
             style={{
               backgroundColor: isCyber ? "rgba(0,245,255,0.03)" : "#FFF9F0",
               borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#000000",
+              boxShadow: isCyber ? "0 0 15px rgba(0,245,255,0.15)" : "2.5px 2.5px 0px #000000",
               color: isCyber ? "#00F5FF" : "#1A1A1A",
             }}
           >
@@ -208,7 +212,7 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
             >
               Ctrl + K
             </span>
-          </div>
+          </motion.div>
         </div>
 
         {/* Right Section: customizable profile, topbar player, and clock */}

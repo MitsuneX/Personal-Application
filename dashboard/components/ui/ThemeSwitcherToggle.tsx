@@ -24,9 +24,9 @@ export function ThemeSwitcherToggle() {
       onClick={toggleTheme}
       disabled={isTransitioning}
       className="relative flex items-center gap-3 cursor-pointer select-none outline-none group"
-      whileHover={{ scale: 1.04 }}
-      whileTap={{ scale: 0.94 }}
-      transition={springConfig}
+      whileHover={{ scale: 1.06, y: -1 }}
+      whileTap={{ scale: 0.92, y: 1 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
     >
       {/* Label left */}
       <motion.span
@@ -42,7 +42,13 @@ export function ThemeSwitcherToggle() {
 
       {/* Track */}
       <motion.div
+        suppressHydrationWarning
         className="relative w-16 h-8 rounded-full border-2 overflow-hidden"
+        style={{
+          boxShadow: isCyber
+            ? "0 0 15px rgba(0,245,255,0.3)"
+            : "3px 3px 0px #000000",
+        }}
         animate={isCyber ? toggleTrackCyber : toggleTrackBrutal}
         transition={{ type: "spring", stiffness: 220, damping: 22, duration: 0.6 }}
       >
@@ -52,7 +58,7 @@ export function ThemeSwitcherToggle() {
             className="absolute inset-0 pointer-events-none"
             style={{
               backgroundImage:
-                "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,245,255,0.04) 3px, rgba(0,245,255,0.04) 4px)",
+                "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,245,255,0.06) 3px, rgba(0,245,255,0.06) 4px)",
             }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -64,7 +70,7 @@ export function ThemeSwitcherToggle() {
         {/* Thumb */}
         <motion.div
           layoutId="toggle-thumb"
-          className="absolute top-1 left-1 w-6 h-6 rounded-full flex items-center justify-center text-sm"
+          className="absolute top-1 left-1 w-6 h-6 rounded-full flex items-center justify-center text-sm shadow-md"
           animate={isCyber ? toggleThumbCyber : toggleThumbBrutal}
           transition={{ type: "spring", stiffness: 380, damping: 28 }}
         >

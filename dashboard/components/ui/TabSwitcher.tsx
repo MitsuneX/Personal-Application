@@ -35,11 +35,14 @@ export function TabSwitcher({ tabs, activeTab, onTabChange, className = "" }: Ta
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
-            <button
+            <motion.button
               key={tab.id}
               id={`tab-${tab.id}`}
               onClick={() => onTabChange(tab.id)}
-              className="relative px-4 py-2 rounded-lg text-sm font-bold tracking-wide outline-none transition-colors flex items-center gap-1.5"
+              whileHover={{ scale: 1.04, y: -1 }}
+              whileTap={{ scale: 0.95, y: 1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              className="relative px-4 py-2 rounded-lg text-sm font-bold tracking-wide outline-none transition-colors flex items-center gap-1.5 cursor-pointer"
               style={{
                 color: isActive
                   ? isCyber ? "#050816" : "#FFFFFF"
@@ -55,7 +58,7 @@ export function TabSwitcher({ tabs, activeTab, onTabChange, className = "" }: Ta
                   style={{
                     backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
                     boxShadow: isCyber
-                      ? "0 0 16px rgba(0,245,255,0.6), 0 0 40px rgba(0,245,255,0.2)"
+                      ? "0 0 18px rgba(0,245,255,0.7), 0 0 45px rgba(0,245,255,0.3)"
                       : "3px 3px 0px 0px rgba(0,0,0,1)",
                   }}
                   transition={{ type: "spring", stiffness: 380, damping: 30 }}
@@ -67,11 +70,11 @@ export function TabSwitcher({ tabs, activeTab, onTabChange, className = "" }: Ta
                 {tab.label}
                 {tab.count !== undefined && (
                   <span
-                    className="text-xs rounded-full px-1.5 py-0.5 font-mono"
+                    className="text-xs rounded-full px-1.5 py-0.5 font-mono font-bold"
                     style={{
                       backgroundColor: isActive
                         ? "rgba(0,0,0,0.2)"
-                        : isCyber ? "rgba(0,245,255,0.1)" : "rgba(0,0,0,0.1)",
+                        : isCyber ? "rgba(0,245,255,0.15)" : "rgba(0,0,0,0.1)",
                       color: isActive ? "inherit" : isCyber ? "#00F5FF" : "#FF6B35",
                     }}
                   >
@@ -79,7 +82,7 @@ export function TabSwitcher({ tabs, activeTab, onTabChange, className = "" }: Ta
                   </span>
                 )}
               </span>
-            </button>
+            </motion.button>
           );
         })}
       </div>

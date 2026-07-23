@@ -26,22 +26,19 @@ export function NavLink({ href, icon, label, exact = false, collapsed = false, o
   return (
     <Link href={href} onClick={onClick} className="block outline-none">
       <motion.div
+        suppressHydrationWarning
         className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer group"
+        whileHover={{ x: 4, scale: 1.02 }}
+        whileTap={{ scale: 0.96 }}
         animate={{
           backgroundColor: isActive
-            ? isCyber ? "rgba(0,245,255,0.1)" : "rgba(255,107,53,0.12)"
+            ? isCyber ? "rgba(0,245,255,0.12)" : "rgba(255,107,53,0.12)"
             : "rgba(0,0,0,0)",
           color: isActive
             ? isCyber ? "#00F5FF" : "#FF6B35"
             : isCyber ? "#94A3B8" : "#4A4A4A",
         }}
-        whileHover={{
-          backgroundColor: isActive
-            ? isCyber ? "rgba(0,245,255,0.15)" : "rgba(255,107,53,0.18)"
-            : isCyber ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
-          color: isCyber ? "#E0E8FF" : "#1A1A1A",
-        }}
-        transition={{ duration: 0.15 }}
+        transition={{ type: "spring", stiffness: 400, damping: 25 }}
       >
         {/* Active indicator bar */}
         {isActive && (

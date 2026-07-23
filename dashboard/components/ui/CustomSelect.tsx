@@ -88,10 +88,14 @@ export function CustomSelect({
   return (
     <div ref={containerRef} className={`relative w-full select-none ${className}`}>
       {/* Trigger Button */}
-      <button
+      <motion.button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-3 py-2 text-sm font-semibold rounded-lg border outline-none cursor-pointer transition-all duration-150"
+        whileHover={{ scale: 1.015 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+        suppressHydrationWarning
+        className="w-full flex items-center justify-between px-3.5 py-2.5 text-sm font-semibold rounded-lg border outline-none cursor-pointer"
         style={buttonStyle}
       >
         <span className="flex items-center gap-2 truncate">
@@ -107,7 +111,7 @@ export function CustomSelect({
         <span className={`text-[10px] transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}>
           ▼
         </span>
-      </button>
+      </motion.button>
 
       {/* Options Panel */}
       <AnimatePresence>

@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { Space_Grotesk, JetBrains_Mono, Orbitron } from "next/font/google";
 import { RootProviders } from "@/components/providers/RootProviders";
 import "./globals.css";
@@ -93,17 +92,15 @@ export default function RootLayout({
           Reads the stored theme from localStorage and sets data-theme + CSS class
           on <html> immediately so no flash of wrong theme occurs on hard refresh.
         */}
-        <Script
+        <script
           id="theme-script"
-          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('dashboard-theme');var root=document.documentElement;if(t==='cyber'){root.setAttribute('data-theme','cyber');root.classList.add('theme-cyber');root.classList.remove('theme-neo-brutal');}else{root.setAttribute('data-theme','brutal');root.classList.add('theme-neo-brutal');root.classList.remove('theme-cyber');}}catch(e){}})();`,
           }}
         />
         {/* 📱 PWA — Service Worker registration */}
-        <Script
+        <script
           id="sw-register"
-          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(function(e){console.warn('SW registration failed:',e);});});}`,
           }}
