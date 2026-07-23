@@ -13,6 +13,49 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v2.5.7",
+    date: "2026-07-23",
+    title: "Global Command Palette & Links Indexing Engine",
+    badge: "SEARCH UPGRADE",
+    type: "patch",
+    summary: "Upgraded global CTRL+K search modal with dynamic cross-model indexing (Bookmarks, Notes, Games, Anime, Dramas, Songs, Gallery, Prompts, Hobbies, Profiles) and instant route navigation.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "Dynamic Comprehensive Indexing: Global search automatically scans 12 application data models in parallel (including Bookmarks/Links, Notepad, Music Vault, Media Gallery, AI Prompts, and Hobbies).",
+          "Flexible Fuzzy Keyword Matching: Case-insensitive search across titles, categories, tags, URLs, platforms, genres, and metadata.",
+          "Direct Navigation: Clicking any search result instantly routes to its specific application page or view (/links, /games, /notepad, /gallery, etc.).",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "Resolved missing Bookmarks/Links indexer in backend search API route (/api/search/route.ts).",
+          "Fixed property key mismatches and empty result list edge cases in CommandPalette.tsx.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.5.6",
+    date: "2026-07-23",
+    title: "Gamenized HUD & Arcade Games Page Overhaul",
+    badge: "UI OVERHAUL",
+    type: "patch",
+    summary: "Cranked up the gamenized aesthetic on GamesPage & GameCard with sci-fi HUD crosshairs, active LED pulses, arcade coin slots, and inventory slot item containers.",
+    categories: [
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "Cyber Theme: Animated sci-fi corner brackets (crosshair L-corners), cyan scanline overlays, active green LED pulse dots, and monospace terminal tags.",
+          "Neo-Brutalism Theme: 3px solid black borders, hard offset 5px/8px drop shadows, retro coin-slot tags (SYS // GACHA_DECK), and punchy arcade header bars.",
+          "Inventory slot item container styling for category icons with inset depth and energetic arcade-cabinet hover pop (scale 1.015, y: -6).",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.5.5",
     date: "2026-07-23",
     title: "Clean HTML Web Scraper & Frontend Lyrics Cache",

@@ -13,12 +13,18 @@ interface SearchResult {
 }
 
 interface SearchResponse {
-  games: SearchResult[];
-  anime: SearchResult[];
-  dramas: SearchResult[];
-  characters: SearchResult[];
-  talent: SearchResult[];
-  profile: SearchResult[];
+  links?: SearchResult[];
+  notes?: SearchResult[];
+  games?: SearchResult[];
+  anime?: SearchResult[];
+  dramas?: SearchResult[];
+  characters?: SearchResult[];
+  talent?: SearchResult[];
+  gallery?: SearchResult[];
+  songs?: SearchResult[];
+  prompts?: SearchResult[];
+  hobbies?: SearchResult[];
+  profile?: SearchResult[];
 }
 
 export function CommandPalette() {
@@ -29,14 +35,7 @@ export function CommandPalette() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<SearchResponse>({
-    games: [],
-    anime: [],
-    dramas: [],
-    characters: [],
-    talent: [],
-    profile: [],
-  });
+  const [results, setResults] = useState<SearchResponse>({});
 
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -69,7 +68,7 @@ export function CommandPalette() {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 80);
       setQuery("");
-      setResults({ games: [], anime: [], dramas: [], characters: [], talent: [], profile: [] });
+      setResults({});
       setActiveIndex(0);
     }
   }, [isOpen]);
@@ -77,7 +76,7 @@ export function CommandPalette() {
   // Debounced search fetching
   useEffect(() => {
     if (!query.trim()) {
-      setResults({ games: [], anime: [], dramas: [], characters: [], talent: [], profile: [] });
+      setResults({});
       setLoading(false);
       return;
     }
@@ -99,14 +98,20 @@ export function CommandPalette() {
     return () => clearTimeout(delayDebounce);
   }, [query]);
 
-  // Flattened items list for keyboard navigation
+  // Flattened items list across all categories for keyboard navigation
   const categories = [
-    { label: "Games Found", data: results.games, icon: "🎮" },
-    { label: "Anime Series", data: results.anime, icon: "⛩️" },
-    { label: "Dramas & Series", data: results.dramas, icon: "🎬" },
-    { label: "Favorite Characters", data: results.characters, icon: "📖" },
-    { label: "Cast & Talent", data: results.talent, icon: "🏆" },
-    { label: "User Profiles", data: results.profile, icon: "👤" },
+    { label: "Bookmarks & Links", data: results.links || [], icon: "🔗" },
+    { label: "Notepad Workspaces", data: results.notes || [], icon: "📝" },
+    { label: "Games HUD", data: results.games || [], icon: "🎮" },
+    { label: "Anime Series", data: results.anime || [], icon: "⛩️" },
+    { label: "Dramas & Series", data: results.dramas || [], icon: "🎬" },
+    { label: "Music Vault", data: results.songs || [], icon: "🎵" },
+    { label: "Media Gallery", data: results.gallery || [], icon: "🖼️" },
+    { label: "Favorite Characters", data: results.characters || [], icon: "📖" },
+    { label: "Hall of Fame", data: results.talent || [], icon: "🏆" },
+    { label: "Saved AI Prompts", data: results.prompts || [], icon: "🤖" },
+    { label: "Hobby Skills", data: results.hobbies || [], icon: "🎯" },
+    { label: "User Profiles", data: results.profile || [], icon: "👤" },
   ];
 
   const flattenedList: { item: SearchResult; categoryLabel: string }[] = [];
@@ -160,19 +165,6 @@ export function CommandPalette() {
         color: "#1A1A1A",
       };
 
-  const inputStyle: React.CSSProperties = isCyber
-    ? {
-        background: "rgba(255, 255, 255, 0.03)",
-        borderColor: "rgba(0, 245, 255, 0.2)",
-        color: "#FFF",
-      }
-    : {
-        background: "#FFFFFF",
-        borderColor: "#000000",
-        borderWidth: "2.5px",
-        color: "#1A1A1A",
-      };
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -203,14 +195,15 @@ export function CommandPalette() {
               <input
                 ref={inputRef}
                 type="text"
-                placeholder={isCyber ? "RUN COMMAND / SEARCH REGISTRIES..." : "Type to search..."}
+                placeholder={isCyber ? "RUN COMMAND / SEARCH ALL REGISTRIES..." : "Search bookmarks, games, notes, anime..."}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="flex-1 bg-transparent border-none outline-none text-sm font-semibold p-1"
                 style={{ color: isCyber ? "#00F5FF" : "#000" }}
               />
               <div 
-                className="text-[9px] px-2 py-1 rounded font-bold font-mono tracking-wider select-none shrink-0"
+                className="text-[9px] px-2 py-1 rounded font-bold font-mono tracking-wider select-none shrink-0 cursor-pointer"
+                onClick={() => setIsOpen(false)}
                 style={{
                   background: isCyber ? "rgba(0,245,255,0.1)" : "#E5E7EB",
                   color: isCyber ? "#00F5FF" : "#4B5563",
@@ -233,20 +226,21 @@ export function CommandPalette() {
               )}
 
               {!loading && query.trim() !== "" && flattenedList.length === 0 && (
-                <div className="text-center py-10">
+                <div className="text-center py-10 space-y-1">
                   <p className="text-2xl mb-1">📡</p>
-                  <p className="text-xs font-black uppercase tracking-widest opacity-50">
+                  <p className="text-xs font-black uppercase tracking-widest opacity-60" style={{ color: isCyber ? "#00F5FF" : "#000" }}>
                     {isCyber ? "NO_COORDINATES_FOUND" : "No matching records found"}
                   </p>
+                  <p className="text-[11px] opacity-40">Try searching for keywords like "Database", "Anime", "RPG", "Link", etc.</p>
                 </div>
               )}
 
               {!loading && query.trim() === "" && (
-                <div className="space-y-4 py-2">
-                  <div className="text-center py-4">
-                    <p className="text-xl mb-1.5">⌨️</p>
-                    <p className="text-xs font-bold uppercase tracking-wider opacity-50">
-                      {isCyber ? "ENTER_OPERATOR_QUERY_SIGNAL" : "Search files, entries, users, and logs"}
+                <div className="space-y-4 py-2 select-none">
+                  <div className="text-center py-3">
+                    <p className="text-xl mb-1">⌨️</p>
+                    <p className="text-xs font-bold uppercase tracking-wider opacity-60">
+                      {isCyber ? "GLOBAL_COMMAND_CENTER_INDEX" : "Search files, bookmarks, entries, and logs"}
                     </p>
                   </div>
 
@@ -257,12 +251,13 @@ export function CommandPalette() {
                         borderColor: isCyber ? "rgba(0,245,255,0.1)" : "rgba(0,0,0,0.06)",
                       }}
                     >
-                      ⚡ Quick System Shortcuts
+                      ⚡ Quick System Navigation
                     </div>
 
                     {[
+                      { title: "🔗 Bookmarks Directory & Links", subtitle: "Browse saved websites, databases, productivity & tools", url: "/links" },
                       { title: "📜 Log Updates (Changelog)", subtitle: "View system release notes, v2.5.0 features & bug fixes", url: "/changelog" },
-                      { title: "🎵 Music Vault & Player", subtitle: "Open music workspace, search & synced lyrics", url: "/music" },
+                      { title: "🎵 Music Vault & Synced Lyrics", subtitle: "Open music workspace, search & synced lyrics", url: "/music" },
                       { title: "🏆 Hall of Fame", subtitle: "Browse GOAT status rankings & champion entries", url: "/hall-of-fame" },
                       { title: "👤 Profile Settings", subtitle: "Customize your avatar, banner, bio & tags", url: "/profile" },
                     ].map((item, idx) => (
@@ -299,13 +294,14 @@ export function CommandPalette() {
                     return (
                       <div key={cat.label} className="space-y-1.5">
                         <div 
-                          className="text-[9px] font-black tracking-widest uppercase pb-1 border-b"
+                          className="text-[9px] font-black tracking-widest uppercase pb-1 border-b flex items-center justify-between"
                           style={{
-                            color: isCyber ? "rgba(0,245,255,0.4)" : "#6B7280",
+                            color: isCyber ? "rgba(0,245,255,0.5)" : "#6B7280",
                             borderColor: isCyber ? "rgba(0,245,255,0.1)" : "rgba(0,0,0,0.06)"
                           }}
                         >
-                          {cat.icon} {cat.label}
+                          <span>{cat.icon} {cat.label}</span>
+                          <span className="text-[9px] opacity-60">{cat.data.length} match(es)</span>
                         </div>
 
                         <div className="space-y-1">
@@ -323,15 +319,15 @@ export function CommandPalette() {
                                   setIsOpen(false);
                                 }}
                                 onMouseEnter={() => setActiveIndex(indexInFlattened)}
-                                className="p-2.5 rounded-lg cursor-pointer flex justify-between items-center transition-all duration-100"
+                                className="p-2.5 rounded-lg cursor-pointer flex justify-between items-center transition-all duration-100 select-none"
                                 style={{
                                   background: isActive
                                     ? isCyber
-                                      ? "rgba(0,245,255,0.12)"
+                                      ? "rgba(0,245,255,0.15)"
                                       : "#FFD700"
                                     : "transparent",
                                   border: isCyber
-                                    ? `1px solid ${isActive ? "rgba(0,245,255,0.35)" : "transparent"}`
+                                    ? `1px solid ${isActive ? "rgba(0,245,255,0.4)" : "transparent"}`
                                     : `2px solid ${isActive ? "#000" : "transparent"}`,
                                   boxShadow: isActive && !isCyber ? "2px 2px 0px #000" : "none"
                                 }}
@@ -347,17 +343,17 @@ export function CommandPalette() {
                                   >
                                     {item.title}
                                   </p>
-                                  <p className="text-[10px] theme-text-muted truncate mt-0.5 font-medium">
+                                  <p className="text-[10px] truncate mt-0.5 font-semibold opacity-70">
                                     {item.subtitle}
                                   </p>
                                 </div>
                                 <span 
-                                  className="text-[9px] font-mono tracking-wider opacity-60 uppercase shrink-0"
+                                  className="text-[9px] font-mono tracking-wider opacity-70 uppercase shrink-0"
                                   style={{
                                     color: isActive && isCyber ? "#00F5FF" : undefined
                                   }}
                                 >
-                                  {isActive ? "↵ navigate" : "view"}
+                                  {isActive ? "↵ NAVIGATE" : "VIEW"}
                                 </span>
                               </div>
                             );
@@ -371,7 +367,7 @@ export function CommandPalette() {
             </div>
 
             {/* Footer */}
-            <div className="p-3 bg-black/10 dark:bg-white/5 border-t text-[9px] font-mono flex justify-between items-center px-4" style={{ borderColor: isCyber ? "rgba(0,245,255,0.12)" : "#000" }}>
+            <div className="p-3 bg-black/10 dark:bg-white/5 border-t text-[9px] font-mono flex justify-between items-center px-4 select-none" style={{ borderColor: isCyber ? "rgba(0,245,255,0.12)" : "#000" }}>
               <div className="flex gap-3">
                 <span>↑↓ navigate</span>
                 <span>↵ select</span>

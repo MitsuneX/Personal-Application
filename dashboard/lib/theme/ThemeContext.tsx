@@ -72,15 +72,18 @@ export const ThemeContext = createContext<ThemeContextValue | null>(null);
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
+  // Always start initial render with DEFAULT_THEME for 100% identical SSR and Client hydration
   const [state, dispatch] = useReducer(themeReducer, null, () => ({
-    theme: getInitialTheme(),
+    theme: DEFAULT_THEME,
     isTransitioning: false,
   }));
 
-  // Synchronously set initial root data attribute & theme classes before paint
+  // Synchronously sync stored theme after mount on client before paint
   useLayoutEffect(() => {
     const initial = getInitialTheme();
-    dispatch({ type: "SET_THEME", payload: initial });
+    if (initial !== state.theme) {
+      dispatch({ type: "SET_THEME", payload: initial });
+    }
 
     const root = document.documentElement;
     root.setAttribute("data-theme", initial);

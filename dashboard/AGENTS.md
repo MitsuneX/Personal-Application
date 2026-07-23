@@ -11,6 +11,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Always verify that styling, borders, colors, and drop-shadows fit seamlessly across all themes without breaking layout integrity.
 - Use `useTheme()` hook and dynamic styles (`isCyber ? ... : ...`) for crisp contrast and theme alignment.
 
-## 2. Continuous Log Updates Maintenance
-- Always update the changelog data structure ([`lib/data/changelog.ts`](file:///c:/Coding/scripts/Full%20Stack%20Personal%20Applications/dashboard/lib/data/changelog.ts)) with detailed, neat, and easy-to-understand bullet points whenever any new changes, features, or bug fixes are introduced.
-- Maintain accurate version numbers, release dates, and categorized change items (New Features, Bug Fixes & Engine, UI & Aesthetics, PWA & Mobile).
+## 2. Changelog Generation Policy (No Premature Updates)
+- **DO NOT** generate or update entries in `lib/data/changelog.ts` prematurely while actively iterating on a feature, bug fix, or UI section.
+- **ONLY** update the changelog when a feature/page is completely finalized and verified, or **strictly when explicitly commanded by the user**.
+
+## 3. Focused Task Execution
+- Keep code edits strictly scoped to the specific problem, component, or feature requested by the user.
+- Avoid unnecessary side-effects or premature documentation churn until the user gives the green light.
