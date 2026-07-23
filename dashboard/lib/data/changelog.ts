@@ -13,6 +13,40 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v2.5.9",
+    date: "2026-07-23",
+    title: "Pure Framer Motion Loading Engine & Interactive Physics Overhaul",
+    badge: "UI & ENGINE OVERHAUL",
+    type: "patch",
+    summary: "Replaced external Lottie JSON files with pure code-based Framer Motion loading animations, overhauled interactive buttons with tactile physics and theme shadow shifts, and resolved Next.js SSR hydration/style warnings.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "Pure Framer Motion Loading Engine: Created LoadingGraphic.tsx featuring custom theme-specific loading graphics (rotating hard-shadow geometric blocks for Neo-Brutalism, dual-ring sci-fi HUD spinners with radar sweep for Cyberpunk).",
+          "Zero External Lottie Dependencies: Removed all Lottie JSON files and lottie-react package overhead for faster client bundle performance.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "App-Wide Interactive Micro-Interactions: Added Framer Motion spring physics (whileHover, whileTap) across ThemeSwitcherToggle, TabSwitcher, CustomSelect, NavLink, FloatingFAB, and Header controls.",
+          "Neo-Brutalism Shadow Physics: Directional drop-shadow shifts on hover (-2px, -2px shift to 5px 5px 0 #000) and tactile press compression (1px 1px 0 #000).",
+          "Cyberpunk Neon Halo & Glassmorphism: Multi-layer cyan/magenta neon glow shadows (0 0 20px rgba(0,245,255,0.4)), backdrop blurs, and hover lift physics.",
+          "Global CSS Utility System: Introduced .btn-interactive and .theme-card-interactive in globals.css for application-wide visual consistency.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "Resolved Next.js Turbopack React script tag warning in layout.tsx by utilizing native inline HTML script tags.",
+          "Fixed Framer Motion tabindex='0' hydration mismatch on navigation links, search bar triggers, and select controls using suppressHydrationWarning.",
+          "Fixed React style shorthand property warning (borderBottom vs borderBottomColor) in Header.tsx.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.5.8",
     date: "2026-07-23",
     title: "Loading Screen Modal Refactor",
