@@ -13,6 +13,37 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v2.6.0",
+    date: "2026-07-23",
+    title: "Dynamic Media Sync, Hall of Fame Integration & Production Lyrics Engine",
+    badge: "FEATURE & MUSIC UPGRADE",
+    type: "minor",
+    summary: "Connected Media Log widget to dynamic Zustand drama and Hall of Fame stores with compact layout navigation, integrated LRCLib for free production synced lyrics, and added a regex sanitizer to purge scraped text clutter.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "Dynamic Media & Drama Log Sync: Now Streaming and Top Show cards pull live watch progress, episode counts, platforms, and ratings directly from actual dramas & dramaLog store records.",
+          "Real-Time Hall of Fame Talent Sync: Actors and Actresses sections dynamically filter real-time Hall of Fame rankings (#1, #2 rank badges and GOAT/All-Star status) with auto-updating reactive state.",
+          "LRCLib Synced Lyrics Backup: Added free open-source LrcLib API provider for instant time-synced LRC lyrics playback without API key quotas.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "Compact Widget View & Navigation: Capped Actors and Actresses widget lists to top 4 items max and added a styled 'View Full Hall of Fame' button linking directly to /hall-of-fame.",
+          "Clean Lyrics Sanitizer: Added sanitizeLyricText regex filtering in app/api/music/lyrics/route.ts to strip out Genius scraper headers (Contributors, Translations, language lists, Embed counts, and boilerplate links).",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "Production Lyrics Request Robustness: Injected full browser User-Agent and Accept headers across Musixmatch, LRCLib, and Genius API requests to prevent HTTP 403/401 blocks in hosted production environments.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.5.9",
     date: "2026-07-23",
     title: "Pure Framer Motion Loading Engine & Interactive Physics Overhaul",

@@ -16,6 +16,8 @@ export interface LyricLine {
   translation?: string;
 }
 
+// ─── HELPER FUNCTIONS ─────────────────────────────────────────────────────────
+
 function decodeHTMLEntities(text: string): string {
   return text
     .replace(/&amp;/g, "&")
@@ -25,6 +27,44 @@ function decodeHTMLEntities(text: string): string {
     .replace(/&#39;/g, "'")
     .replace(/&#x27;/g, "'")
     .replace(/&nbsp;/g, " ");
+}
+
+/**
+ * Sanitizes scraped lyrics text to remove Genius contributor headers, translation lists,
+ * website boilerplate, embed buttons, and random numeric tags.
+ */
+function sanitizeLyricText(text: string): string {
+  if (!text) return "";
+
+  const decoded = decodeHTMLEntities(text);
+
+  return decoded
+    // Remove "17 Contributors", "ContributorsTranslations...", "Translations..." headers
+    .replace(/^\d*\s*Contributors\s*/gi, "")
+    .replace(/Contributors\s*Translations[^\n]*/gi, "")
+    .replace(/^Translations[^\n]*/gm, "")
+    // Remove concatenated language headers like "TürkçeSvenskaEspañolPolskiFrançaisDeutsch..."
+    .replace(/(?:English|Español|Türkçe|Svenska|Polski|Français|Deutsch|Português|Italiano|Русский|한국어|日本語|中文|Tiếng Việt)+/gi, "")
+    // Remove Genius footer / metadata noise
+    .replace(/\b\d+K?\s*Embed\b/gi, "")
+    .replace(/\bYou might also like\b/gi, "")
+    .replace(/\bHow to Format Lyrics\b/gi, "")
+    .replace(/\bSee [^\n]* Live\b/gi, "")
+    .replace(/\bGet tickets for [^\n]*\b/gi, "")
+    .replace(/URLCopyEmbedCopy/gi, "")
+    // Line-by-line filtering for leftover boilerplate
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => {
+      if (!line) return false;
+      if (/^\d*\s*Contributors/i.test(line)) return false;
+      if (/^Translations/i.test(line)) return false;
+      if (/^Embed$/i.test(line)) return false;
+      if (/^You might also like$/i.test(line)) return false;
+      if (/^URLCopyEmbedCopy$/i.test(line)) return false;
+      return true;
+    })
+    .join("\n");
 }
 
 /**
@@ -74,10 +114,15 @@ async function fetchMusixmatchLyrics(track: string, artist: string) {
     const cleanT = cleanTrackTitle(track);
     const cleanA = artist.toLowerCase() === "unknown artist" ? "" : artist.trim();
 
+    const headers = {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "Accept": "application/json",
+    };
+
     // 1. Matcher Endpoint (`matcher.lyrics.get`)
     console.log(`[Lyrics API] 🎵 [MUSIXMATCH] Step 1: Trying Matcher Endpoint for track="${cleanT}", artist="${cleanA}"`);
     const matcherUrl = `${MUSIXMATCH_BASE_URL}/matcher.lyrics.get?q_artist=${encodeURIComponent(cleanA)}&q_track=${encodeURIComponent(cleanT)}&apikey=${MUSIXMATCH_API_KEY}`;
-    const matcherRes = await fetch(matcherUrl);
+    const matcherRes = await fetch(matcherUrl, { headers });
     
     if (matcherRes.ok) {
       const matcherData = await matcherRes.json();
@@ -99,7 +144,7 @@ async function fetchMusixmatchLyrics(track: string, artist: string) {
     // 2. Track Search Endpoint (`track.search`) & Subtitles / RichSync (`track.subtitle.get`)
     console.log(`[Lyrics API] 🎵 [MUSIXMATCH] Step 2: Trying Track Search Endpoint...`);
     const searchUrl = `${MUSIXMATCH_BASE_URL}/track.search?q_artist=${encodeURIComponent(cleanA)}&q_track=${encodeURIComponent(cleanT)}&page_size=3&s_track_rating=desc&apikey=${MUSIXMATCH_API_KEY}`;
-    const searchRes = await fetch(searchUrl);
+    const searchRes = await fetch(searchUrl, { headers });
 
     if (searchRes.ok) {
       const searchData = await searchRes.json();
@@ -112,7 +157,7 @@ async function fetchMusixmatchLyrics(track: string, artist: string) {
         // Check if rich-sync subtitle LRC data exists
         if (topTrack.has_subtitles === 1) {
           const subUrl = `${MUSIXMATCH_BASE_URL}/track.subtitle.get?track_id=${trackId}&subtitle_format=lrc&apikey=${MUSIXMATCH_API_KEY}`;
-          const subRes = await fetch(subUrl);
+          const subRes = await fetch(subUrl, { headers });
           if (subRes.ok) {
             const subData = await subRes.json();
             const subtitleBody = subData.message?.body?.subtitle?.subtitle_body;
@@ -132,7 +177,7 @@ async function fetchMusixmatchLyrics(track: string, artist: string) {
 
         // Fallback to track lyrics get (`track.lyrics.get`)
         const lyricsGetUrl = `${MUSIXMATCH_BASE_URL}/track.lyrics.get?track_id=${trackId}&apikey=${MUSIXMATCH_API_KEY}`;
-        const lyricsGetRes = await fetch(lyricsGetUrl);
+        const lyricsGetRes = await fetch(lyricsGetUrl, { headers });
         if (lyricsGetRes.ok) {
           const lyricsGetData = await lyricsGetRes.json();
           const lyricsBody = lyricsGetData.message?.body?.lyrics?.lyrics_body;
@@ -158,12 +203,58 @@ async function fetchMusixmatchLyrics(track: string, artist: string) {
 }
 
 /**
- * ── PROVIDER 2: GENIUS API SERVICE (MULTI-PASS CANDIDATE SEARCH) ──────────────
+ * ── PROVIDER 2: LRCLIB API SERVICE (FREE PUBLIC SYNCED LYRICS) ────────────────
+ */
+async function fetchLrcLibLyrics(track: string, artist: string) {
+  try {
+    const cleanT = cleanTrackTitle(track);
+    const cleanA = artist.toLowerCase() === "unknown artist" ? "" : artist.trim();
+
+    console.log(`[Lyrics API] 🎵 [LRCLIB] Querying LRCLib API for track="${cleanT}", artist="${cleanA}"`);
+    const searchUrl = `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanT)}&artist_name=${encodeURIComponent(cleanA)}`;
+    const res = await fetch(searchUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.syncedLyrics) {
+        console.log(`[Lyrics API] 🎵 [LRCLIB] ✅ Synced LRC Lyrics HIT!`);
+        return {
+          source: "LrcLib Synced",
+          title: data.trackName || cleanT,
+          artist: data.artistName || cleanA,
+          rawLyrics: data.syncedLyrics,
+          hasSubtitles: true,
+        };
+      }
+      if (data.plainLyrics) {
+        console.log(`[Lyrics API] 🎵 [LRCLIB] ✅ Plain Lyrics HIT!`);
+        return {
+          source: "LrcLib Plain",
+          title: data.trackName || cleanT,
+          artist: data.artistName || cleanA,
+          rawLyrics: data.plainLyrics,
+          hasSubtitles: false,
+        };
+      }
+    }
+  } catch (e) {
+    console.warn("[Lyrics API] LRCLib Provider Exception:", e);
+  }
+  return null;
+}
+
+/**
+ * ── PROVIDER 3: GENIUS API SERVICE (MULTI-PASS CANDIDATE SEARCH) ──────────────
  */
 async function searchGenius(query: string) {
   const headers = {
     "X-RapidAPI-Key": GENIUS_KEY,
     "X-RapidAPI-Host": GENIUS_HOST,
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
   };
   const searchUrl = `https://${GENIUS_HOST}/search/?q=${encodeURIComponent(query)}`;
   
@@ -227,7 +318,7 @@ async function scrapePublicGeniusWebPage(url: string): Promise<string> {
           .replace(/<\/p>/gi, "\n")
           .replace(/<[^>]+>/g, "")
           .trim();
-        return decodeHTMLEntities(text);
+        return sanitizeLyricText(text);
       }
     }
   } catch (e) {
@@ -290,6 +381,7 @@ async function fetchGeniusLyrics(trackParam: string, artistParam: string) {
         const headers = {
           "X-RapidAPI-Key": GENIUS_KEY,
           "X-RapidAPI-Host": GENIUS_HOST,
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         };
         const lyricsUrl = `https://${GENIUS_HOST}/song/lyrics/?id=${hit.id}`;
         const lyricsRes = await fetch(lyricsUrl, { headers });
@@ -297,11 +389,10 @@ async function fetchGeniusLyrics(trackParam: string, artistParam: string) {
           const lyricsData = await lyricsRes.json();
           const rawGeniusLyrics = lyricsData?.lyrics?.lyrics?.body?.html || lyricsData?.lyrics?.lyrics?.body?.plain || "";
           if (rawGeniusLyrics) {
-            cleanText = decodeHTMLEntities(
+            cleanText = sanitizeLyricText(
               rawGeniusLyrics
                 .replace(/<br\s*\/?>/gi, "\n")
                 .replace(/<[^>]+>/g, "")
-                .trim()
             );
           }
         }
@@ -355,15 +446,21 @@ export async function GET(req: Request) {
     // 1. PRIMARY PROVIDER: MUSIXMATCH
     lyricsPayload = await fetchMusixmatchLyrics(trackParam, artistParam);
 
-    // 2. SECONDARY PROVIDER: GENIUS (ONLY IF MUSIXMATCH RETURNED NO MATCH)
+    // 2. SECONDARY PROVIDER: LRCLIB (FREE SYNCED LRC REPOSITORY)
     if (!lyricsPayload) {
-      console.log("[Lyrics API] ℹ️ Musixmatch returned no hits. Trying Genius API...");
+      console.log("[Lyrics API] ℹ️ Musixmatch returned no hits. Trying LRCLib API...");
+      lyricsPayload = await fetchLrcLibLyrics(trackParam, artistParam);
+    }
+
+    // 3. TERTIARY PROVIDER: GENIUS (MULTI-PASS SEARCH & WEB SCRAPING)
+    if (!lyricsPayload) {
+      console.log("[Lyrics API] ℹ️ LRCLib returned no hits. Trying Genius API...");
       lyricsPayload = await fetchGeniusLyrics(trackParam, artistParam);
     }
 
-    // 3. FINAL VALIDATION: ALL PROVIDERS AND PASSES FAILED
+    // 4. FINAL VALIDATION: ALL PROVIDERS AND PASSES FAILED
     if (!lyricsPayload || !lyricsPayload.rawLyrics) {
-      console.log(`[Lyrics API] ❌ ALL PROVIDERS (Musixmatch & Genius) FAILED for track "${trackParam}"`);
+      console.log(`[Lyrics API] ❌ ALL PROVIDERS (Musixmatch, LRCLib & Genius) FAILED for track "${trackParam}"`);
       console.log("==================================================");
       return NextResponse.json({
         isFallback: true,
@@ -377,8 +474,10 @@ export async function GET(req: Request) {
 
     console.log(`[Lyrics API] ✅ FINAL SUCCESS Payload Ready (Provider: ${lyricsPayload.source})`);
 
+    const sanitizedLyrics = sanitizeLyricText(lyricsPayload.rawLyrics);
+
     // Parse lyrics text into LyricLine[]
-    const rawLines = lyricsPayload.rawLyrics
+    const rawLines = sanitizedLyrics
       .split("\n")
       .map((l: string) => l.trim())
       .filter((l: string) => l.length > 0);

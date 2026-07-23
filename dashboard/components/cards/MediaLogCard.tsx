@@ -103,12 +103,14 @@ export function MediaLogCard() {
   const media = useDashboardStore((s) => s.media);
   const dramas = useDashboardStore((s) => s.dramas);
   const dramaLog = useDashboardStore((s) => s.dramaLog);
+  const hallOfFame = useDashboardStore((s) => s.hallOfFame);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  // Map local + OMDb dramas to a unified structure
+  // Map local + OMDb dramas to a unified dynamic structure
   const unifiedDramas = React.useMemo(() => {
     return [
       ...dramas.map((d) => ({
+        id: d.id,
         title: d.title,
         episodes: d.episodes,
         episodesWatched: d.episodesWatched,
@@ -116,12 +118,13 @@ export function MediaLogCard() {
         rating: d.rating,
         genre: d.genre,
         year: d.year,
-        platform: d.platform || "Local",
+        platform: d.platform || "Drama Hub",
         type: "Series",
       })),
       ...dramaLog.map((d) => {
         const isCompleted = d.statusBadge === "Classic" || d.statusBadge === "GOAT Status";
         return {
+          id: d.id,
           title: d.title,
           episodes: d.type === "Movie" ? 1 : 16,
           episodesWatched: isCompleted ? (d.type === "Movie" ? 1 : 16) : 0,
@@ -136,34 +139,33 @@ export function MediaLogCard() {
     ];
   }, [dramas, dramaLog]);
 
-  // Find the current active watching series
-  const currentWatching = React.useMemo(() => {
-    return unifiedDramas.find((d) => d.status === "Watching" && d.type !== "Movie");
-  }, [unifiedDramas]);
+  // Find the current active watching series from dynamic store
+  const activeSeries = React.useMemo(() => {
+    const watching = unifiedDramas.find((d) => d.status === "Watching" && d.type !== "Movie");
+    if (watching) return watching;
+    if (unifiedDramas.length > 0) return unifiedDramas[0];
+    return {
+      title: media.currentSeries.title,
+      episodesWatched: media.currentSeries.episode,
+      episodes: media.currentSeries.totalEpisodes,
+      platform: media.currentSeries.platform,
+    };
+  }, [unifiedDramas, media.currentSeries]);
 
-  // Find the top-rated completed show/movie
-  const topRatedDrama = React.useMemo(() => {
-    const completed = unifiedDramas.filter((d) => d.status === "Completed");
-    if (completed.length === 0) return null;
-    return [...completed].sort((a, b) => b.rating - a.rating)[0];
-  }, [unifiedDramas]);
+  // Find the top-rated completed show/movie from dynamic store
+  const activeTopFilm = React.useMemo(() => {
+    const sorted = [...unifiedDramas].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    if (sorted.length > 0) return sorted[0];
+    return {
+      title: media.topFilm.title,
+      year: media.topFilm.year,
+      genre: media.topFilm.genre,
+      rating: media.topFilm.rating,
+    };
+  }, [unifiedDramas, media.topFilm]);
 
-  const activeSeries = currentWatching || {
-    title: media.currentSeries.title,
-    episodesWatched: media.currentSeries.episode,
-    episodes: media.currentSeries.totalEpisodes,
-    platform: media.currentSeries.platform,
-  };
-
-  const activeTopFilm = topRatedDrama || {
-    title: media.topFilm.title,
-    year: media.topFilm.year,
-    genre: media.topFilm.genre,
-    rating: media.topFilm.rating,
-  };
-
-  const topFilmLabel = topRatedDrama
-    ? topRatedDrama.type === "Movie" ? "Top Film" : "Top Show"
+  const topFilmLabel = activeTopFilm
+    ? (activeTopFilm as any).type === "Movie" ? "Top Film" : "Top Show"
     : "Top Film";
 
   const seriesProgress = (activeSeries as any).status === "Completed"
@@ -171,6 +173,54 @@ export function MediaLogCard() {
     : Math.round(
         (activeSeries.episodesWatched / Math.max(1, activeSeries.episodes)) * 100
       );
+
+  // Dynamic Hall of Fame Actors Sync (Capped at top 4 for compact layout)
+  const actorsList = React.useMemo(() => {
+    const hofActors = hallOfFame
+      .filter((h) => h.type === "actor")
+      .sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
+
+    if (hofActors.length > 0) {
+      return hofActors.slice(0, 4).map((h) => ({
+        id: h.id,
+        name: h.name,
+        status: (h.status || "GOAT Status") as MediaStatus,
+        knownFor: Array.isArray(h.knownFor) ? h.knownFor.join(", ") : h.knownFor || "Drama Series",
+        rank: h.rank,
+      }));
+    }
+    return media.actors.slice(0, 4).map((a) => ({
+      id: a.id,
+      name: a.name,
+      status: a.status,
+      knownFor: a.knownFor,
+      rank: null,
+    }));
+  }, [hallOfFame, media.actors]);
+
+  // Dynamic Hall of Fame Actresses Sync (Capped at top 4 for compact layout)
+  const actressesList = React.useMemo(() => {
+    const hofActresses = hallOfFame
+      .filter((h) => h.type === "actress")
+      .sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
+
+    if (hofActresses.length > 0) {
+      return hofActresses.slice(0, 4).map((h) => ({
+        id: h.id,
+        name: h.name,
+        status: (h.status || "GOAT Status") as MediaStatus,
+        knownFor: Array.isArray(h.knownFor) ? h.knownFor.join(", ") : h.knownFor || "Drama Series",
+        rank: h.rank,
+      }));
+    }
+    return media.actresses.slice(0, 4).map((a) => ({
+      id: a.id,
+      name: a.name,
+      status: a.status,
+      knownFor: a.knownFor,
+      rank: null,
+    }));
+  }, [hallOfFame, media.actresses]);
 
   return (
     <motion.div layout className="col-span-1 md:col-span-1 lg:col-span-2 xl:col-span-2">
@@ -301,34 +351,53 @@ export function MediaLogCard() {
           style={{ background: isCyber ? "rgba(0,245,255,0.1)" : "rgba(0,0,0,0.1)" }}
         />
 
-        {/* Talent sections */}
+        {/* Dynamic Talent sections synced to Hall of Fame */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <TalentSection title="Actors" entries={media.actors} isCyber={isCyber} />
-          <TalentSection title="Actresses" entries={media.actresses} isCyber={isCyber} />
+          <TalentSection title="Actors" entries={actorsList} isCyber={isCyber} />
+          <TalentSection title="Actresses" entries={actressesList} isCyber={isCyber} />
         </div>
 
-        {/* Drama Search Button */}
-        <motion.button
-          className="w-full mt-4 py-2.5 rounded-xl text-sm font-bold tracking-wide flex items-center justify-center gap-2 transition-all"
-          style={{
-            background: isCyber
-              ? "linear-gradient(135deg, rgba(0,245,255,0.08), rgba(191,95,255,0.08))"
-              : "rgba(255,107,53,0.08)",
-            border: isCyber ? "1px solid rgba(0,245,255,0.25)" : "2px dashed rgba(255,107,53,0.4)",
-            color: isCyber ? "rgba(0,245,255,0.8)" : "#FF6B35",
-            fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
-          }}
-          whileHover={{
-            scale: 1.01,
-            backgroundColor: isCyber ? "rgba(0,245,255,0.06)" : "rgba(255,107,53,0.12)",
-            boxShadow: isCyber ? "0 0 16px rgba(0,245,255,0.15)" : "none",
-          }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setSearchOpen(true)}
-        >
-          <span>🔍</span>
-          <span>{isCyber ? "SEARCH DRAMA.DB" : "Search & Log a Drama"}</span>
-        </motion.button>
+        {/* View Full Hall of Fame & Search Buttons */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
+          <Link href="/hall-of-fame" className="block">
+            <motion.button
+              className="w-full py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase font-mono flex items-center justify-center gap-1.5 border cursor-pointer"
+              style={{
+                background: isCyber ? "rgba(0,245,255,0.06)" : "#FFFFFF",
+                borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000000",
+                boxShadow: isCyber ? "0 0 12px rgba(0,245,255,0.1)" : "2.5px 2.5px 0px #000000",
+                color: isCyber ? "#00F5FF" : "#1A1A1A",
+              }}
+              whileHover={{ scale: 1.015, y: -1 }}
+              whileTap={{ scale: 0.98, y: 1 }}
+            >
+              <span>🏆</span>
+              <span>VIEW HALL OF FAME →</span>
+            </motion.button>
+          </Link>
+
+          <motion.button
+            className="w-full py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase font-mono flex items-center justify-center gap-1.5 border cursor-pointer"
+            style={{
+              background: isCyber
+                ? "linear-gradient(135deg, rgba(0,245,255,0.08), rgba(191,95,255,0.08))"
+                : "rgba(255,107,53,0.08)",
+              borderColor: isCyber ? "rgba(0,245,255,0.25)" : "2px dashed rgba(255,107,53,0.4)",
+              boxShadow: isCyber ? "none" : "2.5px 2.5px 0px #000000",
+              color: isCyber ? "rgba(0,245,255,0.9)" : "#FF6B35",
+            }}
+            whileHover={{
+              scale: 1.015,
+              y: -1,
+              backgroundColor: isCyber ? "rgba(0,245,255,0.12)" : "rgba(255,107,53,0.14)",
+            }}
+            whileTap={{ scale: 0.98, y: 1 }}
+            onClick={() => setSearchOpen(true)}
+          >
+            <span>🔍</span>
+            <span>{isCyber ? "SEARCH DRAMA.DB" : "Search & Log Drama"}</span>
+          </motion.button>
+        </div>
 
       </BentoCard>
 
@@ -345,7 +414,13 @@ export function MediaLogCard() {
 
 interface TalentSectionProps {
   title: string;
-  entries: ReturnType<typeof useDashboardStore.getState>["media"]["actors"];
+  entries: Array<{
+    id: string;
+    name: string;
+    status: MediaStatus;
+    knownFor: string;
+    rank?: number | null;
+  }>;
   isCyber: boolean;
 }
 
@@ -370,7 +445,7 @@ function TalentSection({ title, entries, isCyber }: TalentSectionProps) {
         animate="visible"
       >
         {entries.map((entry, i) => {
-          const style = STATUS_STYLE[entry.status];
+          const style = STATUS_STYLE[entry.status] || STATUS_STYLE["GOAT Status"];
           const isThisHovered = hoveredId === entry.id;
           const isOtherHovered = hoveredId !== null && hoveredId !== entry.id;
 
@@ -389,11 +464,25 @@ function TalentSection({ title, entries, isCyber }: TalentSectionProps) {
               }}
               transition={{ duration: 0.2, ease: "easeOut" }}
             >
-              <div className="min-w-0">
-                <p className="theme-text-primary text-sm font-bold truncate">
-                  {entry.name}
-                </p>
-                <p className="theme-text-muted text-xs truncate">{entry.knownFor}</p>
+              <div className="min-w-0 flex items-center gap-1.5">
+                {entry.rank !== undefined && entry.rank !== null && (
+                  <span
+                    className="text-[10px] font-mono font-black px-1.5 py-0.5 rounded shrink-0"
+                    style={{
+                      backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#FFD700",
+                      color: isCyber ? "#00F5FF" : "#000000",
+                      border: isCyber ? "1px solid rgba(0,245,255,0.3)" : "1.5px solid #000000",
+                    }}
+                  >
+                    #{entry.rank}
+                  </span>
+                )}
+                <div className="min-w-0">
+                  <p className="theme-text-primary text-sm font-bold truncate">
+                    {entry.name}
+                  </p>
+                  <p className="theme-text-muted text-xs truncate">{entry.knownFor}</p>
+                </div>
               </div>
               <motion.span
                 className="theme-badge shrink-0"
