@@ -13,6 +13,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v2.6.2",
+    date: "2026-07-23",
+    title: "Media & Drama Log Live Store Binding & Overflow Capping",
+    badge: "WIDGET DATA SYNC",
+    type: "patch",
+    summary: "Completely purged static mock fallbacks from MediaLogCard, bound Top Show, Now Streaming, Actors, and Actresses directly to live Zustand store state, capped visible talent to top 4 max, and added a direct link to the Hall of Fame.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "Complete Purge of Static Mock Data: Removed all hardcoded fallback objects from MediaLogCard so it relies exclusively on active user store records with graceful empty state UIs.",
+          "Live Drama & Hall of Fame Store Sync: Now Streaming and Top Show pull real-time watch status, ratings, and episode progress, while Actors and Actresses sync directly with Hall of Fame rankings.",
+          "Strict Overflow Control & Navigation: Capped visible actors and actresses lists to top 4 max and added a styled 'VIEW HALL OF FAME' button routing directly to /hall-of-fame.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.6.0",
     date: "2026-07-23",
     title: "Dynamic Media Sync, Hall of Fame Integration & Production Lyrics Engine",
