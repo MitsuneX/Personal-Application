@@ -470,7 +470,7 @@ export function ProfileCard() {
                 {profile.tagline}
               </p>
 
-              <p className="theme-text-muted text-xs mt-1 hidden md:block">
+              <p className="theme-text-muted text-xs mt-1 block">
                 📍 {profile.location}
               </p>
             </div>

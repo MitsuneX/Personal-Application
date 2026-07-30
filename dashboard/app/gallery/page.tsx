@@ -714,7 +714,7 @@ export default function GalleryPage() {
                 {/* Quick delete button */}
                 <button
                   onClick={(e) => handleDelete(item.id, e)}
-                  className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center bg-red-500 text-white rounded-xl opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-20 shadow-lg border border-red-700 font-bold"
+                  className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center bg-red-500 text-white rounded-xl opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-red-600 z-20 shadow-lg border border-red-700 font-bold"
                 >
                   ✕
                 </button>

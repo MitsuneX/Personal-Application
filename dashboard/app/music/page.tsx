@@ -467,7 +467,7 @@ export default function MusicPage() {
                         )}
                         <div
                           onClick={() => playTrack(song, filteredSongs)}
-                          className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white text-xs"
+                          className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer text-white text-xs"
                         >
                           {isActive && isPlaying ? "⏸" : "▶"}
                         </div>

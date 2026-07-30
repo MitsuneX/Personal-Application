@@ -31,6 +31,19 @@ export function AppShell({ children }: AppShellProps) {
     }
   }, []);
 
+  // Dynamically export --sidebar-width CSS variable for modal & viewport alignment
+  useEffect(() => {
+    const updateSidebarWidth = () => {
+      const isMobile = window.innerWidth < 768;
+      const width = isMobile ? "0px" : sidebarCollapsed ? "78px" : "240px";
+      document.documentElement.style.setProperty("--sidebar-width", width);
+    };
+
+    updateSidebarWidth();
+    window.addEventListener("resize", updateSidebarWidth);
+    return () => window.removeEventListener("resize", updateSidebarWidth);
+  }, [sidebarCollapsed]);
+
   const handleToggleSidebar = () => {
     const nextVal = !sidebarCollapsed;
     setSidebarCollapsed(nextVal);

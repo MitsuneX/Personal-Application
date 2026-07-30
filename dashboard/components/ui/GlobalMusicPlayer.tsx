@@ -303,11 +303,11 @@ export function GlobalMusicPlayer() {
           </div>
 
           {/* Right Action Widgets: Volume, Lyrics, Mute */}
-          <div className="hidden sm:flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
             {/* Lyrics Button */}
             <button
               onClick={() => setLyricsOpen(true)}
-              className="px-2.5 py-1 text-[11px] font-black rounded-lg border transition-all hover:scale-105 cursor-pointer flex items-center gap-1"
+              className="px-2 py-1 text-[10px] sm:text-[11px] font-black rounded-lg border transition-all hover:scale-105 cursor-pointer flex items-center gap-1 shrink-0"
               style={{
                 backgroundColor: isCyber ? "rgba(0,245,255,0.1)" : "#F3F4F6",
                 borderColor: isCyber ? "#00F5FF" : "#000000",
@@ -321,7 +321,7 @@ export function GlobalMusicPlayer() {
             {/* Mute button */}
             <button
               onClick={toggleMute}
-              className="text-xs font-bold opacity-80 hover:opacity-100 cursor-pointer"
+              className="text-xs font-bold opacity-80 hover:opacity-100 cursor-pointer hidden xs:inline-block"
               title={isMuted ? "Unmute" : "Mute"}
             >
               {isMuted ? "🔇" : "🔊"}
@@ -335,7 +335,7 @@ export function GlobalMusicPlayer() {
               step={0.05}
               value={isMuted ? 0 : volume}
               onChange={handleVolumeChange}
-              className="w-16 h-1 accent-cyan-400 cursor-pointer"
+              className="hidden sm:inline-block w-14 sm:w-16 h-1 accent-cyan-400 cursor-pointer"
               title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
             />
           </div>

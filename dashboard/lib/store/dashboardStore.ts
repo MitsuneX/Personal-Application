@@ -51,6 +51,7 @@ export interface GameEntry {
   accentColor: string;
   profileLink?: string;
   icon?: string;
+  screenshot?: string;
 }
 
 // ─── Media Types ──────────────────────────────────────────────────────────────

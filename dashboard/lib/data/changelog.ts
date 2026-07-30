@@ -13,6 +13,60 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v2.7.2",
+    date: "2026-07-30",
+    title: "Application-Wide Mobile & Tablet Responsive Audit Fix",
+    badge: "RESPONSIVE PARITY",
+    type: "patch",
+    summary: "Audited and resolved responsive issues across all pages, ensuring action buttons, edit/delete controls, location metadata, lyrics, and mini-players remain 100% accessible on touch devices, mobile viewports (320px-480px), and tablets (600px-834px).",
+    categories: [
+      {
+        name: "PWA & Mobile",
+        items: [
+          "Touch Device Action Visibility: Updated hover-dependent action containers (Games ⚙️, Hall of Fame ✏️/🗑️, Bookmarks ✏️/🗑️, Gallery ✕) to remain permanently visible on touch/mobile viewports (opacity-100 md:opacity-0 md:group-hover:opacity-100).",
+          "Mobile Controls & Player Parity: Unhidden Lyrics button and volume controls in GlobalMusicPlayer and TopbarMiniPlayer on mobile screen widths.",
+          "Profile Location Tag: Restored profile location tag visibility on mobile and tablet cards in ProfileCard.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.7.1",
+    date: "2026-07-30",
+    title: "Fullscreen Lightbox Viewport & Sidebar Alignment Fix",
+    badge: "LAYOUT BUG FIX",
+    type: "patch",
+    summary: "Fixed fullscreen Lightbox modal viewport calculation by exporting dynamic --sidebar-width CSS variable from AppShell, perfectly centering lightbox content within the active viewport, and anchoring zoom controls inside the modal viewer frame.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "Sidebar-Aware Viewport Alignment: Lightbox modal now dynamically offsets its content viewport using --sidebar-width, aligning seamlessly across desktop expanded (240px), collapsed (78px), and mobile drawer (0px) states.",
+          "Anchored Control Toolbar: Zoom controls ([-] 100% [+]) and close button (✕) are anchored to the modal viewer UI header and footer bars, preventing floating or misalignment during zoom and drag pan.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.7.0",
+    date: "2026-07-30",
+    title: "Optional Game Card Landscape Screenshot & Interactive Fullscreen Lightbox",
+    badge: "GAMES LIBRARY UPGRADE",
+    type: "minor",
+    summary: "Added optional landscape screenshot support to Game Cards in the Games Library with a seamless upload workflow in Game Settings and a responsive fullscreen interactive Lightbox modal.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "Optional Landscape Screenshot Insertion: Game cards optionally display a ~16:9 landscape profile screenshot between the HUD matrix blocks and bottom buttons without altering card width or compact layouts.",
+          "Seamless Upload Workflow: Upload PNG, JPG, JPEG, or WEBP screenshot files or paste image URLs directly inside the existing Game Settings modal with live preview and instant removal.",
+          "Fullscreen Responsive Image Lightbox: Clicking screenshots launches a smooth Framer Motion Lightbox modal with backdrop blur, ESC & backdrop close handlers, interactive zoom controls (wheel & pinch), and pan/drag while zoomed.",
+          "Full Dual-Theme Aesthetics: Styled custom screenshot containers and Lightbox overlays tailored for both Neo-Brutalism (hard black borders, offset shadows) and Cyberpunk (cyan neon glow, backdrop blur, Orbitron font).",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.6.2",
     date: "2026-07-23",
     title: "Media & Drama Log Live Store Binding & Overflow Capping",

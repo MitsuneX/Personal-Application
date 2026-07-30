@@ -418,7 +418,7 @@ export function HofEntryCard({ entry, idx, isCyber, group, onEdit, onDelete, sho
 
         {/* ── Hover Action Buttons ── */}
         <div
-          className="absolute top-2 left-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 z-40"
+          className="absolute top-2 left-2 flex gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-200 z-40"
         >
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(entry); }}

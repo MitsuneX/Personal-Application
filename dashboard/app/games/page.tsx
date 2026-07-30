@@ -7,6 +7,7 @@ import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants";
 import { GameEditorModal } from "@/components/ui/GameEditorModal";
+import { ImageLightboxModal } from "@/components/ui/ImageLightboxModal";
 import type { GameEntry } from "@/lib/store/dashboardStore";
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -32,12 +33,14 @@ function GameCard({
   game, 
   isCyber, 
   index,
-  onEditClick 
+  onEditClick,
+  onScreenshotClick
 }: { 
   game: GameEntry; 
   isCyber: boolean; 
   index: number;
   onEditClick: (game: GameEntry) => void;
+  onScreenshotClick?: (url: string, title: string) => void;
 }) {
   const rank = game?.rank || "";
   const tier = RANK_TIER[rank] || { brutColor: "#555", cyberColor: "#94A3B8", cyberGlow: "rgba(148,163,184,0.2)" };
@@ -81,7 +84,7 @@ function GameCard({
             e.stopPropagation();
             onEditClick(game);
           }}
-          className="absolute top-4 right-4 p-2 rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-black/10 dark:hover:bg-white/10 z-20 cursor-pointer text-xs flex items-center justify-center backdrop-blur-md"
+          className="absolute top-4 right-4 p-2 rounded-xl opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-200 hover:bg-black/10 dark:hover:bg-white/10 z-20 cursor-pointer text-xs flex items-center justify-center backdrop-blur-md"
           style={{
             color: isCyber ? "#00F5FF" : "#000",
             border: isCyber ? "1px solid rgba(255,255,255,0.15)" : "1.5px solid #000",
@@ -172,6 +175,47 @@ function GameCard({
           </div>
         </div>
 
+        {/* Optional Landscape Screenshot Segment */}
+        {game?.screenshot && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.25 }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onScreenshotClick?.(game.screenshot!, gameTitle);
+            }}
+            className="relative w-full aspect-video rounded-xl overflow-hidden cursor-pointer group/screenshot my-1 transition-all shrink-0"
+            style={{
+              border: isCyber ? `1px solid ${accent}40` : "2.5px solid #000",
+              boxShadow: isCyber
+                ? `0 0 16px ${accent}25, inset 0 0 10px rgba(0,0,0,0.5)`
+                : "3px 3px 0 rgba(0,0,0,1)",
+            }}
+          >
+            <img
+              src={game.screenshot}
+              alt={`${gameTitle} Screenshot`}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover/screenshot:scale-105"
+            />
+            {/* Expand Hover Badge */}
+            <div
+              className="absolute bottom-2 right-2 px-2 py-1 rounded-lg text-[10px] font-bold font-mono opacity-0 group-hover/screenshot:opacity-100 transition-all duration-200 backdrop-blur-md flex items-center gap-1 select-none pointer-events-none"
+              style={{
+                backgroundColor: isCyber ? "rgba(10,15,30,0.85)" : "#000000",
+                color: isCyber ? "#00F5FF" : "#FFFFFF",
+                border: isCyber ? "1px solid rgba(0,245,255,0.4)" : "none",
+                boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.4)" : "none",
+              }}
+            >
+              <span>🔍</span>
+              <span>EXPAND</span>
+            </div>
+          </motion.div>
+        )}
+
         {/* Footer Meta Segment */}
         <div className="flex items-center justify-between mt-auto pt-2 border-t border-dashed border-slate-700/15 dark:border-slate-400/15">
           {game?.mainRole ? (
@@ -260,6 +304,9 @@ export default function GamesPage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [gameToEdit, setGameToEdit] = useState<GameEntry | null>(null);
 
+  // Lightbox State
+  const [lightboxState, setLightboxState] = useState<{ url: string; title: string } | null>(null);
+
   // Filter games based on search text
   const filteredGames = useMemo(() => {
     if (!searchQuery.trim()) return games;
@@ -285,6 +332,10 @@ export default function GamesPage() {
   const handleAddClick = () => {
     setGameToEdit(null);
     setEditorOpen(true);
+  };
+
+  const handleScreenshotClick = (url: string, title: string) => {
+    setLightboxState({ url, title });
   };
 
   return (
@@ -479,7 +530,14 @@ export default function GamesPage() {
                 </motion.h2>
                 <motion.div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5" variants={gridContainerVariants} initial="hidden" animate="visible">
                   {gacha.map((g, i) => (
-                    <GameCard key={g.id} game={g} isCyber={isCyber} index={i} onEditClick={handleEditClick} />
+                    <GameCard 
+                      key={g.id} 
+                      game={g} 
+                      isCyber={isCyber} 
+                      index={i} 
+                      onEditClick={handleEditClick}
+                      onScreenshotClick={handleScreenshotClick}
+                    />
                   ))}
                 </motion.div>
               </motion.div>
@@ -494,7 +552,14 @@ export default function GamesPage() {
                 </motion.h2>
                 <motion.div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5" variants={gridContainerVariants} initial="hidden" animate="visible">
                   {competitive.map((g, i) => (
-                    <GameCard key={g.id} game={g} isCyber={isCyber} index={i} onEditClick={handleEditClick} />
+                    <GameCard 
+                      key={g.id} 
+                      game={g} 
+                      isCyber={isCyber} 
+                      index={i} 
+                      onEditClick={handleEditClick}
+                      onScreenshotClick={handleScreenshotClick}
+                    />
                   ))}
                 </motion.div>
               </motion.div>
@@ -508,6 +573,14 @@ export default function GamesPage() {
         isOpen={editorOpen} 
         onClose={() => setEditorOpen(false)} 
         gameToEdit={gameToEdit} 
+      />
+
+      {/* Fullscreen Image Lightbox Modal */}
+      <ImageLightboxModal
+        isOpen={!!lightboxState}
+        onClose={() => setLightboxState(null)}
+        imageUrl={lightboxState?.url || ""}
+        title={lightboxState?.title || "Game Screenshot"}
       />
     </AppShell>
   );

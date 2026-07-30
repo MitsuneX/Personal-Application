@@ -185,7 +185,7 @@ export function TopbarMiniPlayer() {
         </div>
 
         {/* Track Title */}
-        <div className="hidden sm:flex flex-col min-w-0 max-w-[110px]">
+        <div className="flex flex-col min-w-0 max-w-[70px] xs:max-w-[90px] sm:max-w-[110px]">
           <span className="text-[10px] font-black truncate" style={{ color: isCyber ? "#E0FFFF" : "#000000" }}>
             {activeTrack.title}
           </span>
@@ -215,7 +215,7 @@ export function TopbarMiniPlayer() {
             e.stopPropagation();
             setLyricsOpen(true);
           }}
-          className="hidden md:flex text-[10px] p-0.5 opacity-80 hover:opacity-100 cursor-pointer"
+          className="flex text-[10px] p-0.5 opacity-80 hover:opacity-100 cursor-pointer shrink-0"
           title="Open Synced Lyrics"
         >
           🎤

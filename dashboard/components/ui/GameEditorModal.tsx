@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
@@ -47,7 +47,9 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
   const [accentColor, setAccentColor] = useState("#7C3AED");
   const [profileLink, setProfileLink] = useState("");
   const [icon, setIcon] = useState("");
+  const [screenshot, setScreenshot] = useState("");
   
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -64,6 +66,7 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
       setAccentColor(gameToEdit.accentColor || "#7C3AED");
       setProfileLink(gameToEdit.profileLink || "");
       setIcon(gameToEdit.icon || "");
+      setScreenshot(gameToEdit.screenshot || "");
     } else {
       setGame("");
       setHandle("");
@@ -75,8 +78,25 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
       setAccentColor("#7C3AED");
       setProfileLink("");
       setIcon("");
+      setScreenshot("");
     }
   }, [gameToEdit, isOpen]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.match(/^image\/(png|jpeg|jpg|webp)$/i)) {
+      alert("Please select a valid image file (PNG, JPG, JPEG, or WEBP).");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      if (evt.target?.result) {
+        setScreenshot(evt.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,6 +117,7 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
           accentColor,
           profileLink: profileLink || undefined,
           icon: icon || undefined,
+          screenshot: screenshot || undefined,
         });
       } else {
         // Add new game
@@ -113,6 +134,7 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
           accentColor,
           profileLink: profileLink || undefined,
           icon: icon || undefined,
+          screenshot: screenshot || undefined,
         };
         await addGame(newGame);
       }
@@ -300,6 +322,70 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
                 className="w-full p-2 rounded-xl border text-sm font-semibold focus:outline-none"
                 style={inputStyles}
               />
+            </div>
+          </div>
+
+          {/* Landscape Screenshot Field */}
+          <div className="grid grid-cols-1 gap-3">
+            <div>
+              <label className="block text-xs font-bold mb-1 theme-text-secondary flex items-center justify-between">
+                <span>GAME SCREENSHOT (OPTIONAL LANDSCAPE)</span>
+                <span className="text-[10px] font-normal opacity-70">PNG, JPG, WEBP</span>
+              </label>
+
+              {/* Input & Upload Controls */}
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={screenshot}
+                  onChange={(e) => setScreenshot(e.target.value)}
+                  placeholder="Paste Image URL or upload image file →"
+                  className="flex-1 p-2 rounded-xl border text-sm font-semibold focus:outline-none"
+                  style={inputStyles}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(0,245,255,0.12)" : "#FEF08A",
+                    color: isCyber ? "#00F5FF" : "#854D0E",
+                    border: isCyber ? "1px solid rgba(0,245,255,0.3)" : "2px solid #000",
+                    boxShadow: isCyber ? "none" : "2px 2px 0 #000",
+                  }}
+                  title="Upload PNG, JPG, or WEBP file"
+                >
+                  <span>🖼️ Upload File</span>
+                </button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  accept="image/png, image/jpeg, image/jpg, image/webp"
+                  className="hidden"
+                />
+              </div>
+
+              {/* Screenshot Preview & Clear Option */}
+              {screenshot && (
+                <div 
+                  className="relative rounded-xl overflow-hidden aspect-video w-full border mt-2 group"
+                  style={{
+                    borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000",
+                    borderWidth: isCyber ? "1px" : "2px",
+                    boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.15)" : "3px 3px 0 #000",
+                  }}
+                >
+                  <img src={screenshot} alt="Screenshot Preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setScreenshot("")}
+                    className="absolute top-2 right-2 px-2.5 py-1 rounded-lg text-xs font-bold bg-red-600 hover:bg-red-700 text-white shadow transition-all cursor-pointer"
+                  >
+                    🗑️ Remove Screenshot
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
