@@ -46,7 +46,7 @@ export function GeniusArtistModal({ isOpen, onClose, artistName }: GeniusArtistM
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-lg">
-      <div className="p-6 text-slate-100">
+      <div className="overflow-y-auto overscroll-contain flex-1 p-5 sm:p-6 text-slate-100 scrollbar-thin">
         {/* Header */}
         <div className="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
           <h2

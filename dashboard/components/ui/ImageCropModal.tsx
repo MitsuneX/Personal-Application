@@ -53,7 +53,7 @@ export function ImageCropModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-lg">
-      <div className="p-6 relative">
+      <div className="overflow-y-auto overscroll-contain flex-1 p-5 sm:p-6 scrollbar-thin relative">
         {/* Cyber corner brackets */}
         {isCyber && (
           <>

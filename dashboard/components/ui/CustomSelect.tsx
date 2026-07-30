@@ -121,7 +121,7 @@ export function CustomSelect({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 5 }}
             transition={{ duration: 0.12 }}
-            className="absolute left-0 right-0 mt-1.5 rounded-lg z-50 overflow-hidden max-h-60 overflow-y-auto"
+            className="absolute left-0 right-0 mt-1.5 rounded-lg z-[9999] overflow-hidden max-h-60 overflow-y-auto"
             style={dropdownStyle}
           >
             <div className="py-1">

@@ -309,7 +309,7 @@ export function AnimeSearchModal({ isOpen, onClose }: AnimeSearchModalProps) {
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 pb-6 max-h-[60vh]">
+        <div className="flex-1 overflow-y-auto px-6 pb-6">
           <AnimatePresence>
             {results.length > 0 && !selected && (
               <motion.div

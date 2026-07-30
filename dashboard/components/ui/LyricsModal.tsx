@@ -104,7 +104,7 @@ export function LyricsModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-lg">
-      <div className="p-5 md:p-6 space-y-4 select-none">
+      <div className="overflow-y-auto overscroll-contain flex-1 p-5 md:p-6 space-y-4 select-none scrollbar-thin">
         {/* Header */}
         <div
           className="flex justify-between items-center pb-3 border-b"

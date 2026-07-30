@@ -191,7 +191,8 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="p-1 max-h-[82vh] overflow-y-auto pr-2 scrollbar-thin">
+      {/* Scrollable content area — takes all available space inside the flex-col card */}
+      <div className="overflow-y-auto overscroll-contain flex-1 p-5 sm:p-6 scrollbar-thin">
         {/* Cyber corner accents */}
         {isCyber && (
           <>
@@ -214,7 +215,7 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary">GAME TITLE</label>
               <input
@@ -240,7 +241,7 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary">CATEGORY</label>
               <CustomSelect
@@ -262,7 +263,7 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary">PLATFORM</label>
               <CustomSelect
@@ -284,7 +285,7 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary">MAIN CHARACTER</label>
               <input

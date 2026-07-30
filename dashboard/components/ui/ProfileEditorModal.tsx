@@ -44,155 +44,148 @@ export function ProfileEditorModal({ isOpen, onClose }: ProfileEditorModalProps)
     }
   };
 
+  const inputStyle: React.CSSProperties = {
+    backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "#FFF9F0",
+    borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000000",
+    color: isCyber ? "#fff" : "#1a1a1a",
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-lg">
-      {/* Corner brackets for Cyber */}
-      {isCyber && (
-        <>
-          <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#00F5FF]" />
-          <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#BF5FFF]" />
-        </>
-      )}
+      {/* Scrollable content wrapper — flex-1 fills modal card height */}
+      <div className="overflow-y-auto overscroll-contain flex-1 scrollbar-thin">
+        {/* Corner brackets for Cyber */}
+        {isCyber && (
+          <>
+            <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#00F5FF]" />
+            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#BF5FFF]" />
+          </>
+        )}
 
-      {/* Header */}
-      <div className="flex justify-between items-center mb-5 pb-3 px-6 pt-6" style={{ borderBottom: isCyber ? "1px solid rgba(255,255,255,0.1)" : "2px dashed #000" }}>
-                <h2 className="text-xl font-black font-mono tracking-wide" style={{ fontFamily: isCyber ? "var(--font-orbitron)" : "inherit" }}>
-                  {isCyber ? "EDIT_PROFILE.CONFIG" : "Customise Profile"}
-                </h2>
-                <button onClick={onClose} className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
-                  ✕
-                </button>
-              </div>
+        {/* Sticky header */}
+        <div
+          className="flex justify-between items-center px-5 pt-5 pb-3"
+          style={{ borderBottom: isCyber ? "1px solid rgba(255,255,255,0.1)" : "2px dashed #000" }}
+        >
+          <h2
+            className="text-xl font-black font-mono tracking-wide"
+            style={{ fontFamily: isCyber ? "var(--font-orbitron)" : "inherit" }}
+          >
+            {isCyber ? "EDIT_PROFILE.CONFIG" : "Customise Profile"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
+            style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}
+          >
+            ✕
+          </button>
+        </div>
 
-              {/* Form */}
-              <form onSubmit={handleSave} className="space-y-4">
-                {/* Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Name */}
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">Name</label>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                      className="px-3 py-2 text-sm font-semibold rounded-lg outline-none border focus:ring-1"
-                      style={{
-                        backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "#FFF9F0",
-                        borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000000",
-                        color: isCyber ? "#fff" : "#1a1a1a",
-                      }}
-                    />
-                  </div>
+        {/* Form */}
+        <form onSubmit={handleSave} className="p-5 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="px-3 py-2 text-sm font-semibold rounded-lg outline-none border focus:ring-1"
+                style={inputStyle}
+              />
+            </div>
 
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">Status</label>
-                    <CustomSelect
-                      value={status}
-                      onChange={(val) => setStatus(val as any)}
-                      options={[
-                        { value: "online", label: "Online", icon: "🟢" },
-                        { value: "away", label: "Away", icon: "🟡" },
-                        { value: "busy", label: "Busy", icon: "🔴" },
-                        { value: "offline", label: "Offline", icon: "⚪" },
-                      ]}
-                    />
-                  </div>
-                </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">Status</label>
+              <CustomSelect
+                value={status}
+                onChange={(val) => setStatus(val as any)}
+                options={[
+                  { value: "online", label: "Online", icon: "🟢" },
+                  { value: "away", label: "Away", icon: "🟡" },
+                  { value: "busy", label: "Busy", icon: "🔴" },
+                  { value: "offline", label: "Offline", icon: "⚪" },
+                ]}
+              />
+            </div>
+          </div>
 
-                {/* Tagline */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">Tagline</label>
-                  <input
-                    type="text"
-                    value={tagline}
-                    onChange={(e) => setTagline(e.target.value)}
-                    className="px-3 py-2 text-sm font-semibold rounded-lg outline-none border"
-                    style={{
-                      backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "#FFF9F0",
-                      borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000000",
-                      color: isCyber ? "#fff" : "#1a1a1a",
-                    }}
-                  />
-                </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">Tagline</label>
+            <input
+              type="text"
+              value={tagline}
+              onChange={(e) => setTagline(e.target.value)}
+              className="px-3 py-2 text-sm font-semibold rounded-lg outline-none border"
+              style={inputStyle}
+            />
+          </div>
 
-                {/* Location */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">Location</label>
-                  <input
-                    type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="px-3 py-2 text-sm font-semibold rounded-lg outline-none border"
-                    style={{
-                      backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "#FFF9F0",
-                      borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000000",
-                      color: isCyber ? "#fff" : "#1a1a1a",
-                    }}
-                  />
-                </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">Location</label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="px-3 py-2 text-sm font-semibold rounded-lg outline-none border"
+              style={inputStyle}
+            />
+          </div>
 
-                {/* Skills */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">Skills (comma separated)</label>
-                  <input
-                    type="text"
-                    value={skills}
-                    onChange={(e) => setSkills(e.target.value)}
-                    className="px-3 py-2 text-sm font-semibold rounded-lg outline-none border"
-                    style={{
-                      backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "#FFF9F0",
-                      borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000000",
-                      color: isCyber ? "#fff" : "#1a1a1a",
-                    }}
-                  />
-                </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">Skills (comma separated)</label>
+            <input
+              type="text"
+              value={skills}
+              onChange={(e) => setSkills(e.target.value)}
+              className="px-3 py-2 text-sm font-semibold rounded-lg outline-none border"
+              style={inputStyle}
+            />
+          </div>
 
-                {/* Bio */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">Bio</label>
-                  <textarea
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    rows={3}
-                    className="px-3 py-2 text-sm font-semibold rounded-lg outline-none border resize-none"
-                    style={{
-                      backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "#FFF9F0",
-                      borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000000",
-                      color: isCyber ? "#fff" : "#1a1a1a",
-                    }}
-                  />
-                </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">Bio</label>
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              rows={3}
+              className="px-3 py-2 text-sm font-semibold rounded-lg outline-none border resize-none"
+              style={inputStyle}
+            />
+          </div>
 
-                {/* Actions */}
-                <div className="flex justify-end gap-3 pt-3">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="px-4 py-2 text-sm font-bold rounded-lg border-2"
-                    style={{
-                      backgroundColor: isCyber ? "transparent" : "#FFF9F0",
-                      borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#000000",
-                      color: isCyber ? "#94A3B8" : "#4A4A4A",
-                    }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSaving}
-                    className="px-4 py-2 text-sm font-black rounded-lg transition-transform active:scale-95"
-                    style={{
-                      backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
-                      color: isCyber ? "#050816" : "#FFFFFF",
-                      border: isCyber ? "none" : "2px solid #000",
-                      boxShadow: isCyber ? "0 0 15px rgba(0,245,255,0.4)" : "3px 3px 0px 0px rgba(0,0,0,1)",
-                    }}
-                  >
-                    {isSaving ? "Saving..." : "Save Config"}
-                  </button>
-                </div>
-              </form>
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-bold rounded-lg border-2 cursor-pointer"
+              style={{
+                backgroundColor: isCyber ? "transparent" : "#FFF9F0",
+                borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#000000",
+                color: isCyber ? "#94A3B8" : "#4A4A4A",
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="px-4 py-2 text-sm font-black rounded-lg transition-transform active:scale-95 cursor-pointer disabled:opacity-50"
+              style={{
+                backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
+                color: isCyber ? "#050816" : "#FFFFFF",
+                border: isCyber ? "none" : "2px solid #000",
+                boxShadow: isCyber ? "0 0 15px rgba(0,245,255,0.4)" : "3px 3px 0px 0px rgba(0,0,0,1)",
+              }}
+            >
+              {isSaving ? "Saving..." : "Save Config"}
+            </button>
+          </div>
+        </form>
+      </div>
     </Modal>
   );
 }

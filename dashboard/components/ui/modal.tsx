@@ -59,7 +59,13 @@ const cardVariants = {
  * - Blurred backdrop with `bg-black/50 backdrop-blur-sm`
  * - Body scroll-lock while open
  * - Smooth Framer Motion enter/exit
- * - Dual-theme aware (brutal / cyber) via data-theme attribute on document root
+ * - Dual-theme aware (brutal / cyber)
+ *
+ * Architecture:
+ *   The card uses `flex flex-col` + `max-h-[92vh]`.
+ *   Children are responsible for their own overflow/scrolling sections.
+ *   This prevents double-scroll nesting and allows CustomSelect dropdowns
+ *   to overflow their parent element correctly.
  */
 export function Modal({
   isOpen,
@@ -95,7 +101,7 @@ export function Modal({
       {isOpen && (
         <motion.div
           // ── Outer overlay: fixed, full viewport, centered ──
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
           style={{
             backgroundColor: "rgba(0, 0, 0, 0.55)",
             backdropFilter: "blur(6px)",
@@ -112,11 +118,7 @@ export function Modal({
         >
           {/* ── Inner content card ── */}
           <motion.div
-            className={`
-              w-full ${maxWidth} max-h-[90vh] overflow-y-auto
-              rounded-2xl
-              ${className}
-            `.trim()}
+            className={`w-full ${maxWidth} max-h-[92vh] flex flex-col rounded-2xl ${className}`.trim()}
             style={{
               // Dual-theme card background
               background: isCyber

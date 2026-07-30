@@ -172,7 +172,7 @@ export function GameScannerModal({
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} maxWidth="max-w-2xl">
-      <div className="p-5 md:p-7 space-y-5">
+      <div className="overflow-y-auto overscroll-contain flex-1 p-5 sm:p-7 space-y-5 scrollbar-thin">
         {/* Header */}
         <div className="flex items-center justify-between border-b pb-4 border-white/10">
           <div>

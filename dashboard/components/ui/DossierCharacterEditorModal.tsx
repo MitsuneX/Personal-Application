@@ -139,7 +139,7 @@ export function DossierCharacterEditorModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-lg">
-      <div className="p-6">
+      <div className="overflow-y-auto overscroll-contain flex-1 p-5 sm:p-6 scrollbar-thin">
         <h2 className="text-xl font-black mb-1 theme-text-primary flex items-center gap-2">
           <span>{characterToEdit ? "✏️ Edit" : "✨ Add"} {config.characterLabel} Entry</span>
         </h2>
@@ -163,7 +163,7 @@ export function DossierCharacterEditorModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary uppercase">
                 {config.categoryLabel} *
@@ -189,7 +189,7 @@ export function DossierCharacterEditorModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary uppercase">
                 Mastery / Rank
@@ -233,7 +233,7 @@ export function DossierCharacterEditorModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary uppercase">
                 Accent Color

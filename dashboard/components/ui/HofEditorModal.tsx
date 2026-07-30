@@ -185,7 +185,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                 </>
               )}
 
-              <div className="p-6">
+              <div className="overflow-y-auto overscroll-contain flex-1 p-5 sm:p-6 scrollbar-thin">
                 {/* Header */}
                 <div
                   className="flex justify-between items-center mb-5 pb-3"

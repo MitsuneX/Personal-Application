@@ -13,6 +13,37 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v3.0.1",
+    date: "2026-07-30",
+    title: "Global Modal System Audit & Responsive Architecture Overhaul",
+    badge: "MODAL RESPONSIVE ENGINE",
+    type: "patch",
+    summary: "Comprehensive audit and responsive bug-fix pass for all popup, modal, dialog, and overlay components. Upgraded base Modal architecture to a flex-column flex-1 structure with overscroll-contain, preventing double-scroll bars and dropdown clipping. Fixed mobile field grid layouts across Edit Game, Character Editor, Profile Editor, Manual Anime/Drama, HOF Editor, and Search modals across desktop, tablet, and mobile viewports down to 320px.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "Modal Base Architecture: Upgraded modal.tsx card container to flex-col max-h-[92vh] flex-1 structure so child containers manage scrollable regions cleanly.",
+          "Double-Scroll Nesting Fix: Eliminated redundant inner max-h-[82vh] overflow-y-auto wrappers in GameEditorModal, ManualAnimeModal, and ManualDramaModal.",
+          "CustomSelect Dropdown Clipping: Raised CustomSelect dropdown z-index to z-[9999], ensuring select menus overflow cleanly above modal card boundaries.",
+          "ProfileEditorModal Structure Fix: Removed duplicated code blocks and added proper flex-1 scrollable body wrapper.",
+          "Anime & Drama Search Modals: Removed hardcoded max-h-[60vh] constraint so search results expand to fill available modal viewport height dynamically.",
+          "Aesthetics & HOF Editor Modals: Converted rigid max-height wrappers to flex-1 overscroll-contain scrollable containers.",
+          "Command Palette Mobile Layout: Adapted top padding (pt-6 sm:pt-[12vh]) for comfortable viewing on short mobile screens.",
+        ],
+      },
+      {
+        name: "PWA & Mobile",
+        items: [
+          "Mobile Input Grid Responsiveness: Replaced fixed grid-cols-2 in form modals with grid-cols-1 sm:grid-cols-2 to prevent input field cramping on 320px–480px viewports.",
+          "Touch & Scroll Stability: Added overscroll-contain and scrollbar-thin to modal scroll bodies to prevent background page scroll bleed on mobile touch devices.",
+          "Fullscreen Lightbox Preservation: Verified ImageLightboxModal profile screenshot viewer with 0 regressions.",
+        ],
+      },
+    ],
+  },
+
+  {
     version: "v3.0.0",
     date: "2026-07-30",
     title: "Game Database Full System Upgrade",

@@ -291,7 +291,7 @@ export function AestheticsModal({ isOpen, onClose }: AestheticsModalProps) {
         </>
       )}
 
-      <form onSubmit={handleSave}>
+      <form onSubmit={handleSave} className="flex flex-col flex-1 overflow-hidden">
         {/* ── Modal Header ──────────────────────────────────────────── */}
         <div
           className="flex justify-between items-center px-6 pt-6 pb-4"
@@ -318,7 +318,7 @@ export function AestheticsModal({ isOpen, onClose }: AestheticsModalProps) {
           </button>
         </div>
 
-        <div className="px-6 pb-6 overflow-y-auto" style={{ maxHeight: "70vh" }}>
+        <div className="px-6 pb-6 flex-1 overflow-y-auto overscroll-contain scrollbar-thin">
 
           {/* ── Identity ──────────────────────────────────────────────── */}
           <div style={sectionStyle}>

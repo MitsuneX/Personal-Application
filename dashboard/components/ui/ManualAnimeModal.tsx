@@ -138,7 +138,7 @@ export function ManualAnimeModal({ isOpen, onClose }: ManualAnimeModalProps) {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="p-1 max-h-[82vh] overflow-y-auto pr-2 scrollbar-thin">
+      <div className="overflow-y-auto overscroll-contain flex-1 p-5 sm:p-6 scrollbar-thin">
         <h2
           className="font-black text-xl font-mono mb-4 text-center"
           style={{
@@ -199,7 +199,7 @@ export function ManualAnimeModal({ isOpen, onClose }: ManualAnimeModalProps) {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary">EPS WATCHED</label>
               <input
@@ -227,7 +227,7 @@ export function ManualAnimeModal({ isOpen, onClose }: ManualAnimeModalProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary">GENRE / TYPE</label>
               <input
@@ -255,7 +255,7 @@ export function ManualAnimeModal({ isOpen, onClose }: ManualAnimeModalProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary">STUDIO</label>
               <input
