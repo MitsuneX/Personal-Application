@@ -14,14 +14,27 @@ interface NavLinkProps {
   exact?: boolean;
   collapsed?: boolean;
   onClick?: () => void;
+  /**
+   * Additional prefix segments that also activate this link.
+   * e.g. activePrefixes={["/heroes"]} means /heroes and /heroes/[id] all activate this item.
+   */
+  activePrefixes?: string[];
 }
 
-export function NavLink({ href, icon, label, exact = false, collapsed = false, onClick }: NavLinkProps) {
+export function NavLink({ href, icon, label, exact = false, collapsed = false, onClick, activePrefixes }: NavLinkProps) {
   const pathname = usePathname();
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
 
-  const isActive = exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
+  const baseActive = exact
+    ? pathname === href
+    : pathname === href || pathname.startsWith(href + "/");
+
+  const prefixActive = (activePrefixes || []).some(
+    (p) => pathname === p || pathname.startsWith(p + "/")
+  );
+
+  const isActive = baseActive || prefixActive;
 
   return (
     <Link href={href} onClick={onClick} className="block outline-none">

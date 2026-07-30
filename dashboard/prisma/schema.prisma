@@ -48,6 +48,23 @@ model Game {
   icon          String?
   screenshot    String?
   createdAt     DateTime @default(now())
+
+  resources     GameExternalResource[]
+}
+
+model GameExternalResource {
+  id          String   @id @default(uuid())
+  gameId      String
+  name        String
+  url         String
+  icon        String?
+  category    String?  // e.g. "Meta", "Tier List", "Heroes", "Builds", "Wiki", "Guides", "Official"
+  description String?
+  enabled     Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
 }
 
 model GameDossierCharacter {

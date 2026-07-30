@@ -13,6 +13,65 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v3.0.0",
+    date: "2026-07-30",
+    title: "Game Database Full System Upgrade",
+    badge: "GAME DB 3.0",
+    type: "major",
+    summary: "Major Game Database overhaul: fixed sidebar active state routing for Game Database vs Games, fixed back button to return to Game Database Hub, added per-game Element/Attribute system (Genshin, WuWa, HSR, ZZZ, DBL), added configurable External Resource system with add/edit/delete/open per game, added GameExternalResource Prisma model, Zustand store integration, and API handlers. All features support both Neo-Brutalism and Cyberpunk themes with full mobile/tablet/desktop responsiveness.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "Sidebar Active State Fix: /heroes and /heroes/[gameId] now correctly highlight 'Game Database' instead of 'Games'; /games uses exact matching.",
+          "Back Button Fix: Individual Game Dossier now navigates back to Game Database Hub (/heroes) instead of /games.",
+          "Game Element System: Per-game element/attribute config with sectionLabel, icon, color, and description per element.",
+          "Genshin Impact Elements: Pyro, Hydro, Anemo, Electro, Dendro, Cryo, Geo — each with color accent and reaction description.",
+          "Wuthering Waves Resonance Attributes: Glacio, Fusion, Electro, Aero, Spectro, Havoc — distinct from Genshin.",
+          "HSR Combat Elements: Fire, Ice, Wind, Lightning, Quantum, Imaginary, Physical.",
+          "ZZZ Attributes: Physical, Fire, Ice, Electric, Ether.",
+          "Dragon Ball Legends Battle Attributes: RED/BLU/GRN/YEL/PUR color triangle system.",
+          "Games without element systems (Mobile Legends, Valorant, Arknights) do NOT show element section.",
+          "External Resource System: Per-game configurable links with name, URL, icon, category, description, enabled/disabled state.",
+          "Resource Add/Edit/Delete: Inline editor modal with URL validation, category selector, enabled toggle.",
+          "Resource Open: External links open in new tab with rel=noopener noreferrer; malformed URLs are blocked.",
+          "Game Capability Config: Unified GameCapabilityConfig replaces GameDossierConfig — element system, resource presets, all in one scalable config.",
+          "Default Resource Presets: Mobile Legends (Current Meta, Hero Details), HSR (Prydwen Tier List), Valorant (Tracker Network), Genshin (Game8).",
+          "GameExternalResource Prisma model: id, gameId, name, url, icon, category, description, enabled, sortOrder, onDelete Cascade.",
+          "Zustand store: gameResources state, addGameResource, updateGameResource, removeGameResource actions.",
+          "API: UPDATE_GAME_RESOURCE and DELETE_GAME_RESOURCE handlers in /api/action; gameResources in /api/dashboard payload.",
+          "Wuthering Waves config added (Resonator, DPS/Sub DPS/Support/Healer categories).",
+          "Dragon Ball Legends config added (Fighter types, Battle Attributes).",
+          "Arknights config added (8 operator classes: Guard/Defender/Sniper/Caster/Medic/Supporter/Specialist/Vanguard).",
+          "HSR Paths expanded: Remembrance and Elation paths added.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "External Resources section: compact grid (1→2→3→4 col) with icon, name, category badge, description, open button.",
+          "Elements section: auto-scales from 2-col mobile to 7-col desktop with element color accents and character counts.",
+          "Resource Editor Modal: dual-theme (Neo-Brutalism/Cyberpunk) with name, URL, icon, category, description, enabled toggle.",
+          "Disabled resources show at reduced opacity; open button only shown for enabled resources.",
+          "Edit/Delete buttons appear on hover (desktop) and always-on (mobile) per card.",
+          "Empty resource state shows informative prompt instead of empty row.",
+          "Back button label changed to 'Back to Game Database' on individual Dossier pages.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "NavLink activePrefixes prop: allows /heroes to activate Game Database nav item without polluting /games matching.",
+          "NavLink exact prop for /games: prevents /games/[id] from activating Games nav item.",
+          "Prisma schema: GameExternalResource model with onDelete Cascade on gameId.",
+          "TypeScript: 0 errors after prisma generate and full tsc --noEmit check.",
+          "URL validation (isValidUrl) prevents malformed link crashes in resource open button.",
+        ],
+      },
+    ],
+  },
+
+  {
     version: "v2.9.1",
     date: "2026-07-30",
     title: "Direct Game Database Card Navigation Sync",

@@ -69,6 +69,18 @@ export interface DossierCharacterEntry {
   isFavorite?: boolean;
 }
 
+export interface GameResourceEntry {
+  id: string;
+  gameId: string;
+  name: string;
+  url: string;
+  icon?: string;
+  category?: string;
+  description?: string;
+  enabled?: boolean;
+  sortOrder?: number;
+}
+
 // ─── Media Types ──────────────────────────────────────────────────────────────
 
 export type MediaStatus = "GOAT Status" | "All-Star" | "Rising" | "Classic";
@@ -247,6 +259,7 @@ interface DashboardState {
   profile: ProfileData;
   games: GameEntry[];
   dossierCharacters: DossierCharacterEntry[];
+  gameResources: GameResourceEntry[];
   media: MediaEntry;
   animeList: AnimeEntry[];
   favoriteCharacters: FavoriteCharacter[];
@@ -267,6 +280,9 @@ interface DashboardState {
   addDossierCharacter: (item: DossierCharacterEntry) => Promise<void>;
   updateDossierCharacter: (id: string, data: Partial<DossierCharacterEntry>) => Promise<void>;
   removeDossierCharacter: (id: string) => Promise<void>;
+  addGameResource: (item: GameResourceEntry) => Promise<void>;
+  updateGameResource: (id: string, data: Partial<GameResourceEntry>) => Promise<void>;
+  removeGameResource: (id: string) => Promise<void>;
   updateMedia: (data: Partial<MediaEntry>) => void;
   addAnime: (anime: AnimeEntry) => Promise<void>;
   updateAnime: (id: string, data: Partial<AnimeEntry>) => Promise<void>;
@@ -405,12 +421,28 @@ const initialDossierCharacters: DossierCharacterEntry[] = [
   { id: "dossier-gi-3", gameId: "game-4", name: "Zhongli", category: "Healer / Shielder", role: "Geo / Jade Shield", levelRank: "Lvl 90 - C0", winRate: 98.0, matches: 520, notes: "Unbreakable Jade Shield & universal resistance shred.", accentColor: "#F59E0B", isFavorite: true },
 ];
 
+const initialGameResources: GameResourceEntry[] = [
+  // Mobile Legends (game-2)
+  { id: "res-ml-1", gameId: "game-2", name: "Current Meta", url: "https://www.mobilelegends.com/rank", icon: "🔥", category: "Meta", description: "Official Win Rate & Ban Rate Rankings", enabled: true, sortOrder: 1 },
+  { id: "res-ml-2", gameId: "game-2", name: "Hero Details", url: "https://www.mobilelegends.com/hero", icon: "🦸", category: "Heroes", description: "Official Skill Ratios & Equipment Guides", enabled: true, sortOrder: 2 },
+
+  // Honkai: Star Rail (game-1)
+  { id: "res-hsr-1", gameId: "game-1", name: "Prydwen HSR Tier List", url: "https://www.prydwen.gg/star-rail/tier-list", icon: "🏆", category: "Tier List", description: "Memory of Chaos & Pure Fiction Tier Ratings", enabled: true, sortOrder: 1 },
+
+  // Valorant (game-3)
+  { id: "res-val-1", gameId: "game-3", name: "Tracker Network", url: "https://tracker.gg/valorant", icon: "🎯", category: "Database", description: "Agent K/D & Winrate Global Leaderboards", enabled: true, sortOrder: 1 },
+
+  // Genshin Impact (game-4)
+  { id: "res-gi-1", gameId: "game-4", name: "Game8 Builds & Tier List", url: "https://game8.co/games/Genshin-Impact", icon: "🏆", category: "Builds", description: "Best Artifact Sets & Team Compositions", enabled: true, sortOrder: 1 },
+];
+
 // ─── Zustand Store ────────────────────────────────────────────────────────────
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
   profile: initialProfile,
   games: [],
   dossierCharacters: initialDossierCharacters,
+  gameResources: initialGameResources,
   media: initialMedia,
   animeList: [],
   favoriteCharacters: [],
@@ -454,6 +486,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           dossierCharacters: (data.dossierCharacters && data.dossierCharacters.length > 0)
             ? data.dossierCharacters
             : get().dossierCharacters,
+          gameResources: (data.gameResources && data.gameResources.length > 0)
+            ? data.gameResources
+            : get().gameResources,
           animeList: data.animeList || [],
           favoriteCharacters: data.favoriteCharacters || [],
           dramas: data.dramas || [],
@@ -599,6 +634,50 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
     } catch (err) {
       console.error("Failed to sync deleted dossier character:", err);
+    }
+  },
+
+  addGameResource: async (item) => {
+    set((s) => ({ gameResources: [...s.gameResources, item] }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "UPDATE_GAME_RESOURCE", payload: item }),
+      });
+    } catch (err) {
+      console.error("Failed to sync added game resource:", err);
+    }
+  },
+
+  updateGameResource: async (id, data) => {
+    set((s) => ({
+      gameResources: s.gameResources.map((r) => (r.id === id ? { ...r, ...data } : r)),
+    }));
+    try {
+      const item = get().gameResources.find((r) => r.id === id);
+      if (item) {
+        await fetch("/api/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "UPDATE_GAME_RESOURCE", payload: item }),
+        });
+      }
+    } catch (err) {
+      console.error("Failed to sync updated game resource:", err);
+    }
+  },
+
+  removeGameResource: async (id) => {
+    set((s) => ({ gameResources: s.gameResources.filter((r) => r.id !== id) }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_GAME_RESOURCE", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to sync deleted game resource:", err);
     }
   },
 

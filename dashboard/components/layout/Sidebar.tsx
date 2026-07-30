@@ -38,8 +38,8 @@ const NAV_SECTIONS = [
   {
     label: "Gaming",
     items: [
-      { href: "/games", icon: "🎮", label: "Games" },
-      { href: "/heroes", icon: "📊", label: "Game Database" },
+      { href: "/games", icon: "🎮", label: "Games", exact: true },
+      { href: "/heroes", icon: "📊", label: "Game Database", activePrefixes: ["/heroes"] },
     ],
   },
   {
@@ -322,9 +322,10 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
                         href={item.href}
                         icon={item.icon}
                         label={collapsed ? "" : item.label}
-                        exact={"exact" in item ? (item as {exact?: boolean}).exact : false}
+                        exact={"exact" in item ? (item as any).exact : false}
                         collapsed={collapsed}
                         onClick={onClose}
+                        activePrefixes={"activePrefixes" in item ? (item as any).activePrefixes : undefined}
                       />
                     )}
                   </div>

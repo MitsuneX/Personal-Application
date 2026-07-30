@@ -86,6 +86,39 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true });
       }
 
+      case "UPDATE_GAME_RESOURCE": {
+        const item = await prisma.gameExternalResource.upsert({
+          where: { id: payload.id },
+          update: {
+            gameId: payload.gameId,
+            name: payload.name,
+            url: payload.url,
+            icon: payload.icon ?? null,
+            category: payload.category ?? null,
+            description: payload.description ?? null,
+            enabled: payload.enabled ?? true,
+            sortOrder: payload.sortOrder ?? 0,
+          },
+          create: {
+            id: payload.id,
+            gameId: payload.gameId,
+            name: payload.name,
+            url: payload.url,
+            icon: payload.icon || null,
+            category: payload.category || null,
+            description: payload.description || null,
+            enabled: payload.enabled ?? true,
+            sortOrder: payload.sortOrder || 0,
+          },
+        });
+        return NextResponse.json({ success: true, data: item });
+      }
+
+      case "DELETE_GAME_RESOURCE": {
+        await prisma.gameExternalResource.delete({ where: { id: payload.id } });
+        return NextResponse.json({ success: true });
+      }
+
       case "UPDATE_ANIME": {
         const anime = await prisma.anime.upsert({
           where: { id: payload.id },
