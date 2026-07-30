@@ -395,17 +395,21 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       const res = await fetch("/api/dashboard?t=" + Date.now(), { cache: "no-store" });
       const data = await res.json();
       if (data && !data.error) {
+        const currentProfile = get().profile;
         set({
-          profile: {
-            ...data.profile,
-            avatar: data.profile.avatar || "/avatar.png",
-            borderStyle: data.profile.borderStyle || "default",
-          },
-          games: data.games,
-          animeList: data.animeList,
-          favoriteCharacters: data.favoriteCharacters,
-          dramas: data.dramas,
-          hallOfFame: data.hallOfFame,
+          profile: data.profile
+            ? {
+                ...currentProfile,
+                ...data.profile,
+                avatar: data.profile.avatar || currentProfile.avatar || "/avatar.png",
+                borderStyle: data.profile.borderStyle || currentProfile.borderStyle || "default",
+              }
+            : currentProfile,
+          games: data.games || [],
+          animeList: data.animeList || [],
+          favoriteCharacters: data.favoriteCharacters || [],
+          dramas: data.dramas || [],
+          hallOfFame: data.hallOfFame || [],
           notes: data.notes || [],
           links: data.links || [],
           gallery: data.gallery || [],

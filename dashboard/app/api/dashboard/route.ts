@@ -52,9 +52,28 @@ export async function GET() {
       }
     }
 
-    // 3. Fallback to main profile ("profile") if unauthenticated
+    // 3. Fallback to main profile ("profile") if unauthenticated or missing
     if (!dbProfile) {
-      dbProfile = await prisma.profile.findUnique({ where: { id: "profile" } });
+      dbProfile = await prisma.profile.upsert({
+        where: { id: "profile" },
+        update: {},
+        create: {
+          id: "profile",
+          name: "Nelvin Ryukawa",
+          tagline: "Full-Stack Architect & Game Developer",
+          bio: "Building next-gen personal dashboards, interactive HUDs, and web experiences.",
+          status: "online",
+          location: "Tokyo / Jakarta",
+          skills: ["Next.js 16", "React 19", "TypeScript", "Prisma", "Supabase", "TailwindCSS"],
+          socials: [
+            { platform: "GitHub", handle: "@alexryukawa", url: "https://github.com" },
+            { platform: "Twitter/X", handle: "@alexryukawa", url: "https://x.com" },
+            { platform: "Discord", handle: "ryukawa#0001" },
+          ],
+          avatar: "/avatar.png",
+          borderStyle: "default",
+        },
+      });
     }
 
     const dbGames = await prisma.game.findMany({ orderBy: { createdAt: "asc" } });
