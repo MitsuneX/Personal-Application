@@ -7,6 +7,8 @@ import { Modal } from "@/components/ui/modal";
 import type { GameEntry, GameCategory } from "@/lib/store/dashboardStore";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 
+import { resolveGameIcon } from "@/lib/data/gameIcons";
+
 interface GameEditorModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -50,6 +52,7 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
   const [screenshot, setScreenshot] = useState("");
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const iconFileInputRef = useRef<HTMLInputElement>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -81,6 +84,24 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
       setScreenshot("");
     }
   }, [gameToEdit, isOpen]);
+
+  const resolvedIconInfo = resolveGameIcon(game, icon);
+
+  const handleIconFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.match(/^image\/(png|jpeg|jpg|webp)$/i)) {
+      alert("Please select a valid image file (PNG, JPG, JPEG, or WEBP).");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      if (evt.target?.result) {
+        setIcon(evt.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -322,6 +343,99 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
                 className="w-full p-2 rounded-xl border text-sm font-semibold focus:outline-none"
                 style={inputStyles}
               />
+            </div>
+          </div>
+
+          {/* Game Icon Field (Automatic Recognition + Optional Custom Override) */}
+          <div className="grid grid-cols-1 gap-3">
+            <div>
+              <label className="block text-xs font-bold mb-1 theme-text-secondary flex items-center justify-between">
+                <span>GAME ICON (AUTOMATIC OR CUSTOM OVERRIDE)</span>
+                <span className="text-[10px] font-normal opacity-70">PNG, JPG, WEBP, URL</span>
+              </label>
+
+              {/* Live Recognition Status Badge */}
+              <div 
+                className="mb-2.5 p-2.5 rounded-xl border flex items-center gap-3 text-xs font-semibold"
+                style={{
+                  backgroundColor: isCyber ? "rgba(0,245,255,0.06)" : "rgba(0,0,0,0.03)",
+                  borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#000",
+                  borderWidth: isCyber ? "1px" : "2px",
+                }}
+              >
+                <div 
+                  className="w-9 h-9 rounded-lg overflow-hidden shrink-0 flex items-center justify-center border bg-slate-900 shadow-sm"
+                  style={{ borderColor: isCyber ? "rgba(0,245,255,0.4)" : "#000" }}
+                >
+                  {resolvedIconInfo.isImage ? (
+                    <img src={resolvedIconInfo.iconUrl} alt="Icon Preview" className="w-full h-full object-cover p-1" />
+                  ) : (
+                    <span className="text-base">{resolvedIconInfo.fallbackEmoji || "🎮"}</span>
+                  )}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  {resolvedIconInfo.source === "custom" && (
+                    <span className="text-amber-500 font-bold flex items-center gap-1">
+                      <span>🖼️</span> Custom Icon Override Active
+                    </span>
+                  )}
+                  {resolvedIconInfo.source === "recognized" && (
+                    <span className="text-emerald-500 dark:text-emerald-400 font-bold flex items-center gap-1">
+                      <span>⚡</span> Auto-Recognized: {resolvedIconInfo.matchedName}
+                    </span>
+                  )}
+                  {resolvedIconInfo.source === "fallback" && (
+                    <span className="theme-text-muted font-bold flex items-center gap-1">
+                      <span>🎮</span> Default Category Fallback Icon
+                    </span>
+                  )}
+                </div>
+
+                {icon && (
+                  <button
+                    type="button"
+                    onClick={() => setIcon("")}
+                    className="text-[10px] px-2.5 py-1 rounded-lg bg-red-600/20 text-red-500 hover:bg-red-600/30 font-bold cursor-pointer transition-all border border-red-600/30"
+                    title="Remove custom icon and revert to automatic recognition"
+                  >
+                    Reset Override
+                  </button>
+                )}
+              </div>
+
+              {/* Custom Icon URL Input & File Upload Button */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={icon}
+                  onChange={(e) => setIcon(e.target.value)}
+                  placeholder="Custom Icon URL or upload image file →"
+                  className="flex-1 p-2 rounded-xl border text-sm font-semibold focus:outline-none"
+                  style={inputStyles}
+                />
+                <button
+                  type="button"
+                  onClick={() => iconFileInputRef.current?.click()}
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(0,245,255,0.12)" : "#FEF08A",
+                    color: isCyber ? "#00F5FF" : "#854D0E",
+                    border: isCyber ? "1px solid rgba(0,245,255,0.3)" : "2px solid #000",
+                    boxShadow: isCyber ? "none" : "2px 2px 0 #000",
+                  }}
+                  title="Upload PNG, JPG, JPEG, or WEBP custom icon file"
+                >
+                  <span>🖼️ Icon File</span>
+                </button>
+                <input
+                  type="file"
+                  ref={iconFileInputRef}
+                  onChange={handleIconFileUpload}
+                  accept="image/png, image/jpeg, image/jpg, image/webp"
+                  className="hidden"
+                />
+              </div>
             </div>
           </div>
 

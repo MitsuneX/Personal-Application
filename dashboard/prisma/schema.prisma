@@ -46,6 +46,7 @@ model Game {
   accentColor   String
   profileLink   String?
   icon          String?
+  screenshot    String?
   createdAt     DateTime @default(now())
 }
 

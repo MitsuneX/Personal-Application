@@ -21,6 +21,7 @@ export async function POST(req: Request) {
             accentColor: payload.accentColor,
             profileLink: payload.profileLink ?? null,
             icon: payload.icon ?? null,
+            screenshot: payload.screenshot ?? null,
           },
           create: {
             id: payload.id,
@@ -35,6 +36,7 @@ export async function POST(req: Request) {
             accentColor: payload.accentColor,
             profileLink: payload.profileLink || null,
             icon: payload.icon || null,
+            screenshot: payload.screenshot || null,
           },
         });
         return NextResponse.json({ success: true, data: game });

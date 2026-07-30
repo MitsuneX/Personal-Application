@@ -13,6 +13,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v2.7.3",
+    date: "2026-07-30",
+    title: "Automatic Game Icon Recognition System & Public Vector Asset Engine",
+    badge: "GAMES HUD UPGRADE",
+    type: "patch",
+    summary: "Integrated a deterministic title normalization and alias matching engine (lib/data/gameIcons.ts) backed by project-local SVG assets in /game-icons/, automatically rendering official game logos while preserving custom icon overrides and Prisma DB persistence.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "Automatic Title Recognition: Normalizes game names (handling colons, hyphens, capitalization, and whitespace) to match canonical titles and aliases for Honkai: Star Rail, Genshin Impact, MLBB, Valorant, ZZZ, Wuthering Waves, League of Legends, DBL, Arknights, FGO, etc.",
+          "Project-Local SVG Assets: Stored stable static vector SVG assets in /public/game-icons/ for 100% offline reliability, instant rendering, and zero broken links.",
+          "Strict 3-Tier Resolution Priority: Custom User Upload Override → Auto-Recognized Game Icon → Default Category Fallback.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.7.2",
     date: "2026-07-30",
     title: "Application-Wide Mobile & Tablet Responsive Audit Fix",

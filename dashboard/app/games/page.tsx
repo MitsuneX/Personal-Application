@@ -8,6 +8,7 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants";
 import { GameEditorModal } from "@/components/ui/GameEditorModal";
 import { ImageLightboxModal } from "@/components/ui/ImageLightboxModal";
+import { resolveGameIcon } from "@/lib/data/gameIcons";
 import type { GameEntry } from "@/lib/store/dashboardStore";
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -47,6 +48,8 @@ function GameCard({
   const accent = game?.accentColor || "#7C3AED";
   const gameTitle = game?.game || "Unknown Title";
   const gameCategory = game?.category || "General";
+
+  const iconRes = resolveGameIcon(gameTitle, game?.icon);
 
   return (
     <motion.div variants={cardVariants} custom={index} layout>
@@ -117,14 +120,25 @@ function GameCard({
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div
-              className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 select-none shadow-sm"
+              className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 select-none shadow-sm overflow-hidden relative"
               style={{
-                backgroundColor: isCyber ? `${accent}20` : accent,
+                backgroundColor: isCyber ? `${accent}20` : (iconRes.isImage ? "#0B0F19" : accent),
                 border: isCyber ? `1px solid ${accent}50` : `2.5px solid #000`,
                 boxShadow: !isCyber ? "2px 2px 0 rgba(0,0,0,1)" : "none"
               }}
             >
-              {game?.icon || CATEGORY_ICONS[gameCategory] || "🎮"}
+              {iconRes.isImage ? (
+                <img
+                  src={iconRes.iconUrl}
+                  alt={gameTitle}
+                  className="w-full h-full object-cover p-1"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = "none";
+                  }}
+                />
+              ) : (
+                <span>{iconRes.fallbackEmoji || CATEGORY_ICONS[gameCategory] || "🎮"}</span>
+              )}
             </div>
             <div className="min-w-0">
               <h3 className="font-black text-sm tracking-tight leading-tight truncate pr-4" style={{ color: isCyber ? "#F8FAFC" : "#1A1A1A" }}>

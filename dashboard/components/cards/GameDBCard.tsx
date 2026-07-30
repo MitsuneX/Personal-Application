@@ -6,6 +6,7 @@ import { BentoCard } from "./BentoCard";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import type { GameRank } from "@/lib/store/dashboardStore";
+import { resolveGameIcon } from "@/lib/data/gameIcons";
 
 const RANK_CLASS: Record<string, string> = {
   Iron:        "rank-iron",
@@ -244,6 +245,7 @@ const cyberGlitchVariants = {
 
 function GameRow({ game, isCyber, index, dimmed }: GameRowProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const iconRes = resolveGameIcon(game.game, game.icon);
 
   return (
     <motion.li
@@ -306,8 +308,16 @@ function GameRow({ game, isCyber, index, dimmed }: GameRowProps) {
         />
       )}
 
-      {/* Platform icon */}
-      <span className="text-base shrink-0">{PLATFORM_ICONS[game.platform] ?? "🖥"}</span>
+      {/* Game Icon / Platform icon */}
+      <div className="w-7 h-7 rounded-md overflow-hidden shrink-0 flex items-center justify-center bg-slate-900 border"
+        style={{ borderColor: isCyber ? "rgba(0,245,255,0.2)" : "rgba(0,0,0,0.15)" }}
+      >
+        {iconRes.isImage ? (
+          <img src={iconRes.iconUrl} alt="" className="w-full h-full object-cover p-0.5" />
+        ) : (
+          <span className="text-xs">{iconRes.fallbackEmoji || PLATFORM_ICONS[game.platform] || "🎮"}</span>
+        )}
+      </div>
 
       {/* Game info with optional cyber glitch */}
       <motion.div
