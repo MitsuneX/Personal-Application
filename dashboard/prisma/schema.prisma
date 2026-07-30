@@ -50,6 +50,22 @@ model Game {
   createdAt     DateTime @default(now())
 }
 
+model GameDossierCharacter {
+  id          String   @id @default(uuid())
+  gameId      String
+  name        String
+  category    String   // e.g. "EXP Lane", "Destruction", "Duelist", "Main DPS"
+  role        String?
+  levelRank   String?  // e.g. "Mastery 7", "E6S1", "Level 90"
+  winRate     Float?   @default(0)
+  matches     Int?     @default(0)
+  notes       String?
+  avatarUrl   String?
+  accentColor String?
+  isFavorite  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
 model Anime {
   id              String   @id @default(uuid())
   title           String

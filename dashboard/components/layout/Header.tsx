@@ -30,7 +30,7 @@ const PAGE_TITLES: Record<string, { title: string; icon: string }> = {
   "/drama/indonesia":   { title: "Indonesian Drama", icon: "🇮🇩" },
   "/hall-of-fame":      { title: "Hall of Fame", icon: "🏆" },
   "/games":             { title: "Games HUD",    icon: "🎮" },
-  "/heroes":            { title: "Heroes Registry", icon: "🛡️" },
+  "/heroes":            { title: "Game Database Hub", icon: "📊" },
   "/profile":           { title: "Profile Panel", icon: "👤" },
   "/notepad":           { title: "Notepad Workspace", icon: "📝" },
   "/links":             { title: "Bookmark Directory", icon: "🔗" },

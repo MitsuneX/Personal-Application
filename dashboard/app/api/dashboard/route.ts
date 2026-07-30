@@ -77,6 +77,14 @@ export async function GET() {
     }
 
     const dbGames = await prisma.game.findMany({ orderBy: { createdAt: "asc" } });
+
+    let dbDossierCharacters: any[] = [];
+    try {
+      dbDossierCharacters = await prisma.gameDossierCharacter.findMany({ orderBy: { createdAt: "asc" } });
+    } catch (err) {
+      console.warn("Notice: GameDossierCharacter query fallback to empty array:", err);
+    }
+
     const dbAnime = await prisma.anime.findMany({ orderBy: { createdAt: "asc" } });
     const dbCharacters = await prisma.favoriteCharacter.findMany({ orderBy: { createdAt: "asc" } });
     const dbDramas = await prisma.drama.findMany({ orderBy: { createdAt: "asc" } });
@@ -97,6 +105,7 @@ export async function GET() {
     return NextResponse.json({
       profile: dbProfile,
       games: dbGames,
+      dossierCharacters: dbDossierCharacters,
       animeList: dbAnime,
       favoriteCharacters: dbCharacters,
       dramas: dbDramas,

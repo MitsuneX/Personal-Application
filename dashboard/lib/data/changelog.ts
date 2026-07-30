@@ -13,6 +13,63 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v2.9.1",
+    date: "2026-07-30",
+    title: "Direct Game Database Card Navigation Sync",
+    badge: "GAME DB ROUTING",
+    type: "patch",
+    summary: "Updated all game cards in the Games Library container to link directly to their corresponding Game Database page (/games/[gameId]), allowing instant interaction with hero rosters, character editors, and AI screenshot scanners for that specific game.",
+    categories: [
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "Games Library Navigation Sync: Each game card button in /games now directly points to its dedicated Game Database (/games/[gameId]) page.",
+          "Targeted Game Context: Directs users straight to the interacted game so they can add characters, edit details, or run AI screenshot scans immediately.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.9.0",
+    date: "2026-07-30",
+    title: "AI Screenshot Scanner & Game Data Import System",
+    badge: "AI VISION ENGINE",
+    type: "major",
+    summary: "Implemented an AI/OCR screenshot scanning engine and review modal for the Game Database architecture. Supports Option B workflow (Screenshot -> AI Extraction -> User Review & Confirmation -> Database Persistence) with game-aware extraction rules for Mobile Legends, HSR, Valorant, Genshin, and generic titles.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "Game-Aware Screenshot Scanner Engine (lib/data/gameScannerEngine.ts): Parses game statistics screenshots (PNG, JPG, WEBP) and maps extracted values into game-aware categories (MOBA lanes, HSR paths, Valorant roles, Genshin elements).",
+          "Option B User Review Workflow (components/ui/GameScannerModal.tsx): Presents extracted values with clear status indicators (Detected, Needs Review, Not Found) allowing full manual editing prior to database persistence.",
+          "Laser Beam Scan Animation: Added Framer Motion laser beam scan effect over preview images during analysis.",
+          "Duplicate Import Protection: Detects existing character entries in the game's dossier and warns the user before updating.",
+          "Dual Theme & Responsive Modal: Full Neo-Brutalism and Cyberpunk styling on Desktop, Tablet, and Mobile.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v2.8.0",
+    date: "2026-07-30",
+    title: "Reusable Game Database & Game Dossier System Architecture",
+    badge: "GAME DOSSIER ENGINE",
+    type: "major",
+    summary: "Transformed the Heroes section into a game-aware Game Database & Game Dossier system. Every game in the Games Library automatically gains a rich, game-aware dossier (/games/[gameId]) driven by a reusable category engine (MOBA Lanes, HSR Paths, Valorant Roles, Genshin Combat Roles) and Prisma database persistence.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "Game Dossier Dynamic Routing (/games/[gameId]): Clicking any game card in the Games Library opens its dedicated Game Dossier page displaying game identity, stats matrix, category breakdown, and hero/agent rosters.",
+          "Game-Aware Category Configuration (lib/data/gameDossierConfig.ts): Dynamically adapts categories based on game type (MOBA EXP/Jungle/Mid/Gold/Roam, HSR Paths of Destruction/Hunt/Harmony, Valorant Duelist/Controller/Initiator/Sentinel, Genshin Combat Roles).",
+          "Automatic Game Dossier Creation: Adding any game to the Games Library automatically activates its Game Dossier without needing new database tables, routes, or manual setup.",
+          "GameDossierCharacter Schema & Persistence: Created GameDossierCharacter model in Prisma schema linked by gameId with full CRUD sync (/api/action) and Zustand state management.",
+          "Game Database Overview Hub (/heroes): Reframed /heroes into a master Game Database Hub displaying game dossier cards and global roster search.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v2.7.3",
     date: "2026-07-30",
     title: "Automatic Game Icon Recognition System & Public Vector Asset Engine",

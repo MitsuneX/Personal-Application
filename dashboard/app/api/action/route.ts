@@ -47,6 +47,45 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true });
       }
 
+      case "UPDATE_DOSSIER_CHARACTER": {
+        const item = await prisma.gameDossierCharacter.upsert({
+          where: { id: payload.id },
+          update: {
+            gameId: payload.gameId,
+            name: payload.name,
+            category: payload.category,
+            role: payload.role ?? null,
+            levelRank: payload.levelRank ?? null,
+            winRate: payload.winRate ?? 0,
+            matches: payload.matches ?? 0,
+            notes: payload.notes ?? null,
+            avatarUrl: payload.avatarUrl ?? null,
+            accentColor: payload.accentColor ?? null,
+            isFavorite: payload.isFavorite ?? false,
+          },
+          create: {
+            id: payload.id,
+            gameId: payload.gameId,
+            name: payload.name,
+            category: payload.category,
+            role: payload.role || null,
+            levelRank: payload.levelRank || null,
+            winRate: payload.winRate || 0,
+            matches: payload.matches || 0,
+            notes: payload.notes || null,
+            avatarUrl: payload.avatarUrl || null,
+            accentColor: payload.accentColor || null,
+            isFavorite: payload.isFavorite || false,
+          },
+        });
+        return NextResponse.json({ success: true, data: item });
+      }
+
+      case "DELETE_DOSSIER_CHARACTER": {
+        await prisma.gameDossierCharacter.delete({ where: { id: payload.id } });
+        return NextResponse.json({ success: true });
+      }
+
       case "UPDATE_ANIME": {
         const anime = await prisma.anime.upsert({
           where: { id: payload.id },
