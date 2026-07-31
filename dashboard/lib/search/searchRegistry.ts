@@ -83,6 +83,39 @@ registerSearchProvider({
   },
 });
 
+// 1.5. AI Library Platforms & Tools Provider
+registerSearchProvider({
+  id: "aiTools",
+  name: "AI Platforms & Launcher",
+  module: "AI Library",
+  icon: "🤖",
+  search: (query, data) => {
+    const aiTools: any[] = data.aiTools || [];
+    return aiTools
+      .filter((t) =>
+        matchesQuery(query, [
+          t.name,
+          t.company,
+          t.description,
+          t.category,
+          t.pricingModel,
+          t.version,
+          ...(Array.isArray(t.tags) ? t.tags : []),
+        ])
+      )
+      .map((t) => ({
+        id: t.id,
+        title: t.name,
+        subtitle: `AI Platform · ${t.company ? `${t.company} · ` : ""}${t.category} · ${t.pricingModel || "Freemium"}`,
+        icon: t.logo || "🤖",
+        module: "AI Library",
+        category: t.category,
+        url: t.launchUrl || t.websiteUrl || "/ai-library",
+        accentColor: t.accentColor || "#10A37F",
+      }));
+  },
+});
+
 // 2. Games HUD & Database Provider
 registerSearchProvider({
   id: "games",

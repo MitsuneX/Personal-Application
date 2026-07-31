@@ -10,6 +10,7 @@ type SearchResponse = Record<string, SearchResultItem[]>;
 
 const CATEGORY_META: Record<string, { label: string; icon: string }> = {
   projects: { label: "Visit Project Hub", icon: "🌐" },
+  aiTools: { label: "AI Library Platforms", icon: "🤖" },
   games: { label: "Game Database", icon: "🎮" },
   dossierCharacters: { label: "Statistics Scanner", icon: "📊" },
   gameShowcaseItems: { label: "Showcase Gallery", icon: "🖼️" },

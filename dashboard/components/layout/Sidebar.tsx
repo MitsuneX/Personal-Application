@@ -23,6 +23,7 @@ const NAV_SECTIONS = [
     items: [
       { href: "/", icon: "🏠", label: "Dashboard", exact: true },
       { href: "/visit", icon: "🌐", label: "Visit", activePrefixes: ["/visit"] },
+      { href: "/ai-library", icon: "🤖", label: "AI Library", activePrefixes: ["/ai-library"] },
     ],
   },
   {

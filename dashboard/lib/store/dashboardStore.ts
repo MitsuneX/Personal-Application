@@ -123,6 +123,36 @@ export interface ProjectItemEntry {
   updatedAt?: string;
 }
 
+export type AiPricingModel = "Free" | "Freemium" | "Paid" | "Open Source" | "Enterprise";
+
+export interface AiToolItemEntry {
+  id: string;
+  name: string;
+  company?: string;
+  description: string;
+  logo?: string;
+  accentColor: string;
+  category: string;
+  pricingModel?: AiPricingModel;
+  version?: string;
+  launchUrl?: string;
+  websiteUrl?: string;
+  docsUrl?: string;
+  apiUrl?: string;
+  pricingUrl?: string;
+  githubUrl?: string;
+  discordUrl?: string;
+  communityUrl?: string;
+  releaseNotesUrl?: string;
+  tags?: string[];
+  sortOrder?: number;
+  isFavorite?: boolean;
+  isPinned?: boolean;
+  isArchived?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 // ─── Media Types ──────────────────────────────────────────────────────────────
 
 export type MediaStatus = "GOAT Status" | "All-Star" | "Rising" | "Classic";
@@ -304,6 +334,7 @@ interface DashboardState {
   gameResources: GameResourceEntry[];
   gameShowcaseItems: GameShowcaseEntry[];
   projects: ProjectItemEntry[];
+  aiTools: AiToolItemEntry[];
   media: MediaEntry;
   animeList: AnimeEntry[];
   favoriteCharacters: FavoriteCharacter[];
@@ -333,6 +364,9 @@ interface DashboardState {
   addProject: (item: ProjectItemEntry) => Promise<void>;
   updateProject: (id: string, data: Partial<ProjectItemEntry>) => Promise<void>;
   removeProject: (id: string) => Promise<void>;
+  addAiTool: (item: AiToolItemEntry) => Promise<void>;
+  updateAiTool: (id: string, data: Partial<AiToolItemEntry>) => Promise<void>;
+  removeAiTool: (id: string) => Promise<void>;
   updateMedia: (data: Partial<MediaEntry>) => void;
   addAnime: (anime: AnimeEntry) => Promise<void>;
   updateAnime: (id: string, data: Partial<AnimeEntry>) => Promise<void>;
@@ -544,6 +578,132 @@ const initialProjects: ProjectItemEntry[] = [
   },
 ];
 
+const initialAiTools: AiToolItemEntry[] = [
+  {
+    id: "ai-chatgpt",
+    name: "ChatGPT",
+    company: "OpenAI",
+    description: "State-of-the-art conversational AI assistant powered by GPT-4o and o1 reasoning models for writing, analysis, coding, and multi-modal problem solving.",
+    logo: "🤖",
+    accentColor: "#10A37F",
+    category: "💬 General AI",
+    pricingModel: "Freemium",
+    version: "GPT-4o / o1",
+    launchUrl: "https://chatgpt.com",
+    websiteUrl: "https://chatgpt.com",
+    docsUrl: "https://platform.openai.com/docs",
+    apiUrl: "https://platform.openai.com/api-keys",
+    pricingUrl: "https://openai.com/pricing",
+    tags: ["LLM", "GPT-4o", "Multimodal", "OpenAI"],
+    sortOrder: 1,
+    isFavorite: true,
+    isPinned: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "ai-claude",
+    name: "Claude 3.5 Sonnet",
+    company: "Anthropic",
+    description: "Advanced AI assistant by Anthropic renowned for nuanced reasoning, superior coding capabilities, artifact workspace generation, and long-context analysis.",
+    logo: "🧠",
+    accentColor: "#D97706",
+    category: "💻 Coding",
+    pricingModel: "Freemium",
+    version: "Claude 3.5 Sonnet",
+    launchUrl: "https://claude.ai",
+    websiteUrl: "https://claude.ai",
+    docsUrl: "https://docs.anthropic.com",
+    apiUrl: "https://console.anthropic.com",
+    pricingUrl: "https://www.anthropic.com/pricing",
+    tags: ["Coding", "Artifacts", "Anthropic", "200k Context"],
+    sortOrder: 2,
+    isFavorite: true,
+    isPinned: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "ai-gemini",
+    name: "Google Gemini Advanced",
+    company: "Google",
+    description: "Multimodal AI assistant integrated with Google Workspace, 2M token context window, live audio interactions, and deep search intelligence.",
+    logo: "✨",
+    accentColor: "#4285F4",
+    category: "🧠 Research",
+    pricingModel: "Freemium",
+    version: "Gemini 1.5 Pro",
+    launchUrl: "https://gemini.google.com",
+    websiteUrl: "https://gemini.google.com",
+    docsUrl: "https://ai.google.dev/docs",
+    apiUrl: "https://aistudio.google.com",
+    pricingUrl: "https://ai.google.dev/pricing",
+    tags: ["Google", "2M Context", "Multimodal", "AI Studio"],
+    sortOrder: 3,
+    isFavorite: true,
+    isPinned: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "ai-perplexity",
+    name: "Perplexity AI",
+    company: "Perplexity AI",
+    description: "Conversational answer engine delivering real-time web research, cited source academic search, and Pro Discovery reasoning.",
+    logo: "🔍",
+    accentColor: "#00B4D8",
+    category: "🔍 Search",
+    pricingModel: "Freemium",
+    version: "Sonar Pro",
+    launchUrl: "https://www.perplexity.ai",
+    websiteUrl: "https://www.perplexity.ai",
+    docsUrl: "https://docs.perplexity.ai",
+    pricingUrl: "https://www.perplexity.ai/pro",
+    tags: ["Search", "Research", "Citations", "Pro Discovery"],
+    sortOrder: 4,
+    isFavorite: true,
+    isPinned: false,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "ai-deepseek",
+    name: "DeepSeek R1",
+    company: "DeepSeek",
+    description: "Open-weights reasoning model specializing in complex mathematics, algorithmic logic, competitive coding, and deep multi-step thinking.",
+    logo: "🐳",
+    accentColor: "#4D6BFE",
+    category: "💻 Coding",
+    pricingModel: "Open Source",
+    version: "DeepSeek-R1",
+    launchUrl: "https://chat.deepseek.com",
+    websiteUrl: "https://chat.deepseek.com",
+    docsUrl: "https://api-docs.deepseek.com",
+    githubUrl: "https://github.com/deepseek-ai",
+    tags: ["Reasoning", "Open Weights", "Math", "Logic"],
+    sortOrder: 5,
+    isFavorite: true,
+    isPinned: false,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "ai-cursor",
+    name: "Cursor IDE",
+    company: "Anysphere",
+    description: "The AI-first code editor built on VS Code with codebase indexing, inline edit agent, multi-file edits, and instant terminal command execution.",
+    logo: "⚡",
+    accentColor: "#00F5FF",
+    category: "💻 Coding",
+    pricingModel: "Freemium",
+    version: "v0.45",
+    launchUrl: "https://cursor.com",
+    websiteUrl: "https://cursor.com",
+    docsUrl: "https://docs.cursor.com",
+    pricingUrl: "https://cursor.com/pricing",
+    tags: ["IDE", "AI Agent", "VSCode", "Codebase Index"],
+    sortOrder: 6,
+    isFavorite: true,
+    isPinned: false,
+    createdAt: new Date().toISOString(),
+  },
+];
+
 // ─── Zustand Store ────────────────────────────────────────────────────────────
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
@@ -553,6 +713,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   gameResources: initialGameResources,
   gameShowcaseItems: [],
   projects: initialProjects,
+  aiTools: initialAiTools,
   media: initialMedia,
   animeList: [],
   favoriteCharacters: [],
@@ -603,6 +764,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           projects: (data.projects && data.projects.length > 0)
             ? data.projects
             : get().projects,
+          aiTools: (data.aiTools && data.aiTools.length > 0)
+            ? data.aiTools
+            : get().aiTools,
           animeList: data.animeList || [],
           favoriteCharacters: data.favoriteCharacters || [],
           dramas: data.dramas || [],
@@ -880,6 +1044,50 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
     } catch (err) {
       console.error("Failed to sync deleted project:", err);
+    }
+  },
+
+  addAiTool: async (item) => {
+    set((s) => ({ aiTools: [item, ...s.aiTools] }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "UPDATE_AI_TOOL", payload: item }),
+      });
+    } catch (err) {
+      console.error("Failed to sync added AI tool:", err);
+    }
+  },
+
+  updateAiTool: async (id, data) => {
+    set((s) => ({
+      aiTools: s.aiTools.map((t) => (t.id === id ? { ...t, ...data } : t)),
+    }));
+    try {
+      const item = get().aiTools.find((t) => t.id === id);
+      if (item) {
+        await fetch("/api/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "UPDATE_AI_TOOL", payload: item }),
+        });
+      }
+    } catch (err) {
+      console.error("Failed to sync updated AI tool:", err);
+    }
+  },
+
+  removeAiTool: async (id) => {
+    set((s) => ({ aiTools: s.aiTools.filter((t) => t.id !== id) }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_AI_TOOL", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to sync deleted AI tool:", err);
     }
   },
 

@@ -211,6 +211,67 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true });
       }
 
+      case "UPDATE_AI_TOOL": {
+        const item = await prisma.aiToolItem.upsert({
+          where: { id: payload.id },
+          update: {
+            name: payload.name,
+            company: payload.company ?? null,
+            description: payload.description,
+            logo: payload.logo ?? null,
+            accentColor: payload.accentColor ?? "#10A37F",
+            category: payload.category ?? "💬 General AI",
+            pricingModel: payload.pricingModel ?? "Freemium",
+            version: payload.version ?? null,
+            launchUrl: payload.launchUrl ?? null,
+            websiteUrl: payload.websiteUrl ?? null,
+            docsUrl: payload.docsUrl ?? null,
+            apiUrl: payload.apiUrl ?? null,
+            pricingUrl: payload.pricingUrl ?? null,
+            githubUrl: payload.githubUrl ?? null,
+            discordUrl: payload.discordUrl ?? null,
+            communityUrl: payload.communityUrl ?? null,
+            releaseNotesUrl: payload.releaseNotesUrl ?? null,
+            tags: payload.tags ?? [],
+            sortOrder: payload.sortOrder ?? 0,
+            isFavorite: payload.isFavorite ?? false,
+            isPinned: payload.isPinned ?? false,
+            isArchived: payload.isArchived ?? false,
+          },
+          create: {
+            id: payload.id,
+            name: payload.name,
+            company: payload.company || null,
+            description: payload.description,
+            logo: payload.logo || null,
+            accentColor: payload.accentColor || "#10A37F",
+            category: payload.category || "💬 General AI",
+            pricingModel: payload.pricingModel || "Freemium",
+            version: payload.version || null,
+            launchUrl: payload.launchUrl || null,
+            websiteUrl: payload.websiteUrl || null,
+            docsUrl: payload.docsUrl || null,
+            apiUrl: payload.apiUrl || null,
+            pricingUrl: payload.pricingUrl || null,
+            githubUrl: payload.githubUrl || null,
+            discordUrl: payload.discordUrl || null,
+            communityUrl: payload.communityUrl || null,
+            releaseNotesUrl: payload.releaseNotesUrl || null,
+            tags: payload.tags || [],
+            sortOrder: payload.sortOrder || 0,
+            isFavorite: payload.isFavorite || false,
+            isPinned: payload.isPinned || false,
+            isArchived: payload.isArchived || false,
+          },
+        });
+        return NextResponse.json({ success: true, data: item });
+      }
+
+      case "DELETE_AI_TOOL": {
+        await prisma.aiToolItem.delete({ where: { id: payload.id } });
+        return NextResponse.json({ success: true });
+      }
+
       case "UPDATE_ANIME": {
         const anime = await prisma.anime.upsert({
           where: { id: payload.id },

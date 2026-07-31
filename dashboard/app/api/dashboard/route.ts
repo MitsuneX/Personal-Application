@@ -106,6 +106,13 @@ export async function GET() {
       console.warn("Notice: ProjectItem query fallback to empty array:", err);
     }
 
+    let dbAiTools: any[] = [];
+    try {
+      dbAiTools = await prisma.aiToolItem.findMany({ orderBy: [ { sortOrder: "asc" }, { createdAt: "desc" } ] });
+    } catch (err) {
+      console.warn("Notice: AiToolItem query fallback to empty array:", err);
+    }
+
     const dbAnime = await prisma.anime.findMany({ orderBy: { createdAt: "asc" } });
     const dbCharacters = await prisma.favoriteCharacter.findMany({ orderBy: { createdAt: "asc" } });
     const dbDramas = await prisma.drama.findMany({ orderBy: { createdAt: "asc" } });
@@ -130,6 +137,7 @@ export async function GET() {
       gameResources: dbGameResources,
       gameShowcaseItems: dbGameShowcaseItems,
       projects: dbProjects,
+      aiTools: dbAiTools,
       animeList: dbAnime,
       favoriteCharacters: dbCharacters,
       dramas: dbDramas,

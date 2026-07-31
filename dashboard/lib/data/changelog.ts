@@ -13,6 +13,34 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v3.3.0",
+    date: "2026-07-31",
+    title: "AI Library Personal Directory, Fast Launcher & Search Integration",
+    badge: "AI LIBRARY 3.3",
+    type: "minor",
+    summary: "Launched the AI Library (/ai-library) module directly below Visit in the MAIN sidebar navigation. Serves as a personal collection, launcher, and resource directory for external AI tools and models (ChatGPT, Claude, Gemini, Perplexity, DeepSeek, Cursor, etc.) with custom branding accents, configurable quick action buttons, and automatic global search indexing.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🤖 AI Library Portal (/ai-library): Added personal AI directory and fast launcher organizing external AI platforms, desktop tools, documentation, API keys, pricing, and developer community links.",
+          "🤖 Sidebar Placement: Inserted 'AI Library' directly BELOW 'Visit' in the MAIN sidebar navigation section.",
+          "🚀 Fast Launch Engine: Configurable primary '🚀 Launch Platform' button with brand-accented hover styling alongside resource action links (Website, Docs, API, Pricing, GitHub, Discord, Forum, Notes).",
+          "🎨 Brand-Driven Accent System: Per-card configurable accent colors (ChatGPT green, Claude orange, Gemini blue, Perplexity teal, DeepSeek blue, Cursor cyan, Windsurf blue, Bolt purple, Lovable pink, Copilot gray).",
+          "🔍 Dynamic Search Provider: Registered aiTools into searchRegistry.ts so AI entries automatically become searchable via Ctrl + K navbar search with direct launch navigation.",
+          "🛠️ AI Tool Editor Modal: Full management modal for Add, Edit, Delete, Archive, Logo Upload, Branding Accent selection, Pricing Model, and Quick Resource Links.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "Prisma Model Addition: Added AiToolItem model to schema.prisma with PostgreSQL database synchronization via npx prisma db push.",
+          "API & Store Integration: Updated /api/dashboard and /api/action with UPDATE_AI_TOOL and DELETE_AI_TOOL action handlers alongside Zustand store persistence.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v3.2.0",
     date: "2026-07-31",
     title: "Global Search Engine Architecture, Visit Project Hub & Motion System Overhaul",
