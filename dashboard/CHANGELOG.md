@@ -2,25 +2,30 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
-## [3.2.0] - 2026-07-31
+## [3.2.1] - 2026-07-31
 
-### 🚀 Multi-User SaaS Architecture & Data Isolation
-- **Strict User Data Isolation**: Added `userId` scoping across all 21 database models in `prisma/schema.prisma` with indexed columns (`@index([userId])`).
-- **Zero Cross-Account Data Leakage**: Enforced server-side ownership filtering in `app/api/dashboard/route.ts` and `app/api/action/route.ts`. Newly registered accounts receive their own clean, isolated datasets.
-- **Database Ownership Migration**: Successfully migrated all pre-existing records to the primary owner account (`8f151ec2-d923-44f4-88d2-ef7a5e166232`), guaranteeing zero data loss.
+### 🔒 Enterprise Multi-User Architecture & Strict Data Isolation
+- **Database Schema Audit & Scoping**: Added `userId` scoping with indexes (`@@index([userId])`) across all 21 user-editable Prisma models (`Game`, `AiToolItem`, `Drama`, `DramaLog`, `ProjectItem`, `Note`, `Song`, `Playlist`, `HobbySkill`, `HobbyLog`, `HallOfFame`, `Anime`, `GalleryItem`, `Link`, etc.).
+- **Zero Cross-Account Data Leakage**: Guaranteed that newly registered accounts receive an isolated environment (`where: { userId: user.id }`). Accounts never see or mutate another user's personal records.
+- **Automated Data Migration**: Executed `scripts/migrate_ownership.ts` to assign all pre-existing personal records to the primary owner account (`mikunakanox@gmail.com`), preserving 100% of existing ratings, screenshots, notes, and collections without data loss.
 
-### 🎮 Guest Sandbox Mode & UX Enhancements
-- **One-Click Guest Access**: Added a prominent `🚀 CONTINUE AS GUEST` option on both Cyberpunk and Neo-Brutalist login screens.
-- **Zero Database Pollution**: Guest session mutations operate strictly in-memory / client state. No guest data ever enters PostgreSQL.
-- **Persistent Guest Banner**: Added `GuestBanner` component displaying active guest status and an `EXIT GUEST →` button.
-- **Email Enter Focus Progression**: Pressing `Enter` in the email input field on the login screen automatically advances focus to the password field.
+### 🎮 Non-Persisting Guest Sandbox Mode
+- **One-Click Demo Access**: Added a prominent `🚀 CONTINUE AS GUEST` option to both Cyberpunk and Neo-Brutalism login screens.
+- **Zero Database Pollution**: All Guest Mode operations (adding items, editing AI tools, deleting entries, uploading assets) exist strictly in-memory / client session state and **never write to PostgreSQL**.
+- **Guest Banner & Exit**: Rendered a `GuestBanner` component indicating temporary sandbox mode with an `EXIT GUEST →` button to clear cookies and return to login.
 
-### 🤖 AI Library & Games Expansion
-- **Expanded AI Library**: Added 35 frontier AI platforms across General AI, Coding AI, Research AI, and Search AI.
-- **Expanded Games Library**: Registered 6 new gaming titles with custom SVG vector icons, dossier configurations, combat role breakdowns, and elemental attributes:
-  - *Girls' Frontline 2: Exilium*
-  - *Outerplane*
-  - *Tower of Fantasy*
-  - *Goddess of Victory: NIKKE*
-  - *Arknights: Endfield*
-  - *Honkai Impact 3rd*
+### ⚡ Login UX & Navigation Improvements
+- **Email Enter Focus Progression**: Hitting `Enter` in the email input field automatically shifts focus directly to the password input field for fast keyboard authentication.
+
+### 🤖 AI Library & Games Database Expansion
+- **35 Frontier AI Platforms**: Expanded AI Library to 35 fully configured entries across General AI, Coding AI, Research AI, and Search AI.
+- **6 New Gaming Dossiers**: Added vector SVG icons, dossier configs, combat breakdowns, and elemental systems for:
+  - *Girls' Frontline 2: Exilium* (Tactical RPG — Doll Combat Roles & Elemental Attributes)
+  - *Outerplane* (Turn-Based RPG — Hero Combat Classes & Elements)
+  - *Tower of Fantasy* (Open-World RPG — Simulacra Roles & Resonance Elements)
+  - *Goddess of Victory: NIKKE* (Shooter RPG — Burst Stage I/II/III & Manufacturer Factions)
+  - *Arknights: Endfield* (Action RPG — Operator Classes & Elements)
+  - *Honkai Impact 3rd* (Action RPG — Valkyrie Battlesuits & Elemental Types)
+
+## [3.1.0] - 2026-07-30
+- Initial AI & Games Library architecture with Prisma 7.8.0 singleton and dual-theme (Cyberpunk & Neo-Brutalism) rendering.
