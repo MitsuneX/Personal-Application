@@ -285,15 +285,21 @@ model ProjectItem {
 }
 
 model AiToolItem {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   name            String
-  company         String?  // e.g. "OpenAI", "Anthropic", "Google", "Perplexity AI", "DeepSeek", "Anysphere"
+  company         String?   // e.g. "OpenAI", "Anthropic", "Google", "Perplexity AI", "DeepSeek", "Anysphere"
   description     String
-  logo            String?  // Emoji or image URL
-  accentColor     String   @default("#10A37F")
-  category        String   @default("💬 General AI")
-  pricingModel    String?  @default("Freemium") // "Free" | "Freemium" | "Paid" | "Open Source"
+  logo            String?   // Emoji or image URL
+  accentColor     String    @default("#10A37F")
+  category        String    @default("💬 General AI")
+  usageStatus     String?   @default("Daily") // "Daily" | "Weekly" | "Occasionally" | "Rarely" | "Experimental" | "Inactive" | "Archived"
+  pricingModel    String?   @default("Freemium") // "Free" | "Freemium" | "Paid" | "Open Source"
+  rating          Int?      @default(5) // 1 to 5 stars
+  strengths       Json?     // array of string strengths (e.g. ["Coding", "Reasoning", "React Refactoring"])
+  notes           String?   // multi-line personal evaluations & notes
   version         String?
+  lastUsed        DateTime?
+  launchCount     Int       @default(0)
   launchUrl       String?
   websiteUrl      String?
   docsUrl         String?
@@ -303,11 +309,14 @@ model AiToolItem {
   discordUrl      String?
   communityUrl    String?
   releaseNotesUrl String?
-  tags            Json?    // array of string tags
-  sortOrder       Int      @default(0)
-  isFavorite      Boolean  @default(false)
-  isPinned        Boolean  @default(false)
-  isArchived      Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  blogUrl         String?
+  roadmapUrl      String?
+  youtubeUrl      String?
+  tags            Json?     // array of string tags
+  sortOrder       Int       @default(0)
+  isFavorite      Boolean   @default(false)
+  isPinned        Boolean   @default(false)
+  isArchived      Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }

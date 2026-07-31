@@ -221,8 +221,14 @@ export async function POST(req: Request) {
             logo: payload.logo ?? null,
             accentColor: payload.accentColor ?? "#10A37F",
             category: payload.category ?? "💬 General AI",
+            usageStatus: payload.usageStatus ?? "Daily",
             pricingModel: payload.pricingModel ?? "Freemium",
+            rating: payload.rating ?? 5,
+            strengths: payload.strengths ?? [],
+            notes: payload.notes ?? null,
             version: payload.version ?? null,
+            lastUsed: payload.lastUsed ? new Date(payload.lastUsed) : undefined,
+            launchCount: payload.launchCount ?? undefined,
             launchUrl: payload.launchUrl ?? null,
             websiteUrl: payload.websiteUrl ?? null,
             docsUrl: payload.docsUrl ?? null,
@@ -232,6 +238,9 @@ export async function POST(req: Request) {
             discordUrl: payload.discordUrl ?? null,
             communityUrl: payload.communityUrl ?? null,
             releaseNotesUrl: payload.releaseNotesUrl ?? null,
+            blogUrl: payload.blogUrl ?? null,
+            roadmapUrl: payload.roadmapUrl ?? null,
+            youtubeUrl: payload.youtubeUrl ?? null,
             tags: payload.tags ?? [],
             sortOrder: payload.sortOrder ?? 0,
             isFavorite: payload.isFavorite ?? false,
@@ -246,8 +255,14 @@ export async function POST(req: Request) {
             logo: payload.logo || null,
             accentColor: payload.accentColor || "#10A37F",
             category: payload.category || "💬 General AI",
+            usageStatus: payload.usageStatus || "Daily",
             pricingModel: payload.pricingModel || "Freemium",
+            rating: payload.rating ?? 5,
+            strengths: payload.strengths || [],
+            notes: payload.notes || null,
             version: payload.version || null,
+            lastUsed: payload.lastUsed ? new Date(payload.lastUsed) : null,
+            launchCount: payload.launchCount || 0,
             launchUrl: payload.launchUrl || null,
             websiteUrl: payload.websiteUrl || null,
             docsUrl: payload.docsUrl || null,
@@ -257,11 +272,25 @@ export async function POST(req: Request) {
             discordUrl: payload.discordUrl || null,
             communityUrl: payload.communityUrl || null,
             releaseNotesUrl: payload.releaseNotesUrl || null,
+            blogUrl: payload.blogUrl || null,
+            roadmapUrl: payload.roadmapUrl || null,
+            youtubeUrl: payload.youtubeUrl || null,
             tags: payload.tags || [],
             sortOrder: payload.sortOrder || 0,
             isFavorite: payload.isFavorite || false,
             isPinned: payload.isPinned || false,
             isArchived: payload.isArchived || false,
+          },
+        });
+        return NextResponse.json({ success: true, data: item });
+      }
+
+      case "RECORD_AI_TOOL_LAUNCH": {
+        const item = await prisma.aiToolItem.update({
+          where: { id: payload.id },
+          data: {
+            lastUsed: new Date(),
+            launchCount: { increment: 1 },
           },
         });
         return NextResponse.json({ success: true, data: item });

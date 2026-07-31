@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Modal } from "@/components/ui/modal";
 import { useTheme } from "@/lib/theme";
-import { useDashboardStore, AiToolItemEntry, AiPricingModel } from "@/lib/store/dashboardStore";
+import { useDashboardStore, AiToolItemEntry, AiPricingModel, AiUsageStatus } from "@/lib/store/dashboardStore";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 
 interface AiToolEditorModalProps {
@@ -29,6 +29,16 @@ const CATEGORY_OPTIONS = [
   { value: "🏢 Enterprise", label: "🏢 Enterprise Solutions", icon: "🏢" },
 ];
 
+const USAGE_STATUS_OPTIONS = [
+  { value: "Daily", label: "🔥 Daily Use", icon: "🔥" },
+  { value: "Weekly", label: "⚡ Weekly Use", icon: "⚡" },
+  { value: "Occasionally", label: "🎯 Occasional Use", icon: "🎯" },
+  { value: "Rarely", label: "🐢 Rarely Used", icon: "🐢" },
+  { value: "Experimental", label: "🧪 Experimental / Lab", icon: "🧪" },
+  { value: "Inactive", label: "💤 Inactive / Evaluated", icon: "💤" },
+  { value: "Archived", label: "📦 Archived", icon: "📦" },
+];
+
 const PRICING_OPTIONS = [
   { value: "Free", label: "🆓 Free", icon: "🆓" },
   { value: "Freemium", label: "⚡ Freemium", icon: "⚡" },
@@ -50,6 +60,10 @@ const BRANDING_PRESETS = [
   { name: "Copilot Gray", hex: "#6E7681" },
 ];
 
+const PRESET_STRENGTHS = [
+  "Coding", "Frontend", "Backend", "Full Stack", "Reasoning", "Writing", "Translation", "Research", "Summarization", "OCR", "Image Generation", "Video Generation", "Audio", "Productivity", "Data Analysis", "Math"
+];
+
 const PRESET_TAGS = [
   "LLM", "Coding", "Reasoning", "Vision", "Multimodal", "Open Source", "IDE", "Search", "Agents", "Local AI"
 ];
@@ -63,7 +77,11 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
   const [company, setCompany] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("💬 General AI");
+  const [usageStatus, setUsageStatus] = useState<AiUsageStatus>("Daily");
   const [pricingModel, setPricingModel] = useState<AiPricingModel>("Freemium");
+  const [rating, setRating] = useState<number>(5);
+  const [strengthsString, setStrengthsString] = useState("");
+  const [notes, setNotes] = useState("");
   const [version, setVersion] = useState("");
   const [accentColor, setAccentColor] = useState("#10A37F");
   const [logo, setLogo] = useState("🤖");
@@ -77,6 +95,9 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
   const [discordUrl, setDiscordUrl] = useState("");
   const [communityUrl, setCommunityUrl] = useState("");
   const [releaseNotesUrl, setReleaseNotesUrl] = useState("");
+  const [blogUrl, setBlogUrl] = useState("");
+  const [roadmapUrl, setRoadmapUrl] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
 
   const [tagsString, setTagsString] = useState("");
   const [isFavorite, setIsFavorite] = useState(false);
@@ -95,7 +116,11 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
       setCompany(toolToEdit.company || "");
       setDescription(toolToEdit.description);
       setCategory(toolToEdit.category || "💬 General AI");
+      setUsageStatus(toolToEdit.usageStatus || "Daily");
       setPricingModel(toolToEdit.pricingModel || "Freemium");
+      setRating(toolToEdit.rating ?? 5);
+      setStrengthsString(Array.isArray(toolToEdit.strengths) ? toolToEdit.strengths.join(", ") : "");
+      setNotes(toolToEdit.notes || "");
       setVersion(toolToEdit.version || "");
       setAccentColor(toolToEdit.accentColor || "#10A37F");
       setLogo(toolToEdit.logo || "🤖");
@@ -109,6 +134,9 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
       setDiscordUrl(toolToEdit.discordUrl || "");
       setCommunityUrl(toolToEdit.communityUrl || "");
       setReleaseNotesUrl(toolToEdit.releaseNotesUrl || "");
+      setBlogUrl(toolToEdit.blogUrl || "");
+      setRoadmapUrl(toolToEdit.roadmapUrl || "");
+      setYoutubeUrl(toolToEdit.youtubeUrl || "");
 
       setTagsString(Array.isArray(toolToEdit.tags) ? toolToEdit.tags.join(", ") : "");
       setIsFavorite(toolToEdit.isFavorite ?? false);
@@ -119,7 +147,11 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
       setCompany("");
       setDescription("");
       setCategory("💬 General AI");
+      setUsageStatus("Daily");
       setPricingModel("Freemium");
+      setRating(5);
+      setStrengthsString("");
+      setNotes("");
       setVersion("");
       setAccentColor("#10A37F");
       setLogo("🤖");
@@ -133,6 +165,9 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
       setDiscordUrl("");
       setCommunityUrl("");
       setReleaseNotesUrl("");
+      setBlogUrl("");
+      setRoadmapUrl("");
+      setYoutubeUrl("");
 
       setTagsString("");
       setIsFavorite(false);
@@ -159,6 +194,13 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
     }
   };
 
+  const handleAddStrength = (strength: string) => {
+    const list = strengthsString.split(",").map((s) => s.trim()).filter(Boolean);
+    if (!list.includes(strength)) {
+      setStrengthsString([...list, strength].join(", "));
+    }
+  };
+
   const handleAddTag = (tag: string) => {
     const list = tagsString.split(",").map((t) => t.trim()).filter(Boolean);
     if (!list.includes(tag)) {
@@ -171,6 +213,7 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
     if (!name.trim() || !description.trim()) return;
 
     setIsSaving(true);
+    const strengths = strengthsString.split(",").map((s) => s.trim()).filter(Boolean);
     const tags = tagsString.split(",").map((t) => t.trim()).filter(Boolean);
 
     try {
@@ -180,7 +223,11 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
           company: company.trim() || undefined,
           description: description.trim(),
           category,
+          usageStatus,
           pricingModel,
+          rating,
+          strengths,
+          notes: notes.trim() || undefined,
           version: version.trim() || undefined,
           accentColor,
           logo: logo.trim() || undefined,
@@ -193,6 +240,9 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
           discordUrl: discordUrl.trim() || undefined,
           communityUrl: communityUrl.trim() || undefined,
           releaseNotesUrl: releaseNotesUrl.trim() || undefined,
+          blogUrl: blogUrl.trim() || undefined,
+          roadmapUrl: roadmapUrl.trim() || undefined,
+          youtubeUrl: youtubeUrl.trim() || undefined,
           tags,
           isFavorite,
           isPinned,
@@ -205,7 +255,11 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
           company: company.trim() || undefined,
           description: description.trim(),
           category,
+          usageStatus,
           pricingModel,
+          rating,
+          strengths,
+          notes: notes.trim() || undefined,
           version: version.trim() || undefined,
           accentColor,
           logo: logo.trim() || undefined,
@@ -218,6 +272,9 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
           discordUrl: discordUrl.trim() || undefined,
           communityUrl: communityUrl.trim() || undefined,
           releaseNotesUrl: releaseNotesUrl.trim() || undefined,
+          blogUrl: blogUrl.trim() || undefined,
+          roadmapUrl: roadmapUrl.trim() || undefined,
+          youtubeUrl: youtubeUrl.trim() || undefined,
           tags,
           sortOrder: 0,
           isFavorite,
@@ -263,10 +320,10 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
         <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/10">
           <div>
             <h2 className="text-xl font-black theme-text-primary flex items-center gap-2">
-              <span>🤖</span> {toolToEdit ? "Edit AI Platform" : "Add AI Platform Entry"}
+              <span>🤖</span> {toolToEdit ? "Edit AI Platform & Knowledge Entry" : "Add AI Platform Entry"}
             </h2>
             <p className="text-xs theme-text-muted font-mono mt-0.5">
-              AI Directory & Fast Launcher Configuration
+              Personal AI Collection & Knowledge Hub Manager
             </p>
           </div>
           <button
@@ -289,7 +346,7 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. ChatGPT, Claude, Cursor IDE"
+                placeholder="e.g. ChatGPT, Claude 3.5 Sonnet, Cursor"
                 className="w-full p-2.5 rounded-xl border text-sm font-bold focus:outline-none"
                 style={inputStyles}
               />
@@ -309,7 +366,7 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
             </div>
           </div>
 
-          {/* Category & Pricing Model & Version */}
+          {/* Category & Usage Status & Rating */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary uppercase">
@@ -321,6 +378,39 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
                 options={CATEGORY_OPTIONS}
               />
             </div>
+            <div>
+              <label className="block text-xs font-bold mb-1 theme-text-secondary uppercase">
+                Usage Status
+              </label>
+              <CustomSelect
+                value={usageStatus}
+                onChange={(val) => setUsageStatus(val as AiUsageStatus)}
+                options={USAGE_STATUS_OPTIONS}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold mb-1 theme-text-secondary uppercase">
+                Personal Rating (1-5★)
+              </label>
+              <div className="flex items-center gap-1.5 p-2 rounded-xl border" style={inputStyles}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    className={`text-lg cursor-pointer transition-transform hover:scale-125 ${
+                      star <= rating ? "text-amber-400" : "opacity-20"
+                    }`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Pricing Model & Version Tag & Accent Branding */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary uppercase">
                 Pricing Model
@@ -344,31 +434,29 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
                 style={inputStyles}
               />
             </div>
-          </div>
-
-          {/* Accent Color Branding */}
-          <div>
-            <label className="block text-xs font-bold mb-1 theme-text-secondary uppercase">
-              Brand Accent Color
-            </label>
-            <div className="flex items-center gap-3 flex-wrap">
-              <input
-                type="color"
-                value={accentColor}
-                onChange={(e) => setAccentColor(e.target.value)}
-                className="w-10 h-10 rounded-xl border cursor-pointer p-0.5 bg-transparent"
-              />
-              <div className="flex flex-wrap gap-1.5">
-                {BRANDING_PRESETS.map((preset) => (
-                  <button
-                    key={preset.name}
-                    type="button"
-                    title={preset.name}
-                    onClick={() => setAccentColor(preset.hex)}
-                    className="w-6 h-6 rounded-md border border-black/40 cursor-pointer transition-transform hover:scale-110"
-                    style={{ backgroundColor: preset.hex }}
-                  />
-                ))}
+            <div>
+              <label className="block text-xs font-bold mb-1 theme-text-secondary uppercase">
+                Brand Accent Color
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={accentColor}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  className="w-10 h-10 rounded-xl border cursor-pointer p-0.5 bg-transparent"
+                />
+                <div className="flex flex-wrap gap-1">
+                  {BRANDING_PRESETS.map((preset) => (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      title={preset.name}
+                      onClick={() => setAccentColor(preset.hex)}
+                      className="w-5 h-5 rounded-md border border-black/40 cursor-pointer"
+                      style={{ backgroundColor: preset.hex }}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -383,8 +471,57 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
               required
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. State-of-the-art conversational AI assistant powered by GPT-4o for coding, writing, and analysis."
+              placeholder="e.g. State-of-the-art conversational AI assistant powered by GPT-4o for writing, analysis, coding, and multi-modal problem solving."
               className="w-full p-2.5 rounded-xl border text-sm font-semibold focus:outline-none"
+              style={inputStyles}
+            />
+          </div>
+
+          {/* Personal Strengths Tag Picker */}
+          <div className="space-y-2">
+            <label className="block text-xs font-bold mb-1 theme-text-secondary uppercase">
+              Personal Strengths (Comma-separated)
+            </label>
+            <input
+              type="text"
+              value={strengthsString}
+              onChange={(e) => setStrengthsString(e.target.value)}
+              placeholder="e.g. Coding, Reasoning, Frontend, Writing, Math"
+              className="w-full p-2.5 rounded-xl border text-sm font-semibold focus:outline-none"
+              style={inputStyles}
+            />
+
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              <span className="text-[10px] theme-text-muted self-center font-mono mr-1">Quick Strengths:</span>
+              {PRESET_STRENGTHS.map((str) => (
+                <button
+                  key={str}
+                  type="button"
+                  onClick={() => handleAddStrength(str)}
+                  className="px-2 py-0.5 rounded text-[10px] font-bold font-mono border transition-all cursor-pointer hover:scale-105"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(0,245,255,0.08)" : "#EFF6FF",
+                    borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#BFDBFE",
+                    color: isCyber ? "#00F5FF" : "#1E40AF",
+                  }}
+                >
+                  +{str}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Personal Notes */}
+          <div>
+            <label className="block text-xs font-bold mb-1 theme-text-secondary uppercase">
+              Personal Knowledge Notes & Workflow Evaluation
+            </label>
+            <textarea
+              rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="e.g. Excellent for React refactoring. Best artifact quality. Weak at image generation."
+              className="w-full p-2.5 rounded-xl border text-sm font-semibold focus:outline-none font-sans"
               style={inputStyles}
             />
           </div>
@@ -425,7 +562,7 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
             </div>
           </div>
 
-          {/* Primary Launch Target */}
+          {/* Primary Fast Launch Target */}
           <div className="p-3.5 rounded-xl border space-y-2.5" style={{ borderColor: isCyber ? "rgba(16,185,129,0.3)" : "#A7F3D0", backgroundColor: isCyber ? "rgba(16,185,129,0.03)" : "#ECFDF5" }}>
             <p className="text-xs font-bold uppercase tracking-wider theme-text-primary flex items-center gap-1.5">
               <span>🚀</span> Primary Fast Launch Target URL
@@ -440,13 +577,13 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
             />
           </div>
 
-          {/* Configurable Quick Action Links */}
+          {/* Configurable Quick Action Resource Links */}
           <div className="p-3.5 rounded-xl border space-y-2.5" style={{ borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#CBD5E1", backgroundColor: isCyber ? "rgba(0,245,255,0.02)" : "#FAFAFA" }}>
             <p className="text-xs font-bold uppercase tracking-wider theme-text-primary flex items-center gap-1.5">
-              <span>🔗</span> Configurable Resource Buttons
+              <span>🔗</span> Resource & Developer Links
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <input type="text" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="Website URL" className="p-2 rounded-lg border text-xs font-mono" style={inputStyles} />
+              <input type="text" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="Official Website URL" className="p-2 rounded-lg border text-xs font-mono" style={inputStyles} />
               <input type="text" value={docsUrl} onChange={(e) => setDocsUrl(e.target.value)} placeholder="Documentation URL" className="p-2 rounded-lg border text-xs font-mono" style={inputStyles} />
               <input type="text" value={apiUrl} onChange={(e) => setApiUrl(e.target.value)} placeholder="API Docs / Keys URL" className="p-2 rounded-lg border text-xs font-mono" style={inputStyles} />
               <input type="text" value={pricingUrl} onChange={(e) => setPricingUrl(e.target.value)} placeholder="Pricing URL" className="p-2 rounded-lg border text-xs font-mono" style={inputStyles} />
@@ -454,6 +591,9 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
               <input type="text" value={discordUrl} onChange={(e) => setDiscordUrl(e.target.value)} placeholder="Discord Server URL" className="p-2 rounded-lg border text-xs font-mono" style={inputStyles} />
               <input type="text" value={communityUrl} onChange={(e) => setCommunityUrl(e.target.value)} placeholder="Community Forum URL" className="p-2 rounded-lg border text-xs font-mono" style={inputStyles} />
               <input type="text" value={releaseNotesUrl} onChange={(e) => setReleaseNotesUrl(e.target.value)} placeholder="Release Notes URL" className="p-2 rounded-lg border text-xs font-mono" style={inputStyles} />
+              <input type="text" value={blogUrl} onChange={(e) => setBlogUrl(e.target.value)} placeholder="Official Blog URL" className="p-2 rounded-lg border text-xs font-mono" style={inputStyles} />
+              <input type="text" value={roadmapUrl} onChange={(e) => setRoadmapUrl(e.target.value)} placeholder="Product Roadmap URL" className="p-2 rounded-lg border text-xs font-mono" style={inputStyles} />
+              <input type="text" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder="YouTube Demos URL" className="p-2 rounded-lg border text-xs font-mono" style={inputStyles} />
             </div>
           </div>
 

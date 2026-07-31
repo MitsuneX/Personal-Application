@@ -8,6 +8,8 @@ import { useTheme } from "@/lib/theme";
 import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants";
 import { useDashboardStore, AiToolItemEntry } from "@/lib/store/dashboardStore";
 import { AiToolEditorModal } from "@/components/ui/AiToolEditorModal";
+import { AiToolDetailModal } from "@/components/ui/AiToolDetailModal";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 const PRICING_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   Free: { label: "🆓 Free", color: "#10B981", bg: "rgba(16,185,129,0.15)" },
@@ -16,6 +18,25 @@ const PRICING_CONFIG: Record<string, { label: string; color: string; bg: string 
   "Open Source": { label: "📦 Open Source", color: "#8B5CF6", bg: "rgba(139,92,246,0.15)" },
   Enterprise: { label: "🏢 Enterprise", color: "#EC4899", bg: "rgba(236,72,153,0.15)" },
 };
+
+const STATUS_PILLS: Record<string, { label: string; color: string; bg: string }> = {
+  Daily: { label: "🔥 Daily", color: "#10B981", bg: "rgba(16,185,129,0.15)" },
+  Weekly: { label: "⚡ Weekly", color: "#00F5FF", bg: "rgba(0,245,255,0.15)" },
+  Occasionally: { label: "🎯 Occasional", color: "#3B82F6", bg: "rgba(59,130,246,0.15)" },
+  Rarely: { label: "🐢 Rarely", color: "#F97316", bg: "rgba(249,115,22,0.15)" },
+  Experimental: { label: "🧪 Experimental", color: "#8B5CF6", bg: "rgba(139,92,246,0.15)" },
+  Inactive: { label: "💤 Inactive", color: "#64748B", bg: "rgba(100,116,139,0.15)" },
+  Archived: { label: "📦 Archived", color: "#64748B", bg: "rgba(100,116,139,0.15)" },
+};
+
+const SORT_OPTIONS = [
+  { value: "DEFAULT", label: "📌 Pinned & Display Order", icon: "📌" },
+  { value: "LAST_USED", label: "⏱️ Recently Used (Last Used)", icon: "⏱️" },
+  { value: "HIGHEST_RATED", label: "⭐ Highest Rated (5★ First)", icon: "⭐" },
+  { value: "ALPHABETICAL", label: "🔤 Alphabetical (A-Z)", icon: "🔤" },
+  { value: "MOST_LAUNCHED", label: "🔥 Most Launched Count", icon: "🔥" },
+  { value: "COMPANY", label: "🏢 Company / Developer", icon: "🏢" },
+];
 
 function isValidUrl(url?: string) {
   if (!url) return false;
@@ -28,30 +49,79 @@ function isValidUrl(url?: string) {
   }
 }
 
+function renderStars(rating: number = 5) {
+  const stars = [];
+  for (let i = 1; i <= 5; i++) {
+    stars.push(
+      <span key={i} className={i <= rating ? "text-amber-400" : "opacity-20"}>
+        ★
+      </span>
+    );
+  }
+  return stars;
+}
+
+function formatRelativeTime(dateStr?: string) {
+  if (!dateStr) return "Never";
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffHours < 1) return "Just now";
+  if (diffHours < 24) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
 export default function AiLibraryPage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
 
   const aiTools = useDashboardStore((s) => s.aiTools) || [];
+  const { recordAiToolLaunch } = useDashboardStore();
 
   // Modal States
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingTool, setEditingTool] = useState<AiToolItemEntry | null>(null);
+  const [detailTool, setDetailTool] = useState<AiToolItemEntry | null>(null);
 
-  // Filters & Search
+  // Filters & Search & Sort
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
+  const [usageFilter, setUsageFilter] = useState("ALL");
+  const [ratingFilter, setRatingFilter] = useState("ALL");
+  const [strengthFilter, setStrengthFilter] = useState("ALL");
   const [pricingFilter, setPricingFilter] = useState("ALL");
+  const [sortBy, setSortBy] = useState("DEFAULT");
   const [showArchived, setShowArchived] = useState(false);
 
-  // Extract unique categories
+  // Extract unique categories & strengths
   const categoriesList = Array.from(new Set(aiTools.map((t) => t.category))).filter(Boolean);
+  const allStrengths = Array.from(
+    new Set(aiTools.flatMap((t) => (Array.isArray(t.strengths) ? t.strengths : [])))
+  ).filter(Boolean);
 
+  // Filter tools
   const filteredTools = aiTools.filter((t) => {
     if (!showArchived && t.isArchived) return false;
 
     if (categoryFilter === "FAVORITES" && !t.isFavorite) return false;
     if (categoryFilter !== "ALL" && categoryFilter !== "FAVORITES" && t.category !== categoryFilter) return false;
+
+    if (usageFilter !== "ALL" && t.usageStatus !== usageFilter) return false;
+
+    if (ratingFilter !== "ALL") {
+      const minStars = parseInt(ratingFilter, 10);
+      if ((t.rating || 5) < minStars) return false;
+    }
+
+    if (strengthFilter !== "ALL") {
+      if (!Array.isArray(t.strengths) || !t.strengths.includes(strengthFilter)) return false;
+    }
 
     if (pricingFilter !== "ALL" && t.pricingModel !== pricingFilter) return false;
 
@@ -60,26 +130,68 @@ export default function AiLibraryPage() {
       const matchName = t.name.toLowerCase().includes(q);
       const matchCompany = (t.company || "").toLowerCase().includes(q);
       const matchDesc = t.description.toLowerCase().includes(q);
+      const matchNotes = (t.notes || "").toLowerCase().includes(q);
       const matchCategory = t.category.toLowerCase().includes(q);
+      const matchUsage = (t.usageStatus || "").toLowerCase().includes(q);
       const matchPricing = (t.pricingModel || "").toLowerCase().includes(q);
+      const matchStrength = (t.strengths || []).some((str) => str.toLowerCase().includes(q));
       const matchTag = (t.tags || []).some((tag) => tag.toLowerCase().includes(q));
-      return matchName || matchCompany || matchDesc || matchCategory || matchPricing || matchTag;
+      return (
+        matchName ||
+        matchCompany ||
+        matchDesc ||
+        matchNotes ||
+        matchCategory ||
+        matchUsage ||
+        matchPricing ||
+        matchStrength ||
+        matchTag
+      );
     }
     return true;
   });
 
-  // Sort tools: Pinned first, then Favorite, then sortOrder
+  // Sort tools
   const sortedTools = [...filteredTools].sort((a, b) => {
+    if (sortBy === "LAST_USED") {
+      const timeA = a.lastUsed ? new Date(a.lastUsed).getTime() : 0;
+      const timeB = b.lastUsed ? new Date(b.lastUsed).getTime() : 0;
+      return timeB - timeA;
+    }
+    if (sortBy === "HIGHEST_RATED") {
+      return (b.rating || 5) - (a.rating || 5);
+    }
+    if (sortBy === "ALPHABETICAL") {
+      return a.name.localeCompare(b.name);
+    }
+    if (sortBy === "MOST_LAUNCHED") {
+      return (b.launchCount || 0) - (a.launchCount || 0);
+    }
+    if (sortBy === "COMPANY") {
+      return (a.company || "").localeCompare(b.company || "");
+    }
+    // DEFAULT: Pinned first, then Favorite, then sortOrder
     if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
     if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
     return (a.sortOrder || 0) - (b.sortOrder || 0);
   });
 
+  // Pinned & Favorites showcase tools
+  const pinnedTools = aiTools.filter((t) => (t.isPinned || t.isFavorite) && !t.isArchived);
+
   // Stats Metrics
   const totalTools = aiTools.length;
   const favoriteTools = aiTools.filter((t) => t.isFavorite).length;
-  const codingTools = aiTools.filter((t) => t.category.includes("Coding") || (t.tags || []).includes("Coding")).length;
-  const researchTools = aiTools.filter((t) => t.category.includes("Research") || t.category.includes("Search")).length;
+  const dailyTools = aiTools.filter((t) => t.usageStatus === "Daily").length;
+  const topRatedTools = aiTools.filter((t) => (t.rating || 5) === 5).length;
+
+  const handleLaunch = (tool: AiToolItemEntry) => {
+    recordAiToolLaunch(tool.id);
+    const target = tool.launchUrl || tool.websiteUrl;
+    if (target) {
+      window.open(target, target.startsWith("/") ? "_self" : "_blank");
+    }
+  };
 
   return (
     <AppShell>
@@ -95,10 +207,10 @@ export default function AiLibraryPage() {
             <span className="text-3xl">🤖</span>
             <div>
               <h1 className="text-2xl md:text-3xl font-black theme-text-primary tracking-tight leading-none">
-                AI Library & Launcher
+                AI Library & Knowledge Hub
               </h1>
               <p className="text-xs theme-text-muted font-mono mt-1">
-                Personal Collection of External AI Platforms, Tools & Fast Launch Targets
+                Personal AI Collection, Evaluations, Workflow Strengths & Fast Launcher
               </p>
             </div>
           </div>
@@ -122,7 +234,7 @@ export default function AiLibraryPage() {
           </div>
         </div>
 
-        {/* ── Stats Header Banner ── */}
+        {/* ── Header Metrics Banner ── */}
         <motion.div variants={cardVariants}>
           <BentoCard id="ai-header-banner" className="relative overflow-hidden p-6 md:p-8">
             {isCyber && (
@@ -133,25 +245,25 @@ export default function AiLibraryPage() {
               <div className="space-y-2 max-w-xl">
                 <div className="flex items-center gap-2">
                   <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
-                    AI LAUNCHER SUITE
+                    PERSONAL KNOWLEDGE HUB
                   </span>
-                  <span className="text-xs font-mono theme-text-muted">v3.2.0 Index</span>
+                  <span className="text-xs font-mono theme-text-muted">v3.4.0 Engine</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-black theme-text-primary leading-tight">
-                  Organized Portal for AI Assistants, Coding Agents & Models
+                  Curated Directory of Evaluated AI Assistants & Models
                 </h2>
                 <p className="text-xs theme-text-secondary leading-relaxed">
-                  Quickly launch web platforms, desktop environments, API documentation, pricing tiers, and developer resources from a single central command interface.
+                  Track personal star ratings, workflow strengths, daily/weekly usage habits, evaluation notes, and fast launch targets for every AI platform in your tech stack.
                 </p>
               </div>
 
               {/* Metrics */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full md:w-auto shrink-0">
                 {[
-                  { label: "Total AI Platforms", value: totalTools, color: "#10A37F" },
+                  { label: "AI Collection", value: totalTools, color: "#10A37F" },
                   { label: "⭐ Favorites", value: favoriteTools, color: "#FACC15" },
-                  { label: "💻 Coding Tools", value: codingTools, color: "#00F5FF" },
-                  { label: "🧠 Research AI", value: researchTools, color: "#00B4D8" },
+                  { label: "🔥 Daily Usage", value: dailyTools, color: "#10B981" },
+                  { label: "5★ Top Rated", value: topRatedTools, color: "#00F5FF" },
                 ].map((stat) => (
                   <div
                     key={stat.label}
@@ -173,8 +285,9 @@ export default function AiLibraryPage() {
           </BentoCard>
         </motion.div>
 
-        {/* ── Search & Filter Bar ── */}
+        {/* ── Search & Filter & Sort Bar ── */}
         <motion.div variants={cardVariants} className="space-y-3">
+          {/* Top Search & Sort Row */}
           <div className="flex items-center justify-between flex-wrap gap-3">
             {/* Search Input */}
             <div className="relative flex-1 min-w-[260px]">
@@ -182,7 +295,7 @@ export default function AiLibraryPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search AI platforms by name, company (OpenAI, Anthropic), category, tags (LLM, Coding)..."
+                placeholder="Search AI by name, company, strengths (Coding, Reasoning), notes, category..."
                 className="w-full pl-9 pr-4 py-2.5 rounded-xl border text-xs font-semibold focus:outline-none"
                 style={{
                   backgroundColor: isCyber ? "rgba(10,15,30,0.75)" : "#FFFFFF",
@@ -201,6 +314,15 @@ export default function AiLibraryPage() {
                   ✕
                 </button>
               )}
+            </div>
+
+            {/* Sorting Dropdown */}
+            <div className="w-full sm:w-64">
+              <CustomSelect
+                value={sortBy}
+                onChange={(val) => setSortBy(val)}
+                options={SORT_OPTIONS}
+              />
             </div>
 
             {/* Show archived toggle */}
@@ -261,40 +383,74 @@ export default function AiLibraryPage() {
             })}
           </div>
 
-          {/* Pricing Model Filter Pills */}
+          {/* Usage Status Filter Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full text-xs font-mono">
-            <span className="theme-text-muted font-bold self-center mr-1">Pricing:</span>
+            <span className="theme-text-muted font-bold self-center mr-1">Usage:</span>
             <button
-              onClick={() => setPricingFilter("ALL")}
+              onClick={() => setUsageFilter("ALL")}
               className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer whitespace-nowrap ${
-                pricingFilter === "ALL"
+                usageFilter === "ALL"
                   ? "bg-cyan-500 text-black border-2 border-black font-extrabold"
                   : "theme-text-muted hover:theme-text-primary bg-black/10 dark:bg-white/5"
               }`}
             >
-              All Pricing
+              All Usage
             </button>
 
-            {["Free", "Freemium", "Paid", "Open Source", "Enterprise"].map((pr) => {
-              const count = aiTools.filter((t) => t.pricingModel === pr).length;
+            {["Daily", "Weekly", "Occasionally", "Rarely", "Experimental", "Inactive"].map((st) => {
+              const count = aiTools.filter((t) => t.usageStatus === st).length;
               if (count === 0) return null;
-              const cfg = PRICING_CONFIG[pr] || { label: pr, color: "#94A3B8", bg: "transparent" };
+              const cfg = STATUS_PILLS[st] || { label: st, color: "#94A3B8", bg: "transparent" };
               return (
                 <button
-                  key={pr}
-                  onClick={() => setPricingFilter(pr)}
+                  key={st}
+                  onClick={() => setUsageFilter(st)}
                   className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer whitespace-nowrap ${
-                    pricingFilter === pr
+                    usageFilter === st
                       ? "border-2 border-black font-extrabold"
                       : "theme-text-muted hover:theme-text-primary bg-black/10 dark:bg-white/5"
                   }`}
-                  style={pricingFilter === pr ? { backgroundColor: cfg.bg, color: cfg.color, borderColor: cfg.color } : {}}
+                  style={usageFilter === st ? { backgroundColor: cfg.bg, color: cfg.color, borderColor: cfg.color } : {}}
                 >
                   {cfg.label} ({count})
                 </button>
               );
             })}
           </div>
+
+          {/* Strengths Filter Pills */}
+          {allStrengths.length > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full text-xs font-mono">
+              <span className="theme-text-muted font-bold self-center mr-1">Strength:</span>
+              <button
+                onClick={() => setStrengthFilter("ALL")}
+                className={`px-2 py-0.5 rounded-lg font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  strengthFilter === "ALL"
+                    ? "bg-purple-500 text-white border-2 border-black font-extrabold"
+                    : "theme-text-muted hover:theme-text-primary bg-black/10 dark:bg-white/5"
+                }`}
+              >
+                All Strengths
+              </button>
+
+              {allStrengths.map((str) => {
+                const count = aiTools.filter((t) => Array.isArray(t.strengths) && t.strengths.includes(str)).length;
+                return (
+                  <button
+                    key={str}
+                    onClick={() => setStrengthFilter(str)}
+                    className={`px-2 py-0.5 rounded-lg font-bold transition-all cursor-pointer whitespace-nowrap ${
+                      strengthFilter === str
+                        ? "bg-purple-500 text-white border-2 border-black font-extrabold"
+                        : "theme-text-muted hover:theme-text-primary bg-black/10 dark:bg-white/5"
+                    }`}
+                  >
+                    ⚡ {str} ({count})
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </motion.div>
 
         {/* ── AI Cards Grid Showcase ── */}
@@ -312,14 +468,18 @@ export default function AiLibraryPage() {
             <div className="text-5xl">🤖</div>
             <h3 className="font-black text-lg theme-text-primary">No AI Platforms Match Selected Filters</h3>
             <p className="text-xs theme-text-muted max-w-md mx-auto">
-              Try adjusting your search query or filters, or add a new AI entry to your personal directory.
+              Try adjusting your search query, strengths, rating, or filters, or add a new AI entry to your personal collection.
             </p>
             <div className="flex items-center justify-center gap-2 pt-2">
               <button
                 onClick={() => {
                   setSearchQuery("");
                   setCategoryFilter("ALL");
+                  setUsageFilter("ALL");
+                  setRatingFilter("ALL");
+                  setStrengthFilter("ALL");
                   setPricingFilter("ALL");
+                  setSortBy("DEFAULT");
                 }}
                 className="px-4 py-2 rounded-xl text-xs font-bold border theme-text-primary cursor-pointer"
               >
@@ -344,6 +504,11 @@ export default function AiLibraryPage() {
             {sortedTools.map((tool, index) => {
               const pricingCfg = PRICING_CONFIG[tool.pricingModel || "Freemium"] || {
                 label: tool.pricingModel || "Freemium",
+                color: "#94A3B8",
+                bg: "rgba(255,255,255,0.1)",
+              };
+              const statusCfg = STATUS_PILLS[tool.usageStatus || "Daily"] || {
+                label: tool.usageStatus || "Daily",
                 color: "#94A3B8",
                 bg: "rgba(255,255,255,0.1)",
               };
@@ -385,7 +550,8 @@ export default function AiLibraryPage() {
                       <div className="flex items-start gap-3">
                         {/* Logo */}
                         <div
-                          className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 font-bold overflow-hidden border shadow-sm"
+                          onClick={() => setDetailTool(tool)}
+                          className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 font-bold overflow-hidden border shadow-sm cursor-pointer hover:scale-105 transition-transform"
                           style={{
                             backgroundColor: `${accent}18`,
                             color: accent,
@@ -407,7 +573,10 @@ export default function AiLibraryPage() {
                         {/* Title & Metadata */}
                         <div className="min-w-0 flex-1 pr-6">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <h3 className="font-black text-base theme-text-primary leading-tight truncate">
+                            <h3
+                              onClick={() => setDetailTool(tool)}
+                              className="font-black text-base theme-text-primary leading-tight truncate cursor-pointer hover:underline"
+                            >
                               {tool.name}
                             </h3>
                             {tool.isFavorite && (
@@ -418,13 +587,29 @@ export default function AiLibraryPage() {
                             )}
                           </div>
 
-                          <p className="text-xs font-semibold theme-text-muted mt-0.5 truncate">
-                            {tool.company || "Independent"}
-                          </p>
+                          <div className="flex items-center justify-between gap-2 mt-0.5">
+                            <p className="text-xs font-semibold theme-text-muted truncate">
+                              {tool.company || "Independent"}
+                            </p>
+                            <div className="flex items-center text-xs shrink-0">
+                              {renderStars(tool.rating || 5)}
+                            </div>
+                          </div>
 
                           <div className="flex items-center gap-1.5 mt-1.5 flex-wrap text-[10px] font-mono">
                             <span
                               className="px-2 py-0.5 rounded font-bold"
+                              style={{
+                                backgroundColor: statusCfg.bg,
+                                color: statusCfg.color,
+                                border: `1px solid ${statusCfg.color}40`,
+                              }}
+                            >
+                              {statusCfg.label}
+                            </span>
+
+                            <span
+                              className="px-1.5 py-0.5 rounded font-bold"
                               style={{
                                 backgroundColor: pricingCfg.bg,
                                 color: pricingCfg.color,
@@ -439,85 +624,109 @@ export default function AiLibraryPage() {
                                 {tool.version}
                               </span>
                             )}
-
-                            <span className="theme-text-muted font-semibold">{tool.category}</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Description */}
-                      <p className="text-xs theme-text-secondary leading-relaxed line-clamp-3">
+                      <p className="text-xs theme-text-secondary leading-relaxed line-clamp-2">
                         {tool.description}
                       </p>
 
-                      {/* Tags */}
-                      {tool.tags && tool.tags.length > 0 && (
+                      {/* Personal Strengths Pills */}
+                      {tool.strengths && tool.strengths.length > 0 && (
                         <div className="flex flex-wrap gap-1 pt-0.5">
-                          {tool.tags.map((tag) => (
+                          {tool.strengths.slice(0, 4).map((str) => (
                             <span
-                              key={tag}
+                              key={str}
                               className="px-2 py-0.5 rounded text-[10px] font-mono font-bold border"
                               style={{
-                                backgroundColor: isCyber ? `${accent}10` : "#F1F5F9",
-                                color: isCyber ? accent : "#334155",
+                                backgroundColor: isCyber ? `${accent}12` : "#F1F5F9",
+                                color: isCyber ? accent : "#1E293B",
                                 borderColor: isCyber ? `${accent}30` : "#CBD5E1",
                               }}
                             >
-                              #{tag}
+                              ⚡ {str}
                             </span>
                           ))}
+                          {tool.strengths.length > 4 && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono theme-text-muted font-bold">
+                              +{tool.strengths.length - 4} more
+                            </span>
+                          )}
                         </div>
                       )}
-                    </div>
 
-                    {/* Fast Launch & Resource Action Buttons */}
-                    <div className="pt-3 border-t border-white/10 space-y-2">
-                      {/* Primary Fast Launch Button */}
-                      {isValidUrl(primaryLaunch) && (
-                        <a
-                          href={primaryLaunch}
-                          target={primaryLaunch?.startsWith("/") ? "_self" : "_blank"}
-                          rel="noopener noreferrer"
-                          className="w-full py-2 px-3 rounded-xl font-black text-xs text-center transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 shadow-md"
+                      {/* Personal Notes Snippet */}
+                      {tool.notes && (
+                        <div
+                          onClick={() => setDetailTool(tool)}
+                          className="p-2.5 rounded-xl border text-[11px] font-medium leading-normal cursor-pointer line-clamp-2 transition-all hover:bg-black/5 dark:hover:bg-white/5"
                           style={{
-                            backgroundColor: accent,
-                            color: "#FFFFFF",
-                            border: isCyber ? "none" : "2px solid #000",
-                            boxShadow: isCyber ? `0 0 14px ${accent}60` : "3px 3px 0 #000",
+                            backgroundColor: isCyber ? `${accent}08` : "#F8FAFC",
+                            borderColor: isCyber ? `${accent}25` : "#E2E8F0",
+                            borderLeftWidth: "3px",
+                            borderLeftColor: accent,
                           }}
                         >
-                          <span>🚀</span> Launch Platform ↗
-                        </a>
+                          <span className="font-bold mr-1" style={{ color: accent }}>Note:</span>
+                          <span className="theme-text-secondary">{tool.notes}</span>
+                        </div>
                       )}
 
-                      {/* Secondary Resource Buttons */}
-                      <div className="flex flex-wrap gap-1.5">
-                        {isValidUrl(tool.websiteUrl) && tool.websiteUrl !== primaryLaunch && (
-                          <a
-                            href={tool.websiteUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="py-1 py-1.5 px-2.5 rounded-lg font-bold text-[11px] transition-all active:scale-95 cursor-pointer flex items-center gap-1"
+                      {/* Quick Insights Row */}
+                      <div className="flex items-center justify-between text-[10px] font-mono theme-text-muted pt-1 border-t border-white/5">
+                        <span>Last used: {formatRelativeTime(tool.lastUsed)}</span>
+                        <span>Launches: {tool.launchCount || 0}</span>
+                      </div>
+                    </div>
+
+                    {/* Actions Row */}
+                    <div className="pt-3 border-t border-white/10 space-y-2">
+                      <div className="flex items-center gap-2">
+                        {/* Primary Fast Launch Button */}
+                        {isValidUrl(primaryLaunch) && (
+                          <button
+                            onClick={() => handleLaunch(tool)}
+                            className="flex-1 py-2 px-3 rounded-xl font-black text-xs text-center transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 shadow-md"
                             style={{
-                              backgroundColor: isCyber ? "rgba(255,255,255,0.08)" : "#E2E8F0",
-                              color: isCyber ? "#E2E8F0" : "#1E293B",
-                              border: isCyber ? "1px solid rgba(255,255,255,0.2)" : "1.5px solid #000",
+                              backgroundColor: accent,
+                              color: "#FFFFFF",
+                              border: isCyber ? "none" : "2px solid #000",
+                              boxShadow: isCyber ? `0 0 14px ${accent}60` : "2.5px 2.5px 0 #000",
                             }}
                           >
-                            <span>🌐</span> Website
-                          </a>
+                            <span>🚀</span> Launch ↗
+                          </button>
                         )}
 
+                        {/* Detail Modal Trigger Button */}
+                        <button
+                          onClick={() => setDetailTool(tool)}
+                          className="py-2 px-3 rounded-xl font-bold text-xs transition-all active:scale-95 cursor-pointer flex items-center gap-1 shrink-0"
+                          style={{
+                            backgroundColor: isCyber ? "rgba(255,255,255,0.08)" : "#F1F5F9",
+                            color: isCyber ? "#E2E8F0" : "#1E293B",
+                            border: isCyber ? "1px solid rgba(255,255,255,0.2)" : "2px solid #000",
+                          }}
+                          title="View Knowledge Details"
+                        >
+                          <span>👁️</span> Details
+                        </button>
+                      </div>
+
+                      {/* Secondary Resource Buttons */}
+                      <div className="flex flex-wrap gap-1">
                         {isValidUrl(tool.docsUrl) && (
                           <a
                             href={tool.docsUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="py-1.5 px-2.5 rounded-lg font-bold text-[11px] transition-all active:scale-95 cursor-pointer flex items-center gap-1"
+                            className="py-1 px-2 rounded-md font-bold text-[10px] transition-all active:scale-95 cursor-pointer flex items-center gap-1"
                             style={{
                               backgroundColor: isCyber ? "rgba(0,245,255,0.1)" : "#E0F2FE",
                               color: isCyber ? "#00F5FF" : "#0369A1",
-                              border: isCyber ? "1px solid rgba(0,245,255,0.25)" : "1.5px solid #000",
+                              border: isCyber ? "1px solid rgba(0,245,255,0.25)" : "1px solid #000",
                             }}
                           >
                             <span>📖</span> Docs
@@ -529,14 +738,14 @@ export default function AiLibraryPage() {
                             href={tool.apiUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="py-1.5 px-2.5 rounded-lg font-bold text-[11px] transition-all active:scale-95 cursor-pointer flex items-center gap-1"
+                            className="py-1 px-2 rounded-md font-bold text-[10px] transition-all active:scale-95 cursor-pointer flex items-center gap-1"
                             style={{
                               backgroundColor: isCyber ? "rgba(139,92,246,0.1)" : "#EDE9FE",
                               color: isCyber ? "#8B5CF6" : "#6D28D9",
-                              border: isCyber ? "1px solid rgba(139,92,246,0.25)" : "1.5px solid #000",
+                              border: isCyber ? "1px solid rgba(139,92,246,0.25)" : "1px solid #000",
                             }}
                           >
-                            <span>🔌</span> API Keys
+                            <span>🔌</span> API
                           </a>
                         )}
 
@@ -545,11 +754,11 @@ export default function AiLibraryPage() {
                             href={tool.pricingUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="py-1.5 px-2.5 rounded-lg font-bold text-[11px] transition-all active:scale-95 cursor-pointer flex items-center gap-1"
+                            className="py-1 px-2 rounded-md font-bold text-[10px] transition-all active:scale-95 cursor-pointer flex items-center gap-1"
                             style={{
                               backgroundColor: isCyber ? "rgba(245,158,11,0.1)" : "#FEF3C7",
                               color: isCyber ? "#F59E0B" : "#B45309",
-                              border: isCyber ? "1px solid rgba(245,158,11,0.25)" : "1.5px solid #000",
+                              border: isCyber ? "1px solid rgba(245,158,11,0.25)" : "1px solid #000",
                             }}
                           >
                             <span>💰</span> Pricing
@@ -561,62 +770,14 @@ export default function AiLibraryPage() {
                             href={tool.githubUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="py-1.5 px-2.5 rounded-lg font-bold text-[11px] transition-all active:scale-95 cursor-pointer flex items-center gap-1"
+                            className="py-1 px-2 rounded-md font-bold text-[10px] transition-all active:scale-95 cursor-pointer flex items-center gap-1"
                             style={{
                               backgroundColor: isCyber ? "rgba(255,255,255,0.08)" : "#181717",
                               color: "#FFFFFF",
-                              border: isCyber ? "1px solid rgba(255,255,255,0.2)" : "1.5px solid #000",
+                              border: isCyber ? "1px solid rgba(255,255,255,0.2)" : "1px solid #000",
                             }}
                           >
                             <span>🐙</span> GitHub
-                          </a>
-                        )}
-
-                        {isValidUrl(tool.discordUrl) && (
-                          <a
-                            href={tool.discordUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="py-1.5 px-2.5 rounded-lg font-bold text-[11px] transition-all active:scale-95 cursor-pointer flex items-center gap-1"
-                            style={{
-                              backgroundColor: isCyber ? "rgba(88,101,242,0.15)" : "#5865F2",
-                              color: "#FFFFFF",
-                              border: isCyber ? "1px solid rgba(88,101,242,0.3)" : "1.5px solid #000",
-                            }}
-                          >
-                            <span>💬</span> Discord
-                          </a>
-                        )}
-
-                        {isValidUrl(tool.communityUrl) && (
-                          <a
-                            href={tool.communityUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="py-1.5 px-2.5 rounded-lg font-bold text-[11px] transition-all active:scale-95 cursor-pointer flex items-center gap-1"
-                            style={{
-                              backgroundColor: isCyber ? "rgba(16,185,129,0.1)" : "#D1FAE5",
-                              color: isCyber ? "#10B981" : "#047857",
-                              border: isCyber ? "1px solid rgba(16,185,129,0.25)" : "1.5px solid #000",
-                            }}
-                          >
-                            <span>👥</span> Forum
-                          </a>
-                        )}
-
-                        {isValidUrl(tool.releaseNotesUrl) && (
-                          <a
-                            href={tool.releaseNotesUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="py-1.5 px-2.5 rounded-lg font-bold text-[11px] transition-all active:scale-95 cursor-pointer flex items-center gap-1"
-                            style={{
-                              backgroundColor: isCyber ? "rgba(236,72,153,0.1)" : "#FCE7F3",
-                              color: isCyber ? "#EC4899" : "#BE185D",
-                              border: isCyber ? "1px solid rgba(236,72,153,0.25)" : "1.5px solid #000",
-                            }}
-                          >
-                            <span>📜</span> Notes
                           </a>
                         )}
                       </div>
@@ -636,6 +797,17 @@ export default function AiLibraryPage() {
             setEditingTool(null);
           }}
           toolToEdit={editingTool}
+        />
+
+        <AiToolDetailModal
+          isOpen={!!detailTool}
+          onClose={() => setDetailTool(null)}
+          tool={detailTool}
+          onEdit={(t) => {
+            setDetailTool(null);
+            setEditingTool(t);
+            setIsEditorOpen(true);
+          }}
         />
       </motion.div>
     </AppShell>

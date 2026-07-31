@@ -124,6 +124,7 @@ export interface ProjectItemEntry {
 }
 
 export type AiPricingModel = "Free" | "Freemium" | "Paid" | "Open Source" | "Enterprise";
+export type AiUsageStatus = "Daily" | "Weekly" | "Occasionally" | "Rarely" | "Experimental" | "Inactive" | "Archived";
 
 export interface AiToolItemEntry {
   id: string;
@@ -133,8 +134,14 @@ export interface AiToolItemEntry {
   logo?: string;
   accentColor: string;
   category: string;
+  usageStatus?: AiUsageStatus;
   pricingModel?: AiPricingModel;
+  rating?: number;
+  strengths?: string[];
+  notes?: string;
   version?: string;
+  lastUsed?: string;
+  launchCount?: number;
   launchUrl?: string;
   websiteUrl?: string;
   docsUrl?: string;
@@ -144,6 +151,9 @@ export interface AiToolItemEntry {
   discordUrl?: string;
   communityUrl?: string;
   releaseNotesUrl?: string;
+  blogUrl?: string;
+  roadmapUrl?: string;
+  youtubeUrl?: string;
   tags?: string[];
   sortOrder?: number;
   isFavorite?: boolean;
@@ -367,6 +377,7 @@ interface DashboardState {
   addAiTool: (item: AiToolItemEntry) => Promise<void>;
   updateAiTool: (id: string, data: Partial<AiToolItemEntry>) => Promise<void>;
   removeAiTool: (id: string) => Promise<void>;
+  recordAiToolLaunch: (id: string) => Promise<void>;
   updateMedia: (data: Partial<MediaEntry>) => void;
   addAnime: (anime: AnimeEntry) => Promise<void>;
   updateAnime: (id: string, data: Partial<AnimeEntry>) => Promise<void>;
@@ -587,8 +598,14 @@ const initialAiTools: AiToolItemEntry[] = [
     logo: "🤖",
     accentColor: "#10A37F",
     category: "💬 General AI",
+    usageStatus: "Daily",
     pricingModel: "Freemium",
+    rating: 5,
+    strengths: ["Coding", "Writing", "Reasoning", "Multimodal", "Brainstorming"],
+    notes: "Go-to daily assistant for general inquiries, quick code snippets, document translation, and creative brainstorming.",
     version: "GPT-4o / o1",
+    lastUsed: new Date().toISOString(),
+    launchCount: 142,
     launchUrl: "https://chatgpt.com",
     websiteUrl: "https://chatgpt.com",
     docsUrl: "https://platform.openai.com/docs",
@@ -608,8 +625,14 @@ const initialAiTools: AiToolItemEntry[] = [
     logo: "🧠",
     accentColor: "#D97706",
     category: "💻 Coding",
+    usageStatus: "Daily",
     pricingModel: "Freemium",
+    rating: 5,
+    strengths: ["Coding", "Frontend", "Backend", "Artifacts", "Reasoning"],
+    notes: "Best model for complex React/Next.js refactoring, architectural review, and artifact UI component generation.",
     version: "Claude 3.5 Sonnet",
+    lastUsed: new Date().toISOString(),
+    launchCount: 198,
     launchUrl: "https://claude.ai",
     websiteUrl: "https://claude.ai",
     docsUrl: "https://docs.anthropic.com",
@@ -629,8 +652,14 @@ const initialAiTools: AiToolItemEntry[] = [
     logo: "✨",
     accentColor: "#4285F4",
     category: "🧠 Research",
+    usageStatus: "Weekly",
     pricingModel: "Freemium",
+    rating: 4,
+    strengths: ["Research", "Summarization", "Multimodal", "Data Analysis"],
+    notes: "Exceptional for digesting massive multi-megabyte PDFs, analyzing long video recordings, and Google Workspace integration.",
     version: "Gemini 1.5 Pro",
+    lastUsed: new Date(Date.now() - 86400000).toISOString(),
+    launchCount: 56,
     launchUrl: "https://gemini.google.com",
     websiteUrl: "https://gemini.google.com",
     docsUrl: "https://ai.google.dev/docs",
@@ -650,8 +679,14 @@ const initialAiTools: AiToolItemEntry[] = [
     logo: "🔍",
     accentColor: "#00B4D8",
     category: "🔍 Search",
+    usageStatus: "Daily",
     pricingModel: "Freemium",
+    rating: 5,
+    strengths: ["Search", "Research", "Summarization", "Data Analysis"],
+    notes: "Replaces traditional search engines for tech troubleshooting, library comparisons, and cited academic research.",
     version: "Sonar Pro",
+    lastUsed: new Date().toISOString(),
+    launchCount: 88,
     launchUrl: "https://www.perplexity.ai",
     websiteUrl: "https://www.perplexity.ai",
     docsUrl: "https://docs.perplexity.ai",
@@ -670,8 +705,14 @@ const initialAiTools: AiToolItemEntry[] = [
     logo: "🐳",
     accentColor: "#4D6BFE",
     category: "💻 Coding",
+    usageStatus: "Weekly",
     pricingModel: "Open Source",
+    rating: 5,
+    strengths: ["Reasoning", "Math", "Coding", "Backend"],
+    notes: "Outstanding chain-of-thought reasoning for complex algorithms, data structures, and mathematical formulas.",
     version: "DeepSeek-R1",
+    lastUsed: new Date(Date.now() - 172800000).toISOString(),
+    launchCount: 42,
     launchUrl: "https://chat.deepseek.com",
     websiteUrl: "https://chat.deepseek.com",
     docsUrl: "https://api-docs.deepseek.com",
@@ -690,8 +731,14 @@ const initialAiTools: AiToolItemEntry[] = [
     logo: "⚡",
     accentColor: "#00F5FF",
     category: "💻 Coding",
+    usageStatus: "Daily",
     pricingModel: "Freemium",
+    rating: 5,
+    strengths: ["Coding", "Full Stack", "Frontend", "Backend", "Productivity"],
+    notes: "Primary IDE environment with full repository indexing, multi-file agent edits, and fast terminal assistance.",
     version: "v0.45",
+    lastUsed: new Date().toISOString(),
+    launchCount: 310,
     launchUrl: "https://cursor.com",
     websiteUrl: "https://cursor.com",
     docsUrl: "https://docs.cursor.com",
@@ -1088,6 +1135,30 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
     } catch (err) {
       console.error("Failed to sync deleted AI tool:", err);
+    }
+  },
+
+  recordAiToolLaunch: async (id) => {
+    const now = new Date().toISOString();
+    set((s) => ({
+      aiTools: s.aiTools.map((t) =>
+        t.id === id
+          ? {
+              ...t,
+              lastUsed: now,
+              launchCount: (t.launchCount || 0) + 1,
+            }
+          : t
+      ),
+    }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "RECORD_AI_TOOL_LAUNCH", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to record AI tool launch:", err);
     }
   },
 

@@ -13,6 +13,33 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v3.4.0",
+    date: "2026-07-31",
+    title: "AI Library Upgrade: Personal AI Collection & Knowledge Hub",
+    badge: "AI KNOWLEDGE HUB 3.4",
+    type: "minor",
+    summary: "Transformed AI Library (/ai-library) into a personal AI collection & knowledge hub with star ratings, usage status tracking (Daily, Weekly, Occasional, Rarely), multi-tag workflow strengths, multi-line personal evaluations, automatic launch tracking, a dedicated detail view modal, and multi-criteria sorting & filtering.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🧠 Personal Knowledge Hub: Added star ratings (1-5★), editable usage statuses (Daily, Weekly, Occasional, Rarely, Experimental), AI strengths tag cloud (Coding, Reasoning, Frontend, Writing, Math), and multi-line workflow evaluations.",
+          "👁️ AI Detail View Modal (AiToolDetailModal.tsx): Dedicated detail modal showing full AI evaluations, strengths tag cloud, usage analytics, relative last used time, and developer resources (Website, Docs, API, Pricing, GitHub, Discord, Forum, Blog, Roadmap, YouTube).",
+          "⏱️ Automatic Launch Analytics: Clicking '🚀 Launch Platform' automatically updates the lastUsed timestamp and increments launchCount in the database.",
+          "📊 Multi-Criteria Sorting & Filtering: Filter by Category, Usage Status, Star Rating, Strengths tags, and Pricing Model. Sort by Recently Used (Last Used), Highest Rated, Most Launched, Alphabetical, or Display Order.",
+          "🔍 Search Indexing Upgrade: Extended searchRegistry.ts to index AI strengths tags, personal notes, company developer names, ratings, and usage statuses.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "Prisma Schema Upgrade: Extended AiToolItem model with usageStatus, rating, strengths, notes, lastUsed, launchCount, blogUrl, roadmapUrl, and youtubeUrl.",
+          "Backend & Store Synchronization: Added RECORD_AI_TOOL_LAUNCH action handler in /api/action alongside Zustand store sync.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v3.3.0",
     date: "2026-07-31",
     title: "AI Library Personal Directory, Fast Launcher & Search Integration",

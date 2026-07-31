@@ -97,16 +97,19 @@ registerSearchProvider({
           t.name,
           t.company,
           t.description,
+          t.notes,
           t.category,
+          t.usageStatus,
           t.pricingModel,
           t.version,
+          ...(Array.isArray(t.strengths) ? t.strengths : []),
           ...(Array.isArray(t.tags) ? t.tags : []),
         ])
       )
       .map((t) => ({
         id: t.id,
         title: t.name,
-        subtitle: `AI Platform · ${t.company ? `${t.company} · ` : ""}${t.category} · ${t.pricingModel || "Freemium"}`,
+        subtitle: `AI Platform · ${t.company ? `${t.company} · ` : ""}${t.category} · Status: ${t.usageStatus || "Daily"} · Rating: ${t.rating || 5}★`,
         icon: t.logo || "🤖",
         module: "AI Library",
         category: t.category,
