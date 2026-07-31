@@ -32,6 +32,7 @@ All notable changes to the Nexus Xenon Personal Dashboard project will be docume
 ### 🧠 Dashboard Widgets
 - **`FocusWidget.tsx`**: New 3-panel dashboard widget showing Today's Focus checklist (tick to complete), quick stat metrics, and Most-Launched AI tool shortcut.
 - **`GameDBCard`**: Capped at 7 entries with "View All Games →" navigation link.
+- **`Games Page Toolbar`**: Removed redundant `All Game Registries` category filter dropdown in favor of category tabs.
 - **`AnimeZoneCard`**: Capped at 7 prioritized entries with "View Anime Zone →" navigation link.
 - **`MediaLogCard`**: Displays drama watch statuses in priority order with "Drama Hub →" navigation link.
 

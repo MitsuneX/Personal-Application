@@ -12,7 +12,6 @@ import { ImageLightboxModal } from "@/components/ui/ImageLightboxModal";
 import { resolveGameIcon } from "@/lib/data/gameIcons";
 import type { GameEntry } from "@/lib/store/dashboardStore";
 import { useConfirm } from "@/lib/context/ConfirmContext";
-import { FilterDropdown, FilterOption } from "@/components/ui/FilterDropdown";
 
 const CATEGORY_ICONS: Record<string, string> = {
   "Gacha RPG":    "🎲",
@@ -537,20 +536,8 @@ export default function GamesPage() {
           })}
         </div>
 
-        {/* Interactive Filter & Live Search Bar */}
+        {/* Live Search Bar */}
         <div className="flex items-center gap-2.5 w-full md:w-auto">
-          <FilterDropdown
-            label="Category Filter"
-            icon="🎮"
-            value={activeTab}
-            onChange={(val) => setActiveTab(val as any)}
-            options={[
-              { id: "all", label: "All Game Registries", icon: "🌐" },
-              { id: "gacha", label: "Gacha RPG & Action", icon: "🎲" },
-              { id: "competitive", label: "Competitive & Pro Roster", icon: "🏆" },
-            ]}
-          />
-
           <div className="relative flex-1 md:w-64">
             <input
               type="text"
