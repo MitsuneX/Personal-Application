@@ -8,6 +8,7 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { listContainerVariants, listItemVariants } from "@/lib/theme/motionVariants";
 import type { AnimeStatus } from "@/lib/store/dashboardStore";
 import { AnimeSearchModal } from "@/components/ui/AnimeSearchModal";
+import Link from "next/link";
 
 const STATUS_CONFIG: Record<
   AnimeStatus,
@@ -300,17 +301,44 @@ export function AnimeZoneCard() {
           </div>
         </motion.div>
 
-        {/* ── Anime List — organic scale spring pop ── */}
-        <motion.ul
-          className="space-y-2.5 mb-4"
-          variants={cardPopVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {animeList.slice(0, 5).map((anime, i) => (
-            <AnimeRow key={anime.id} anime={anime} isCyber={isCyber} index={i} />
-          ))}
-        </motion.ul>
+        {/* ── Anime List (Max 7 prioritized by Watching/Recently Added) ── */}
+        {(() => {
+          const prioritized = [...animeList]
+            .sort((a, b) => {
+              if (a.status === "Watching" && b.status !== "Watching") return -1;
+              if (b.status === "Watching" && a.status !== "Watching") return 1;
+              return 0;
+            })
+            .slice(0, 7);
+
+          return (
+            <motion.ul
+              className="space-y-2.5 mb-4"
+              variants={cardPopVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {prioritized.map((anime, i) => (
+                <AnimeRow key={anime.id} anime={anime} isCyber={isCyber} index={i} />
+              ))}
+            </motion.ul>
+          );
+        })()}
+
+        {/* View Anime Navigation Link */}
+        <div className="mb-4 flex justify-between items-center text-xs">
+          <span className="font-mono theme-text-muted">
+            Showing {Math.min(7, animeList.length)} of {animeList.length}
+          </span>
+          <Link
+            href="/anime"
+            className="font-black flex items-center gap-1 hover:translate-x-1 transition-transform cursor-pointer"
+            style={{ color: isCyber ? "#00F5FF" : "#FF6B35" }}
+          >
+            <span>View Anime Zone</span>
+            <span>→</span>
+          </Link>
+        </div>
 
         {/* ── Divider ── */}
         <div

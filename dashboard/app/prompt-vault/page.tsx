@@ -40,6 +40,8 @@ export default function PromptVaultPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [filterAI, setFilterAI] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Form State
   const [editId, setEditId] = useState<string | null>(null);
@@ -47,9 +49,13 @@ export default function PromptVaultPage() {
   const [targetAI, setTargetAI] = useState("ChatGPT");
   const [promptText, setPromptText] = useState("");
 
-  const filteredPrompts = filterAI === "all"
-    ? savedPrompts
-    : savedPrompts.filter((p) => p.targetAI === filterAI);
+  const filteredPrompts = savedPrompts
+    .filter((p) => filterAI === "all" || p.targetAI === filterAI)
+    .filter((p) => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return p.title.toLowerCase().includes(q) || p.promptText.toLowerCase().includes(q) || p.targetAI.toLowerCase().includes(q);
+    });
 
   const handleCopy = (id: string, text: string) => {
     navigator.clipboard.writeText(text);
@@ -133,9 +139,33 @@ export default function PromptVaultPage() {
         </div>
       </motion.div>
 
-      {/* Target AI Filter Bar */}
+      {/* Search + Filter Bar */}
       {savedPrompts.length > 0 && (
-        <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
+        <div className="mb-6 flex flex-col sm:flex-row items-center gap-3">
+          {/* Search Input */}
+          <div className="relative flex-1 w-full">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={isCyber ? "SEARCH // title, prompt text, target AI..." : "Search by title, content, or AI..."}
+              className="w-full px-4 py-2.5 text-xs font-bold rounded-xl outline-none border transition-all"
+              style={{
+                backgroundColor: isCyber ? "rgba(5,8,22,0.7)" : "#FAFAFA",
+                borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000",
+                borderWidth: isCyber ? "1px" : "2px",
+                color: isCyber ? "#E0F7FA" : "#111",
+                boxShadow: isCyber ? "none" : "3px 3px 0 #000",
+              }}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs opacity-50 hover:opacity-100 transition-opacity"
+              >✕</button>
+            )}
+          </div>
+
           <FilterDropdown
             label="Filter Target AI"
             icon="⚡"
@@ -146,8 +176,9 @@ export default function PromptVaultPage() {
               ...TARGET_AI_OPTIONS.map((opt) => ({ id: opt, label: opt })),
             ]}
           />
-          <span className="text-xs font-mono theme-text-muted">
-            Showing {filteredPrompts.length} of {savedPrompts.length} prompts
+
+          <span className="text-xs font-mono theme-text-muted shrink-0">
+            {filteredPrompts.length}/{savedPrompts.length} prompts
           </span>
         </div>
       )}
@@ -272,16 +303,37 @@ export default function PromptVaultPage() {
                   </span>
                 </div>
 
-                {/* Prompt Text Textarea/Box */}
-                <div
-                  className="flex-1 min-h-[100px] max-h-[160px] overflow-y-auto p-3 rounded-lg text-xs font-mono select-all scrollbar-thin"
-                  style={{
-                    backgroundColor: isCyber ? "rgba(0,0,0,0.3)" : "#FFF",
-                    border: isCyber ? "1px solid rgba(255,255,255,0.06)" : "1px solid #CCC",
-                    color: isCyber ? "#E2E8F0" : "#333",
-                  }}
-                >
-                  {prompt.promptText}
+                {/* Prompt Text Box with expand/collapse */}
+                <div className="relative">
+                  <div
+                    className="p-3 rounded-lg text-xs font-mono select-all transition-all overflow-hidden"
+                    style={{
+                      maxHeight: expandedId === prompt.id ? "400px" : "120px",
+                      overflowY: expandedId === prompt.id ? "auto" : "hidden",
+                      backgroundColor: isCyber ? "rgba(0,0,0,0.3)" : "#FFF",
+                      border: isCyber ? "1px solid rgba(255,255,255,0.06)" : "1px solid #CCC",
+                      color: isCyber ? "#E2E8F0" : "#333",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {prompt.promptText}
+                  </div>
+                  {prompt.promptText.length > 200 && (
+                    <button
+                      onClick={() => setExpandedId(expandedId === prompt.id ? null : prompt.id)}
+                      className="mt-1 text-[10px] font-black uppercase tracking-wider transition-opacity opacity-60 hover:opacity-100"
+                      style={{ color: isCyber ? "#00F5FF" : "#6B7280" }}
+                    >
+                      {expandedId === prompt.id ? "▲ Collapse" : "▼ Expand"}
+                    </button>
+                  )}
+                  {/* Character count */}
+                  <span
+                    className="absolute top-2 right-2 text-[9px] font-mono opacity-40 pointer-events-none"
+                    style={{ color: isCyber ? "#00F5FF" : "#888" }}
+                  >
+                    {prompt.promptText.length}c
+                  </span>
                 </div>
 
                 {/* Copy Button */}

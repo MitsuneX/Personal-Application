@@ -145,27 +145,24 @@ export default function LinksPage() {
       <div className="space-y-8">
         {displayedCategories.map(([cat, list]) => (
           <div key={cat} className="space-y-4">
+            {/* Section Header */}
             <div className="flex items-center gap-3">
-              <h2 className="text-sm font-black uppercase tracking-widest px-3 py-1 rounded inline-block animate-fade-in"
+              <h2 className="text-sm font-black uppercase tracking-widest px-3 py-1 rounded inline-block"
                 style={{
                   backgroundColor: isCyber ? "rgba(0,245,255,0.08)" : "rgba(0,0,0,0.05)",
                   color: isCyber ? "#00F5FF" : "#FF6B35",
                   border: isCyber ? "1px solid rgba(0,245,255,0.15)" : "1.5px solid #000"
                 }}
               >
-                📂 {cat}
+                📂 {cat} <span className="text-[9px] font-mono opacity-60 ml-1">({list.length})</span>
               </h2>
               <button
                 onClick={() => {
-                  setEditId(null);
-                  setTitle("");
-                  setUrl("");
+                  setEditId(null); setTitle(""); setUrl("");
                   if (["Watch", "Entertainment", "Book", "Productivity", "Misc"].includes(cat)) {
-                    setCategory(cat);
-                    setCustomCategory("");
+                    setCategory(cat); setCustomCategory("");
                   } else {
-                    setCategory("Custom");
-                    setCustomCategory(cat);
+                    setCategory("Custom"); setCustomCategory(cat);
                   }
                   setIsOpen(true);
                 }}
@@ -178,94 +175,140 @@ export default function LinksPage() {
                   boxShadow: isCyber ? "none" : "1.5px 1.5px 0 #000",
                 }}
                 title={`Add bookmark to ${cat}`}
-              >
-                ＋
-              </button>
+              >＋</button>
+              <div className="flex-1 h-px" style={{ background: isCyber ? "rgba(0,245,255,0.1)" : "rgba(0,0,0,0.08)" }} />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {list.map((link) => (
-                <div key={link.id} className="relative group">
-                  <a
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block h-full"
+            {/* Premium Bookmark Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {list.map((link, li) => {
+                let domain = "";
+                try { domain = new URL(link.url).hostname; } catch {}
+                const faviconUrl = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : "";
+
+                return (
+                  <motion.div
+                    key={link.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: li * 0.04 }}
+                    className="relative group rounded-2xl overflow-hidden"
+                    style={{
+                      backgroundColor: isCyber ? "rgba(10,15,30,0.8)" : "#FFFFFF",
+                      borderColor: isCyber ? "rgba(0,245,255,0.15)" : "#000",
+                      borderWidth: isCyber ? "1px" : "2.5px",
+                      boxShadow: isCyber ? "0 4px 20px rgba(0,0,0,0.4)" : "4px 4px 0 #000",
+                    }}
+                    whileHover={{
+                      y: -3,
+                      boxShadow: isCyber ? "0 8px 30px rgba(0,245,255,0.15)" : "6px 6px 0 #000",
+                    }}
                   >
-                    <BentoCard>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-black text-sm theme-text-primary group-hover:underline leading-snug">
-                            {link.title}
-                          </h3>
-                          <p className="text-[10px] theme-text-muted mt-1 truncate max-w-[200px] font-mono">
-                            {link.url.replace(/^https?:\/\//i, "")}
-                          </p>
-                        </div>
-                        <span className="text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded"
+                    {/* Card body - clickable */}
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block p-4"
+                    >
+                      <div className="flex items-start gap-3">
+                        {/* Favicon */}
+                        <div
+                          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border"
                           style={{
-                            backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
-                            color: isCyber ? "#94A3B8" : "#4A4A4A"
+                            backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#F8FAFC",
+                            borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0",
                           }}
                         >
-                          🔗 Link
+                          {faviconUrl ? (
+                            <img
+                              src={faviconUrl}
+                              alt=""
+                              className="w-5 h-5 object-contain"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                            />
+                          ) : (
+                            <span className="text-base">🔗</span>
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-black text-sm theme-text-primary group-hover:underline leading-snug line-clamp-1">
+                            {link.title}
+                          </h3>
+                          <p className="text-[10px] theme-text-muted mt-0.5 truncate font-mono">
+                            {domain || link.url.replace(/^https?:\/\//i, "")}
+                          </p>
+                        </div>
+
+                        {/* Quick launch icon */}
+                        <span
+                          className="text-xs shrink-0 opacity-0 group-hover:opacity-60 transition-opacity"
+                          style={{ color: isCyber ? "#00F5FF" : "#1A1A1A" }}
+                        >↗</span>
+                      </div>
+
+                      {/* Category badge */}
+                      <div className="mt-3 flex items-center justify-between">
+                        <span
+                          className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded"
+                          style={{
+                            backgroundColor: isCyber ? "rgba(0,245,255,0.08)" : "#F1F5F9",
+                            color: isCyber ? "rgba(0,245,255,0.7)" : "#64748B",
+                            border: isCyber ? "1px solid rgba(0,245,255,0.15)" : "1px solid #E2E8F0",
+                          }}
+                        >
+                          {link.category}
                         </span>
                       </div>
-                    </BentoCard>
-                  </a>
+                    </a>
 
-                  {/* Absolute controls */}
-                  <div className="absolute top-2 right-2 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-20">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        setEditId(link.id);
-                        setTitle(link.title);
-                        setUrl(link.url);
-                        if (["Watch", "Entertainment", "Book", "Productivity", "Misc"].includes(link.category)) {
-                          setCategory(link.category);
-                          setCustomCategory("");
-                        } else {
-                          setCategory("Custom");
-                          setCustomCategory(link.category);
-                        }
-                        setIsOpen(true);
-                      }}
-                      className="p-1 text-xs bg-cyan-600 text-white rounded hover:bg-cyan-700"
-                      title="Edit Bookmark"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        confirm({
-                          title: "Delete Bookmark Link",
-                          message: `Are you sure you want to delete bookmark "${link.title}"?`,
-                          confirmText: "Delete Bookmark",
-                          variant: "danger",
-                          itemPreview: {
-                            title: link.title,
-                            subtitle: link.url,
-                            icon: "🔗",
-                            category: link.category,
-                          },
-                          successToast: `✓ Bookmark "${link.title}" deleted.`,
-                          onConfirm: async () => {
-                            await deleteLink(link.id);
-                          },
-                        });
-                      }}
-                      className="p-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
-                      title="Delete Bookmark"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
-              ))}
+                    {/* Action buttons */}
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-20">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); e.preventDefault();
+                          setEditId(link.id); setTitle(link.title); setUrl(link.url);
+                          if (["Watch", "Entertainment", "Book", "Productivity", "Misc"].includes(link.category)) {
+                            setCategory(link.category); setCustomCategory("");
+                          } else {
+                            setCategory("Custom"); setCustomCategory(link.category);
+                          }
+                          setIsOpen(true);
+                        }}
+                        className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black transition-all active:scale-95 cursor-pointer border"
+                        style={{
+                          backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#E0F7FA",
+                          color: isCyber ? "#00F5FF" : "#006064",
+                          borderColor: isCyber ? "rgba(0,245,255,0.4)" : "#000",
+                        }}
+                        title="Edit"
+                      >✏️</button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); e.preventDefault();
+                          confirm({
+                            title: "Delete Bookmark Link",
+                            message: `Delete bookmark "${link.title}"?`,
+                            confirmText: "Delete Bookmark",
+                            variant: "danger",
+                            itemPreview: { title: link.title, subtitle: link.url, icon: "🔗", category: link.category },
+                            successToast: `✓ Bookmark "${link.title}" deleted.`,
+                            onConfirm: async () => { await deleteLink(link.id); },
+                          });
+                        }}
+                        className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black transition-all active:scale-95 cursor-pointer border"
+                        style={{
+                          backgroundColor: isCyber ? "rgba(239,68,68,0.15)" : "#FEE2E2",
+                          color: "#EF4444",
+                          borderColor: isCyber ? "rgba(239,68,68,0.4)" : "#000",
+                        }}
+                        title="Delete"
+                      >🗑️</button>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         ))}
@@ -276,6 +319,7 @@ export default function LinksPage() {
             <p className="text-xs font-bold theme-text-muted mt-2">No bookmarks saved yet.</p>
           </div>
         )}
+
       </div>
 
       {/* Bookmark Add Dialog */}

@@ -2,6 +2,46 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [3.8.0] - 2026-07-31
+
+### 🖼️ Gallery Premium Upgrade — Masonry / Grid / Timeline Views
+- **Three View Modes**: Added toggle between **Masonry** (Pinterest-style variable height), **Grid** (fixed aspect-video), and **Timeline** (grouped by date) layouts via an icon toggle bar in the toolbar.
+- **Masonry Layout**: Uses CSS `columnCount` for true Pinterest-style variable height image tiling with `break-inside-avoid` and smooth staggered `framer-motion` enter animations.
+- **Timeline View**: Groups images chronologically into date-labeled sections with thin separator lines and compact 4-column thumbnail grids.
+- **Right-click Context Menu**: Added `ContextMenu` integration — right-clicking any image card reveals "Open Full Preview" and "Delete Image" actions with theme-adaptive styling.
+- **Lazy Loading**: All image renders now use `loading="lazy"` for performance.
+- **Hover Overlays**: Each masonry card shows gradient title/tag overlays on hover with smooth opacity transitions.
+
+### 🔗 Links Page — Premium Bookmark Cards
+- **Favicon Integration**: Each bookmark card auto-fetches the site favicon via Google's favicon service (`s2/favicons?domain=...`) displayed in a styled pill avatar.
+- **Card Redesign**: Replaced flat `BentoCard` wrappers with standalone `motion.div` cards featuring `whileHover` lift animation, thick `boxShadow`, category badge, and external link indicator arrow.
+- **Section Headers**: Added item count badges and horizontal divider lines to each category section header.
+- **Animated Entries**: Cards now stagger-animate on load with `initial={{ opacity: 0, y: 12 }}`.
+- **Action Button Polish**: Edit/delete buttons redesigned as themed icon-only square buttons with colored backgrounds and border styles.
+
+### ⚡ Prompt Vault — Search & Expand/Collapse
+- **Full-Text Search Bar**: Added a dedicated search input that filters prompts by title, prompt body text, and target AI — with a clear (✕) button.
+- **Expand/Collapse Toggle**: Long prompts (>200 chars) now show a "▼ Expand / ▲ Collapse" toggle to reveal full text without cluttering the grid.
+- **Character Count Badge**: Each prompt card displays a subtle character count (e.g. `1234c`) in the top-right corner of the text box.
+- **Combined Filter**: Search and Target AI filter work together for precise lookups.
+
+### 🧩 New Global Components
+- **`ContextMenu.tsx`**: Universal right-click popover with theme-adaptive styles, `framer-motion` entrance animation, keyboard `Escape` dismiss, and click-outside handling.
+- **`BulkActionBar.tsx`**: Multi-select batch action bar with count badge, bulk action buttons, and animated slide-in from bottom.
+
+### 🧠 Dashboard Widgets
+- **`FocusWidget.tsx`**: New 3-panel dashboard widget showing Today's Focus checklist (tick to complete), quick stat metrics, and Most-Launched AI tool shortcut.
+- **`GameDBCard`**: Capped at 7 entries with "View All Games →" navigation link.
+- **`AnimeZoneCard`**: Capped at 7 prioritized entries with "View Anime Zone →" navigation link.
+- **`MediaLogCard`**: Displays drama watch statuses in priority order with "Drama Hub →" navigation link.
+
+### 🔧 TypeScript & Build
+- All TypeScript errors resolved (0 errors on `npx tsc --noEmit`).
+- Fixed `AiToolItemEntry.launchUrl` reference (was incorrectly using `.url`).
+- Fixed `launchCount` optional number sort with `?? 0` nullish coalescing.
+- Added missing `next/link` import to `GameDBCard.tsx`.
+- Fixed IIFE ternary JSX nesting issue in gallery page that caused extra `</div>` errors.
+
 ## [3.7.0] - 2026-07-31
 
 ### 🎮 Game Database Restoration & New Game Dossiers

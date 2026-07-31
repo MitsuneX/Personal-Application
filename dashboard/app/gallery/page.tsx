@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
@@ -7,6 +7,7 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
 import { ImageCropModal } from "@/components/ui/ImageCropModal";
 import { useConfirm } from "@/lib/context/ConfirmContext";
+import { ContextMenu, type ContextMenuItem } from "@/components/ui/ContextMenu";
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 interface FolderTreeNode {
@@ -59,6 +60,9 @@ export default function GalleryPage() {
   const categoryRef = useRef<HTMLDivElement>(null);
   const folderRef = useRef<HTMLDivElement>(null);
 
+  // View Mode
+  const [viewMode, setViewMode] = useState<"masonry" | "grid" | "timeline">("masonry");
+
   // Lightbox state
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [lightboxTitle, setLightboxTitle] = useState("");
@@ -66,6 +70,20 @@ export default function GalleryPage() {
   const [lightboxTags, setLightboxTags] = useState<string[]>([]);
   const [lightboxCategory, setLightboxCategory] = useState<string | null>(null);
   const [lightboxFolder, setLightboxFolder] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number>(-1);
+
+  // Context Menu state
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; itemId: string } | null>(null);
+
+  const openLightbox = useCallback((item: { url: string; title: string; caption?: string | null; tags?: string[] | null; category?: string; folder?: string }, idx: number) => {
+    setLightboxUrl(item.url);
+    setLightboxTitle(item.title);
+    setLightboxCaption(item.caption || null);
+    setLightboxTags(item.tags?.filter(Boolean) as string[] || []);
+    setLightboxCategory(item.category || "General");
+    setLightboxFolder(item.folder || "Root");
+    setLightboxIndex(idx);
+  }, []);
 
   // Close suggestions on outside click
   useEffect(() => {
@@ -458,7 +476,7 @@ export default function GalleryPage() {
         </button>
       </motion.div>
 
-      {/* ── Toolbar Search ── */}
+      {/* ── Toolbar Search + View Mode ── */}
       <div
         className="mb-8 p-5 rounded-2xl flex flex-col md:flex-row gap-4 items-center"
         style={{
@@ -474,7 +492,7 @@ export default function GalleryPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="PROMPT STRINGS // Search metadata tags, title matrix..."
+            placeholder={isCyber ? "SEARCH // title, tags, metadata..." : "Search images by title, tag, or caption..."}
             className="w-full px-5 py-3 text-xs font-black rounded-xl outline-none border transition-all uppercase tracking-wider"
             style={{
               backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#F3F4F6",
@@ -484,7 +502,32 @@ export default function GalleryPage() {
             }}
           />
         </div>
-        <div className="flex items-center gap-4 shrink-0 select-none">
+        <div className="flex items-center gap-3 shrink-0">
+          {/* View Mode Toggle */}
+          <div
+            className="flex items-center rounded-xl overflow-hidden border"
+            style={{ borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#000", borderWidth: isCyber ? "1px" : "2.5px" }}
+          >
+            {(["masonry", "grid", "timeline"] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className="px-3 py-2 text-[10px] font-black uppercase tracking-wider transition-all"
+                style={{
+                  backgroundColor: viewMode === mode
+                    ? (isCyber ? "rgba(0,245,255,0.2)" : "#000")
+                    : "transparent",
+                  color: viewMode === mode
+                    ? (isCyber ? "#00F5FF" : "#FFF")
+                    : (isCyber ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.5)"),
+                }}
+                title={mode.charAt(0).toUpperCase() + mode.slice(1) + " View"}
+              >
+                {mode === "masonry" ? "⊞" : mode === "grid" ? "▦" : "📅"}
+              </button>
+            ))}
+          </div>
+
           <label className="flex items-center gap-2.5 text-xs font-black select-none cursor-pointer uppercase tracking-wider">
             <input
               type="checkbox"
@@ -493,7 +536,7 @@ export default function GalleryPage() {
               className="w-4 h-4 rounded cursor-pointer border-2"
               style={{ accentColor: isCyber ? "#00F5FF" : "#FF3366" }}
             />
-            <span>Include Nested Sectors</span>
+            <span>Nested</span>
           </label>
         </div>
       </div>
@@ -664,89 +707,176 @@ export default function GalleryPage() {
             )}
           </div>
 
-          {/* Photo Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {filteredGallery.map((item) => (
-              <motion.div
-                key={item.id}
-                layoutId={`gallery-${item.id}`}
-                onClick={() => {
-                  setLightboxUrl(item.url);
-                  setLightboxTitle(item.title);
-                  setLightboxCaption(item.caption || null);
-                  setLightboxTags(item.tags || []);
-                  setLightboxCategory(item.category || "General");
-                  setLightboxFolder(item.folder || "Root");
-                }}
-                className="group relative cursor-pointer overflow-hidden aspect-video bg-black/10 transition-transform duration-200"
-                style={{
-                  borderRadius: isCyber ? "16px" : "0px",
-                  border: isCyber ? "1px solid rgba(0,245,255,0.2)" : "4px solid #000",
-                  boxShadow: isCyber ? "0 0 15px rgba(0,245,255,0.02)" : "6px 6px 0 #000",
-                }}
-                whileHover={{ scale: 1.03 }}
-              >
-                <img
-                  src={item.url}
-                  alt={item.title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&q=80";
-                  }}
-                />
-                {/* Static tags layout overlays */}
-                <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
-                  <span className="text-[9px] font-black uppercase tracking-wider font-mono px-2 py-0.5 bg-black/80 text-white border border-white/10 rounded-md shadow-md">
-                    📁 {item.folder || "Root"}
-                  </span>
-                  <span className="text-[9px] font-black uppercase tracking-wider font-mono px-2 py-0.5 bg-[#00F5FF] text-black rounded-md shadow-md w-max">
-                    {item.category || "General"}
-                  </span>
-                </div>
-                {/* Hover overlay description */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-black/20 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-5 pointer-events-none">
-                  <h3 className="text-white text-sm font-black tracking-wide uppercase truncate">{item.title}</h3>
-                  {item.caption && (
-                    <p className="text-[11px] text-white/70 line-clamp-2 mt-1.5 leading-relaxed font-semibold">
-                      {item.caption}
-                    </p>
-                  )}
-                  {item.tags && item.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2.5">
-                      {item.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-[9px] font-black px-2 py-0.5 bg-[#00F5FF]/10 text-[#00F5FF] border border-[#00F5FF]/30 rounded-md font-mono"
+          {/* Photo Layout — View Mode Aware */}
+          {viewMode === "timeline" ? (
+            /* ── TIMELINE VIEW ── */
+            (() => {
+              const grouped = filteredGallery.reduce((acc, item) => {
+                const key = "Imported Items";
+                if (!acc[key]) acc[key] = [];
+                acc[key].push(item);
+                return acc;
+              }, {} as Record<string, typeof filteredGallery>);
+
+              return (
+                <div className="space-y-10">
+                  {Object.entries(grouped).map(([month, items]) => (
+                    <div key={month}>
+                      <div className="flex items-center gap-3 mb-5">
+                        <h3
+                          className="font-black text-base uppercase tracking-wider"
+                          style={{ color: isCyber ? "#00F5FF" : "#1A1A1A", fontFamily: isCyber ? "var(--font-orbitron)" : "inherit" }}
                         >
-                          #{tag.toUpperCase()}
-                        </span>
-                      ))}
+                          📅 {month}
+                        </h3>
+                        <span className="text-xs theme-text-muted">({items.length} items)</span>
+                        <div className="flex-1 h-px" style={{ background: isCyber ? "rgba(0,245,255,0.15)" : "rgba(0,0,0,0.1)" }} />
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        {items.map((item, idx) => (
+                          <motion.div
+                            key={item.id}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: idx * 0.04 }}
+                            onClick={() => openLightbox(item, filteredGallery.indexOf(item))}
+                            onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ x: e.clientX, y: e.clientY, itemId: item.id }); }}
+                            className="group relative cursor-pointer overflow-hidden aspect-square bg-black/10"
+                            style={{
+                              borderRadius: isCyber ? "12px" : "0px",
+                              border: isCyber ? "1px solid rgba(0,245,255,0.15)" : "3px solid #000",
+                            }}
+                            whileHover={{ scale: 1.05 }}
+                          >
+                            <img src={item.url} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300&q=80"; }} />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-2">
+                              <p className="text-white text-[10px] font-black truncate">{item.title}</p>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  {filteredGallery.length === 0 && (
+                    <div className="text-center py-24 border-4 border-dashed border-adaptive-unique rounded-2xl opacity-75">
+                      <p className="text-5xl animate-bounce">📅</p>
+                      <p className="text-sm font-black uppercase tracking-wider mt-4">No Timeline Entries</p>
                     </div>
                   )}
-                  <p className="text-[10px] text-[#00F5FF] font-black font-mono mt-3 flex items-center gap-1 uppercase tracking-widest">
-                    <span>🔍</span> Mount Node View
-                  </p>
                 </div>
-                {/* Quick delete button */}
-                <button
-                  onClick={(e) => handleDelete(item.id, e)}
-                  className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center bg-red-500 text-white rounded-xl opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-red-600 z-20 shadow-lg border border-red-700 font-bold"
+              );
+            })()
+          ) : viewMode === "masonry" ? (
+            /* ── MASONRY VIEW ── */
+            <div
+              style={{
+                columnCount: 3,
+                columnGap: "1.25rem",
+              }}
+              className="[&>*]:break-inside-avoid [&>*]:mb-5 md:columns-3 columns-2 sm:columns-2"
+            >
+              {filteredGallery.map((item, idx) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.03 }}
+                  onClick={() => openLightbox(item, idx)}
+                  onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ x: e.clientX, y: e.clientY, itemId: item.id }); }}
+                  className="group relative cursor-pointer overflow-hidden bg-black/10 break-inside-avoid mb-5"
+                  style={{
+                    borderRadius: isCyber ? "16px" : "0px",
+                    border: isCyber ? "1px solid rgba(0,245,255,0.2)" : "4px solid #000",
+                    boxShadow: isCyber ? "0 0 15px rgba(0,245,255,0.02)" : "6px 6px 0 #000",
+                    display: "inline-block",
+                    width: "100%",
+                  }}
+                  whileHover={{ scale: 1.02, boxShadow: isCyber ? "0 0 25px rgba(0,245,255,0.15)" : "8px 8px 0 #000" }}
                 >
-                  ✕
-                </button>
-              </motion.div>
-            ))}
-            {filteredGallery.length === 0 && (
-              <div className="col-span-full text-center py-24 border-4 border-dashed border-adaptive-unique rounded-2xl opacity-75 bg-black/5 dark:bg-white/5">
-                <p className="text-5xl animate-bounce">📡</p>
-                <p className="text-sm font-black uppercase tracking-wider mt-4">Empty Sector Grid Array</p>
-                <p className="text-xs opacity-60 mt-1">Initialize dynamic asset loading or select another virtual drive channel.</p>
-              </div>
-            )}
+                  <img
+                    src={item.url}
+                    alt={item.title}
+                    className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+                    loading="lazy"
+                    onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&q=80"; }}
+                  />
+                  {/* Gradient overlay on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4 pointer-events-none">
+                    <h3 className="text-white text-sm font-black tracking-wide truncate">{item.title}</h3>
+                    {item.caption && <p className="text-[10px] text-white/70 line-clamp-1 mt-0.5">{item.caption}</p>}
+                    <div className="flex gap-1 mt-2 flex-wrap">
+                      {(item.tags || []).slice(0, 3).map((tag) => (
+                        <span key={tag} className="text-[8px] font-black px-1.5 py-0.5 bg-white/10 text-white border border-white/20 rounded">{tag}</span>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Delete button */}
+                  <button
+                    onClick={(e) => handleDelete(item.id, e)}
+                    className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center bg-red-500 text-white rounded-xl opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-red-600 z-20 shadow-lg border border-red-700 font-bold text-xs"
+                  >✕</button>
+                </motion.div>
+              ))}
+              {filteredGallery.length === 0 && (
+                <div className="col-span-full text-center py-24 border-4 border-dashed border-adaptive-unique rounded-2xl opacity-75 bg-black/5 dark:bg-white/5">
+                  <p className="text-5xl animate-bounce">📡</p>
+                  <p className="text-sm font-black uppercase tracking-wider mt-4">No Images Found</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* ── STANDARD GRID VIEW ── */
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {filteredGallery.map((item, idx) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: idx * 0.04 }}
+                  onClick={() => openLightbox(item, idx)}
+                  onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ x: e.clientX, y: e.clientY, itemId: item.id }); }}
+                  className="group relative cursor-pointer overflow-hidden aspect-video bg-black/10 transition-transform duration-200"
+                  style={{
+                    borderRadius: isCyber ? "16px" : "0px",
+                    border: isCyber ? "1px solid rgba(0,245,255,0.2)" : "4px solid #000",
+                    boxShadow: isCyber ? "0 0 15px rgba(0,245,255,0.02)" : "6px 6px 0 #000",
+                  }}
+                  whileHover={{ scale: 1.03 }}
+                >
+                  <img
+                    src={item.url}
+                    alt={item.title}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    loading="lazy"
+                    onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&q=80"; }}
+                  />
+                  <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
+                    <span className="text-[9px] font-black uppercase tracking-wider font-mono px-2 py-0.5 bg-black/80 text-white border border-white/10 rounded-md shadow-md">📁 {item.folder || "Root"}</span>
+                    <span className="text-[9px] font-black uppercase tracking-wider font-mono px-2 py-0.5 bg-[#00F5FF] text-black rounded-md shadow-md w-max">{item.category || "General"}</span>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-black/20 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-5 pointer-events-none">
+                    <h3 className="text-white text-sm font-black tracking-wide uppercase truncate">{item.title}</h3>
+                    {item.caption && <p className="text-[11px] text-white/70 line-clamp-2 mt-1.5 leading-relaxed font-semibold">{item.caption}</p>}
+                    {item.tags && item.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2.5">
+                        {item.tags.map((tag) => (<span key={tag} className="text-[9px] font-black px-2 py-0.5 bg-[#00F5FF]/10 text-[#00F5FF] border border-[#00F5FF]/30 rounded-md font-mono">#{tag.toUpperCase()}</span>))}
+                      </div>
+                    )}
+                  </div>
+                  <button onClick={(e) => handleDelete(item.id, e)} className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center bg-red-500 text-white rounded-xl opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-red-600 z-20 shadow-lg border border-red-700 font-bold text-xs">✕</button>
+                </motion.div>
+              ))}
+              {filteredGallery.length === 0 && (
+                <div className="col-span-full text-center py-24 border-4 border-dashed border-adaptive-unique rounded-2xl opacity-75 bg-black/5 dark:bg-white/5">
+                  <p className="text-5xl animate-bounce">📡</p>
+                  <p className="text-sm font-black uppercase tracking-wider mt-4">Empty Grid Array</p>
+                </div>
+              )}
+            </div>
+          )}
           </div>
         </div>
-      </div>
 
       {/* ── Add Image Overlay dialog ── */}
       <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} maxWidth="max-w-md">
@@ -1149,6 +1279,40 @@ export default function GalleryPage() {
         }}
         onCropComplete={handleCropComplete}
       />
+
+      {/* ── Right-click Context Menu ── */}
+      {ctxMenu && (
+        <ContextMenu
+          isOpen={!!ctxMenu}
+          x={ctxMenu.x}
+          y={ctxMenu.y}
+          onClose={() => setCtxMenu(null)}
+          title="Image Actions"
+          items={([
+            {
+              id: "view",
+              label: "Open Full Preview",
+              icon: "🔍",
+              onClick: () => {
+                const item = filteredGallery.find((g) => g.id === ctxMenu.itemId);
+                const idx = filteredGallery.findIndex((g) => g.id === ctxMenu.itemId);
+                if (item) openLightbox(item, idx);
+              },
+            },
+            {
+              id: "delete",
+              label: "Delete Image",
+              icon: "🗑️",
+              danger: true,
+              divider: true,
+              onClick: () => {
+                const fakeEvent = { stopPropagation: () => {} } as React.MouseEvent;
+                handleDelete(ctxMenu.itemId, fakeEvent);
+              },
+            },
+          ] as ContextMenuItem[])}
+        />
+      )}
     </AppShell>
   );
 }

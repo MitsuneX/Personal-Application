@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { motion, useAnimation } from "framer-motion";
 import { BentoCard } from "./BentoCard";
 import { useTheme } from "@/lib/theme";
@@ -118,82 +119,64 @@ export function GameDBCard() {
                 animate={{ fontFamily: isCyber ? "var(--font-orbitron)" : "inherit" }}
                 transition={{ duration: 0.4 }}
               >
-                {isCyber ? "GAME.DB" : "Game DB"}
+                {isCyber ? "GAME.DB" : "Game Database"}
               </motion.h2>
               <p className="theme-text-muted text-xs tracking-widest uppercase">
-                {games.length} handles tracked
+                {games.length} titles registered
               </p>
             </div>
           </div>
 
-          {/* Active count badge */}
-          <motion.div
-            className="theme-badge"
-            animate={{
-              backgroundColor: isCyber ? "rgba(57,255,20,0.12)" : "rgba(6,214,160,0.12)",
-              color: isCyber ? "#39FF14" : "#06D6A0",
-              borderColor: isCyber ? "rgba(57,255,20,0.4)" : "#06D6A0",
-            }}
-            transition={{ duration: 0.4 }}
-          >
-            {activeGames.length} Active
-          </motion.div>
+          <div className="flex items-center gap-2">
+            {/* Active count badge */}
+            <motion.div
+              className="theme-badge"
+              animate={{
+                backgroundColor: isCyber ? "rgba(57,255,20,0.12)" : "rgba(6,214,160,0.12)",
+                color: isCyber ? "#39FF14" : "#06D6A0",
+                borderColor: isCyber ? "rgba(57,255,20,0.4)" : "#06D6A0",
+              }}
+              transition={{ duration: 0.4 }}
+            >
+              {activeGames.length} Active
+            </motion.div>
+          </div>
         </motion.div>
 
-        {/* Active games list */}
-        <motion.ul
-          className="space-y-2.5"
-          variants={arcadeContainerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {activeGames.map((game, i) => (
-            <GameRow key={game.id} game={game} isCyber={isCyber} index={i} />
-          ))}
-        </motion.ul>
+        {/* Prioritized Games List (Max 7) */}
+        {(() => {
+          const prioritized = [...games]
+            .sort((a, b) => (b.isActive ? 1 : 0) - (a.isActive ? 1 : 0))
+            .slice(0, 7);
 
-        {/* Divider */}
-        {inactiveGames.length > 0 && (
-          <>
-            <motion.div
-              className="my-3 flex items-center gap-2"
-              animate={{ opacity: 0.6 }}
-            >
-              <div
-                className="flex-1 h-px"
-                style={{
-                  background: isCyber ? "rgba(0,245,255,0.2)" : "rgba(0,0,0,0.15)",
-                }}
-              />
-              <span className="theme-text-muted text-xs font-mono tracking-widest uppercase">
-                archived
-              </span>
-              <div
-                className="flex-1 h-px"
-                style={{
-                  background: isCyber ? "rgba(0,245,255,0.2)" : "rgba(0,0,0,0.15)",
-                }}
-              />
-            </motion.div>
-
+          return (
             <motion.ul
-              className="space-y-2"
+              className="space-y-2.5"
               variants={arcadeContainerVariants}
               initial="hidden"
               animate="visible"
             >
-              {inactiveGames.map((game, i) => (
-                <GameRow
-                  key={game.id}
-                  game={game}
-                  isCyber={isCyber}
-                  index={i + activeGames.length}
-                  dimmed
-                />
+              {prioritized.map((game, i) => (
+                <GameRow key={game.id} game={game} isCyber={isCyber} index={i} />
               ))}
             </motion.ul>
-          </>
-        )}
+          );
+        })()}
+
+        {/* View All Navigation Footer */}
+        <div className="mt-4 pt-3 border-t border-slate-700/20 dark:border-slate-300/10 flex justify-between items-center">
+          <span className="text-[11px] font-mono theme-text-muted">
+            Showing {Math.min(7, games.length)} of {games.length}
+          </span>
+          <Link
+            href="/games"
+            className="text-xs font-black flex items-center gap-1.5 transition-all hover:translate-x-1 cursor-pointer"
+            style={{ color: isCyber ? "#00F5FF" : "#1A1A1A" }}
+          >
+            <span>View All Games</span>
+            <span>→</span>
+          </Link>
+        </div>
       </BentoCard>
     </motion.div>
   );

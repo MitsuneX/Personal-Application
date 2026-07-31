@@ -250,119 +250,87 @@ export function MediaLogCard() {
           </div>
         </motion.div>
 
-        {/* Top section: Film + Series — cinematic stagger slide */}
-        <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4"
-          variants={cinematicContainerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {/* Top Film / Show */}
-          <motion.div
-            className="rounded-lg p-3 relative overflow-hidden flex flex-col justify-between"
-            variants={cinematicSlideVariants}
-            animate={{
-              background: isCyber ? "rgba(0,245,255,0.04)" : "rgba(255,107,53,0.06)",
-              borderColor: isCyber ? "rgba(0,245,255,0.2)" : "rgba(0,0,0,0.2)",
-            }}
-            transition={{ duration: 0.4 }}
-            style={{ border: "1px solid" }}
-          >
-            <div className="flex items-start gap-2">
-              <motion.div
-                className="text-2xl shrink-0 rounded-md w-10 h-10 flex items-center justify-center"
-                animate={{
-                  backgroundColor: isCyber ? "rgba(0,245,255,0.1)" : "#FF6B35",
-                  boxShadow: isCyber ? "0 0 12px rgba(0,245,255,0.4)" : "2px 2px 0px 0px rgba(0,0,0,1)",
-                }}
-                transition={{ duration: 0.4 }}
-              >
-                🏆
-              </motion.div>
-              <div className="flex-1 min-w-0">
-                <p
-                  className="text-xs font-bold tracking-widest uppercase mb-1"
-                  style={{ color: isCyber ? "rgba(0,245,255,0.6)" : "rgba(0,0,0,0.5)" }}
-                >
-                  {activeTopFilm ? (activeTopFilm.type === "Movie" ? "Top Film" : "Top Show") : "Top Show / Film"}
-                </p>
-                <p className="theme-text-primary font-black text-sm leading-tight truncate">
-                  {activeTopFilm ? activeTopFilm.title : "No Media Logged"}
-                </p>
-                <p className="theme-text-muted text-xs truncate mt-0.5">
-                  {activeTopFilm ? `${activeTopFilm.year} · ${activeTopFilm.genre}` : "Track dramas in Drama Hub"}
-                </p>
-                <div className="mt-1.5">
-                  <StarRating rating={activeTopFilm ? activeTopFilm.rating : 0} />
-                </div>
-              </div>
-            </div>
-          </motion.div>
+        {/* Prioritized Drama List (Max 5-7 entries: Watching, Completed, Plan to Watch, Recommended) */}
+        {(() => {
+          const prioritized = [...unifiedDramas]
+            .sort((a, b) => {
+              // Prioritize Watching, then Completed, then Plan to Watch
+              const statusOrder = { Watching: 1, Completed: 2, "Plan to Watch": 3, "On Hold": 4 };
+              return (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99);
+            })
+            .slice(0, 6);
 
-          {/* Current Series */}
-          <motion.div
-            className="rounded-lg p-3 relative overflow-hidden flex flex-col justify-between"
-            variants={cinematicSlideVariants}
-            animate={{
-              background: isCyber ? "rgba(191,95,255,0.04)" : "rgba(6,214,160,0.06)",
-              borderColor: isCyber ? "rgba(191,95,255,0.2)" : "rgba(0,0,0,0.2)",
-            }}
-            transition={{ duration: 0.4 }}
-            style={{ border: "1px solid" }}
-          >
-            <div>
-              <p
-                className="text-xs font-bold tracking-widest uppercase mb-2"
-                style={{ color: isCyber ? "rgba(191,95,255,0.7)" : "rgba(0,0,0,0.5)" }}
-              >
-                Now Streaming
-              </p>
-              <p className="theme-text-primary font-black text-sm leading-tight mb-0.5 truncate">
-                {activeSeries ? activeSeries.title : "Nothing Active"}
-              </p>
-              <p className="theme-text-muted text-xs mb-2 truncate">
-                {activeSeries
-                  ? `Ep. ${activeSeries.episodesWatched} / ${activeSeries.episodes} · ${activeSeries.platform}`
-                  : "0 active shows currently watching"}
-              </p>
-            </div>
+          return (
+            <motion.ul
+              className="space-y-3 mb-4"
+              variants={cinematicContainerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {prioritized.map((drama, i) => {
+                const pct = drama.episodes > 0 ? Math.min((drama.episodesWatched / drama.episodes) * 100, 100) : 0;
+                return (
+                  <motion.li
+                    key={drama.id}
+                    variants={cinematicSlideVariants}
+                    custom={i}
+                    className="p-2.5 rounded-xl border flex flex-col gap-1.5"
+                    style={{
+                      backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#F8FAFC",
+                      borderColor: isCyber ? "rgba(255,255,255,0.06)" : "#E2E8F0",
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="theme-text-primary text-xs font-black truncate">{drama.title}</p>
+                        <p className="theme-text-muted text-[10px] truncate">{drama.genre} · {drama.year}</p>
+                      </div>
+                      <span
+                        className="px-2 py-0.5 rounded text-[9px] font-mono font-bold"
+                        style={{
+                          backgroundColor: drama.status === "Watching"
+                            ? (isCyber ? "rgba(0,245,255,0.12)" : "#E0F7FA")
+                            : (isCyber ? "rgba(57,255,20,0.12)" : "#E8F5E9"),
+                          color: drama.status === "Watching"
+                            ? (isCyber ? "#00F5FF" : "#006064")
+                            : (isCyber ? "#39FF14" : "#2E7D32"),
+                          border: `1px solid ${drama.status === "Watching" ? (isCyber ? "rgba(0,245,255,0.4)" : "#B2EBF2") : (isCyber ? "rgba(57,255,20,0.4)" : "#C8E6C9")}`,
+                        }}
+                      >
+                        {drama.status}
+                      </span>
+                    </div>
 
-            {/* Progress bar */}
-            <div>
-              <div className="progress-track">
-                <motion.div
-                  className="progress-fill"
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: seriesProgress / 100 }}
-                  transition={{ type: "spring", stiffness: 80, damping: 18, delay: 0.6 }}
-                  style={{ transformOrigin: "left" }}
-                />
-              </div>
-              <p
-                className="text-xs font-mono mt-1"
-                style={{ color: isCyber ? "rgba(191,95,255,0.7)" : "rgba(0,0,0,0.45)" }}
-              >
-                {activeSeries ? `${seriesProgress}% complete` : "Idle"}
-              </p>
-            </div>
-          </motion.div>
-        </motion.div>
+                    {drama.status === "Watching" && (
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <motion.div
+                            className="h-full rounded-full"
+                            style={{
+                              width: `${pct}%`,
+                              backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
+                              boxShadow: isCyber ? "0 0 8px #00F5FF" : "none",
+                            }}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ duration: 0.6 }}
+                          />
+                        </div>
+                        <span className="text-[10px] font-mono theme-text-secondary shrink-0">
+                          {drama.episodesWatched}/{drama.episodes}
+                        </span>
+                      </div>
+                    )}
+                  </motion.li>
+                );
+              })}
+            </motion.ul>
+          );
+        })()}
 
-        {/* Divider */}
-        <div
-          className="h-px mb-4"
-          style={{ background: isCyber ? "rgba(0,245,255,0.1)" : "rgba(0,0,0,0.1)" }}
-        />
-
-        {/* Dynamic Talent sections synced to Hall of Fame */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <TalentSection title="Actors" entries={actorsList} isCyber={isCyber} />
-          <TalentSection title="Actresses" entries={actressesList} isCyber={isCyber} />
-        </div>
-
-        {/* View Full Hall of Fame & Search Buttons */}
+        {/* View Full Drama Hub & Search Buttons */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
-          <Link href="/hall-of-fame" className="block">
+          <Link href="/drama" className="block">
             <motion.button
               className="w-full py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase font-mono flex items-center justify-center gap-1.5 border cursor-pointer"
               style={{
@@ -374,8 +342,8 @@ export function MediaLogCard() {
               whileHover={{ scale: 1.015, y: -1 }}
               whileTap={{ scale: 0.98, y: 1 }}
             >
-              <span>🏆</span>
-              <span>VIEW HALL OF FAME →</span>
+              <span>🎬</span>
+              <span>VIEW DRAMA HUB →</span>
             </motion.button>
           </Link>
 
@@ -413,107 +381,4 @@ export function MediaLogCard() {
   );
 }
 
-// ─── Talent Section ───────────────────────────────────────────────────────────
 
-interface TalentSectionProps {
-  title: string;
-  entries: Array<{
-    id: string;
-    name: string;
-    status: MediaStatus;
-    knownFor: string;
-    rank?: number | null;
-  }>;
-  isCyber: boolean;
-}
-
-function TalentSection({ title, entries, isCyber }: TalentSectionProps) {
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-
-  return (
-    <div>
-      <motion.p
-        className="text-xs font-bold tracking-widest uppercase mb-2"
-        variants={cinematicSlideVariants}
-        initial="hidden"
-        animate="visible"
-        style={{ color: isCyber ? "rgba(0,245,255,0.5)" : "rgba(0,0,0,0.4)" }}
-      >
-        {title}
-      </motion.p>
-      {entries.length === 0 ? (
-        <p className="theme-text-muted text-xs italic py-2">
-          No {title.toLowerCase()} ranked in Hall of Fame
-        </p>
-      ) : (
-        <motion.ul
-          className="space-y-2"
-          variants={cinematicContainerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {entries.map((entry, i) => {
-            const style = STATUS_STYLE[entry.status] || STATUS_STYLE["GOAT Status"];
-            const isThisHovered = hoveredId === entry.id;
-            const isOtherHovered = hoveredId !== null && hoveredId !== entry.id;
-
-            return (
-              <motion.li
-                key={entry.id}
-                variants={cinematicSlideVariants}
-                custom={i}
-                className="flex items-center justify-between gap-2 cursor-default"
-                onHoverStart={() => setHoveredId(entry.id)}
-                onHoverEnd={() => setHoveredId(null)}
-                animate={{
-                  scale: isThisHovered ? 1.05 : isOtherHovered ? 0.97 : 1,
-                  opacity: isOtherHovered ? 0.45 : 1,
-                  filter: isOtherHovered ? "blur(1.5px)" : "blur(0px)",
-                }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-              >
-                <div className="min-w-0 flex items-center gap-1.5">
-                  {entry.rank !== undefined && entry.rank !== null && (
-                    <span
-                      className="text-[10px] font-mono font-black px-1.5 py-0.5 rounded shrink-0"
-                      style={{
-                        backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#FFD700",
-                        color: isCyber ? "#00F5FF" : "#000000",
-                        border: isCyber ? "1px solid rgba(0,245,255,0.3)" : "1.5px solid #000000",
-                      }}
-                    >
-                      #{entry.rank}
-                    </span>
-                  )}
-                  <div className="min-w-0">
-                    <p className="theme-text-primary text-sm font-bold truncate">
-                      {entry.name}
-                    </p>
-                    <p className="theme-text-muted text-xs truncate">{entry.knownFor}</p>
-                  </div>
-                </div>
-                <motion.span
-                  className="theme-badge shrink-0"
-                  style={{
-                    backgroundColor: style.bg,
-                    color: style.color,
-                    borderColor: isCyber ? style.borderCyber : style.borderBrutal,
-                  }}
-                  whileHover={{ scale: 1.06 }}
-                  animate={
-                    isCyber && entry.status === "GOAT Status"
-                      ? { boxShadow: ["0 0 6px rgba(255,215,0,0.4)", "0 0 14px rgba(255,215,0,0.6)", "0 0 6px rgba(255,215,0,0.4)"] }
-                      : {}
-                  }
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  {entry.status}
-                </motion.span>
-              </motion.li>
-            );
-          })}
-        </motion.ul>
-      )}
-    </div>
-  );
-}

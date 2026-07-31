@@ -14,6 +14,7 @@ import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants";
 import { RecommendationWidget } from "@/components/ui/RecommendationWidget";
+import { FocusWidget } from "@/components/dashboard/FocusWidget";
 import Link from "next/link";
 
 export default function DashboardPage() {
@@ -136,6 +137,11 @@ export default function DashboardPage() {
           </BentoCard>
         </motion.div>
       </motion.div>
+
+      {/* ── Today's Mission & Focus Control ── */}
+      <div className="mb-5">
+        <FocusWidget />
+      </div>
 
       {/* ── AI Recommendations ── */}
       <div className="mb-5">
