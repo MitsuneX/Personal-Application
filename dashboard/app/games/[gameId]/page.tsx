@@ -101,7 +101,12 @@ function ResourceEditorModal({ isOpen, onClose, gameId, resourceToEdit }: Resour
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)" }}
+        style={{
+          backgroundColor: "rgba(0,0,0,0.6)",
+          backdropFilter: "blur(6px)",
+          paddingLeft: "calc(var(--sidebar-width, 0px) + 1rem)",
+          transition: "padding-left 0.25s cubic-bezier(0.22, 1, 0.36, 1)",
+        }}
       >
         <motion.div
           className="w-full max-w-md rounded-2xl p-6 space-y-4 relative"

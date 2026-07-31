@@ -13,6 +13,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v3.0.2",
+    date: "2026-07-31",
+    title: "Modal Main Content Area Horizontal Centering Engine Fix",
+    badge: "MODAL LAYOUT FIX",
+    type: "patch",
+    summary: "Fixed a positioning calculation bug where viewport-fixed modals appeared visually shifted toward the left when the desktop sidebar was expanded. Modals now dynamically calculate padding-left from the AppShell CSS custom property var(--sidebar-width, 0px), placing all dialogs in the exact visual center of the usable main content area whether the sidebar is expanded (240px), collapsed (78px), transitioning, or on mobile (0px).",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "Modal Horizontal Centering: Added dynamic paddingLeft using calc(var(--sidebar-width, 0px) + offset) to modal.tsx, ResourceEditorModal, ChangelogModal, and CommandPalette overlays.",
+          "Sidebar Expansion Sync: Modals remain perfectly centered within the usable main content area whether sidebar is expanded (240px) or collapsed (78px).",
+          "Sidebar Animation Transition: Added smooth CSS cubic-bezier padding-left transition in tandem with sidebar width spring animation to eliminate visual jump during sidebar toggle.",
+          "Mobile & Tablet Continuity: Preserves zero-offset 100% viewport centering on mobile devices (<768px) where sidebar width is 0px.",
+        ],
+      },
+    ],
+  },
+
+  {
     version: "v3.0.1",
     date: "2026-07-30",
     title: "Global Modal System Audit & Responsive Architecture Overhaul",

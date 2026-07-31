@@ -106,6 +106,8 @@ export function Modal({
             backgroundColor: "rgba(0, 0, 0, 0.55)",
             backdropFilter: "blur(6px)",
             WebkitBackdropFilter: "blur(6px)",
+            paddingLeft: "calc(var(--sidebar-width, 0px) + 0.75rem)",
+            transition: "padding-left 0.25s cubic-bezier(0.22, 1, 0.36, 1)",
           }}
           variants={backdropVariants}
           initial="hidden"

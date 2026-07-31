@@ -46,7 +46,13 @@ export function ChangelogModal({ isOpen, onClose }: ChangelogModalProps) {
   const modalContent = (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 select-none overflow-y-auto">
+        <div
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 select-none overflow-y-auto"
+          style={{
+            paddingLeft: "calc(var(--sidebar-width, 0px) + 1rem)",
+            transition: "padding-left 0.25s cubic-bezier(0.22, 1, 0.36, 1)",
+          }}
+        >
           {/* Backdrop Overlay */}
           <motion.div
             initial={{ opacity: 0 }}
