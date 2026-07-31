@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
+import { OverlayPortal } from "./OverlayPortal";
+import { Z_INDEX, getViewportRect } from "./ViewportBoundary";
 
 export interface ContextMenuItem {
   id: string;
@@ -28,29 +30,28 @@ export function ContextMenu({ isOpen, x, y, onClose, items, title }: ContextMenu
   const isCyber = theme === "cyber";
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Position adjustment to prevent overflow off screen
-  const [adjustedPos, setAdjustedPos] = React.useState({ left: x, top: y });
+  const [pos, setPos] = useState({ left: x, top: y });
 
   useEffect(() => {
     if (!isOpen) return;
 
+    const vp = getViewportRect(12);
     const menuWidth = 220;
-    const menuHeight = items.length * 36 + 40;
+    const menuHeight = items.length * 38 + (title ? 32 : 12);
 
-    let posX = x;
-    let posY = y;
+    let left = x;
+    let top = y;
 
-    if (posX + menuWidth > window.innerWidth - 12) {
-      posX = Math.max(12, window.innerWidth - menuWidth - 12);
+    if (left + menuWidth > vp.width - vp.safeMargin) {
+      left = Math.max(vp.safeMargin, vp.width - menuWidth - vp.safeMargin);
     }
-    if (posY + menuHeight > window.innerHeight - 12) {
-      posY = Math.max(12, window.innerHeight - menuHeight - 12);
+    if (top + menuHeight > vp.height - vp.safeMargin) {
+      top = Math.max(vp.safeMargin, vp.height - menuHeight - vp.safeMargin);
     }
 
-    setAdjustedPos({ left: posX, top: posY });
-  }, [isOpen, x, y, items.length]);
+    setPos({ left, top });
+  }, [isOpen, x, y, items.length, title]);
 
-  // Click outside and Escape key handlers
   useEffect(() => {
     if (!isOpen) return;
 
@@ -80,91 +81,98 @@ export function ContextMenu({ isOpen, x, y, onClose, items, title }: ContextMenu
   }, [isOpen, onClose]);
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          ref={menuRef}
-          initial={{ opacity: 0, scale: 0.92, y: -4 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.92, y: -4 }}
-          transition={{ type: "spring", stiffness: 450, damping: 30 }}
-          style={{
-            position: "fixed",
-            left: `${adjustedPos.left}px`,
-            top: `${adjustedPos.top}px`,
-            zIndex: 9999,
-            minWidth: "200px",
-            backgroundColor: isCyber ? "rgba(10, 15, 30, 0.95)" : "#FFFFFF",
-            borderColor: isCyber ? "rgba(0, 245, 255, 0.35)" : "#000000",
-            borderWidth: isCyber ? "1px" : "2.5px",
-            boxShadow: isCyber
-              ? "0 12px 36px rgba(0,0,0,0.6), 0 0 25px rgba(0,245,255,0.25)"
-              : "5px 5px 0 #000000",
-            backdropFilter: "blur(12px)",
-          }}
-          className="rounded-xl py-1.5 overflow-hidden select-none"
-        >
-          {title && (
-            <div
-              className="px-3.5 py-1.5 text-[10px] font-mono font-black uppercase tracking-wider border-b"
-              style={{
-                borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#000000",
-                color: isCyber ? "rgba(0,245,255,0.7)" : "#64748B",
-              }}
-            >
-              {title}
-            </div>
-          )}
+    <OverlayPortal>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            ref={menuRef}
+            initial={{ opacity: 0, scale: 0.92, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.92, y: -4 }}
+            transition={{ type: "spring", stiffness: 450, damping: 30 }}
+            style={{
+              position: "fixed",
+              left: `${pos.left}px`,
+              top: `${pos.top}px`,
+              zIndex: Z_INDEX.DROPDOWN,
+              minWidth: "200px",
+              maxWidth: "280px",
+              backgroundColor: isCyber ? "rgba(10, 15, 30, 0.96)" : "#FFFFFF",
+              borderColor: isCyber ? "rgba(0, 245, 255, 0.35)" : "#000000",
+              borderWidth: isCyber ? "1px" : "2.5px",
+              boxShadow: isCyber
+                ? "0 12px 36px rgba(0,0,0,0.6), 0 0 25px rgba(0,245,255,0.25)"
+                : "5px 5px 0 #000000",
+              backdropFilter: "blur(12px)",
+            }}
+            className="rounded-xl py-1.5 overflow-hidden select-none"
+          >
+            {title && (
+              <div
+                className="px-3.5 py-1.5 text-[10px] font-mono font-black uppercase tracking-wider border-b"
+                style={{
+                  borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#000000",
+                  color: isCyber ? "rgba(0,245,255,0.7)" : "#64748B",
+                }}
+              >
+                {title}
+              </div>
+            )}
 
-          <div className="py-1">
-            {items.map((item) => (
-              <React.Fragment key={item.id}>
-                {item.divider && (
-                  <div
-                    className="my-1 border-t"
-                    style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0" }}
-                  />
-                )}
-                <button
-                  disabled={item.disabled}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (!item.disabled) {
-                      item.onClick();
-                      onClose();
-                    }
-                  }}
-                  className={`w-full px-3.5 py-1.5 text-xs font-bold flex items-center justify-between gap-3 transition-colors cursor-pointer text-left ${
-                    item.disabled ? "opacity-40 cursor-not-allowed" : ""
-                  }`}
-                  style={{
-                    color: item.danger
-                      ? "#EF4444"
-                      : isCyber
-                      ? "#F8FAFC"
-                      : "#1E293B",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!item.disabled) {
-                      (e.currentTarget as HTMLElement).style.backgroundColor = item.danger
-                        ? isCyber ? "rgba(239,68,68,0.2)" : "#FEE2E2"
-                        : isCyber ? "rgba(0,245,255,0.12)" : "#F1F5F9";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
-                  }}
-                >
-                  <span className="flex items-center gap-2 truncate">
-                    {item.icon && <span className="text-sm shrink-0">{item.icon}</span>}
-                    <span className="truncate">{item.label}</span>
-                  </span>
-                </button>
-              </React.Fragment>
-            ))}
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+            <div className="py-1">
+              {items.map((item) => (
+                <React.Fragment key={item.id}>
+                  {item.divider && (
+                    <div
+                      className="my-1 border-t"
+                      style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0" }}
+                    />
+                  )}
+                  <button
+                    disabled={item.disabled}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!item.disabled) {
+                        item.onClick();
+                        onClose();
+                      }
+                    }}
+                    className={`w-full px-3.5 py-2 text-xs font-bold flex items-center justify-between gap-3 transition-colors cursor-pointer text-left ${
+                      item.disabled ? "opacity-40 cursor-not-allowed" : ""
+                    }`}
+                    style={{
+                      color: item.danger
+                        ? "#EF4444"
+                        : isCyber
+                        ? "#F8FAFC"
+                        : "#1E293B",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!item.disabled) {
+                        (e.currentTarget as HTMLElement).style.backgroundColor = item.danger
+                          ? isCyber
+                            ? "rgba(239,68,68,0.2)"
+                            : "#FEE2E2"
+                          : isCyber
+                          ? "rgba(0,245,255,0.12)"
+                          : "#F1F5F9";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+                    }}
+                  >
+                    <span className="flex items-center gap-2 truncate">
+                      {item.icon && <span className="text-sm shrink-0">{item.icon}</span>}
+                      <span className="truncate">{item.label}</span>
+                    </span>
+                  </button>
+                </React.Fragment>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </OverlayPortal>
   );
 }

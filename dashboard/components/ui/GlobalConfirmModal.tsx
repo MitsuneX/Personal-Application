@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 import { useToast } from "@/components/ui/ToastProvider";
+import { OverlayPortal } from "./OverlayPortal";
+import { Z_INDEX } from "./ViewportBoundary";
 
 export function GlobalConfirmModal() {
   const { theme } = useTheme();
@@ -64,155 +66,141 @@ export function GlobalConfirmModal() {
   const overlayBg = isCyber ? "rgba(2, 5, 15, 0.8)" : "rgba(0, 0, 0, 0.65)";
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6"
-          style={{
-            paddingLeft: "calc(var(--sidebar-width, 0px) + 1rem)",
-            transition: "padding-left 0.25s cubic-bezier(0.22, 1, 0.36, 1)",
-          }}
-        >
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 pointer-events-auto"
+    <OverlayPortal>
+      <AnimatePresence>
+        {isOpen && (
+          <div
+            className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 select-none"
             style={{
-              backgroundColor: overlayBg,
-              backdropFilter: isCyber ? "blur(8px)" : "none",
-            }}
-            onClick={() => !isLoading && closeConfirm()}
-          />
-
-          {/* Dialog Container */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.92, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 15 }}
-            transition={{ type: "spring", stiffness: 350, damping: 28 }}
-            className="relative w-full max-w-md rounded-2xl overflow-hidden pointer-events-auto flex flex-col z-10 select-none shadow-2xl"
-            style={{
-              backgroundColor: isCyber ? "rgba(8, 12, 28, 0.95)" : "#FFFCDE",
-              borderColor: isCyber ? `${accentColor}50` : "#000000",
-              borderWidth: isCyber ? "1px" : "3px",
-              boxShadow: isCyber
-                ? `0 0 35px ${accentColor}30, 0 0 70px ${accentColor}10`
-                : "6px 6px 0px #000000",
-              color: isCyber ? "#F8FAFC" : "#0F172A",
+              zIndex: Z_INDEX.MODAL + 100,
             }}
           >
-            {/* Header Icon Bar */}
-            <div
-              className="p-5 pb-4 border-b flex items-start gap-3.5"
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 pointer-events-auto"
               style={{
-                borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#000000",
+                backgroundColor: overlayBg,
+                backdropFilter: isCyber ? "blur(8px)" : "none",
+              }}
+              onClick={() => !isLoading && closeConfirm()}
+            />
+
+            {/* Dialog Container */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 15 }}
+              transition={{ type: "spring", stiffness: 350, damping: 28 }}
+              className="relative w-full max-w-md max-h-[calc(100vh-32px)] overflow-y-auto rounded-2xl pointer-events-auto flex flex-col z-10 shadow-2xl scrollbar-thin"
+              style={{
+                backgroundColor: isCyber ? "rgba(8, 12, 28, 0.96)" : "#FFFCDE",
+                borderColor: isCyber ? `${accentColor}50` : "#000000",
+                borderWidth: isCyber ? "1px" : "3px",
+                boxShadow: isCyber
+                  ? `0 0 40px ${accentColor}30, 0 10px 40px rgba(0,0,0,0.8)`
+                  : "6px 6px 0 #000000",
               }}
             >
+              {/* Header Banner */}
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 font-bold border"
+                className="p-5 pb-4 border-b flex items-start justify-between gap-3"
                 style={{
-                  backgroundColor: `${accentColor}20`,
-                  color: accentColor,
-                  borderColor: isCyber ? `${accentColor}60` : "#000000",
-                  borderWidth: isCyber ? "1px" : "2px",
+                  borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#000000",
+                  backgroundColor: isCyber ? "rgba(0,0,0,0.2)" : "transparent",
                 }}
               >
-                {isDanger ? "⚠️" : "ℹ️"}
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <h3
-                  className="font-black text-lg leading-tight theme-text-primary uppercase tracking-tight"
-                  style={{ color: isCyber ? "#F8FAFC" : "#0F172A" }}
-                >
-                  {title}
-                </h3>
-                {message && (
-                  <p className="text-xs theme-text-secondary font-medium mt-1 leading-relaxed">
-                    {message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Contextual Item Preview Card */}
-            {itemPreview && (
-              <div className="p-4 bg-black/10 dark:bg-white/5 border-b border-white/10">
-                <div
-                  className="p-3 rounded-xl border flex items-center gap-3"
-                  style={{
-                    backgroundColor: isCyber ? "rgba(10,15,30,0.8)" : "#FFFFFF",
-                    borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#000000",
-                    borderWidth: isCyber ? "1px" : "2px",
-                  }}
-                >
-                  {/* Thumbnail / Logo / Icon */}
-                  {itemPreview.imageUrl ? (
-                    <img
-                      src={itemPreview.imageUrl}
-                      alt={itemPreview.title || "Preview"}
-                      className="w-12 h-12 rounded-lg object-cover shrink-0 border border-black/20"
-                    />
-                  ) : itemPreview.icon ? (
-                    <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center text-xl shrink-0 font-bold border bg-black/5 dark:bg-white/5"
-                      style={{ borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000" }}
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 font-bold"
+                    style={{
+                      backgroundColor: `${accentColor}20`,
+                      color: accentColor,
+                      border: isCyber ? `1px solid ${accentColor}40` : "2px solid #000",
+                    }}
+                  >
+                    {isDanger ? "⚠️" : "⚡"}
+                  </div>
+                  <div>
+                    <h3
+                      className="text-base font-black truncate leading-tight"
+                      style={{ color: isCyber ? "#F8FAFC" : "#000000" }}
                     >
-                      {itemPreview.icon}
-                    </div>
-                  ) : null}
-
-                  {/* Details */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {itemPreview.title && (
-                        <p className="font-black text-xs truncate theme-text-primary">
-                          {itemPreview.title}
-                        </p>
-                      )}
-                      {itemPreview.category && (
-                        <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold border bg-black/10 dark:bg-white/10 opacity-80">
-                          {itemPreview.category}
-                        </span>
-                      )}
-                    </div>
-
-                    {itemPreview.subtitle && (
-                      <p className="text-[11px] theme-text-muted truncate mt-0.5 font-medium">
-                        {itemPreview.subtitle}
-                      </p>
-                    )}
-
-                    {itemPreview.description && (
-                      <p className="text-[10px] theme-text-secondary line-clamp-2 mt-1 italic opacity-80">
-                        "{itemPreview.description}"
-                      </p>
-                    )}
+                      {title}
+                    </h3>
+                    <span className="text-[10px] font-mono uppercase tracking-widest opacity-60">
+                      CONFIRMATION REQUIRED
+                    </span>
                   </div>
                 </div>
+
+                <button
+                  onClick={closeConfirm}
+                  disabled={isLoading}
+                  className="text-sm font-mono opacity-60 hover:opacity-100 transition-opacity p-1 cursor-pointer"
+                >
+                  ✕
+                </button>
               </div>
-            )}
 
-            {/* Warning Details Banner */}
-            <div className="p-4 space-y-3">
-              <p className="text-xs font-bold text-amber-500/90 dark:text-amber-400 flex items-center gap-1.5">
-                <span>⚡ Warning:</span> This action cannot be undone.
-              </p>
+              {/* Body Content */}
+              <div className="p-5 space-y-4">
+                <p
+                  className="text-xs sm:text-sm font-semibold leading-relaxed"
+                  style={{ color: isCyber ? "#94A3B8" : "#334155" }}
+                >
+                  {message}
+                </p>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3 pt-2">
+                {/* Item Preview Card */}
+                {itemPreview && (
+                  <div
+                    className="p-3 rounded-xl border flex items-center gap-3"
+                    style={{
+                      backgroundColor: isCyber ? "rgba(255,255,255,0.03)" : "#FFFFFF",
+                      borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#000000",
+                      borderWidth: isCyber ? "1px" : "2px",
+                      boxShadow: isCyber ? "none" : "2px 2px 0 #000000",
+                    }}
+                  >
+                    {itemPreview.icon && (
+                      <span className="text-xl shrink-0">{itemPreview.icon}</span>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className="text-xs font-black truncate"
+                        style={{ color: isCyber ? "#E0E8FF" : "#000000" }}
+                      >
+                        {itemPreview.title}
+                      </p>
+                      {itemPreview.subtitle && (
+                        <p className="text-[10px] font-mono opacity-70 truncate mt-0.5">
+                          {itemPreview.subtitle}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer Actions */}
+              <div
+                className="p-4 bg-black/10 dark:bg-white/5 border-t flex items-center justify-end gap-2.5"
+                style={{ borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#000000" }}
+              >
                 <button
                   type="button"
+                  onClick={closeConfirm}
                   disabled={isLoading}
-                  onClick={() => closeConfirm()}
-                  className="flex-1 py-2.5 px-4 rounded-xl font-bold text-xs transition-all active:scale-95 cursor-pointer"
+                  className="px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer border hover:opacity-80"
                   style={{
-                    backgroundColor: isCyber ? "rgba(255,255,255,0.08)" : "#E2E8F0",
-                    color: isCyber ? "#94A3B8" : "#475569",
-                    border: isCyber ? "1px solid rgba(255,255,255,0.15)" : "2px solid #000",
+                    backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#FFFFFF",
+                    borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#000000",
+                    borderWidth: isCyber ? "1px" : "2px",
+                    color: isCyber ? "#CBD5E1" : "#000000",
                   }}
                 >
                   {cancelText}
@@ -220,31 +208,31 @@ export function GlobalConfirmModal() {
 
                 <button
                   type="button"
-                  disabled={isLoading}
                   onClick={handleConfirmAction}
-                  className="flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs text-white transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 shadow-md"
+                  disabled={isLoading}
+                  className="px-5 py-2 text-xs font-black rounded-xl transition-all cursor-pointer flex items-center gap-2 text-white shadow-md active:scale-95 disabled:opacity-50"
                   style={{
                     backgroundColor: accentColor,
-                    border: isCyber ? "none" : "2px solid #000",
+                    border: isCyber ? `1px solid ${accentColor}` : "2px solid #000000",
                     boxShadow: isCyber
-                      ? `0 0 15px ${accentColor}60`
-                      : "3px 3px 0 #000",
+                      ? `0 0 15px ${accentColor}40`
+                      : "2.5px 2.5px 0 #000000",
                   }}
                 >
                   {isLoading ? (
                     <>
-                      <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       <span>Processing...</span>
                     </>
                   ) : (
-                    <span>{confirmText || (isDanger ? "Confirm Delete" : "Confirm Action")}</span>
+                    <span>{confirmText}</span>
                   )}
                 </button>
               </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </OverlayPortal>
   );
 }

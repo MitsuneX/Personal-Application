@@ -1,15 +1,16 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
+import { OverlayPortal } from "./OverlayPortal";
+import { useOverlay } from "./OverlayProvider";
+import { Z_INDEX } from "./ViewportBoundary";
 
-// ─── Props ────────────────────────────────────────────────────────────────────
-
-interface ModalProps {
+export interface ModalProps {
   /** Controls visibility */
   isOpen: boolean;
-  /** Called when backdrop is clicked */
+  /** Called when backdrop is clicked or ESC is pressed */
   onClose: () => void;
   /** Modal content */
   children: React.ReactNode;
@@ -21,8 +22,6 @@ interface ModalProps {
   closeOnBackdrop?: boolean;
 }
 
-// ─── Animation Variants ────────────────────────────────────────────────────────
-
 const backdropVariants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { duration: 0.2 } },
@@ -30,7 +29,7 @@ const backdropVariants = {
 };
 
 const cardVariants = {
-  hidden: { opacity: 0, scale: 0.94, y: 24 },
+  hidden: { opacity: 0, scale: 0.94, y: 20 },
   visible: {
     opacity: 1,
     scale: 1,
@@ -39,34 +38,17 @@ const cardVariants = {
       type: "spring" as const,
       stiffness: 340,
       damping: 28,
-      delay: 0.04,
+      delay: 0.03,
     },
   },
   exit: {
     opacity: 0,
     scale: 0.94,
-    y: 16,
+    y: 14,
     transition: { duration: 0.16 },
   },
 };
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
-/**
- * Global reusable Modal wrapper.
- *
- * - Always centered in the viewport via `fixed inset-0 flex items-center justify-center`
- * - Blurred backdrop with `bg-black/50 backdrop-blur-sm`
- * - Body scroll-lock while open
- * - Smooth Framer Motion enter/exit
- * - Dual-theme aware (brutal / cyber)
- *
- * Architecture:
- *   The card uses `flex flex-col` + `max-h-[92vh]`.
- *   Children are responsible for their own overflow/scrolling sections.
- *   This prevents double-scroll nesting and allows CustomSelect dropdowns
- *   to overflow their parent element correctly.
- */
 export function Modal({
   isOpen,
   onClose,
@@ -77,76 +59,84 @@ export function Modal({
 }: ModalProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
+  const modalId = useId();
+  const { registerOverlay, unregisterOverlay, isTopOverlay } = useOverlay();
 
-  // ── Body scroll-lock ────────────────────────────────────────────────────────
   useEffect(() => {
     if (isOpen) {
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
+      registerOverlay(modalId);
       return () => {
-        document.body.style.overflow = prev;
+        unregisterOverlay(modalId);
       };
     }
-  }, [isOpen]);
+  }, [isOpen, modalId, registerOverlay, unregisterOverlay]);
 
-  // ── Backdrop click handler ──────────────────────────────────────────────────
+  // Handle Escape Key for Top Overlay
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isTopOverlay(modalId)) {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, modalId, isTopOverlay, onClose]);
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (closeOnBackdrop && e.target === e.currentTarget) {
+    if (closeOnBackdrop && e.target === e.currentTarget && isTopOverlay(modalId)) {
       onClose();
     }
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          // ── Outer overlay: fixed, full viewport, centered ──
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
-          style={{
-            backgroundColor: "rgba(0, 0, 0, 0.55)",
-            backdropFilter: "blur(6px)",
-            WebkitBackdropFilter: "blur(6px)",
-            paddingLeft: "calc(var(--sidebar-width, 0px) + 0.75rem)",
-            transition: "padding-left 0.25s cubic-bezier(0.22, 1, 0.36, 1)",
-          }}
-          variants={backdropVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          onClick={handleBackdropClick}
-          // Prevent scroll-through on iOS
-          onWheel={(e) => e.stopPropagation()}
-          onTouchMove={(e) => e.stopPropagation()}
-        >
-          {/* ── Inner content card ── */}
+    <OverlayPortal>
+      <AnimatePresence>
+        {isOpen && (
           <motion.div
-            className={`w-full ${maxWidth} max-h-[92vh] flex flex-col rounded-2xl ${className}`.trim()}
+            // Outer overlay container: fixed inset-0 centered in viewport
+            className="fixed inset-0 flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto"
             style={{
-              // Dual-theme card background
-              background: isCyber
-                ? "rgba(5, 8, 22, 0.97)"
-                : "#FFFBF5",
-              border: isCyber
-                ? "1.5px solid rgba(0, 245, 255, 0.2)"
-                : "2px solid rgba(0, 0, 0, 0.12)",
-              boxShadow: isCyber
-                ? "0 0 60px rgba(0, 245, 255, 0.12), 0 0 120px rgba(191, 95, 255, 0.06)"
-                : "8px 8px 0px 0px rgba(0, 0, 0, 1)",
+              zIndex: Z_INDEX.MODAL,
+              backgroundColor: "rgba(0, 0, 0, 0.65)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
             }}
-            variants={cardVariants}
+            variants={backdropVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
-            // Prevent backdrop click from firing when clicking the card
-            onClick={(e) => e.stopPropagation()}
-            // Accessible dialog semantics
-            role="dialog"
-            aria-modal="true"
+            onClick={handleBackdropClick}
           >
-            {children}
+            {/* Inner modal content card */}
+            <motion.div
+              className={`w-full ${maxWidth} max-h-[calc(100vh-32px)] sm:max-h-[calc(100vh-48px)] flex flex-col rounded-2xl overflow-hidden ${className}`.trim()}
+              style={{
+                background: isCyber
+                  ? "rgba(5, 8, 22, 0.97)"
+                  : "#FFFBF5",
+                border: isCyber
+                  ? "1.5px solid rgba(0, 245, 255, 0.25)"
+                  : "2.5px solid #000000",
+                boxShadow: isCyber
+                  ? "0 0 60px rgba(0, 245, 255, 0.15), 0 0 120px rgba(191, 95, 255, 0.08)"
+                  : "8px 8px 0px 0px rgba(0, 0, 0, 1)",
+              }}
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+            >
+              {children}
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+    </OverlayPortal>
   );
 }

@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useRef } from "react";
+import { motion } from "framer-motion";
 import { useTheme } from "@/lib/theme";
+import { FloatingLayer } from "./FloatingLayer";
+import { Z_INDEX } from "./ViewportBoundary";
 
 export interface CustomSelectOption {
   value: string;
@@ -28,7 +30,7 @@ export function CustomSelect({
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Map options to unified shape
   const normalizedOptions: CustomSelectOption[] = options.map((opt) => {
@@ -39,19 +41,6 @@ export function CustomSelect({
   });
 
   const selectedOption = normalizedOptions.find((opt) => opt.value === value);
-
-  // Handle click outside to close dropdown
-  useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      document.addEventListener("mousedown", handleOutsideClick);
-    }
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, [isOpen]);
 
   // Styles
   const buttonStyle: React.CSSProperties = isCyber
@@ -86,9 +75,10 @@ export function CustomSelect({
       };
 
   return (
-    <div ref={containerRef} className={`relative w-full select-none ${className}`}>
+    <div className={`relative w-full select-none ${className}`}>
       {/* Trigger Button */}
       <motion.button
+        ref={buttonRef}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.015 }}
@@ -113,46 +103,46 @@ export function CustomSelect({
         </span>
       </motion.button>
 
-      {/* Options Panel */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 5 }}
-            transition={{ duration: 0.12 }}
-            className="absolute left-0 right-0 mt-1.5 rounded-lg z-[9999] overflow-hidden max-h-60 overflow-y-auto"
-            style={dropdownStyle}
-          >
-            <div className="py-1">
-              {normalizedOptions.map((opt) => {
-                const isSelected = opt.value === value;
-                return (
-                  <div
-                    key={opt.value}
-                    onClick={() => {
-                      onChange(opt.value);
-                      setIsOpen(false);
-                    }}
-                    className={`px-3 py-2 text-xs font-semibold flex items-center gap-2 cursor-pointer transition-colors duration-100 ${
-                      isSelected
-                        ? isCyber
-                          ? "bg-[#00f5ff]/20 text-[#00f5ff]"
-                          : "bg-[#FFD700] text-black"
-                        : isCyber
-                        ? "hover:bg-[#00f5ff]/10 hover:text-white"
-                        : "hover:bg-black/5"
-                    }`}
-                  >
-                    {opt.icon && <span className="shrink-0">{opt.icon}</span>}
-                    <span className="truncate">{opt.label}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Floating Layer Options Panel */}
+      <FloatingLayer
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        triggerRef={buttonRef}
+        placement="bottom-start"
+        zIndex={Z_INDEX.DROPDOWN}
+      >
+        <div
+          style={dropdownStyle}
+          className="rounded-lg overflow-hidden max-h-60 overflow-y-auto min-w-[200px]"
+        >
+          <div className="py-1">
+            {normalizedOptions.map((opt) => {
+              const isSelected = opt.value === value;
+              return (
+                <div
+                  key={opt.value}
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  className={`px-3.5 py-2.5 text-xs font-semibold flex items-center gap-2 cursor-pointer transition-colors duration-100 ${
+                    isSelected
+                      ? isCyber
+                        ? "bg-[#00f5ff]/20 text-[#00f5ff]"
+                        : "bg-[#FFD700] text-black font-bold"
+                      : isCyber
+                      ? "hover:bg-[#00f5ff]/10 hover:text-white"
+                      : "hover:bg-black/5"
+                  }`}
+                >
+                  {opt.icon && <span className="shrink-0">{opt.icon}</span>}
+                  <span className="truncate">{opt.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </FloatingLayer>
     </div>
   );
 }

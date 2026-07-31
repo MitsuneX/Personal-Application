@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { useTheme } from "@/lib/theme";
 import { useRouter } from "next/navigation";
 import { LyricsModal } from "@/components/ui/LyricsModal";
+import { FloatingLayer } from "./FloatingLayer";
+import { Z_INDEX } from "./ViewportBoundary";
 
 export function TopbarMiniPlayer() {
   const { theme } = useTheme();
@@ -30,7 +32,7 @@ export function TopbarMiniPlayer() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
 
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(180);
@@ -94,261 +96,247 @@ export function TopbarMiniPlayer() {
     }
   }, [activeTrack]);
 
-  // ── Close popover when clicking outside ────────────────────────────────────
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setPopoverOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m}:${s < 10 ? "0" : ""}${s}`;
+  };
 
   if (!activeTrack) return null;
 
-  const formatTime = (secs: number) => {
-    if (isNaN(secs) || secs < 0) return "0:00";
-    const mins = Math.floor(secs / 60);
-    const remainder = Math.floor(secs % 60);
-    return `${mins}:${remainder < 10 ? "0" : ""}${remainder}`;
-  };
-
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setProgress(audioRef.current.currentTime);
-      if (audioRef.current.duration && !isNaN(audioRef.current.duration)) {
-        setDuration(audioRef.current.duration);
-      }
-    }
-  };
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const seconds = Number(e.target.value);
-    setProgress(seconds);
-
-    if (audioRef.current && activeTrack.audioUrl && !activeTrack.youtubeId) {
-      audioRef.current.currentTime = seconds;
-    }
-
-    if (iframeRef.current?.contentWindow && activeTrack.youtubeId) {
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: "command", func: "seekTo", args: [seconds, true] }),
-        "*"
-      );
-    }
-  };
-
   return (
-    <div ref={containerRef} className="relative z-40">
-      {/* Audio Element for direct stream/uploads */}
-      {activeTrack.audioUrl && !activeTrack.youtubeId && (
-        <audio
-          ref={audioRef}
-          src={activeTrack.audioUrl}
-          onTimeUpdate={handleTimeUpdate}
-          onEnded={nextTrack}
-        />
-      )}
-
-      {/* YouTube Background Player Iframe — KEEP MOUNTED to preserve timestamp */}
+    <div ref={triggerRef} className="relative select-none">
+      {/* Hidden YouTube Iframe Player */}
       {activeTrack.youtubeId && (
         <iframe
           ref={iframeRef}
-          src={`https://www.youtube.com/embed/${activeTrack.youtubeId}?enablejsapi=1&autoplay=1`}
-          allow="autoplay"
+          src={`https://www.youtube.com/embed/${activeTrack.youtubeId}?enablejsapi=1&autoplay=${
+            isPlaying ? "1" : "0"
+          }&controls=0`}
           className="hidden"
-          title="Background YouTube Player"
+          allow="autoplay"
         />
       )}
 
-      {/* Topbar Mini Widget */}
+      {/* Hidden Audio Tag */}
+      {activeTrack.audioUrl && (
+        <audio
+          ref={audioRef}
+          src={activeTrack.audioUrl}
+          onTimeUpdate={(e) => {
+            const el = e.currentTarget;
+            setProgress(el.currentTime);
+            if (el.duration) setDuration(el.duration);
+          }}
+          onEnded={() => nextTrack()}
+        />
+      )}
+
+      {/* Topbar Compact Badge Pill */}
       <motion.div
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        onClick={() => setPopoverOpen(!popoverOpen)}
-        className="flex items-center gap-2 px-2.5 py-1 rounded-xl border cursor-pointer select-none"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full border cursor-pointer transition-all"
         style={{
           backgroundColor: isCyber ? "rgba(0, 245, 255, 0.08)" : "#FFF9F0",
           borderColor: isCyber ? "rgba(0, 245, 255, 0.3)" : "#000000",
           borderWidth: isCyber ? "1px" : "2px",
-          boxShadow: isCyber ? "0 0 10px rgba(0, 245, 255, 0.2)" : "2px 2px 0 #000000",
+          boxShadow: isCyber ? "0 0 12px rgba(0, 245, 255, 0.15)" : "2px 2px 0 #000000",
         }}
+        onClick={() => setPopoverOpen(!popoverOpen)}
       >
-        {/* Artwork */}
-        <div className="w-6 h-6 rounded-md overflow-hidden bg-slate-800 shrink-0 relative flex items-center justify-center font-bold text-[10px]">
-          {activeTrack.imageUrl ? (
-            <img src={activeTrack.imageUrl} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <span>🎵</span>
-          )}
-        </div>
+        <span className={`text-xs ${isPlaying ? "animate-spin" : ""}`} style={{ animationDuration: "3s" }}>
+          🎵
+        </span>
 
-        {/* Track Title */}
-        <div className="flex flex-col min-w-0 max-w-[70px] xs:max-w-[90px] sm:max-w-[110px]">
-          <span className="text-[10px] font-black truncate" style={{ color: isCyber ? "#E0FFFF" : "#000000" }}>
+        <div className="flex flex-col text-left max-w-[100px] sm:max-w-[150px]">
+          <span className="text-[11px] font-black truncate leading-tight" style={{ color: isCyber ? "#00F5FF" : "#000" }}>
             {activeTrack.title}
           </span>
-          <span className="text-[9px] font-semibold opacity-60 truncate" style={{ color: isCyber ? "#94A3B8" : "#444444" }}>
+          <span className="text-[9px] font-semibold opacity-70 truncate" style={{ color: isCyber ? "#94A3B8" : "#444" }}>
             {activeTrack.artist}
           </span>
         </div>
 
-        {/* Quick Play/Pause */}
+        {/* Mini Play / Pause Button */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             togglePlay();
           }}
-          className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 cursor-pointer"
+          className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-transform active:scale-90"
           style={{
-            backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
-            color: isCyber ? "#050816" : "#FFFFFF",
+            backgroundColor: isCyber ? "#00F5FF" : "#000000",
+            color: isCyber ? "#000000" : "#FFFFFF",
           }}
         >
           {isPlaying ? "⏸" : "▶"}
         </button>
 
-        {/* Quick Lyrics Button */}
+        {/* Lyrics Trigger */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             setLyricsOpen(true);
           }}
-          className="flex text-[10px] p-0.5 opacity-80 hover:opacity-100 cursor-pointer shrink-0"
+          className="text-xs hover:scale-125 transition-transform"
           title="Open Synced Lyrics"
         >
           🎤
         </button>
       </motion.div>
 
-      {/* Interactive Popover Dropdown */}
-      <AnimatePresence>
-        {popoverOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute top-12 right-0 w-80 p-4 rounded-2xl border shadow-2xl backdrop-blur-xl space-y-3"
-            style={{
-              backgroundColor: isCyber ? "rgba(5, 8, 22, 0.95)" : "#FFFFFF",
-              borderColor: isCyber ? "rgba(0, 245, 255, 0.4)" : "#000000",
-              borderWidth: isCyber ? "1px" : "3px",
-              boxShadow: isCyber ? "0 0 25px rgba(0, 245, 255, 0.25)" : "4px 4px 0 #000000",
-              color: isCyber ? "#E0FFFF" : "#000000",
-            }}
-          >
-            {/* Header Track Info */}
-            <div className="flex items-center gap-3">
-              <div
-                className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border bg-slate-800 flex items-center justify-center font-bold text-xs"
-                style={{ borderColor: isCyber ? "rgba(0, 245, 255, 0.3)" : "#000" }}
-              >
-                {activeTrack.imageUrl ? (
-                  <img src={activeTrack.imageUrl} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <span>🎵</span>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <h4 className="font-black text-xs truncate" style={{ color: isCyber ? "#E0FFFF" : "#000" }}>
-                  {activeTrack.title}
-                </h4>
-                <p className="text-[10px] font-semibold opacity-70 truncate" style={{ color: isCyber ? "#94A3B8" : "#444" }}>
-                  {activeTrack.artist}
-                </p>
-              </div>
-            </div>
-
-            {/* Timeline Scrubbing Bar */}
-            <div className="w-full flex items-center gap-2 text-[10px] font-mono opacity-90 pt-1">
-              <span className="shrink-0">{formatTime(progress)}</span>
-              <input
-                type="range"
-                min={0}
-                max={duration || 100}
-                value={progress}
-                onChange={handleSeek}
-                className="w-full h-1.5 accent-cyan-400 cursor-pointer rounded"
-              />
-              <span className="shrink-0">{formatTime(duration)}</span>
-            </div>
-
-            {/* Control Suite Row */}
+      {/* Floating Interactive Popover Portal */}
+      <FloatingLayer
+        isOpen={popoverOpen}
+        onClose={() => setPopoverOpen(false)}
+        triggerRef={triggerRef}
+        placement="bottom-end"
+        zIndex={Z_INDEX.POPOVER}
+      >
+        <div
+          className="w-80 p-4 rounded-2xl border shadow-2xl backdrop-blur-xl space-y-3 select-none"
+          style={{
+            backgroundColor: isCyber ? "rgba(5, 8, 22, 0.96)" : "#FFFFFF",
+            borderColor: isCyber ? "rgba(0, 245, 255, 0.4)" : "#000000",
+            borderWidth: isCyber ? "1px" : "3px",
+            boxShadow: isCyber ? "0 0 25px rgba(0, 245, 255, 0.25)" : "4px 4px 0 #000000",
+            color: isCyber ? "#E0FFFF" : "#000000",
+          }}
+        >
+          {/* Header Track Info */}
+          <div className="flex items-center gap-3">
             <div
-              className="flex items-center justify-between pt-1 border-t"
-              style={{ borderColor: isCyber ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)" }}
+              className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border bg-slate-800 flex items-center justify-center font-bold text-xs"
+              style={{ borderColor: isCyber ? "rgba(0, 245, 255, 0.3)" : "#000" }}
             >
+              {activeTrack.imageUrl ? (
+                <img src={activeTrack.imageUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span>🎵</span>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <h4 className="font-black text-xs truncate" style={{ color: isCyber ? "#E0FFFF" : "#000" }}>
+                {activeTrack.title}
+              </h4>
+              <p className="text-[10px] font-semibold opacity-70 truncate" style={{ color: isCyber ? "#94A3B8" : "#444" }}>
+                {activeTrack.artist}
+              </p>
+            </div>
+          </div>
+
+          {/* Timeline Scrubbing Bar */}
+          <div className="w-full flex items-center gap-2 text-[10px] font-mono opacity-90 pt-1">
+            <span className="shrink-0">{formatTime(progress)}</span>
+            <input
+              type="range"
+              min={0}
+              max={duration || 100}
+              value={progress}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value);
+                setProgress(val);
+                if (audioRef.current) audioRef.current.currentTime = val;
+              }}
+              className="flex-1 h-1.5 accent-cyan-400 bg-slate-700 rounded-lg cursor-pointer"
+            />
+            <span className="shrink-0">{formatTime(duration)}</span>
+          </div>
+
+          {/* Media Player Control Buttons */}
+          <div className="flex items-center justify-between pt-1">
+            <button
+              onClick={toggleShuffle}
+              className={`p-1.5 rounded-lg text-xs transition-colors ${
+                isShuffle ? (isCyber ? "text-cyan-400 font-bold" : "text-black font-black underline") : "opacity-40"
+              }`}
+              title="Shuffle Playlist"
+            >
+              🔀
+            </button>
+
+            <div className="flex items-center gap-2">
               <button
-                onClick={toggleShuffle}
-                className="p-1 rounded text-xs"
-                style={{ color: isShuffle ? (isCyber ? "#00F5FF" : "#FF6B35") : "inherit" }}
-                title="Shuffle"
+                onClick={prevTrack}
+                className="w-8 h-8 rounded-xl flex items-center justify-center border font-bold text-xs hover:scale-105 active:scale-95"
+                style={{
+                  backgroundColor: isCyber ? "rgba(0, 245, 255, 0.1)" : "#F1F5F9",
+                  borderColor: isCyber ? "rgba(0, 245, 255, 0.3)" : "#000",
+                }}
               >
-                🔀
+                ⏮
               </button>
-              <button onClick={prevTrack} className="p-1 text-xs cursor-pointer">⏮</button>
+
               <button
                 onClick={togglePlay}
-                className="px-3 py-1 text-xs font-black rounded-lg cursor-pointer"
-                style={{ backgroundColor: isCyber ? "#00F5FF" : "#FF6B35", color: isCyber ? "#050816" : "#FFF" }}
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black border hover:scale-105 active:scale-95"
+                style={{
+                  backgroundColor: isCyber ? "#00F5FF" : "#FFD700",
+                  color: "#000000",
+                  borderColor: isCyber ? "#00F5FF" : "#000000",
+                  boxShadow: isCyber ? "0 0 15px rgba(0, 245, 255, 0.4)" : "2px 2px 0 #000",
+                }}
               >
-                {isPlaying ? "⏸ Pause" : "▶ Play"}
+                {isPlaying ? "⏸" : "▶"}
               </button>
-              <button onClick={nextTrack} className="p-1 text-xs cursor-pointer">⏭</button>
+
               <button
-                onClick={cycleLoopMode}
-                className="p-1 rounded text-xs font-bold cursor-pointer"
-                style={{ color: loopMode !== "off" ? (isCyber ? "#00F5FF" : "#FF6B35") : "inherit" }}
+                onClick={nextTrack}
+                className="w-8 h-8 rounded-xl flex items-center justify-center border font-bold text-xs hover:scale-105 active:scale-95"
+                style={{
+                  backgroundColor: isCyber ? "rgba(0, 245, 255, 0.1)" : "#F1F5F9",
+                  borderColor: isCyber ? "rgba(0, 245, 255, 0.3)" : "#000",
+                }}
               >
-                {loopMode === "one" ? "🔂 1" : loopMode === "all" ? "🔁 All" : "🔁"}
-              </button>
-              <button
-                onClick={() => setLyricsOpen(true)}
-                className="px-2 py-1 text-[10px] font-black rounded border cursor-pointer"
-                style={{ borderColor: isCyber ? "#00F5FF" : "#000", color: isCyber ? "#00F5FF" : "#000" }}
-              >
-                🎤 Lyrics
+                ⏭
               </button>
             </div>
 
-            {/* Queue Preview */}
-            <div className="space-y-1 pt-1">
-              <span className="text-[9px] font-black uppercase tracking-wider opacity-60">Upcoming Queue</span>
-              <div className="max-h-24 overflow-y-auto space-y-1 pr-1">
-                {playlistQueue.slice(0, 3).map((track, i) => (
-                  <p key={track.id || i} className="text-[10px] font-semibold truncate opacity-80">
-                    {i + 1}. {track.title} — {track.artist}
-                  </p>
-                ))}
-              </div>
-            </div>
+            <button
+              onClick={cycleLoopMode}
+              className={`p-1.5 rounded-lg text-xs transition-colors ${
+                loopMode !== "off" ? (isCyber ? "text-cyan-400 font-bold" : "text-black font-black underline") : "opacity-40"
+              }`}
+              title={`Loop Mode: ${loopMode}`}
+            >
+              {loopMode === "one" ? "🔂" : "🔁"}
+            </button>
+          </div>
 
-            {/* Workspace Shortcut Button */}
+          {/* Quick Actions Bar */}
+          <div className="pt-2 border-t flex items-center justify-between text-xs" style={{ borderColor: isCyber ? "rgba(0,245,255,0.15)" : "#000" }}>
+            <button
+              onClick={() => {
+                setPopoverOpen(false);
+                setLyricsOpen(true);
+              }}
+              className="flex items-center gap-1.5 font-bold hover:underline cursor-pointer"
+              style={{ color: isCyber ? "#00F5FF" : "#000" }}
+            >
+              <span>🎤</span> Synced Lyrics
+            </button>
+
             <button
               onClick={() => {
                 setPopoverOpen(false);
                 router.push("/music");
               }}
-              className="w-full py-1.5 text-xs font-black rounded-xl text-center border transition-all hover:scale-[1.02] cursor-pointer"
-              style={{
-                backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#E5E7EB",
-                borderColor: isCyber ? "#00F5FF" : "#000000",
-                color: isCyber ? "#00F5FF" : "#000000",
-              }}
+              className="flex items-center gap-1.5 font-bold hover:underline cursor-pointer"
+              style={{ color: isCyber ? "#BF5FFF" : "#000" }}
             >
-              ⚙️ Open Music Workspace
+              <span>🎵</span> Music Vault →
             </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      </FloatingLayer>
 
-      {/* Synchronized Lyrics Drawer Modal */}
+      {/* Lyrics Modal */}
       <LyricsModal
         isOpen={lyricsOpen}
         onClose={() => setLyricsOpen(false)}
-        trackTitle={activeTrack.title}
-        artistName={activeTrack.artist}
+        trackTitle={activeTrack?.title || null}
+        artistName={activeTrack?.artist || null}
         currentTime={progress}
       />
     </div>

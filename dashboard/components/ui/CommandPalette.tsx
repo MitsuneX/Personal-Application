@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "@/lib/theme";
 import { SearchResultItem } from "@/lib/search/searchRegistry";
 
+import { OverlayPortal } from "./OverlayPortal";
+import { Z_INDEX } from "./ViewportBoundary";
+
 type SearchResponse = Record<string, SearchResultItem[]>;
 
 const CATEGORY_META: Record<string, { label: string; icon: string }> = {
@@ -166,15 +169,15 @@ export function CommandPalette() {
       };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-[9999] flex items-start justify-center pt-6 sm:pt-[12vh] p-3 sm:p-4"
-          style={{
-            paddingLeft: "calc(var(--sidebar-width, 0px) + 0.75rem)",
-            transition: "padding-left 0.25s cubic-bezier(0.22, 1, 0.36, 1)",
-          }}
-        >
+    <OverlayPortal>
+      <AnimatePresence>
+        {isOpen && (
+          <div
+            className="fixed inset-0 flex items-start justify-center pt-6 sm:pt-[10vh] p-3 sm:p-4"
+            style={{
+              zIndex: Z_INDEX.MODAL,
+            }}
+          >
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -310,91 +313,92 @@ export function CommandPalette() {
                           <span className="text-[9px] opacity-60">{cat.data.length} match(es)</span>
                         </div>
 
-                        <div className="space-y-1">
-                          {cat.data.map((item) => {
-                            const indexInFlattened = flattenedList.findIndex(
-                              (f) => f.item.id === item.id && f.categoryLabel === cat.label
-                            );
-                            const isActive = indexInFlattened === activeIndex;
+                          <div className="space-y-1">
+                            {cat.data.map((item) => {
+                              const indexInFlattened = flattenedList.findIndex(
+                                (f) => f.item.id === item.id && f.categoryLabel === cat.label
+                              );
+                              const isActive = indexInFlattened === activeIndex;
 
-                            return (
-                              <div
-                                key={item.id}
-                                onClick={() => {
-                                  router.push(item.url);
-                                  setIsOpen(false);
-                                }}
-                                onMouseEnter={() => setActiveIndex(indexInFlattened)}
-                                className="p-2.5 rounded-lg cursor-pointer flex justify-between items-center transition-all duration-100 select-none"
-                                style={{
-                                  background: isActive
-                                    ? isCyber
-                                      ? "rgba(0,245,255,0.15)"
-                                      : "#FFD700"
-                                    : "transparent",
-                                  border: isCyber
-                                    ? `1px solid ${isActive ? "rgba(0,245,255,0.4)" : "transparent"}`
-                                    : `2px solid ${isActive ? "#000" : "transparent"}`,
-                                  boxShadow: isActive && !isCyber ? "2px 2px 0px #000" : "none"
-                                }}
-                              >
-                                <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
-                                  <span className="text-base shrink-0">{item.icon || cat.icon}</span>
-                                  <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-2">
-                                      <p 
-                                        className="text-xs font-black truncate leading-tight"
-                                        style={{
-                                          color: isActive
-                                            ? isCyber ? "#00F5FF" : "#000"
-                                            : isCyber ? "#E0E8FF" : "#1A1A1A"
-                                        }}
-                                      >
-                                        {item.title}
-                                      </p>
-                                      {item.category && (
-                                        <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold opacity-80 border bg-black/10 dark:bg-white/10">
-                                          {item.category}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="text-[10px] truncate mt-0.5 font-semibold opacity-70">
-                                      {item.subtitle}
-                                    </p>
-                                  </div>
-                                </div>
-                                <span 
-                                  className="text-[9px] font-mono tracking-wider opacity-70 uppercase shrink-0"
+                              return (
+                                <div
+                                  key={item.id}
+                                  onClick={() => {
+                                    router.push(item.url);
+                                    setIsOpen(false);
+                                  }}
+                                  onMouseEnter={() => setActiveIndex(indexInFlattened)}
+                                  className="p-2.5 rounded-lg cursor-pointer flex justify-between items-center transition-all duration-100 select-none"
                                   style={{
-                                    color: isActive && isCyber ? "#00F5FF" : undefined
+                                    background: isActive
+                                      ? isCyber
+                                        ? "rgba(0,245,255,0.15)"
+                                        : "#FFD700"
+                                      : "transparent",
+                                    border: isCyber
+                                      ? `1px solid ${isActive ? "rgba(0,245,255,0.4)" : "transparent"}`
+                                      : `2px solid ${isActive ? "#000" : "transparent"}`,
+                                    boxShadow: isActive && !isCyber ? "2px 2px 0px #000" : "none"
                                   }}
                                 >
-                                  {isActive ? "↵ NAVIGATE" : "OPEN"}
-                                </span>
-                              </div>
-                            );
-                          })}
+                                  <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
+                                    <span className="text-base shrink-0">{item.icon || cat.icon}</span>
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <p 
+                                          className="text-xs font-black truncate leading-tight"
+                                          style={{
+                                            color: isActive
+                                              ? isCyber ? "#00F5FF" : "#000"
+                                              : isCyber ? "#E0E8FF" : "#1A1A1A"
+                                          }}
+                                        >
+                                          {item.title}
+                                        </p>
+                                        {item.category && (
+                                          <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold opacity-80 border bg-black/10 dark:bg-white/10">
+                                            {item.category}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="text-[10px] truncate mt-0.5 font-semibold opacity-70">
+                                        {item.subtitle}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <span 
+                                    className="text-[9px] font-mono tracking-wider opacity-70 uppercase shrink-0"
+                                    style={{
+                                      color: isActive && isCyber ? "#00F5FF" : undefined
+                                    }}
+                                  >
+                                    {isActive ? "↵ NAVIGATE" : "OPEN"}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
 
-            {/* Footer */}
-            <div className="p-3 bg-black/10 dark:bg-white/5 border-t text-[9px] font-mono flex justify-between items-center px-4 select-none" style={{ borderColor: isCyber ? "rgba(0,245,255,0.12)" : "#000" }}>
-              <div className="flex gap-3">
-                <span>↑↓ navigate</span>
-                <span>↵ select</span>
+              {/* Footer */}
+              <div className="p-3 bg-black/10 dark:bg-white/5 border-t text-[9px] font-mono flex justify-between items-center px-4 select-none" style={{ borderColor: isCyber ? "rgba(0,245,255,0.12)" : "#000" }}>
+                <div className="flex gap-3">
+                  <span>↑↓ navigate</span>
+                  <span>↵ select</span>
+                </div>
+                <div>
+                  <span>CTRL + K to toggle</span>
+                </div>
               </div>
-              <div>
-                <span>CTRL + K to toggle</span>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </OverlayPortal>
   );
 }

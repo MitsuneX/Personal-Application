@@ -1,8 +1,10 @@
-﻿"use client";
+"use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useRef } from "react";
+import { motion } from "framer-motion";
 import { useTheme } from "@/lib/theme";
+import { FloatingLayer } from "./FloatingLayer";
+import { Z_INDEX } from "./ViewportBoundary";
 
 export interface FilterOption {
   id: string;
@@ -41,54 +43,17 @@ export function FilterDropdown({
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const [isOpen, setIsOpen] = useState(false);
-  const [dropUp, setDropUp] = useState(false);
-
-  const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Normalize options into groups
-  const groups: FilterGroup[] = Array.isArray(options) && options.length > 0 && "options" in options[0]
-    ? (options as FilterGroup[])
-    : [{ options: options as FilterOption[] }];
+  const groups: FilterGroup[] =
+    Array.isArray(options) && options.length > 0 && "options" in options[0]
+      ? (options as FilterGroup[])
+      : [{ options: options as FilterOption[] }];
 
   // Find currently selected option label & icon
   const allOptions = groups.flatMap((g) => g.options);
   const activeOption = allOptions.find((opt) => opt.id === value);
-
-  // Handle Viewport Space & Positioning
-  useEffect(() => {
-    if (isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      const spaceBelow = windowHeight - rect.bottom;
-      // If less than 240px below button, flip dropdown to open upwards
-      setDropUp(spaceBelow < 240);
-    }
-  }, [isOpen]);
-
-  // Handle click outside and Escape key
-  useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleOutsideClick);
-      document.addEventListener("keydown", handleKeyDown);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isOpen]);
 
   // Trigger button styles
   const triggerStyle: React.CSSProperties = isCyber
@@ -124,8 +89,10 @@ export function FilterDropdown({
         color: "#000000",
       };
 
+  const placement = align === "right" ? "bottom-end" : "bottom-start";
+
   return (
-    <div ref={containerRef} className={`relative inline-block text-left select-none ${className}`}>
+    <div className={`inline-block select-none ${className}`}>
       {/* Trigger Button */}
       <motion.button
         ref={buttonRef}
@@ -155,87 +122,82 @@ export function FilterDropdown({
         </motion.span>
       </motion.button>
 
-      {/* Popover Menu */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: dropUp ? 8 : -8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: dropUp ? 5 : -5 }}
-            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            style={{
-              ...dropdownPanelStyle,
-              position: "absolute",
-              [dropUp ? "bottom" : "top"]: "calc(100% + 8px)",
-              [align === "right" ? "right" : "left"]: 0,
-            }}
-            className="z-[999] min-w-[230px] max-w-[320px] rounded-xl overflow-hidden p-1.5 flex flex-col gap-1"
-          >
-            {groups.map((group, gIdx) => (
-              <div key={gIdx} className="flex flex-col">
-                {group.groupName && (
-                  <div
-                    className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest border-b mb-1 flex items-center justify-between"
-                    style={{
-                      borderColor: isCyber ? "rgba(0, 245, 255, 0.15)" : "#000000",
-                      color: isCyber ? "#00F5FF" : "#000000",
+      {/* Floating Layer Menu */}
+      <FloatingLayer
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        triggerRef={buttonRef}
+        placement={placement}
+        zIndex={Z_INDEX.DROPDOWN}
+      >
+        <div
+          style={dropdownPanelStyle}
+          className="min-w-[230px] max-w-[320px] rounded-xl overflow-hidden p-1.5 flex flex-col gap-1"
+        >
+          {groups.map((group, gIdx) => (
+            <div key={gIdx} className="flex flex-col">
+              {group.groupName && (
+                <div
+                  className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest border-b mb-1 flex items-center justify-between"
+                  style={{
+                    borderColor: isCyber ? "rgba(0, 245, 255, 0.15)" : "#000000",
+                    color: isCyber ? "#00F5FF" : "#000000",
+                  }}
+                >
+                  <span>{group.groupName}</span>
+                </div>
+              )}
+
+              {group.options.map((opt) => {
+                const isSelected = opt.id === value;
+
+                const itemStyle: React.CSSProperties = isCyber
+                  ? {
+                      background: isSelected ? "rgba(0, 245, 255, 0.18)" : "transparent",
+                      color: isSelected ? "#00F5FF" : "#94A3B8",
+                    }
+                  : {
+                      background: isSelected ? "#FFD700" : "transparent",
+                      color: "#000000",
+                      fontWeight: isSelected ? "900" : "700",
+                    };
+
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onChange(opt.id);
+                      setIsOpen(false);
                     }}
+                    className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold rounded-lg text-left transition-all duration-100 cursor-pointer hover:bg-opacity-80"
+                    style={itemStyle}
                   >
-                    <span>{group.groupName}</span>
-                  </div>
-                )}
-
-                {group.options.map((opt) => {
-                  const isSelected = opt.id === value;
-
-                  const itemStyle: React.CSSProperties = isCyber
-                    ? {
-                        background: isSelected ? "rgba(0, 245, 255, 0.18)" : "transparent",
-                        color: isSelected ? "#00F5FF" : "#94A3B8",
-                      }
-                    : {
-                        background: isSelected ? "#FFD700" : "transparent",
-                        color: "#000000",
-                        fontWeight: isSelected ? "900" : "700",
-                      };
-
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onChange(opt.id);
-                        setIsOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold rounded-lg text-left transition-all duration-100 cursor-pointer hover:bg-opacity-80"
-                      style={itemStyle}
-                    >
-                      <div className="flex items-center gap-2.5 truncate">
-                        {opt.icon && <span className="text-sm">{opt.icon}</span>}
-                        <div className="flex flex-col">
-                          <span className="truncate">{opt.label}</span>
-                          {opt.description && (
-                            <span className="text-[10px] font-normal opacity-70 truncate max-w-[200px]">
-                              {opt.description}
-                            </span>
-                          )}
-                        </div>
+                    <div className="flex items-center gap-2.5 truncate">
+                      {opt.icon && <span className="text-sm">{opt.icon}</span>}
+                      <div className="flex flex-col">
+                        <span className="truncate">{opt.label}</span>
+                        {opt.description && (
+                          <span className="text-[10px] font-normal opacity-70 truncate max-w-[200px]">
+                            {opt.description}
+                          </span>
+                        )}
                       </div>
+                    </div>
 
-                      {isSelected && (
-                        <span className="ml-2 text-xs font-black">
-                          {isCyber ? "⚡" : "✓"}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+                    {isSelected && (
+                      <span className="ml-2 text-xs font-black">
+                        {isCyber ? "⚡" : "✓"}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </FloatingLayer>
     </div>
   );
 }
