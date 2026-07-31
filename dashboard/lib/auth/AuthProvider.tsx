@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { createClient } from "@/utils/supabase/client";
+import { useDashboardStore } from "@/lib/store/dashboardStore";
 import type { User } from "@supabase/supabase-js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -40,8 +41,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth state changes (sign in / sign out)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      const newUser = session?.user ?? null;
+      setUser((prevUser) => {
+        if (prevUser?.id !== newUser?.id) {
+          useDashboardStore.getState().resetUserStore();
+          if (newUser) {
+            useDashboardStore.getState().fetchDashboard();
+          }
+        }
+        return newUser;
+      });
       setIsLoading(false);
     });
 

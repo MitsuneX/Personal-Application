@@ -132,6 +132,37 @@ function LoginPageInner() {
   const [loading, setLoading] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  // ── Forgot Password state ──
+  const [viewMode, setViewMode] = useState<"auth" | "forgot">("auth");
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail.trim()) {
+      addToast("error", "Please enter your email address.");
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
+        redirectTo: `${origin}/auth/reset-password`,
+      });
+      if (error) {
+        addToast("error", error.message);
+      } else {
+        setForgotSent(true);
+        addToast("success", "Password reset instructions dispatched!");
+      }
+    } catch (err: any) {
+      addToast("error", err.message || "Failed to request password reset.");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
   // ── Guest Mode Handler ──
   const handleGuestLogin = () => {
     document.cookie = "is_guest=true; path=/; max-age=86400; SameSite=Lax";
@@ -356,140 +387,219 @@ function LoginPageInner() {
                 </p>
               </div>
 
-              {/* Mode toggle */}
-              <div className="flex rounded-lg overflow-hidden mb-6 p-0.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(0,245,255,0.15)" }}>
-                {(["signin", "signup"] as AuthMode[]).map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => setMode(m)}
-                    className="flex-1 py-2 text-xs font-bold uppercase tracking-widest rounded-md transition-all duration-200"
-                    style={{
-                      fontFamily: "var(--font-jetbrains-mono)",
-                      background: mode === m ? "rgba(0,245,255,0.12)" : "transparent",
-                      color: mode === m ? "#00F5FF" : "#64748B",
-                      border: mode === m ? "1px solid rgba(0,245,255,0.3)" : "1px solid transparent",
-                    }}
-                  >
-                    {m === "signin" ? "// SIGN_IN" : "// SIGN_UP"}
-                  </button>
-                ))}
-              </div>
-
-              {/* Form */}
-              <form onSubmit={handleAuth} className="space-y-4">
-                {/* Email */}
+              {viewMode === "forgot" ? (
                 <div>
-                  <label
-                    className="block text-[10px] font-bold uppercase tracking-widest mb-1.5"
-                    style={{ color: "#00F5FF", fontFamily: "var(--font-jetbrains-mono)", opacity: 0.7 }}
-                  >
-                    &gt; email_address
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        passwordInputRef.current?.focus();
-                      }
-                    }}
-                    autoComplete="email"
-                    placeholder="operator@nexus.io"
-                    className="w-full px-4 py-3 text-sm rounded-lg outline-none transition-all duration-200 focus:ring-1 focus:ring-[rgba(0,245,255,0.5)]"
-                    style={{
-                      background: "rgba(0,245,255,0.04)",
-                      border: "1px solid rgba(0,245,255,0.2)",
-                      color: "#E0E8FF",
-                      fontFamily: "var(--font-jetbrains-mono)",
-                    }}
-                    onFocus={(e) => (e.target.style.borderColor = "rgba(0,245,255,0.5)")}
-                    onBlur={(e) => (e.target.style.borderColor = "rgba(0,245,255,0.2)")}
-                  />
-                </div>
+                  <div className="mb-6 text-center">
+                    <span className="text-3xl">🔑</span>
+                    <h2 className="text-lg font-black uppercase tracking-wider text-[#00F5FF] mt-2" style={{ fontFamily: "var(--font-orbitron)" }}>
+                      RECOVERY_PROTOCOL
+                    </h2>
+                    <p className="text-xs text-[#94A3B8] mt-1" style={{ fontFamily: "var(--font-jetbrains-mono)" }}>
+                      Enter your operator email address to receive password reset instructions.
+                    </p>
+                  </div>
 
-                {/* Password */}
-                <div>
-                  <label
-                    className="block text-[10px] font-bold uppercase tracking-widest mb-1.5"
-                    style={{ color: "#00F5FF", fontFamily: "var(--font-jetbrains-mono)", opacity: 0.7 }}
-                  >
-                    &gt; password_key
-                  </label>
-                  <input
-                    ref={passwordInputRef}
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                    placeholder="••••••••••••"
-                    className="w-full px-4 py-3 text-sm rounded-lg outline-none transition-all duration-200 focus:ring-1 focus:ring-[rgba(0,245,255,0.5)]"
-                    style={{
-                      background: "rgba(0,245,255,0.04)",
-                      border: "1px solid rgba(0,245,255,0.2)",
-                      color: "#E0E8FF",
-                      fontFamily: "var(--font-jetbrains-mono)",
-                    }}
-                    onFocus={(e) => (e.target.style.borderColor = "rgba(0,245,255,0.5)")}
-                    onBlur={(e) => (e.target.style.borderColor = "rgba(0,245,255,0.2)")}
-                  />
-                </div>
-
-                {/* Submit */}
-                <motion.button
-                  type="submit"
-                  disabled={loading}
-                  whileHover={{ scale: loading ? 1 : 1.02 }}
-                  whileTap={{ scale: loading ? 1 : 0.98 }}
-                  className="w-full py-3.5 text-sm font-black uppercase tracking-widest rounded-lg transition-all duration-200 mt-2 flex items-center justify-center gap-2"
-                  style={{
-                    fontFamily: "var(--font-orbitron)",
-                    background: loading
-                      ? "rgba(0,245,255,0.1)"
-                      : "linear-gradient(135deg, rgba(0,245,255,0.15) 0%, rgba(34,197,94,0.15) 100%)",
-                    border: "1px solid rgba(0,245,255,0.4)",
-                    color: loading ? "rgba(0,245,255,0.4)" : "#00F5FF",
-                    boxShadow: loading ? "none" : "0 0 20px rgba(0,245,255,0.2), inset 0 0 10px rgba(0,245,255,0.05)",
-                    cursor: loading ? "not-allowed" : "pointer",
-                  }}
-                >
-                  {loading ? (
-                    <>
-                      <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      {mode === "signin" ? "AUTHENTICATING..." : "REGISTERING..."}
-                    </>
+                  {forgotSent ? (
+                    <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 text-xs font-mono text-center mb-6">
+                      ✅ Password reset instructions have been dispatched to <strong>{forgotEmail}</strong>. Please check your inbox.
+                    </div>
                   ) : (
-                    <>
-                      {mode === "signin" ? "⚡ INITIATE ACCESS" : "🛸 CREATE ACCOUNT"}
-                    </>
+                    <form onSubmit={handleForgotPassword} className="space-y-4">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-widest text-[#00F5FF] mb-1 font-mono">
+                          &gt; operator_email
+                        </label>
+                        <input
+                          type="email"
+                          required
+                          value={forgotEmail}
+                          onChange={(e) => setForgotEmail(e.target.value)}
+                          placeholder="operator@nexus.io"
+                          className="w-full px-4 py-3 text-sm rounded-lg outline-none bg-[rgba(0,245,255,0.04)] border border-[rgba(0,245,255,0.2)] text-[#E0E8FF] font-mono focus:border-[#00F5FF]"
+                        />
+                      </div>
+
+                      <motion.button
+                        type="submit"
+                        disabled={forgotLoading}
+                        whileHover={{ scale: forgotLoading ? 1 : 1.02 }}
+                        whileTap={{ scale: forgotLoading ? 1 : 0.98 }}
+                        className="w-full py-3.5 text-xs font-black uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 cursor-pointer"
+                        style={{
+                          fontFamily: "var(--font-orbitron)",
+                          background: "linear-gradient(135deg, rgba(0,245,255,0.2) 0%, rgba(34,197,94,0.2) 100%)",
+                          border: "1px solid rgba(0,245,255,0.5)",
+                          color: "#00F5FF",
+                          boxShadow: "0 0 20px rgba(0,245,255,0.2)",
+                        }}
+                      >
+                        {forgotLoading ? "DISPATCHING..." : "⚡ DISPATCH RESET LINK"}
+                      </motion.button>
+                    </form>
                   )}
-                </motion.button>
-              </form>
 
-              {/* Guest Mode Divider & Button */}
-              <div className="relative my-4 text-center">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[rgba(0,245,255,0.15)]" /></div>
-                <span className="relative px-3 text-[10px] font-bold uppercase tracking-widest bg-[#050816] text-[#64748B]" style={{ fontFamily: "var(--font-jetbrains-mono)" }}>
-                  OR DEMO ACCESS
-                </span>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("auth")}
+                    className="w-full mt-4 py-2 text-xs font-bold text-[#64748B] hover:text-[#E0E8FF] transition-colors cursor-pointer text-center font-mono"
+                  >
+                    ← RETURN TO SIGN IN
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Mode toggle */}
+                  <div className="flex rounded-lg overflow-hidden mb-6 p-0.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(0,245,255,0.15)" }}>
+                    {(["signin", "signup"] as AuthMode[]).map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => setMode(m)}
+                        className="flex-1 py-2 text-xs font-bold uppercase tracking-widest rounded-md transition-all duration-200"
+                        style={{
+                          fontFamily: "var(--font-jetbrains-mono)",
+                          background: mode === m ? "rgba(0,245,255,0.12)" : "transparent",
+                          color: mode === m ? "#00F5FF" : "#64748B",
+                          border: mode === m ? "1px solid rgba(0,245,255,0.3)" : "1px solid transparent",
+                        }}
+                      >
+                        {m === "signin" ? "// SIGN_IN" : "// SIGN_UP"}
+                      </button>
+                    ))}
+                  </div>
 
-              <motion.button
-                type="button"
-                onClick={handleGuestLogin}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full py-3 text-xs font-bold uppercase tracking-widest rounded-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
-                style={{
-                  fontFamily: "var(--font-jetbrains-mono)",
-                  background: "rgba(255, 215, 0, 0.08)",
-                  border: "1px dashed rgba(255, 215, 0, 0.4)",
-                  color: "#FFD700",
-                }}
-              >
-                🚀 CONTINUE AS GUEST
-              </motion.button>
+                  {/* Form */}
+                  <form onSubmit={handleAuth} className="space-y-4">
+                    {/* Email */}
+                    <div>
+                      <label
+                        className="block text-[10px] font-bold uppercase tracking-widest mb-1.5"
+                        style={{ color: "#00F5FF", fontFamily: "var(--font-jetbrains-mono)", opacity: 0.7 }}
+                      >
+                        &gt; email_address
+                      </label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            passwordInputRef.current?.focus();
+                          }
+                        }}
+                        autoComplete="email"
+                        placeholder="operator@nexus.io"
+                        className="w-full px-4 py-3 text-sm rounded-lg outline-none transition-all duration-200 focus:ring-1 focus:ring-[rgba(0,245,255,0.5)]"
+                        style={{
+                          background: "rgba(0,245,255,0.04)",
+                          border: "1px solid rgba(0,245,255,0.2)",
+                          color: "#E0E8FF",
+                          fontFamily: "var(--font-jetbrains-mono)",
+                        }}
+                        onFocus={(e) => (e.target.style.borderColor = "rgba(0,245,255,0.5)")}
+                        onBlur={(e) => (e.target.style.borderColor = "rgba(0,245,255,0.2)")}
+                      />
+                    </div>
+
+                    {/* Password */}
+                    <div>
+                      <label
+                        className="block text-[10px] font-bold uppercase tracking-widest mb-1.5"
+                        style={{ color: "#00F5FF", fontFamily: "var(--font-jetbrains-mono)", opacity: 0.7 }}
+                      >
+                        &gt; password_key
+                      </label>
+                      <input
+                        ref={passwordInputRef}
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                        placeholder="••••••••••••"
+                        className="w-full px-4 py-3 text-sm rounded-lg outline-none transition-all duration-200 focus:ring-1 focus:ring-[rgba(0,245,255,0.5)]"
+                        style={{
+                          background: "rgba(0,245,255,0.04)",
+                          border: "1px solid rgba(0,245,255,0.2)",
+                          color: "#E0E8FF",
+                          fontFamily: "var(--font-jetbrains-mono)",
+                        }}
+                        onFocus={(e) => (e.target.style.borderColor = "rgba(0,245,255,0.5)")}
+                        onBlur={(e) => (e.target.style.borderColor = "rgba(0,245,255,0.2)")}
+                      />
+                      {mode === "signin" && (
+                        <div className="flex justify-end mt-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setForgotEmail(email);
+                              setForgotSent(false);
+                              setViewMode("forgot");
+                            }}
+                            className="text-[11px] font-bold text-[#00F5FF] hover:underline cursor-pointer opacity-80 hover:opacity-100 transition-opacity"
+                            style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+                          >
+                            Forgot Password?
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Submit */}
+                    <motion.button
+                      type="submit"
+                      disabled={loading}
+                      whileHover={{ scale: loading ? 1 : 1.02 }}
+                      whileTap={{ scale: loading ? 1 : 0.98 }}
+                      className="w-full py-3.5 text-sm font-black uppercase tracking-widest rounded-lg transition-all duration-200 mt-2 flex items-center justify-center gap-2"
+                      style={{
+                        fontFamily: "var(--font-orbitron)",
+                        background: loading
+                          ? "rgba(0,245,255,0.1)"
+                          : "linear-gradient(135deg, rgba(0,245,255,0.15) 0%, rgba(34,197,94,0.15) 100%)",
+                        border: "1px solid rgba(0,245,255,0.4)",
+                        color: loading ? "rgba(0,245,255,0.4)" : "#00F5FF",
+                        boxShadow: loading ? "none" : "0 0 20px rgba(0,245,255,0.2), inset 0 0 10px rgba(0,245,255,0.05)",
+                        cursor: loading ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      {loading ? (
+                        <>
+                          <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          {mode === "signin" ? "AUTHENTICATING..." : "REGISTERING..."}
+                        </>
+                      ) : (
+                        <>
+                          {mode === "signin" ? "⚡ INITIATE ACCESS" : "🛸 CREATE ACCOUNT"}
+                        </>
+                      )}
+                    </motion.button>
+                  </form>
+
+                  {/* Guest Mode Divider & Button */}
+                  <div className="relative my-4 text-center">
+                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[rgba(0,245,255,0.15)]" /></div>
+                    <span className="relative px-3 text-[10px] font-bold uppercase tracking-widest bg-[#050816] text-[#64748B]" style={{ fontFamily: "var(--font-jetbrains-mono)" }}>
+                      OR DEMO ACCESS
+                    </span>
+                  </div>
+
+                  <motion.button
+                    type="button"
+                    onClick={handleGuestLogin}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full py-3 text-xs font-bold uppercase tracking-widest rounded-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                    style={{
+                      fontFamily: "var(--font-jetbrains-mono)",
+                      background: "rgba(255, 215, 0, 0.08)",
+                      border: "1px dashed rgba(255, 215, 0, 0.4)",
+                      color: "#FFD700",
+                    }}
+                  >
+                    🚀 CONTINUE AS GUEST
+                  </motion.button>
+                </>
+              )}
 
               {/* Footer */}
               <p
@@ -596,146 +706,215 @@ function LoginPageInner() {
           </div>
 
           <div className="p-8">
-            {/* Header */}
-            <div className="mb-7 text-center">
-              <h1 className="text-4xl font-black uppercase tracking-tight text-black mb-2">
-                {mode === "signin" ? "SIGN IN" : "SIGN UP"}
-              </h1>
-              <p className="text-sm font-bold text-gray-600">
-                {mode === "signin"
-                  ? "Enter your credentials to access the hub."
-                  : "Create your Nexus Xeon operator account."}
-              </p>
-            </div>
-
-            {/* Mode toggle */}
-            <div className="flex gap-0 mb-6 border-2 border-black">
-              {(["signin", "signup"] as AuthMode[]).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setMode(m)}
-                  className="flex-1 py-2.5 text-sm font-black uppercase tracking-wider transition-all duration-100"
-                  style={{
-                    background: mode === m ? "#FFD700" : "#FFFFFF",
-                    color: "#000",
-                    borderRight: m === "signin" ? "2px solid #000" : "none",
-                  }}
-                >
-                  {m === "signin" ? "Sign In" : "Sign Up"}
-                </button>
-              ))}
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleAuth} className="space-y-4">
-              {/* Email */}
+            {viewMode === "forgot" ? (
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1.5 text-black">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      passwordInputRef.current?.focus();
-                    }
-                  }}
-                  autoComplete="email"
-                  placeholder="operator@nexus.io"
-                  className="w-full px-4 py-3 text-sm font-semibold outline-none transition-all duration-100"
-                  style={{
-                    background: "#FFFFFF",
-                    border: "2.5px solid #000",
-                    color: "#1A1A1A",
-                    boxShadow: "none",
-                  }}
-                  onFocus={(e) => (e.target.style.boxShadow = "3px 3px 0px #000")}
-                  onBlur={(e) => (e.target.style.boxShadow = "none")}
-                />
-              </div>
+                <div className="mb-6 text-center">
+                  <span className="text-3xl">🔑</span>
+                  <h2 className="text-2xl font-black uppercase text-black mt-2">
+                    PASSWORD RECOVERY
+                  </h2>
+                  <p className="text-xs font-bold text-gray-600 mt-1">
+                    Enter your registered email to request a reset link.
+                  </p>
+                </div>
 
-              {/* Password */}
-              <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1.5 text-black">
-                  Password
-                </label>
-                <input
-                  ref={passwordInputRef}
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                  placeholder="••••••••••••"
-                  className="w-full px-4 py-3 text-sm font-semibold outline-none transition-all duration-100"
-                  style={{
-                    background: "#FFFFFF",
-                    border: "2.5px solid #000",
-                    color: "#1A1A1A",
-                    boxShadow: "none",
-                  }}
-                  onFocus={(e) => (e.target.style.boxShadow = "3px 3px 0px #000")}
-                  onBlur={(e) => (e.target.style.boxShadow = "none")}
-                />
-              </div>
-
-              {/* Submit */}
-              <motion.button
-                type="submit"
-                disabled={loading}
-                whileHover={{ scale: loading ? 1 : 1.01 }}
-                whileTap={{ scale: loading ? 1 : 0.99 }}
-                className="w-full py-3.5 text-sm font-black uppercase tracking-widest transition-all duration-100 mt-2 flex items-center justify-center gap-2 cursor-pointer"
-                style={{
-                  background: "#00F5FF",
-                  border: "3px solid #000",
-                  boxShadow: "4px 4px 0px #000",
-                  color: "#000",
-                  cursor: loading ? "not-allowed" : "pointer",
-                  letterSpacing: "0.15em",
-                }}
-                onMouseDown={(e) => {
-                  if (!loading) {
-                    (e.target as HTMLElement).style.boxShadow = "2px 2px 0px #000";
-                    (e.target as HTMLElement).style.transform = "translate(3px, 3px)";
-                  }
-                }}
-                onMouseUp={(e) => {
-                  if (!loading) {
-                    (e.target as HTMLElement).style.boxShadow = "5px 5px 0px #000";
-                    (e.target as HTMLElement).style.transform = "translate(0, 0)";
-                  }
-                }}
-              >
-                {loading ? (
-                  <>
-                    <span className="inline-block w-4 h-4 border-3 border-black border-t-transparent rounded-full animate-spin" />
-                    {mode === "signin" ? "VERIFYING..." : "REGISTERING..."}
-                  </>
+                {forgotSent ? (
+                  <div className="p-4 bg-green-100 border-2 border-black font-black text-xs text-green-800 shadow-[3px_3px_0px_#000] text-center mb-6">
+                    ✅ Password reset link dispatched to <strong>{forgotEmail}</strong>. Check your inbox!
+                  </div>
                 ) : (
-                  mode === "signin" ? "▶ ACCESS THE HUB" : "🛸 CREATE ACCOUNT"
+                  <form onSubmit={handleForgotPassword} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-black uppercase text-black mb-1.5">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        placeholder="operator@nexus.io"
+                        className="w-full px-4 py-3 text-sm font-semibold outline-none bg-white border-2 border-black focus:shadow-[3px_3px_0px_#000]"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={forgotLoading}
+                      className="w-full py-3.5 text-xs font-black uppercase tracking-widest border-3 border-black bg-[#00F5FF] text-black shadow-[4px_4px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                    >
+                      {forgotLoading ? "DISPATCHING..." : "DISPATCH RESET LINK →"}
+                    </button>
+                  </form>
                 )}
-              </motion.button>
-            </form>
 
-            {/* Guest Mode Divider & Button */}
-            <div className="relative my-5 text-center">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t-2 border-black" /></div>
-              <span className="relative px-3 text-xs font-black uppercase bg-[#FFFCDE] text-black border-2 border-black" style={{ boxShadow: "2px 2px 0px #000" }}>
-                OR DEMO ACCESS
-              </span>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("auth")}
+                  className="w-full mt-4 py-2 text-xs font-black uppercase text-black hover:underline cursor-pointer text-center"
+                >
+                  ← RETURN TO SIGN IN
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Header */}
+                <div className="mb-7 text-center">
+                  <h1 className="text-4xl font-black uppercase tracking-tight text-black mb-2">
+                    {mode === "signin" ? "SIGN IN" : "SIGN UP"}
+                  </h1>
+                  <p className="text-sm font-bold text-gray-600">
+                    {mode === "signin"
+                      ? "Enter your credentials to access the hub."
+                      : "Create your Nexus Xeon operator account."}
+                  </p>
+                </div>
 
-            <button
-              type="button"
-              onClick={handleGuestLogin}
-              className="w-full py-3.5 text-xs font-black uppercase tracking-wider border-3 border-black bg-[#FFD700] text-black cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
-              style={{ boxShadow: "4px 4px 0px #000" }}
-            >
-              🚀 CONTINUE AS GUEST
-            </button>
+                {/* Mode toggle */}
+                <div className="flex gap-0 mb-6 border-2 border-black">
+                  {(["signin", "signup"] as AuthMode[]).map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setMode(m)}
+                      className="flex-1 py-2.5 text-sm font-black uppercase tracking-wider transition-all duration-100"
+                      style={{
+                        background: mode === m ? "#FFD700" : "#FFFFFF",
+                        color: "#000",
+                        borderRight: m === "signin" ? "2px solid #000" : "none",
+                      }}
+                    >
+                      {m === "signin" ? "Sign In" : "Sign Up"}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Form */}
+                <form onSubmit={handleAuth} className="space-y-4">
+                  {/* Email */}
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider mb-1.5 text-black">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          passwordInputRef.current?.focus();
+                        }
+                      }}
+                      autoComplete="email"
+                      placeholder="operator@nexus.io"
+                      className="w-full px-4 py-3 text-sm font-semibold outline-none transition-all duration-100"
+                      style={{
+                        background: "#FFFFFF",
+                        border: "2.5px solid #000",
+                        color: "#1A1A1A",
+                        boxShadow: "none",
+                      }}
+                      onFocus={(e) => (e.target.style.boxShadow = "3px 3px 0px #000")}
+                      onBlur={(e) => (e.target.style.boxShadow = "none")}
+                    />
+                  </div>
+
+                  {/* Password */}
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider mb-1.5 text-black">
+                      Password
+                    </label>
+                    <input
+                      ref={passwordInputRef}
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                      placeholder="••••••••••••"
+                      className="w-full px-4 py-3 text-sm font-semibold outline-none transition-all duration-100"
+                      style={{
+                        background: "#FFFFFF",
+                        border: "2.5px solid #000",
+                        color: "#1A1A1A",
+                        boxShadow: "none",
+                      }}
+                      onFocus={(e) => (e.target.style.boxShadow = "3px 3px 0px #000")}
+                      onBlur={(e) => (e.target.style.boxShadow = "none")}
+                    />
+                    {mode === "signin" && (
+                      <div className="flex justify-end mt-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setForgotEmail(email);
+                            setForgotSent(false);
+                            setViewMode("forgot");
+                          }}
+                          className="text-xs font-black text-black hover:underline cursor-pointer"
+                        >
+                          Forgot Password?
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Submit */}
+                  <motion.button
+                    type="submit"
+                    disabled={loading}
+                    whileHover={{ scale: loading ? 1 : 1.01 }}
+                    whileTap={{ scale: loading ? 1 : 0.99 }}
+                    className="w-full py-3.5 text-sm font-black uppercase tracking-widest transition-all duration-100 mt-2 flex items-center justify-center gap-2 cursor-pointer"
+                    style={{
+                      background: "#00F5FF",
+                      border: "3px solid #000",
+                      boxShadow: "4px 4px 0px #000",
+                      color: "#000",
+                      cursor: loading ? "not-allowed" : "pointer",
+                      letterSpacing: "0.15em",
+                    }}
+                    onMouseDown={(e) => {
+                      if (!loading) {
+                        (e.target as HTMLElement).style.boxShadow = "2px 2px 0px #000";
+                        (e.target as HTMLElement).style.transform = "translate(3px, 3px)";
+                      }
+                    }}
+                    onMouseUp={(e) => {
+                      if (!loading) {
+                        (e.target as HTMLElement).style.boxShadow = "5px 5px 0px #000";
+                        (e.target as HTMLElement).style.transform = "translate(0, 0)";
+                      }
+                    }}
+                  >
+                    {loading ? (
+                      <>
+                        <span className="inline-block w-4 h-4 border-3 border-black border-t-transparent rounded-full animate-spin" />
+                        {mode === "signin" ? "VERIFYING..." : "REGISTERING..."}
+                      </>
+                    ) : (
+                      mode === "signin" ? "▶ ACCESS THE HUB" : "🛸 CREATE ACCOUNT"
+                    )}
+                  </motion.button>
+                </form>
+
+                {/* Guest Mode Divider & Button */}
+                <div className="relative my-5 text-center">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t-2 border-black" /></div>
+                  <span className="relative px-3 text-xs font-black uppercase bg-[#FFFCDE] text-black border-2 border-black" style={{ boxShadow: "2px 2px 0px #000" }}>
+                    OR DEMO ACCESS
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleGuestLogin}
+                  className="w-full py-3.5 text-xs font-black uppercase tracking-wider border-3 border-black bg-[#FFD700] text-black cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                  style={{ boxShadow: "4px 4px 0px #000" }}
+                >
+                  🚀 CONTINUE AS GUEST
+                </button>
+              </>
+            )}
 
             {/* Footer */}
             <div

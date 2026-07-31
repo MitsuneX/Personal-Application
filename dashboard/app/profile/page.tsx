@@ -236,14 +236,16 @@ export default function ProfilePage() {
                     successToast: "✓ Logged out successfully.",
                     onConfirm: async () => {
                       try {
+                        useDashboardStore.getState().resetUserStore();
+                        document.cookie = "is_guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+                        localStorage.removeItem("is_guest");
                         const { createClient } = await import("@/utils/supabase/client");
                         const supabase = createClient();
                         await supabase.auth.signOut();
                       } catch (err) {
                         console.error(err);
                       }
-                      localStorage.removeItem("supabase.auth.token");
-                      router.push("/login");
+                      window.location.href = "/login";
                     },
                   });
                 }}

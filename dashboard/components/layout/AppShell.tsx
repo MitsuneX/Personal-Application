@@ -7,6 +7,7 @@ import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { PageWrapper } from "./PageWrapper";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { TopLoader } from "@/components/ui/TopLoader";
 import { FloatingHeartEngine } from "@/components/ui/FloatingHeartEngine";
 import { GlobalMusicPlayer } from "@/components/ui/GlobalMusicPlayer";
@@ -51,11 +52,13 @@ export function AppShell({ children }: AppShellProps) {
     localStorage.setItem("sidebar_collapsed", String(nextVal));
   };
 
+  const { user } = useAuth();
+
   useEffect(() => {
     if (!isHydrated) {
       fetchDashboard();
     }
-  }, [isHydrated, fetchDashboard]);
+  }, [isHydrated, user?.id, fetchDashboard]);
 
   return (
     <>

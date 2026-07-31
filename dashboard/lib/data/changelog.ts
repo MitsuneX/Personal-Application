@@ -13,6 +13,31 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v3.6.0",
+    date: "2026-07-31",
+    title: "Account Switching Synchronization & Theme-Adaptive Password Recovery",
+    badge: "ACCOUNT SYNC & RECOVERY 3.6",
+    type: "minor",
+    summary: "Eliminated the hard-refresh requirement during account switching by introducing instant store resetting & sequence-aware API request handling, while launching full theme-adaptive Forgot Password & Reset Password flows.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🔑 Theme-Adaptive Forgot Password: Added 'Forgot Password?' recovery trigger to Sign In interfaces in both Cyberpunk and Neo-Brutalist themes with dedicated reset email dispatching.",
+          "🔒 Password Reset Portal (/auth/reset-password): Launched standalone password reset page with full Cyberpunk neon HUD and Neo-Brutalist offset shadow UI themes.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "⚡ Instant Account Switching: Added resetUserStore() to Zustand store to invalidate and clear previous account state instantly upon logout or user change.",
+          "🛡️ Race Condition Protection: Implemented requestSequenceId counter in fetchDashboard() so late API responses from previous sessions are automatically ignored.",
+          "🔄 Auth State Synchronization (AuthProvider.tsx): Updated onAuthStateChange listener to trigger store reset and user-scoped data re-hydration on SIGNED_IN, SIGNED_OUT, and USER_CHANGED events.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v3.5.1",
     date: "2026-07-31",
     title: "Guest Mode Middleware Routing, Dual Theme UI Parity & Dev Schema Sync Fix",

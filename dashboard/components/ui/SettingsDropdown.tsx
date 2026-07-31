@@ -6,6 +6,7 @@ import { useTheme } from "@/lib/theme";
 import { useRouter } from "next/navigation";
 import { ChangelogModal } from "@/components/ui/ChangelogModal";
 import { useConfirm } from "@/lib/context/ConfirmContext";
+import { useDashboardStore } from "@/lib/store/dashboardStore";
 
 interface SettingsDropdownProps {
   onOpenAesthetics?: () => void;
@@ -143,14 +144,16 @@ export function SettingsDropdown({ onOpenAesthetics }: SettingsDropdownProps) {
                     successToast: "✓ Logged out successfully.",
                     onConfirm: async () => {
                       try {
+                        useDashboardStore.getState().resetUserStore();
+                        document.cookie = "is_guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+                        localStorage.removeItem("is_guest");
                         const { createClient } = await import("@/utils/supabase/client");
                         const supabase = createClient();
                         await supabase.auth.signOut();
                       } catch (err) {
                         console.error(err);
                       }
-                      localStorage.removeItem("supabase.auth.token");
-                      router.push("/login");
+                      window.location.href = "/login";
                     },
                   });
                 }}

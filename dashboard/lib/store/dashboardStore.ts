@@ -355,9 +355,11 @@ interface DashboardState {
   links: LinkEntry[];
   gallery: GalleryEntry[];
   savedPrompts: SavedPromptEntry[];
+  requestSequenceId: number;
   isLoading: boolean;
   isHydrated: boolean;
 
+  resetUserStore: () => void;
   fetchDashboard: () => Promise<void>;
   updateProfile: (data: Partial<ProfileData>) => Promise<void>;
   addGame: (game: GameEntry) => Promise<void>;
@@ -622,14 +624,55 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   hobbySkills: [],
   hobbyLogs: [],
   profileHistory: [],
+  requestSequenceId: 0,
   isLoading: false,
   isHydrated: false,
 
+  resetUserStore: () => {
+    set((s) => ({
+      requestSequenceId: s.requestSequenceId + 1,
+      isHydrated: false,
+      isLoading: false,
+      profile: initialProfile,
+      games: [],
+      dossierCharacters: initialDossierCharacters,
+      gameResources: initialGameResources,
+      gameShowcaseItems: [],
+      projects: initialProjects,
+      aiTools: initialAiTools,
+      media: initialMedia,
+      animeList: [],
+      favoriteCharacters: [],
+      dramas: [],
+      hallOfFame: [],
+      notes: [],
+      links: [],
+      gallery: [],
+      songs: [],
+      playlists: [],
+      activeTrack: null,
+      isPlaying: false,
+      playlistQueue: [],
+      dramaLog: [],
+      savedPrompts: [],
+      hobbySkills: [],
+      hobbyLogs: [],
+      profileHistory: [],
+    }));
+  },
+
   fetchDashboard: async () => {
-    set({ isLoading: true });
+    const seq = get().requestSequenceId + 1;
+    set({ isLoading: true, requestSequenceId: seq });
     try {
       const res = await fetch("/api/dashboard?t=" + Date.now(), { cache: "no-store" });
       const data = await res.json();
+      
+      // Prevent race conditions: if account switched or reset happened during fetch, discard
+      if (get().requestSequenceId !== seq) {
+        return;
+      }
+
       if (data && !data.error) {
         const currentProfile = get().profile;
         set({
@@ -683,7 +726,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     } catch (err) {
       console.error("Failed to fetch dashboard:", err);
     } finally {
-      set({ isLoading: false });
+      if (get().requestSequenceId === seq) {
+        set({ isLoading: false });
+      }
     }
   },
 
