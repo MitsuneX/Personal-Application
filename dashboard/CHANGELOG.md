@@ -35,7 +35,10 @@ All notable changes to the Nexus Xenon Personal Dashboard project will be docume
 - **`AnimeZoneCard`**: Capped at 7 prioritized entries with "View Anime Zone →" navigation link.
 - **`MediaLogCard`**: Displays drama watch statuses in priority order with "Drama Hub →" navigation link.
 
-### 🔧 TypeScript & Build
+### 🔧 React State Synchronization & Build Audit
+- **Render-Phase Side Effect Elimination (`AuthProvider.tsx`)**: Refactored `onAuthStateChange` to perform pure state setters only (`setUser(newUser)`). Store reset and hydration side effects (`resetUserStore()`, `fetchDashboard()`) now execute strictly inside a dedicated `useEffect([user, isLoading])` with `previousUserIdRef` tracking, completely eliminating `Cannot update a component (AuthGateInner) while rendering a different component (AuthProvider)` warnings.
+- **Decoupled Realtime Notifications (`useRealtimeSync.ts`)**: Separated `useDashboardStore.setState` producers from `ToastProvider` dispatches so notifications trigger cleanly after state update resolution.
+- **Idempotent Dashboard Hydration (`dashboardStore.ts`)**: Added `if (get().isLoading) return;` guard to `fetchDashboard()` to prevent duplicate concurrent network requests during auth state changes.
 - All TypeScript errors resolved (0 errors on `npx tsc --noEmit`).
 - Fixed `AiToolItemEntry.launchUrl` reference (was incorrectly using `.url`).
 - Fixed `launchCount` optional number sort with `?? 0` nullish coalescing.

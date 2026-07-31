@@ -662,6 +662,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   fetchDashboard: async () => {
+    if (get().isLoading) return;
     const seq = get().requestSequenceId + 1;
     set({ isLoading: true, requestSequenceId: seq });
     try {
