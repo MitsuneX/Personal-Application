@@ -2,6 +2,14 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [3.5.1] - 2026-07-31
+
+### 🐛 Bug Fixes & Engine Stability
+- **Middleware Guest Routing (`proxy.ts`)**: Configured Next.js 16 proxy middleware to validate `is_guest=true` cookies alongside Supabase auth tokens, enabling seamless navigation across all protected routes without redirect loops.
+- **Dev Schema Refresh (`lib/prisma.ts`)**: Implemented `getPrismaClient()` schema refresh for development hot-reloads to eliminate cached `PrismaClientValidationError` crashes (`Unknown argument userId`).
+- **Neo-Brutalism Theme Parity (`app/login/page.tsx`)**: Added missing `🚀 CONTINUE AS GUEST` button with offset brutalist styling matching Cyberpunk mode parity.
+- **Navigation Reliability**: Updated Guest login and Exit Guest button handlers to perform `window.location.href` redirection to ensure immediate middleware re-evaluation and clean state re-hydration.
+
 ## [3.5.0] - 2026-07-31
 
 ### 🔒 Enterprise Multi-User Architecture & Strict Data Isolation
@@ -19,19 +27,4 @@ All notable changes to the Nexus Xenon Personal Dashboard project will be docume
 
 ### 🤖 AI Library & Games Database Expansion
 - **35 Frontier AI Platforms**: Expanded AI Library to 35 fully configured entries across General AI, Coding AI, Research AI, and Search AI.
-- **6 New Gaming Dossiers**: Added vector SVG icons, dossier configs, combat breakdowns, and elemental systems for:
-  - *Girls' Frontline 2: Exilium* (Tactical RPG — Doll Combat Roles & Elemental Attributes)
-  - *Outerplane* (Turn-Based RPG — Hero Combat Classes & Elements)
-  - *Tower of Fantasy* (Open-World RPG — Simulacra Roles & Resonance Elements)
-  - *Goddess of Victory: NIKKE* (Shooter RPG — Burst Stage I/II/III & Manufacturer Factions)
-  - *Arknights: Endfield* (Action RPG — Operator Classes & Elements)
-  - *Honkai Impact 3rd* (Action RPG — Valkyrie Battlesuits & Elemental Types)
-
-## [3.4.0] - 2026-07-31
-- AI Library Personal Collection & Knowledge Hub with star ratings, usage tracking, strengths tag cloud, and launch analytics.
-
-## [3.3.0] - 2026-07-31
-- AI Library Personal Directory & Fast Launcher Module under Visit in sidebar.
-
-## [3.2.0] - 2026-07-31
-- Global Search Engine Architecture, Visit Project Hub & Motion System Overhaul.
+- **6 New Gaming Dossiers**: Added vector SVG icons, dossier configs, combat breakdowns, and elemental systems for GFL2, Outerplane, ToF, NIKKE, Endfield, and Honkai Impact 3rd.

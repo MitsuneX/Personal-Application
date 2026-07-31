@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,7 +27,7 @@ export function GuestBanner() {
     document.cookie = "is_guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
     localStorage.removeItem("is_guest");
     setIsGuest(false);
-    router.push("/login");
+    window.location.href = "/login";
   };
 
   if (!isGuest) return null;

@@ -134,12 +134,12 @@ function LoginPageInner() {
 
   // ── Guest Mode Handler ──
   const handleGuestLogin = () => {
-    document.cookie = "is_guest=true; path=/; max-age=86400";
+    document.cookie = "is_guest=true; path=/; max-age=86400; SameSite=Lax";
     localStorage.setItem("is_guest", "true");
     addToast("success", "Entering Guest Sandbox Mode...");
     setTimeout(() => {
-      router.push("/");
-    }, 400);
+      window.location.href = "/";
+    }, 300);
   };
 
   // ── Animation: cursor blink ──
@@ -719,6 +719,23 @@ function LoginPageInner() {
                 )}
               </motion.button>
             </form>
+
+            {/* Guest Mode Divider & Button */}
+            <div className="relative my-5 text-center">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t-2 border-black" /></div>
+              <span className="relative px-3 text-xs font-black uppercase bg-[#FFFCDE] text-black border-2 border-black" style={{ boxShadow: "2px 2px 0px #000" }}>
+                OR DEMO ACCESS
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGuestLogin}
+              className="w-full py-3.5 text-xs font-black uppercase tracking-wider border-3 border-black bg-[#FFD700] text-black cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
+              style={{ boxShadow: "4px 4px 0px #000" }}
+            >
+              🚀 CONTINUE AS GUEST
+            </button>
 
             {/* Footer */}
             <div

@@ -13,6 +13,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v3.5.1",
+    date: "2026-07-31",
+    title: "Guest Mode Middleware Routing, Dual Theme UI Parity & Dev Schema Sync Fix",
+    badge: "GUEST ROUTING & FIXES 3.5.1",
+    type: "patch",
+    summary: "Resolved proxy middleware Guest session routing, added missing Continue as Guest button to Neo-Brutalist login theme, and upgraded Prisma singleton instantiation to eliminate development schema validation crashes.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🌐 Middleware Guest Authorization (proxy.ts): Configured proxy middleware to recognize is_guest cookie and allow seamless navigation across all protected routes without redirect loops.",
+          "⚡ Dev Schema Refresh (lib/prisma.ts): Fixed cached Prisma singleton validation error (Unknown argument userId) by implementing getPrismaClient() schema refresh for local dev hot-reloads.",
+          "🎨 Neo-Brutalism Theme Parity (app/login/page.tsx): Added the missing '🚀 CONTINUE AS GUEST' button with offset brutalist styling matching Cyberpunk mode parity.",
+          "🔄 Navigation Reliability: Switched Guest login and Exit Guest actions to window.location.href to trigger full middleware re-evaluation and clean state re-hydration.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v3.5.0",
     date: "2026-07-31",
     title: "Multi-User Enterprise Architecture, Guest Sandbox Mode & Major AI/Games Expansion",

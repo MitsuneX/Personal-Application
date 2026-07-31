@@ -33,6 +33,18 @@ export async function proxy(request: NextRequest) {
   });
 
   const { pathname } = request.nextUrl;
+  const isGuest = request.cookies.get("is_guest")?.value === "true";
+
+  // Guest Mode sessions pass through all routes
+  if (isGuest) {
+    if (pathname.startsWith("/login")) {
+      const dashboardUrl = request.nextUrl.clone();
+      dashboardUrl.pathname = "/";
+      dashboardUrl.search = "";
+      return NextResponse.redirect(dashboardUrl);
+    }
+    return supabaseResponse;
+  }
 
   // Strict routing check: if no auth-token cookie exists for a protected route, abort immediately
   if (!isPublicRoute(pathname)) {

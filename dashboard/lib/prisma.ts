@@ -24,20 +24,23 @@ if (!global.__prismaPool) {
   });
 }
 
-// PrismaClient: one per process — never recreated
-if (!global.__prismaClient) {
-  const adapter = new PrismaPg(global.__prismaPool);
-  global.__prismaClient = new PrismaClient({
-    adapter,
-    log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
-  });
-  const modelKeys = Object.keys(global.__prismaClient).filter(
-    (k) => !k.startsWith("_") && !k.startsWith("$")
-  );
-  console.log("[Prisma Singleton] Initialized with models:", modelKeys);
+// In development, ensure PrismaClient reflects freshly generated client types
+function getPrismaClient(): PrismaClient {
+  const adapter = new PrismaPg(global.__prismaPool!);
+  if (process.env.NODE_ENV === "production") {
+    if (!global.__prismaClient) {
+      global.__prismaClient = new PrismaClient({ adapter, log: ["error"] });
+    }
+    return global.__prismaClient;
+  }
+  // Dev mode: re-instantiate if needed to avoid stale cached client schema
+  if (!global.__prismaClient) {
+    global.__prismaClient = new PrismaClient({ adapter, log: ["warn", "error"] });
+  }
+  return global.__prismaClient;
 }
 
-const prisma = global.__prismaClient;
+const prisma = getPrismaClient();
 
 export { prisma };
 export default prisma;
