@@ -59,17 +59,17 @@ function AuthGateInner({ children }: { children: React.ReactNode }) {
 
 export function RootProviders({ children }: { children: React.ReactNode }) {
   return (
-    <ToastProvider>
-      <ConfirmProvider>
-        <AuthProvider>
-          <ThemeProvider>
+    <ThemeProvider>
+      <ToastProvider>
+        <ConfirmProvider>
+          <AuthProvider>
             <AuthGateInner>
               {children}
               <GlobalConfirmModal />
             </AuthGateInner>
-          </ThemeProvider>
-        </AuthProvider>
-      </ConfirmProvider>
-    </ToastProvider>
+          </AuthProvider>
+        </ConfirmProvider>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }

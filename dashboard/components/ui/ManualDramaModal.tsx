@@ -39,6 +39,7 @@ export function ManualDramaModal({ isOpen, onClose, defaultCountry = "other" }: 
   // Form states
   const [title, setTitle] = useState("");
   const [type, setType] = useState<"Movie" | "Series">("Series");
+  const [totalEpisodesInput, setTotalEpisodesInput] = useState("");
   const [releaseYear, setReleaseYear] = useState("");
   const [plotSummary, setPlotSummary] = useState("");
   const [posterUrl, setPosterUrl] = useState("");
@@ -113,6 +114,11 @@ export function ManualDramaModal({ isOpen, onClose, defaultCountry = "other" }: 
       .map((a) => a.trim())
       .filter(Boolean);
 
+    const isMovie = type === "Movie";
+    const parsedTotalEpisodes = isMovie
+      ? 1
+      : (totalEpisodesInput ? parseInt(totalEpisodesInput) || undefined : undefined);
+
     const entry: DramaLogEntry = {
       id: `drama-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       title,
@@ -125,6 +131,8 @@ export function ManualDramaModal({ isOpen, onClose, defaultCountry = "other" }: 
       country,
       rating: rating || null,
       createdAt: new Date().toISOString(),
+      totalEpisodes: parsedTotalEpisodes,
+      episodesWatched: isMovie && (statusBadge === "GOAT Status" || statusBadge === "Classic") ? 1 : 0,
     };
 
     await saveDramaLog(entry);
@@ -134,6 +142,7 @@ export function ManualDramaModal({ isOpen, onClose, defaultCountry = "other" }: 
     // Reset Form
     setTitle("");
     setType("Series");
+    setTotalEpisodesInput("");
     setReleaseYear("");
     setPlotSummary("");
     setPosterUrl("");
@@ -218,7 +227,11 @@ export function ManualDramaModal({ isOpen, onClose, defaultCountry = "other" }: 
               <label className="block text-xs font-bold mb-1 theme-text-secondary">TYPE</label>
               <select
                 value={type}
-                onChange={(e) => setType(e.target.value as "Movie" | "Series")}
+                onChange={(e) => {
+                  const newType = e.target.value as "Movie" | "Series";
+                  setType(newType);
+                  if (newType === "Movie") setTotalEpisodesInput("1");
+                }}
                 className="w-full p-2 rounded-xl border text-sm font-semibold focus:outline-none"
                 style={inputStyles}
               >
@@ -227,6 +240,24 @@ export function ManualDramaModal({ isOpen, onClose, defaultCountry = "other" }: 
               </select>
             </div>
 
+            <div>
+              <label className="block text-xs font-bold mb-1 theme-text-secondary">
+                {type === "Movie" ? "TOTAL EPISODES (locked: 1)" : "TOTAL EPISODES (optional)"}
+              </label>
+              <input
+                type="number"
+                value={type === "Movie" ? "1" : totalEpisodesInput}
+                onChange={(e) => type !== "Movie" && setTotalEpisodesInput(e.target.value)}
+                readOnly={type === "Movie"}
+                min={1}
+                placeholder={type === "Movie" ? "1" : "e.g. 16"}
+                className="w-full p-2 rounded-xl border text-sm font-semibold focus:outline-none"
+                style={{ ...inputStyles, opacity: type === "Movie" ? 0.55 : 1 }}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary">RELEASE YEAR</label>
               <input

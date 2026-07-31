@@ -113,6 +113,7 @@ function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
+  const passwordInputRef = React.useRef<HTMLInputElement>(null);
 
   // ── Theme ──
   const [theme, setTheme] = useState<Theme>("cyber");
@@ -130,6 +131,16 @@ function LoginPageInner() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+
+  // ── Guest Mode Handler ──
+  const handleGuestLogin = () => {
+    document.cookie = "is_guest=true; path=/; max-age=86400";
+    localStorage.setItem("is_guest", "true");
+    addToast("success", "Entering Guest Sandbox Mode...");
+    setTimeout(() => {
+      router.push("/");
+    }, 400);
+  };
 
   // ── Animation: cursor blink ──
   const [cursor, setCursor] = useState(true);
@@ -378,6 +389,12 @@ function LoginPageInner() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        passwordInputRef.current?.focus();
+                      }
+                    }}
                     autoComplete="email"
                     placeholder="operator@nexus.io"
                     className="w-full px-4 py-3 text-sm rounded-lg outline-none transition-all duration-200 focus:ring-1 focus:ring-[rgba(0,245,255,0.5)]"
@@ -401,6 +418,7 @@ function LoginPageInner() {
                     &gt; password_key
                   </label>
                   <input
+                    ref={passwordInputRef}
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -448,6 +466,30 @@ function LoginPageInner() {
                   )}
                 </motion.button>
               </form>
+
+              {/* Guest Mode Divider & Button */}
+              <div className="relative my-4 text-center">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[rgba(0,245,255,0.15)]" /></div>
+                <span className="relative px-3 text-[10px] font-bold uppercase tracking-widest bg-[#050816] text-[#64748B]" style={{ fontFamily: "var(--font-jetbrains-mono)" }}>
+                  OR DEMO ACCESS
+                </span>
+              </div>
+
+              <motion.button
+                type="button"
+                onClick={handleGuestLogin}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full py-3 text-xs font-bold uppercase tracking-widest rounded-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                style={{
+                  fontFamily: "var(--font-jetbrains-mono)",
+                  background: "rgba(255, 215, 0, 0.08)",
+                  border: "1px dashed rgba(255, 215, 0, 0.4)",
+                  color: "#FFD700",
+                }}
+              >
+                🚀 CONTINUE AS GUEST
+              </motion.button>
 
               {/* Footer */}
               <p
@@ -595,6 +637,12 @@ function LoginPageInner() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      passwordInputRef.current?.focus();
+                    }
+                  }}
                   autoComplete="email"
                   placeholder="operator@nexus.io"
                   className="w-full px-4 py-3 text-sm font-semibold outline-none transition-all duration-100"
@@ -615,6 +663,7 @@ function LoginPageInner() {
                   Password
                 </label>
                 <input
+                  ref={passwordInputRef}
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -636,12 +685,14 @@ function LoginPageInner() {
               <motion.button
                 type="submit"
                 disabled={loading}
-                whileTap={loading ? {} : { x: 3, y: 3 }}
-                className="w-full py-4 text-sm font-black uppercase tracking-widest mt-2 border-2 border-black transition-all duration-100 flex items-center justify-center gap-2"
+                whileHover={{ scale: loading ? 1 : 1.01 }}
+                whileTap={{ scale: loading ? 1 : 0.99 }}
+                className="w-full py-3.5 text-sm font-black uppercase tracking-widest transition-all duration-100 mt-2 flex items-center justify-center gap-2 cursor-pointer"
                 style={{
-                  background: loading ? "#E5E5E5" : "#FFD700",
+                  background: "#00F5FF",
+                  border: "3px solid #000",
+                  boxShadow: "4px 4px 0px #000",
                   color: "#000",
-                  boxShadow: loading ? "none" : "5px 5px 0px #000",
                   cursor: loading ? "not-allowed" : "pointer",
                   letterSpacing: "0.15em",
                 }}

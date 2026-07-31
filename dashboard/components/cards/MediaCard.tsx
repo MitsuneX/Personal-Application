@@ -16,7 +16,7 @@ export interface MediaCardProps {
   category: MediaCategory;
   status: string;
   episodesWatched: number;
-  totalEpisodes: number;
+  totalEpisodes: number | null | undefined;
   rating: number;
   genre?: string;
   year?: number;
@@ -223,6 +223,20 @@ function CulturalOverlay({ category, isCyber }: { category: MediaCategory; isCyb
       </div>
     );
   }
+  if (category === "indonesia") {
+    return (
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ opacity: isCyber ? 0.04 : 0.05 }}>
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `radial-gradient(circle at 25px 25px, ${isCyber ? "#FF2A2A" : "#E60000"} 1.5px, transparent 0),
+              linear-gradient(45deg, transparent 48%, ${isCyber ? "#FF2A2A" : "#E60000"} 49%, ${isCyber ? "#FF2A2A" : "#E60000"} 51%, transparent 52%)`,
+            backgroundSize: "50px 50px",
+          }}
+        />
+      </div>
+    );
+  }
   return null;
 }
 
@@ -231,29 +245,31 @@ function CulturalOverlay({ category, isCyber }: { category: MediaCategory; isCyb
 function EpisodeStepper({
   watched, total, category, isCyber, accent, onChange, onTotalChange,
 }: {
-  watched: number; total: number; category: MediaCategory;
+  watched: number; total: number | null | undefined; category: MediaCategory;
   isCyber: boolean; accent: string;
   onChange: (v: number) => void;
   onTotalChange?: (t: number) => void;
 }) {
   const [local, setLocal] = useState(watched);
-  const [localTotal, setLocalTotal] = useState(total);
+  const [localTotal, setLocalTotal] = useState(total ?? 0);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const totalTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const isUnknown = total == null || total === 0;
 
   useEffect(() => { setLocal(watched); }, [watched]);
-  useEffect(() => { setLocalTotal(total); }, [total]);
+  useEffect(() => { setLocalTotal(total ?? 0); }, [total]);
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
     if (totalTimer.current) clearTimeout(totalTimer.current);
   }, []);
 
   const commit = useCallback((v: number) => {
-    const clamped = Math.max(0, Math.min(localTotal, v));
+    const max = isUnknown ? 99999 : localTotal;
+    const clamped = Math.max(0, Math.min(max, v));
     setLocal(clamped);
     clearTimeout(timer.current);
     timer.current = setTimeout(() => onChange(clamped), 500);
-  }, [localTotal, onChange]);
+  }, [isUnknown, localTotal, onChange]);
 
   const commitTotal = useCallback((t: number) => {
     const clampedTotal = Math.max(1, t);
@@ -303,7 +319,7 @@ function EpisodeStepper({
           type="number"
           value={local}
           min={0}
-          max={localTotal}
+          max={isUnknown ? undefined : localTotal}
           onChange={(e) => {
             const val = parseInt(e.target.value);
             commit(isNaN(val) ? 0 : val);
@@ -314,13 +330,14 @@ function EpisodeStepper({
         <span className="opacity-60 text-xs" style={{ color: accent }}>/</span>
         <input
           type="number"
-          value={localTotal}
+          value={isUnknown ? (localTotal === 0 ? "" : localTotal) : localTotal}
           min={1}
+          placeholder={isUnknown ? "?" : undefined}
           onChange={(e) => {
             const val = parseInt(e.target.value);
             commitTotal(isNaN(val) ? 1 : val);
           }}
-          style={inputStyle}
+          style={isUnknown ? { ...inputStyle, opacity: 0.6 } : inputStyle}
           className="no-spinners"
         />
         <span className="text-[10px] opacity-60 font-black ml-0.5" style={{ color: accent }}>
@@ -390,9 +407,16 @@ export function MediaCard({
   const hasPoster = !!posterUrl && !imgError;
   const isCompleted = localStatus === "Completed";
   const isDrama = category !== "anime";
-  const pct = (isDrama && isCompleted)
+  // Resolve episode count: null/undefined means "unknown"
+  const knownTotal = totalEpisodes != null && totalEpisodes > 0 ? totalEpisodes : null;
+  // Progress: null when total is unknown and not completed
+  const pct: number | null = isCompleted && knownTotal != null
     ? 100
-    : Math.min(100, Math.round((localEps / Math.max(1, totalEpisodes)) * 100));
+    : isCompleted && isDrama
+    ? 100
+    : knownTotal != null
+    ? Math.min(100, Math.round((localEps / knownTotal) * 100))
+    : localEps > 0 ? null : 0;
 
   const statusColorKey = localStatus as keyof typeof STATUS_COLORS;
   const sc = STATUS_COLORS[statusColorKey] ?? { cyber: "#94A3B8", brutal: "#6B7280" };
@@ -433,17 +457,22 @@ export function MediaCard({
     const idx = STATUS_CYCLE.indexOf(localStatus);
     const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
     setLocalStatus(next);
+    // Auto-set episodes to total when marking Completed
+    if (next === "Completed" && knownTotal != null && localEps < knownTotal) {
+      setLocalEps(knownTotal);
+      onEpisodeChange?.(id, knownTotal, next);
+    }
     onStatusChange?.(id, next);
-  }, [id, localStatus, onStatusChange]);
+  }, [id, localStatus, onStatusChange, knownTotal, localEps, onEpisodeChange]);
 
   const handleEpisodeChange = useCallback((v: number) => {
     setLocalEps(v);
-    const newStatus = v >= totalEpisodes
+    const newStatus = knownTotal != null && v >= knownTotal
       ? "Completed"
       : (localStatus === "Completed" ? "Watching" : (v > 0 && localStatus === "Plan to Watch" ? "Watching" : localStatus));
     if (newStatus !== localStatus) setLocalStatus(newStatus);
     onEpisodeChange?.(id, v, newStatus);
-  }, [id, totalEpisodes, localStatus, onEpisodeChange]);
+  }, [id, knownTotal, localStatus, onEpisodeChange]);
 
   // ── Card base style ────────────────────────────────────────────────────────
   const baseStyle: React.CSSProperties = isCyber
@@ -637,7 +666,7 @@ export function MediaCard({
               <motion.div
                 className="h-full rounded-full"
                 initial={{ scaleX: 0 }}
-                animate={{ scaleX: pct / 100 }}
+                animate={{ scaleX: pct != null ? pct / 100 : 0 }}
                 transition={{ type: "spring", stiffness: 65, damping: 18, delay: 0.2 + index * 0.04 }}
                 style={{
                   transformOrigin: "left",
@@ -657,12 +686,12 @@ export function MediaCard({
                     : (isCyber ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.4)"),
                 }}
               >
-                {localEps}/{totalEpisodes}&nbsp;{EP_LABELS[category]}
+                {localEps}/{knownTotal ?? "?"}&nbsp;{EP_LABELS[category]}
               </span>
               <span
                 className="text-[10px] font-mono font-black tabular-nums"
                 style={{ color: hasPoster ? "rgba(255,255,255,0.9)" : accent }}
-              >{pct}%</span>
+              >{pct != null ? `${pct}%` : "?%"}</span>
             </div>
           </div>
         </div>
@@ -746,6 +775,11 @@ export function MediaCard({
                             onClick={(e) => {
                               e.stopPropagation();
                               setLocalStatus(st);
+                              // Auto-set episodes to total when selecting Completed from dropdown
+                              if (st === "Completed" && knownTotal != null && localEps < knownTotal) {
+                                setLocalEps(knownTotal);
+                                onEpisodeChange?.(id, knownTotal, st);
+                              }
                               onStatusChange?.(id, st);
                               setDropdownOpen(false);
                             }}
@@ -849,10 +883,12 @@ export function MediaCard({
                   />
                 ) : (
                   <span className="text-[10px] font-mono opacity-50">
-                    {localEps}/{totalEpisodes} {EP_LABELS[category]}
+                    {localEps}/{knownTotal ?? "?"} {EP_LABELS[category]}
                   </span>
                 )}
-                <span className="text-[10px] font-mono font-black" style={{ color: accent }}>{pct}%</span>
+                <span className="text-[10px] font-mono font-black" style={{ color: accent }}>
+                  {pct != null ? `${pct}%` : "?%"}
+                </span>
               </div>
             </div>
 

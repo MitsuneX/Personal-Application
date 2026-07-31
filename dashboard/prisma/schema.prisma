@@ -8,6 +8,7 @@ generator client {
 
 model Profile {
   id          String   @id @default("profile")
+  userId      String?  @unique
   name        String
   tagline     String
   bio         String
@@ -28,13 +29,17 @@ model Profile {
 
 model ProfileHistory {
   id        String   @id @default(uuid())
+  userId    String?
   assetType String   // "avatar" | "banner"
   url       String
   createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Game {
   id            String   @id @default(uuid())
+  userId        String?
   game          String
   handle        String?
   platform      String   // "PC" | "PSN" | "Xbox" | "Switch" | "Mobile" | "Multi"
@@ -51,10 +56,13 @@ model Game {
 
   resources     GameExternalResource[]
   showcaseItems GameShowcaseItem[]
+
+  @@index([userId])
 }
 
 model GameShowcaseItem {
   id          String   @id @default(uuid())
+  userId      String?
   gameId      String
   title       String
   description String?
@@ -65,10 +73,13 @@ model GameShowcaseItem {
   createdAt   DateTime @default(now())
 
   game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model GameExternalResource {
   id          String   @id @default(uuid())
+  userId      String?
   gameId      String
   name        String
   url         String
@@ -80,10 +91,13 @@ model GameExternalResource {
   createdAt   DateTime @default(now())
 
   game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model GameDossierCharacter {
   id          String   @id @default(uuid())
+  userId      String?
   gameId      String
   name        String
   category    String   // e.g. "EXP Lane", "Destruction", "Duelist", "Main DPS"
@@ -96,10 +110,13 @@ model GameDossierCharacter {
   accentColor String?
   isFavorite  Boolean  @default(false)
   createdAt   DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Anime {
   id              String   @id @default(uuid())
+  userId          String?
   title           String
   episodesWatched Int
   totalEpisodes   Int
@@ -112,18 +129,24 @@ model Anime {
   synopsis        String?
   cast            String[]
   createdAt       DateTime @default(now())
+
+  @@index([userId])
 }
 
 model FavoriteCharacter {
   id         String   @id @default(uuid())
+  userId     String?
   name       String
   anime      String
   isFavorite Boolean  @default(true)
   createdAt  DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Drama {
   id              String   @id @default(uuid())
+  userId          String?
   title           String
   country         String   // "japanese" | "korean" | "chinese"
   episodes        Int
@@ -135,10 +158,13 @@ model Drama {
   platform        String?
   cast            String[]
   createdAt       DateTime @default(now())
+
+  @@index([userId])
 }
 
 model HallOfFame {
   id                 String   @id @default(uuid())
+  userId             String?
   name               String
   type               String   // "actor" | "actress" | "anime" | "singer" | "tokusatsu"
   status             String   // "GOAT Status" | "All-Star" | "Rising" | "Classic"
@@ -154,28 +180,37 @@ model HallOfFame {
   tokusatsuShow      String?
   associatedDramas   String[]
   createdAt          DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Note {
   id          String      @id @default(uuid())
+  userId      String?
   title       String
   content     String
   hobbyId     String?
   isCuriosity Boolean     @default(false)
   hobby       HobbySkill? @relation(fields: [hobbyId], references: [id])
   updatedAt   DateTime    @updatedAt
+
+  @@index([userId])
 }
 
 model Link {
   id        String   @id @default(uuid())
+  userId    String?
   title     String
   url       String
   category  String   // e.g. "Watch", "Entertainment", "Book", "Productivity"
   createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model GalleryItem {
   id        String   @id @default(uuid())
+  userId    String?
   title     String
   url       String
   caption   String?
@@ -183,10 +218,13 @@ model GalleryItem {
   category  String   @default("General")
   folder    String   @default("Root")
   createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Song {
   id         String   @id @default(uuid())
+  userId     String?
   title      String
   artist     String
   album      String?
@@ -199,19 +237,25 @@ model Song {
   geniusId   String?
   playlistId String?
   createdAt  DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Playlist {
   id          String   @id @default(uuid())
+  userId      String?
   name        String
   description String?
   coverUrl    String?
   songs       Json?    // array of song IDs or track objects
   createdAt   DateTime @default(now())
+
+  @@index([userId])
 }
 
 model DramaLog {
   id              String   @id @default(uuid())
+  userId          String?
   title           String
   type            String   // "Movie" | "Series"
   releaseYear     Int?
@@ -225,18 +269,24 @@ model DramaLog {
   episodesWatched Int      @default(0)
   totalEpisodes   Int      @default(0)
   createdAt       DateTime @default(now())
+
+  @@index([userId])
 }
 
 model SavedPrompt {
   id         String   @id @default(uuid())
+  userId     String?
   title      String
   targetAI   String
   promptText String
   createdAt  DateTime @default(now())
+
+  @@index([userId])
 }
 
 model HobbySkill {
   id        String     @id @default(uuid())
+  userId    String?
   name      String     @unique
   category  String     // "Languages" | "Doctors" | "Martial Arts"
   priority  String     // "Priority" | "Haven't Started" | "Manifest"
@@ -244,20 +294,26 @@ model HobbySkill {
   createdAt DateTime   @default(now())
   logs      HobbyLog[]
   notes     Note[]
+
+  @@index([userId])
 }
 
 model HobbyLog {
   id        String     @id @default(uuid())
+  userId    String?
   skillId   String
   skill     HobbySkill @relation(fields: [skillId], references: [id])
   delta     Float
   wordCount Int        @default(0)
   note      String?
   createdAt DateTime   @default(now())
+
+  @@index([userId])
 }
 
 model ProjectItem {
   id          String   @id @default(uuid())
+  userId      String?
   name        String
   logo        String?
   heroBanner  String?
@@ -282,10 +338,13 @@ model ProjectItem {
   stats       Json?    // e.g. { stars: 120, users: "5.2k" }
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model AiToolItem {
   id              String    @id @default(uuid())
+  userId          String?
   name            String
   company         String?   // e.g. "OpenAI", "Anthropic", "Google", "Perplexity AI", "DeepSeek", "Anysphere"
   description     String
@@ -319,4 +378,6 @@ model AiToolItem {
   isArchived      Boolean   @default(false)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
 }

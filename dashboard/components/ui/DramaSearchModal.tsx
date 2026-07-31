@@ -20,6 +20,7 @@ interface SearchResult {
   genre: string;
   rating: string;
   director?: string;
+  totalEpisodes?: number | null;
 }
 
 interface DramaSearchModalProps {
@@ -195,6 +196,7 @@ export function DramaSearchModal({ isOpen, onClose, defaultCountry = "other" }: 
     if (!selected) return;
     setIsSaving(true);
 
+    const isMovie = selected.type === "Movie";
     const entry: DramaLogEntry = {
       id: `drama-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       title: selected.title,
@@ -208,6 +210,10 @@ export function DramaSearchModal({ isOpen, onClose, defaultCountry = "other" }: 
       country,
       rating: selected.rating || null,
       createdAt: new Date().toISOString(),
+      // For movies always 1; for series use what the API returned (may be null)
+      totalEpisodes: isMovie ? 1 : (selected.totalEpisodes ?? undefined),
+      // For completed movies, set episodesWatched to 1
+      episodesWatched: isMovie && (statusBadge === "GOAT Status" || statusBadge === "Classic") ? 1 : 0,
     };
 
     await saveDramaLog(entry);

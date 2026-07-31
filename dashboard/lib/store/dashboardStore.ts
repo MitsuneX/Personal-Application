@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { DEFAULT_AI_TOOLS } from "@/lib/data/initialAiTools";
 
 // ─── Shared Types ─────────────────────────────────────────────────────────────
 
@@ -589,167 +590,7 @@ const initialProjects: ProjectItemEntry[] = [
   },
 ];
 
-const initialAiTools: AiToolItemEntry[] = [
-  {
-    id: "ai-chatgpt",
-    name: "ChatGPT",
-    company: "OpenAI",
-    description: "State-of-the-art conversational AI assistant powered by GPT-4o and o1 reasoning models for writing, analysis, coding, and multi-modal problem solving.",
-    logo: "🤖",
-    accentColor: "#10A37F",
-    category: "💬 General AI",
-    usageStatus: "Daily",
-    pricingModel: "Freemium",
-    rating: 5,
-    strengths: ["Coding", "Writing", "Reasoning", "Multimodal", "Brainstorming"],
-    notes: "Go-to daily assistant for general inquiries, quick code snippets, document translation, and creative brainstorming.",
-    version: "GPT-4o / o1",
-    lastUsed: new Date().toISOString(),
-    launchCount: 142,
-    launchUrl: "https://chatgpt.com",
-    websiteUrl: "https://chatgpt.com",
-    docsUrl: "https://platform.openai.com/docs",
-    apiUrl: "https://platform.openai.com/api-keys",
-    pricingUrl: "https://openai.com/pricing",
-    tags: ["LLM", "GPT-4o", "Multimodal", "OpenAI"],
-    sortOrder: 1,
-    isFavorite: true,
-    isPinned: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "ai-claude",
-    name: "Claude 3.5 Sonnet",
-    company: "Anthropic",
-    description: "Advanced AI assistant by Anthropic renowned for nuanced reasoning, superior coding capabilities, artifact workspace generation, and long-context analysis.",
-    logo: "🧠",
-    accentColor: "#D97706",
-    category: "💻 Coding",
-    usageStatus: "Daily",
-    pricingModel: "Freemium",
-    rating: 5,
-    strengths: ["Coding", "Frontend", "Backend", "Artifacts", "Reasoning"],
-    notes: "Best model for complex React/Next.js refactoring, architectural review, and artifact UI component generation.",
-    version: "Claude 3.5 Sonnet",
-    lastUsed: new Date().toISOString(),
-    launchCount: 198,
-    launchUrl: "https://claude.ai",
-    websiteUrl: "https://claude.ai",
-    docsUrl: "https://docs.anthropic.com",
-    apiUrl: "https://console.anthropic.com",
-    pricingUrl: "https://www.anthropic.com/pricing",
-    tags: ["Coding", "Artifacts", "Anthropic", "200k Context"],
-    sortOrder: 2,
-    isFavorite: true,
-    isPinned: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "ai-gemini",
-    name: "Google Gemini Advanced",
-    company: "Google",
-    description: "Multimodal AI assistant integrated with Google Workspace, 2M token context window, live audio interactions, and deep search intelligence.",
-    logo: "✨",
-    accentColor: "#4285F4",
-    category: "🧠 Research",
-    usageStatus: "Weekly",
-    pricingModel: "Freemium",
-    rating: 4,
-    strengths: ["Research", "Summarization", "Multimodal", "Data Analysis"],
-    notes: "Exceptional for digesting massive multi-megabyte PDFs, analyzing long video recordings, and Google Workspace integration.",
-    version: "Gemini 1.5 Pro",
-    lastUsed: new Date(Date.now() - 86400000).toISOString(),
-    launchCount: 56,
-    launchUrl: "https://gemini.google.com",
-    websiteUrl: "https://gemini.google.com",
-    docsUrl: "https://ai.google.dev/docs",
-    apiUrl: "https://aistudio.google.com",
-    pricingUrl: "https://ai.google.dev/pricing",
-    tags: ["Google", "2M Context", "Multimodal", "AI Studio"],
-    sortOrder: 3,
-    isFavorite: true,
-    isPinned: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "ai-perplexity",
-    name: "Perplexity AI",
-    company: "Perplexity AI",
-    description: "Conversational answer engine delivering real-time web research, cited source academic search, and Pro Discovery reasoning.",
-    logo: "🔍",
-    accentColor: "#00B4D8",
-    category: "🔍 Search",
-    usageStatus: "Daily",
-    pricingModel: "Freemium",
-    rating: 5,
-    strengths: ["Search", "Research", "Summarization", "Data Analysis"],
-    notes: "Replaces traditional search engines for tech troubleshooting, library comparisons, and cited academic research.",
-    version: "Sonar Pro",
-    lastUsed: new Date().toISOString(),
-    launchCount: 88,
-    launchUrl: "https://www.perplexity.ai",
-    websiteUrl: "https://www.perplexity.ai",
-    docsUrl: "https://docs.perplexity.ai",
-    pricingUrl: "https://www.perplexity.ai/pro",
-    tags: ["Search", "Research", "Citations", "Pro Discovery"],
-    sortOrder: 4,
-    isFavorite: true,
-    isPinned: false,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "ai-deepseek",
-    name: "DeepSeek R1",
-    company: "DeepSeek",
-    description: "Open-weights reasoning model specializing in complex mathematics, algorithmic logic, competitive coding, and deep multi-step thinking.",
-    logo: "🐳",
-    accentColor: "#4D6BFE",
-    category: "💻 Coding",
-    usageStatus: "Weekly",
-    pricingModel: "Open Source",
-    rating: 5,
-    strengths: ["Reasoning", "Math", "Coding", "Backend"],
-    notes: "Outstanding chain-of-thought reasoning for complex algorithms, data structures, and mathematical formulas.",
-    version: "DeepSeek-R1",
-    lastUsed: new Date(Date.now() - 172800000).toISOString(),
-    launchCount: 42,
-    launchUrl: "https://chat.deepseek.com",
-    websiteUrl: "https://chat.deepseek.com",
-    docsUrl: "https://api-docs.deepseek.com",
-    githubUrl: "https://github.com/deepseek-ai",
-    tags: ["Reasoning", "Open Weights", "Math", "Logic"],
-    sortOrder: 5,
-    isFavorite: true,
-    isPinned: false,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "ai-cursor",
-    name: "Cursor IDE",
-    company: "Anysphere",
-    description: "The AI-first code editor built on VS Code with codebase indexing, inline edit agent, multi-file edits, and instant terminal command execution.",
-    logo: "⚡",
-    accentColor: "#00F5FF",
-    category: "💻 Coding",
-    usageStatus: "Daily",
-    pricingModel: "Freemium",
-    rating: 5,
-    strengths: ["Coding", "Full Stack", "Frontend", "Backend", "Productivity"],
-    notes: "Primary IDE environment with full repository indexing, multi-file agent edits, and fast terminal assistance.",
-    version: "v0.45",
-    lastUsed: new Date().toISOString(),
-    launchCount: 310,
-    launchUrl: "https://cursor.com",
-    websiteUrl: "https://cursor.com",
-    docsUrl: "https://docs.cursor.com",
-    pricingUrl: "https://cursor.com/pricing",
-    tags: ["IDE", "AI Agent", "VSCode", "Codebase Index"],
-    sortOrder: 6,
-    isFavorite: true,
-    isPinned: false,
-    createdAt: new Date().toISOString(),
-  },
-];
+const initialAiTools: AiToolItemEntry[] = DEFAULT_AI_TOOLS;
 
 // ─── Zustand Store ────────────────────────────────────────────────────────────
 
@@ -811,9 +652,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           projects: (data.projects && data.projects.length > 0)
             ? data.projects
             : get().projects,
-          aiTools: (data.aiTools && data.aiTools.length > 0)
-            ? data.aiTools
-            : get().aiTools,
+          aiTools: data.aiTools !== undefined ? data.aiTools : get().aiTools,
+
           animeList: data.animeList || [],
           favoriteCharacters: data.favoriteCharacters || [],
           dramas: data.dramas || [],
@@ -1095,70 +935,119 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   addAiTool: async (item) => {
+    // Optimistic update
     set((s) => ({ aiTools: [item, ...s.aiTools] }));
     try {
-      await fetch("/api/action", {
+      const res = await fetch("/api/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "UPDATE_AI_TOOL", payload: item }),
       });
+      if (!res.ok) {
+        const body = await res.text();
+        console.error(`[AI Library] addAiTool HTTP ${res.status}:`, body);
+        // Rollback optimistic update on failure
+        set((s) => ({ aiTools: s.aiTools.filter((t) => t.id !== item.id) }));
+        return;
+      }
+      const result = await res.json();
+      if (result?.data) {
+        // Sync store with DB-authoritative record
+        set((s) => ({
+          aiTools: s.aiTools.map((t) =>
+            t.id === item.id
+              ? { ...t, ...result.data, createdAt: result.data.createdAt ?? t.createdAt, updatedAt: result.data.updatedAt ?? t.updatedAt }
+              : t
+          ),
+        }));
+      }
     } catch (err) {
-      console.error("Failed to sync added AI tool:", err);
+      console.error("[AI Library] addAiTool network error:", err);
+      set((s) => ({ aiTools: s.aiTools.filter((t) => t.id !== item.id) }));
     }
   },
 
   updateAiTool: async (id, data) => {
+    // Optimistic update
     set((s) => ({
       aiTools: s.aiTools.map((t) => (t.id === id ? { ...t, ...data } : t)),
     }));
     try {
       const item = get().aiTools.find((t) => t.id === id);
-      if (item) {
-        await fetch("/api/action", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "UPDATE_AI_TOOL", payload: item }),
-        });
+      if (!item) return;
+      const res = await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "UPDATE_AI_TOOL", payload: item }),
+      });
+      if (!res.ok) {
+        const body = await res.text();
+        console.error(`[AI Library] updateAiTool HTTP ${res.status}:`, body);
+        return;
+      }
+      const result = await res.json();
+      if (result?.data) {
+        set((s) => ({
+          aiTools: s.aiTools.map((t) =>
+            t.id === id
+              ? { ...t, ...result.data, createdAt: result.data.createdAt ?? t.createdAt }
+              : t
+          ),
+        }));
       }
     } catch (err) {
-      console.error("Failed to sync updated AI tool:", err);
+      console.error("[AI Library] updateAiTool network error:", err);
     }
   },
 
   removeAiTool: async (id) => {
+    // Optimistic update
+    const removed = get().aiTools.find((t) => t.id === id);
     set((s) => ({ aiTools: s.aiTools.filter((t) => t.id !== id) }));
     try {
-      await fetch("/api/action", {
+      const res = await fetch("/api/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "DELETE_AI_TOOL", payload: { id } }),
       });
+      if (!res.ok) {
+        const body = await res.text();
+        console.error(`[AI Library] removeAiTool HTTP ${res.status}:`, body);
+        // Rollback: restore item
+        if (removed) {
+          set((s) => ({ aiTools: [...s.aiTools, removed] }));
+        }
+      }
     } catch (err) {
-      console.error("Failed to sync deleted AI tool:", err);
+      console.error("[AI Library] removeAiTool network error:", err);
+      if (removed) {
+        set((s) => ({ aiTools: [...s.aiTools, removed] }));
+      }
     }
   },
 
   recordAiToolLaunch: async (id) => {
     const now = new Date().toISOString();
+    // Optimistic update
     set((s) => ({
       aiTools: s.aiTools.map((t) =>
         t.id === id
-          ? {
-              ...t,
-              lastUsed: now,
-              launchCount: (t.launchCount || 0) + 1,
-            }
+          ? { ...t, lastUsed: now, launchCount: (t.launchCount || 0) + 1 }
           : t
       ),
     }));
     try {
-      await fetch("/api/action", {
+      const res = await fetch("/api/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "RECORD_AI_TOOL_LAUNCH", payload: { id } }),
       });
+      if (!res.ok) {
+        const body = await res.text();
+        console.error(`[AI Library] recordAiToolLaunch HTTP ${res.status}:`, body);
+      }
     } catch (err) {
-      console.error("Failed to record AI tool launch:", err);
+      console.error("[AI Library] recordAiToolLaunch network error:", err);
     }
   },
 

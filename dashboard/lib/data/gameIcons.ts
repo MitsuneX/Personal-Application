@@ -86,6 +86,42 @@ export const GAME_ICON_REGISTRY: GameIconEntry[] = [
     aliases: ["fate grand order", "fgo", "fate/grand order", "fategrandorder"],
     icon: "/game-icons/fgo.svg",
   },
+  {
+    id: "gfl2",
+    name: "Girls' Frontline 2: Exilium",
+    aliases: ["girls frontline 2", "gfl2", "gf2", "gf2exilium", "girlsfrontline2", "frontline 2", "exilium"],
+    icon: "/game-icons/gfl2.svg",
+  },
+  {
+    id: "outerplane",
+    name: "Outerplane",
+    aliases: ["outerplane", "outer plane"],
+    icon: "/game-icons/outerplane.svg",
+  },
+  {
+    id: "tof",
+    name: "Tower of Fantasy",
+    aliases: ["tower of fantasy", "tof", "toweroffantasy"],
+    icon: "/game-icons/tof.svg",
+  },
+  {
+    id: "nikke",
+    name: "Goddess of Victory: NIKKE",
+    aliases: ["nikke", "goddess of victory", "nikke goddess", "goddessvictory", "goddessofvictory"],
+    icon: "/game-icons/nikke.svg",
+  },
+  {
+    id: "endfield",
+    name: "Arknights: Endfield",
+    aliases: ["arknights endfield", "endfield", "arknightsendfield", "ak endfield"],
+    icon: "/game-icons/endfield.svg",
+  },
+  {
+    id: "hi3",
+    name: "Honkai Impact 3rd",
+    aliases: ["honkai impact 3rd", "honkai impact 3", "hi3", "honkaiimpact3", "honkai impact", "hi3rd"],
+    icon: "/game-icons/honkaiimpact3.svg",
+  },
 ];
 
 export interface ResolvedIconResult {

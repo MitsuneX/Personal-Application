@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
+import { DEFAULT_AI_TOOLS } from "@/lib/data/initialAiTools";
+import { DEFAULT_GAMES } from "@/lib/data/initialGames";
 
 export const dynamic = "force-dynamic";
 
@@ -11,126 +13,207 @@ export async function GET() {
     const supabase = createClient(cookieStore);
     const { data: { user } } = await supabase.auth.getUser();
 
-    let dbProfile = null;
+    const isGuestCookie = cookieStore.get("is_guest")?.value === "true";
 
-    // 1. Check if profile exists for this authenticated user ID
-    if (user?.id) {
-      dbProfile = await prisma.profile.findUnique({ where: { id: user.id } });
+    // ── GUEST MODE DEMO RESPONSE ──────────────────────────────────────────────
+    if (isGuestCookie || !user) {
+      const guestProfile = {
+        id: "guest-profile",
+        name: "Guest Explorer",
+        tagline: "Interactive Dashboard Demonstration",
+        bio: "Temporary Guest Session. All modifications are kept in-memory and will reset upon session end.",
+        status: "online",
+        location: "Virtual Sandbox",
+        skills: ["Demonstration Mode", "Zero Data Persistence", "Interactive UI"],
+        socials: [
+          { platform: "GitHub", handle: "@guest", url: "https://github.com" },
+        ],
+        avatar: "/avatar.png",
+        borderStyle: "default",
+      };
+
+      return NextResponse.json({
+        isGuest: true,
+        profile: guestProfile,
+        games: DEFAULT_GAMES,
+        dossierCharacters: [],
+        gameResources: [],
+        gameShowcaseItems: [],
+        projects: [],
+        aiTools: DEFAULT_AI_TOOLS,
+        animeList: [],
+        favoriteCharacters: [],
+        dramas: [],
+        hallOfFame: [],
+        notes: [],
+        links: [],
+        gallery: [],
+        songs: [],
+        dramaLog: [],
+        savedPrompts: [],
+        hobbySkills: [],
+        hobbyLogs: [],
+        profileHistory: [],
+      });
     }
 
-    // 2. If no profile exists for this user yet
-    if (!dbProfile && user) {
-      const userMeta = user.user_metadata || {};
-      const mainProfile = await prisma.profile.findUnique({ where: { id: "profile" } });
-      const isNelvin = user.email?.toLowerCase().includes("nelvin") || userMeta.full_name?.toLowerCase().includes("nelvin");
+    const userId = user.id;
 
-      if (isNelvin && mainProfile) {
-        // Copy main Nelvin profile onto user session record
-        const { id, updatedAt, ...rest } = mainProfile;
-        dbProfile = await prisma.profile.create({
-          data: {
-            id: user.id,
-            ...(rest as any),
-          },
-        });
-      } else {
-        // Clean isolated default profile for any NEW account (zero data contamination)
-        dbProfile = await prisma.profile.create({
-          data: {
-            id: user.id,
-            name: userMeta.full_name || user.email?.split("@")[0] || "New User",
-            tagline: "Personal Command Center",
-            bio: "Welcome to Nexus Xenon",
-            status: "online",
-            location: "Earth",
-            skills: [],
-            socials: [],
-            avatar: userMeta.avatar_url || "/avatar.png",
-            borderStyle: "default",
-          },
-        });
-      }
-    }
+    // 1. Fetch Profile for authenticated user
+    let dbProfile = await prisma.profile.findFirst({ where: { OR: [{ userId }, { id: userId }] } });
 
-    // 3. Fallback to main profile ("profile") if unauthenticated or missing
     if (!dbProfile) {
-      dbProfile = await prisma.profile.upsert({
-        where: { id: "profile" },
-        update: {},
-        create: {
-          id: "profile",
-          name: "Nelvin Ryukawa",
-          tagline: "Full-Stack Architect & Game Developer",
-          bio: "Building next-gen personal dashboards, interactive HUDs, and web experiences.",
+      const userMeta = user.user_metadata || {};
+      dbProfile = await prisma.profile.create({
+        data: {
+          id: userId,
+          userId: userId,
+          name: userMeta.full_name || user.email?.split("@")[0] || "Command Operator",
+          tagline: "Personal Command Center",
+          bio: "Welcome to Nexus Xenon",
           status: "online",
-          location: "Tokyo / Jakarta",
-          skills: ["Next.js 16", "React 19", "TypeScript", "Prisma", "Supabase", "TailwindCSS"],
-          socials: [
-            { platform: "GitHub", handle: "@alexryukawa", url: "https://github.com" },
-            { platform: "Twitter/X", handle: "@alexryukawa", url: "https://x.com" },
-            { platform: "Discord", handle: "ryukawa#0001" },
-          ],
-          avatar: "/avatar.png",
+          location: "Earth",
+          skills: [],
+          socials: [],
+          avatar: userMeta.avatar_url || "/avatar.png",
           borderStyle: "default",
         },
       });
     }
 
-    const dbGames = await prisma.game.findMany({ orderBy: { createdAt: "asc" } });
+    const safeQuery = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
+      try {
+        return await fn();
+      } catch (err) {
+        console.warn("[Dashboard API] Query fallback:", err);
+        return fallback;
+      }
+    };
 
-    let dbDossierCharacters: any[] = [];
-    try {
-      dbDossierCharacters = await prisma.gameDossierCharacter.findMany({ orderBy: { createdAt: "asc" } });
-    } catch (err) {
-      console.warn("Notice: GameDossierCharacter query fallback to empty array:", err);
+    // 2. Fetch User-Scoped AI Tools
+    let dbAiTools: any[] = await safeQuery(
+      () => prisma.aiToolItem.findMany({ where: { userId }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] }),
+      []
+    );
+
+    // Auto-seed AI tools for NEW registered user
+    if (dbAiTools.length === 0) {
+      try {
+        console.log(`[AI Library] Seeding default AI collection for user ${userId}...`);
+        for (const t of DEFAULT_AI_TOOLS) {
+          await prisma.aiToolItem.create({
+            data: {
+              userId,
+              name: t.name,
+              company: t.company || null,
+              description: t.description,
+              logo: t.logo || null,
+              accentColor: t.accentColor || "#10A37F",
+              category: t.category || "💬 General AI",
+              usageStatus: t.usageStatus || "Daily",
+              pricingModel: t.pricingModel || "Freemium",
+              rating: t.rating ?? 5,
+              strengths: t.strengths || [],
+              notes: t.notes || null,
+              version: t.version || null,
+              lastUsed: t.lastUsed ? new Date(t.lastUsed) : null,
+              launchCount: t.launchCount || 0,
+              launchUrl: t.launchUrl || null,
+              websiteUrl: t.websiteUrl || null,
+              docsUrl: t.docsUrl || null,
+              apiUrl: t.apiUrl || null,
+              pricingUrl: t.pricingUrl || null,
+              githubUrl: (t as any).githubUrl || null,
+              tags: t.tags || [],
+              sortOrder: t.sortOrder || 0,
+              isFavorite: t.isFavorite || false,
+              isPinned: t.isPinned || false,
+              isArchived: t.isArchived || false,
+            },
+          });
+        }
+        dbAiTools = await prisma.aiToolItem.findMany({ where: { userId }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] });
+      } catch (seedErr) {
+        console.error("[AI Library] User auto-seed error:", seedErr);
+      }
     }
 
-    let dbGameResources: any[] = [];
-    try {
-      dbGameResources = await prisma.gameExternalResource.findMany({ orderBy: { sortOrder: "asc" } });
-    } catch (err) {
-      console.warn("Notice: GameExternalResource query fallback to empty array:", err);
+    // 3. Fetch User-Scoped Games
+    let dbGames: any[] = await safeQuery(
+      () => prisma.game.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }),
+      []
+    );
+
+    // Auto-seed Games for NEW registered user
+    if (dbGames.length === 0) {
+      try {
+        console.log(`[Games Library] Seeding default games for user ${userId}...`);
+        for (const g of DEFAULT_GAMES) {
+          await prisma.game.create({
+            data: {
+              userId,
+              game: g.game,
+              handle: g.handle || null,
+              platform: g.platform,
+              rank: g.rank || null,
+              mainCharacter: g.mainCharacter,
+              mainRole: g.mainRole || null,
+              category: g.category,
+              isActive: g.isActive !== undefined ? g.isActive : true,
+              accentColor: g.accentColor,
+              profileLink: g.profileLink || null,
+              icon: g.icon || null,
+              screenshot: null,
+            },
+          });
+        }
+        dbGames = await prisma.game.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
+      } catch (gameSeedErr) {
+        console.error("[Games Library] User auto-seed error:", gameSeedErr);
+      }
     }
 
-    let dbGameShowcaseItems: any[] = [];
-    try {
-      dbGameShowcaseItems = await prisma.gameShowcaseItem.findMany({ orderBy: { createdAt: "desc" } });
-    } catch (err) {
-      console.warn("Notice: GameShowcaseItem query fallback to empty array:", err);
-    }
-
-    let dbProjects: any[] = [];
-    try {
-      dbProjects = await prisma.projectItem.findMany({ orderBy: [ { sortOrder: "asc" }, { createdAt: "desc" } ] });
-    } catch (err) {
-      console.warn("Notice: ProjectItem query fallback to empty array:", err);
-    }
-
-    let dbAiTools: any[] = [];
-    try {
-      dbAiTools = await prisma.aiToolItem.findMany({ orderBy: [ { sortOrder: "asc" }, { createdAt: "desc" } ] });
-    } catch (err) {
-      console.warn("Notice: AiToolItem query fallback to empty array:", err);
-    }
-
-    const dbAnime = await prisma.anime.findMany({ orderBy: { createdAt: "asc" } });
-    const dbCharacters = await prisma.favoriteCharacter.findMany({ orderBy: { createdAt: "asc" } });
-    const dbDramas = await prisma.drama.findMany({ orderBy: { createdAt: "asc" } });
-    const dbHOF = await prisma.hallOfFame.findMany({ orderBy: { rank: "asc" } });
-    const dbNotes = await prisma.note.findMany({ orderBy: { updatedAt: "desc" } });
-    const dbLinks = await prisma.link.findMany({ orderBy: { createdAt: "desc" } });
-    const dbGallery = await prisma.galleryItem.findMany({ orderBy: { createdAt: "desc" } });
-    const dbSongs = await prisma.song.findMany({ orderBy: { createdAt: "desc" } });
-    const dbDramaLog = await prisma.dramaLog.findMany({ orderBy: { createdAt: "desc" } });
-    const dbPrompts = await prisma.savedPrompt.findMany({ orderBy: { createdAt: "desc" } });
-    const dbHobbySkills = await prisma.hobbySkill.findMany({ orderBy: { createdAt: "asc" } });
-    const dbHobbyLogs = await prisma.hobbyLog.findMany({ orderBy: { createdAt: "asc" } });
-    const dbProfileHistory = await prisma.profileHistory.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 10,
-    });
+    // 4. Fetch all other User-Scoped entities in parallel
+    const [
+      dbDossierCharacters,
+      dbGameResources,
+      dbGameShowcaseItems,
+      dbProjects,
+      dbAnime,
+      dbCharacters,
+      dbDramas,
+      dbHOF,
+      dbNotes,
+      dbLinks,
+      dbGallery,
+      dbSongs,
+      dbDramaLog,
+      dbPrompts,
+      dbHobbySkills,
+      dbHobbyLogs,
+      dbProfileHistory,
+    ] = await Promise.all([
+      safeQuery(() => prisma.gameDossierCharacter.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
+      safeQuery(() => prisma.gameExternalResource.findMany({ where: { userId }, orderBy: { sortOrder: "asc" } }), []),
+      safeQuery(() => prisma.gameShowcaseItem.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
+      safeQuery(() => prisma.projectItem.findMany({ where: { userId }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] }), []),
+      safeQuery(() => prisma.anime.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
+      safeQuery(() => prisma.favoriteCharacter.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
+      safeQuery(() => prisma.drama.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
+      safeQuery(() => prisma.hallOfFame.findMany({ where: { userId }, orderBy: { rank: "asc" } }), []),
+      safeQuery(() => prisma.note.findMany({ where: { userId }, orderBy: { updatedAt: "desc" } }), []),
+      safeQuery(() => prisma.link.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
+      safeQuery(() => prisma.galleryItem.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
+      safeQuery(() => prisma.song.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
+      safeQuery(() => prisma.dramaLog.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
+      safeQuery(() => prisma.savedPrompt.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
+      safeQuery(() => prisma.hobbySkill.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
+      safeQuery(() => prisma.hobbyLog.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
+      safeQuery(() => prisma.profileHistory.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 10 }), []),
+    ]);
 
     return NextResponse.json({
+      isGuest: false,
       profile: dbProfile,
       games: dbGames,
       dossierCharacters: dbDossierCharacters,

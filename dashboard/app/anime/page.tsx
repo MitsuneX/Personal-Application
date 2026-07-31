@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, Suspense, useEffect } from "react";
+import React, { useState, useCallback, Suspense, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { TabSwitcher } from "@/components/ui/TabSwitcher";
@@ -22,6 +22,45 @@ const STATUS_TABS = [
   { id: "On Hold",         label: "On Hold",       icon: "⏸" },
   { id: "Plan to Watch",   label: "Plan to Watch", icon: "🕐" },
 ];
+
+function useCounter(target: number, duration = 1200) {
+  const [count, setCount] = useState(0);
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    if (target === 0) return;
+    const step = target / (duration / 16);
+    let current = 0;
+    const timer = setInterval(() => {
+      current += step;
+      if (current >= target) { setCount(target); clearInterval(timer); }
+      else setCount(Math.floor(current));
+    }, 16);
+    return () => clearInterval(timer);
+  }, [target, duration]);
+  return count;
+}
+
+function StatCard({ label, value, color, icon, isCyber }: { label: string; value: number; color: string; icon: string; isCyber: boolean }) {
+  const count = useCounter(value);
+  return (
+    <motion.div variants={cardVariants}>
+      <div
+        className="rounded-xl p-4 transition-all"
+        style={{
+          background: isCyber ? `${color}0D` : `${color}12`,
+          border: isCyber ? `1px solid ${color}30` : `2px solid ${color}`,
+          boxShadow: isCyber ? `0 0 25px ${color}20` : "3px 3px 0 rgba(0,0,0,1)",
+        }}
+      >
+        <span className="text-2xl">{icon}</span>
+        <p className="font-black text-2xl mt-1 tabular-nums" style={{ color, textShadow: isCyber ? `0 0 10px ${color}` : "none" }}>{count}</p>
+        <p className="text-xs theme-text-muted font-semibold">{label}</p>
+      </div>
+    </motion.div>
+  );
+}
 
 function AnimePageContent() {
   const { theme } = useTheme();
@@ -53,10 +92,6 @@ function AnimePageContent() {
 
   // Stats
   const totalEps  = animeList.reduce((s, a) => s + a.episodesWatched, 0);
-  const rateable  = animeList.filter(a => a.rating);
-  const avgRating = rateable.length
-    ? (rateable.reduce((s, a) => s + (a.rating ?? 0), 0) / rateable.length).toFixed(1)
-    : "—";
   const completed = animeList.filter(a => a.status === "Completed").length;
   const watching  = animeList.filter(a => a.status === "Watching").length;
 
@@ -116,7 +151,6 @@ function AnimePageContent() {
     }
   }, [targetId, isCyber]);
 
-
   return (
     <>
       <AppShell>
@@ -127,27 +161,10 @@ function AnimePageContent() {
           initial="hidden"
           animate="visible"
         >
-          {[
-            { label: "Total Series", value: animeList.length, color: isCyber ? "#00F5FF" : "#FF6B35",  icon: "📚" },
-            { label: "Completed",    value: completed,        color: isCyber ? "#39FF14" : "#06D6A0",  icon: "✅" },
-            { label: "Watching",     value: watching,         color: isCyber ? "#BF5FFF" : "#FFD166",  icon: "▶️" },
-            { label: "Eps Watched",  value: totalEps,         color: isCyber ? "#F472B6" : "#EF476F",  icon: "🎞️" },
-          ].map(s => (
-            <motion.div key={s.label} variants={cardVariants}>
-              <div
-                className="rounded-xl p-4"
-                style={{
-                  background: isCyber ? `${s.color}0D` : `${s.color}12`,
-                  border: isCyber ? `1px solid ${s.color}30` : `2px solid ${s.color}`,
-                  boxShadow: isCyber ? `0 0 20px ${s.color}15` : "3px 3px 0 rgba(0,0,0,1)",
-                }}
-              >
-                <span className="text-2xl">{s.icon}</span>
-                <p className="font-black text-2xl mt-1" style={{ color: s.color, textShadow: isCyber ? `0 0 10px ${s.color}` : "none" }}>{s.value}</p>
-                <p className="text-xs theme-text-muted font-semibold">{s.label}</p>
-              </div>
-            </motion.div>
-          ))}
+          <StatCard label="Total Series" value={animeList.length} color={isCyber ? "#00F5FF" : "#FF6B35"} icon="📚" isCyber={isCyber} />
+          <StatCard label="Completed"    value={completed}        color={isCyber ? "#39FF14" : "#06D6A0"} icon="✅" isCyber={isCyber} />
+          <StatCard label="Watching"     value={watching}         color={isCyber ? "#BF5FFF" : "#FFD166"} icon="▶️" isCyber={isCyber} />
+          <StatCard label="Eps Watched"  value={totalEps}         color={isCyber ? "#F472B6" : "#EF476F"} icon="🎞️" isCyber={isCyber} />
         </motion.div>
 
         {/* ── Filter tabs ── */}

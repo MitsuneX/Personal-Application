@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useCallback, Suspense, useEffect } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useCallback, Suspense, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
-import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants";
 import { DramaSearchModal } from "@/components/ui/DramaSearchModal";
 import { ManualDramaModal } from "@/components/ui/ManualDramaModal";
 import { MediaCard } from "@/components/cards/MediaCard";
@@ -14,9 +13,38 @@ import { useSearchParams } from "next/navigation";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 
 const ID_THEME = {
-  brutal: { text: "#1F2937", accent: "#E60000", accent2: "#FFFFFF", border: "#000000" },
-  cyber:  { text: "#FFF8E7", accent: "#FF2A2A", accent2: "#FFFFFF", border: "rgba(255, 42, 42, 0.4)" },
+  brutal: { text: "#1F2937", accent: "#E60000", accent2: "#FFFFFF", border: "#000000", bg: "#FFE6E6" },
+  cyber:  { text: "#FFF8E7", accent: "#FF2A2A", accent2: "#FFFFFF", border: "rgba(255, 42, 42, 0.4)", bg: "#120404" },
 };
+
+function useCounter(target: number, duration = 1200) {
+  const [count, setCount] = useState(0);
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    if (target === 0) return;
+    const step = target / (duration / 16);
+    let current = 0;
+    const timer = setInterval(() => {
+      current += step;
+      if (current >= target) { setCount(target); clearInterval(timer); }
+      else setCount(Math.floor(current));
+    }, 16);
+    return () => clearInterval(timer);
+  }, [target, duration]);
+  return count;
+}
+
+function StatChip({ value, label, color, text }: { value: number; label: string; color: string; text: string }) {
+  const count = useCounter(value);
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 280, damping: 22 }} className="flex flex-col items-start">
+      <p className="font-black text-2xl tabular-nums" style={{ color }}>{count}</p>
+      <p className="text-xs opacity-60 font-medium" style={{ color: text }}>{label}</p>
+    </motion.div>
+  );
+}
 
 function BatikPattern({ isCyber }: { isCyber: boolean }) {
   return (
@@ -53,8 +81,7 @@ function IndonesianDramaContent() {
       episodes: d.episodes, episodesWatched: d.episodesWatched,
       status: d.status, rating: d.rating ?? 8,
       genre: d.genre, year: d.year, platform: d.platform,
-      cast: d.cast,
-      isEditable: true,
+      cast: d.cast, isEditable: true,
       posterUrl: undefined as string | undefined,
       synopsis: undefined as string | undefined,
     }));
@@ -63,34 +90,43 @@ function IndonesianDramaContent() {
     .filter(d => d.country?.toLowerCase() === "indonesia" || d.country?.toLowerCase() === "indonesian")
     .map(d => ({
       id: d.id, title: d.title,
-      episodes: d.totalEpisodes && d.totalEpisodes > 0 ? d.totalEpisodes : (d.type === "Movie" ? 1 : 16),
-      episodesWatched: d.episodesWatched ?? (d.statusBadge === "Classic" || d.statusBadge === "GOAT Status" ? (d.type === "Movie" ? 1 : 16) : 0),
+      episodes: d.type === "Movie" ? 1 : (d.totalEpisodes && d.totalEpisodes > 0 ? d.totalEpisodes : null),
+      episodesWatched: (() => {
+        if (d.episodesWatched != null) return d.episodesWatched;
+        const isComplete = d.statusBadge === "Classic" || d.statusBadge === "GOAT Status";
+        if (!isComplete) return 0;
+        if (d.type === "Movie") return 1;
+        return d.totalEpisodes && d.totalEpisodes > 0 ? d.totalEpisodes : 0;
+      })(),
       status: d.statusBadge === "Classic" || d.statusBadge === "GOAT Status" ? "Completed" : "Watching",
       rating: d.rating ? Math.round(parseFloat(d.rating)) : 8,
       genre: d.type ?? "Series", year: d.releaseYear ?? 2026, platform: "OMDb Log",
-      cast: d.mainActors,
-      isEditable: false,
+      cast: d.mainActors, isEditable: false,
       posterUrl: d.posterUrl ?? undefined,
       synopsis: d.plotSummary ?? undefined,
     }));
 
   const items = [...editableEntries, ...logEntries];
+  const completedCount = items.filter(d => d.status === "Completed").length;
+  const watchingCount  = items.filter(d => d.status === "Watching").length;
 
   const searchParams = useSearchParams();
-  const targetSearch = searchParams?.get("search") || null;
   const targetId = searchParams?.get("id") || null;
 
   useEffect(() => {
-    if (targetId) {
-      const timer = setTimeout(() => {
-        const el = document.getElementById(`media-card-${targetId}`);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 400);
-      return () => clearTimeout(timer);
-    }
-  }, [targetId]);
+    if (!targetId) return;
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`media-card-${targetId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.style.outline = `3px solid ${p.accent}`;
+        el.style.outlineOffset = "4px";
+        el.style.borderRadius = "12px";
+        setTimeout(() => { el.style.outline = "none"; }, 3000);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [targetId, p.accent]);
 
   const fabActions = [
     { label: "🔍 Search Online Drama", icon: "🔍", onClick: () => setSearchOpen(true) },
@@ -102,17 +138,18 @@ function IndonesianDramaContent() {
       <div className="relative">
         <BatikPattern isCyber={isCyber} />
 
-        {/* Header Banner */}
+        {/* ── Premium Banner ── */}
         <motion.div
-          className="relative rounded-2xl overflow-hidden mb-8 p-6 md:p-8"
-          initial={{ opacity: 0, y: -20 }}
+          className="relative rounded-2xl overflow-hidden mb-8"
+          initial={{ opacity: 0, y: -24 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 220, damping: 26 }}
           style={{
             background: isCyber
               ? "linear-gradient(135deg, #0A0204 0%, #1F0509 50%, #050816 100%)"
               : "linear-gradient(135deg, #FFF0F0 0%, #FFE6E6 50%, #FFF5E4 100%)",
             border: isCyber ? "1px solid rgba(255, 42, 42, 0.4)" : "3px solid #000000",
-            boxShadow: isCyber ? "0 0 35px rgba(255, 42, 42, 0.2)" : "5px 5px 0px #000000",
+            boxShadow: isCyber ? "0 0 45px rgba(255, 42, 42, 0.25)" : "6px 6px 0px #000000",
           }}
         >
           {/* Merah Putih Flag Stripe */}
@@ -121,7 +158,17 @@ function IndonesianDramaContent() {
             <div className="w-1/2 h-full bg-[#FFFFFF]" />
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-2">
+          {/* Shimmer line */}
+          {isCyber && (
+            <motion.div
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: "linear-gradient(105deg, transparent 30%, rgba(255,42,42,0.08) 50%, transparent 70%)" }}
+              animate={{ x: ["-100%", "200%"] }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: "linear", repeatDelay: 1.5 }}
+            />
+          )}
+
+          <div className="relative z-10 p-6 md:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 pt-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-2xl">🇮🇩</span>
@@ -136,7 +183,7 @@ function IndonesianDramaContent() {
                 </span>
               </div>
               <h1
-                className="font-black text-2xl md:text-4xl"
+                className="font-black text-2xl md:text-5xl"
                 style={{
                   color: isCyber ? "#FFFFFF" : "#1A1A1A",
                   fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
@@ -147,6 +194,23 @@ function IndonesianDramaContent() {
               <p className="text-xs font-semibold theme-text-secondary mt-1 max-w-xl">
                 Explore iconic Indonesian serials, web series, and blockbuster cinema with full progress tracking.
               </p>
+
+              {/* Glass stats row */}
+              <motion.div
+                className="flex gap-6 mt-4 p-3 rounded-xl w-fit"
+                style={{
+                  background: isCyber ? "rgba(255,42,42,0.06)" : "rgba(255,255,255,0.65)",
+                  border: isCyber ? "1px solid rgba(255,42,42,0.2)" : "1.5px solid rgba(0,0,0,0.15)",
+                  backdropFilter: "blur(8px)",
+                }}
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+              >
+                <StatChip value={items.length} label="Total" color={p.accent} text={isCyber ? p.text : "#111"} />
+                <div style={{ width: "1px", alignSelf: "stretch", background: isCyber ? "rgba(255,42,42,0.15)" : "rgba(0,0,0,0.12)" }} />
+                <StatChip value={completedCount} label="Completed" color={isCyber ? "#39FF14" : "#06D6A0"} text={isCyber ? p.text : "#111"} />
+                <div style={{ width: "1px", alignSelf: "stretch", background: isCyber ? "rgba(255,42,42,0.15)" : "rgba(0,0,0,0.12)" }} />
+                <StatChip value={watchingCount} label="Watching" color={p.accent} text={isCyber ? p.text : "#111"} />
+              </motion.div>
             </div>
           </div>
         </motion.div>
@@ -161,61 +225,64 @@ function IndonesianDramaContent() {
             </p>
           </div>
         ) : (
-          <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-            variants={gridContainerVariants}
-            initial="hidden"
-            animate="show"
-          >
-            {items.map((item) => (
-              <motion.div key={item.id} variants={cardVariants} id={`media-card-${item.id}`}>
-                <MediaCard
-                  id={item.id}
-                  title={item.title}
-                  category="indonesia"
-                  status={item.status}
-                  genre={item.genre}
-                  posterUrl={item.posterUrl}
-                  rating={item.rating}
-                  year={item.year}
-                  episodesWatched={item.episodesWatched}
-                  totalEpisodes={item.episodes}
-                  synopsis={item.synopsis}
-                  cast={item.cast}
-                  onEpisodeChange={(id: string, newEp: number) => {
-                    if (item.isEditable) {
-                      updateDrama(item.id, { episodesWatched: newEp });
-                    } else {
-                      updateDramaLog(item.id, { episodesWatched: newEp });
-                    }
-                  }}
-                  onDelete={() => {
-                    confirm({
-                      title: "Remove Indonesian Drama",
-                      message: `Are you sure you want to remove "${item.title}" from your watchlist?`,
-                      confirmText: "Remove Drama",
-                      variant: "danger",
-                      itemPreview: {
-                        title: item.title,
-                        subtitle: `Indonesian Drama · ${item.status || "Watchlist"}`,
-                        imageUrl: item.posterUrl,
-                        icon: "🇮🇩",
-                        category: item.status,
-                      },
-                      successToast: `✓ "${item.title}" removed from watchlist.`,
-                      onConfirm: async () => {
-                        if (item.isEditable) {
-                          await removeDrama(item.id);
-                        } else {
-                          await deleteDramaLog(item.id);
-                        }
-                      },
-                    });
-                  }}
-                />
-              </motion.div>
-            ))}
-          </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <AnimatePresence>
+              {items.map((item, i) => (
+                <motion.div key={item.id}
+                  initial={{ opacity: 0, y: 24, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 24, delay: Math.min(i * 0.05, 0.4) }}
+                  id={`media-card-${item.id}`}
+                >
+                  <MediaCard
+                    id={item.id}
+                    title={item.title}
+                    category="indonesia"
+                    status={item.status}
+                    genre={item.genre}
+                    posterUrl={item.posterUrl}
+                    rating={item.rating}
+                    year={item.year}
+                    episodesWatched={item.episodesWatched}
+                    totalEpisodes={item.episodes}
+                    synopsis={item.synopsis}
+                    cast={item.cast}
+                    onEpisodeChange={(id: string, newEp: number) => {
+                      if (item.isEditable) {
+                        updateDrama(item.id, { episodesWatched: newEp });
+                      } else {
+                        updateDramaLog(item.id, { episodesWatched: newEp });
+                      }
+                    }}
+                    onDelete={() => {
+                      confirm({
+                        title: "Remove Indonesian Drama",
+                        message: `Are you sure you want to remove "${item.title}" from your watchlist?`,
+                        confirmText: "Remove Drama",
+                        variant: "danger",
+                        itemPreview: {
+                          title: item.title,
+                          subtitle: `Indonesian Drama · ${item.status || "Watchlist"}`,
+                          imageUrl: item.posterUrl,
+                          icon: "🇮🇩",
+                          category: item.status,
+                        },
+                        successToast: `✓ "${item.title}" removed from watchlist.`,
+                        onConfirm: async () => {
+                          if (item.isEditable) {
+                            await removeDrama(item.id);
+                          } else {
+                            await deleteDramaLog(item.id);
+                          }
+                        },
+                      });
+                    }}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
         )}
 
         {/* Modals & FAB */}

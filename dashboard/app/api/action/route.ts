@@ -1,15 +1,31 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
   try {
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    const { data: { user } } = await supabase.auth.getUser();
+    const isGuestCookie = cookieStore.get("is_guest")?.value === "true";
+
     const { action, payload } = await req.json();
+
+    // ── GUEST MODE SHORT-CIRCUIT ──────────────────────────────────────────────
+    // Guest modifications exist strictly in memory / client state. Never touch DB.
+    if (isGuestCookie || !user) {
+      return NextResponse.json({ success: true, isGuest: true, data: payload });
+    }
+
+    const userId = user.id;
 
     switch (action) {
       case "UPDATE_GAME": {
         const game = await prisma.game.upsert({
           where: { id: payload.id },
           update: {
+            userId,
             game: payload.game,
             handle: payload.handle,
             platform: payload.platform,
@@ -25,6 +41,7 @@ export async function POST(req: Request) {
           },
           create: {
             id: payload.id,
+            userId,
             game: payload.game,
             handle: payload.handle || null,
             platform: payload.platform,
@@ -212,6 +229,10 @@ export async function POST(req: Request) {
       }
 
       case "UPDATE_AI_TOOL": {
+        const lastUsedDate = payload.lastUsed && !isNaN(new Date(payload.lastUsed).getTime())
+          ? new Date(payload.lastUsed)
+          : null;
+
         const item = await prisma.aiToolItem.upsert({
           where: { id: payload.id },
           update: {
@@ -227,7 +248,7 @@ export async function POST(req: Request) {
             strengths: payload.strengths ?? [],
             notes: payload.notes ?? null,
             version: payload.version ?? null,
-            lastUsed: payload.lastUsed ? new Date(payload.lastUsed) : undefined,
+            lastUsed: lastUsedDate ?? undefined,
             launchCount: payload.launchCount ?? undefined,
             launchUrl: payload.launchUrl ?? null,
             websiteUrl: payload.websiteUrl ?? null,
@@ -261,7 +282,7 @@ export async function POST(req: Request) {
             strengths: payload.strengths || [],
             notes: payload.notes || null,
             version: payload.version || null,
-            lastUsed: payload.lastUsed ? new Date(payload.lastUsed) : null,
+            lastUsed: lastUsedDate,
             launchCount: payload.launchCount || 0,
             launchUrl: payload.launchUrl || null,
             websiteUrl: payload.websiteUrl || null,
@@ -762,32 +783,33 @@ export async function POST(req: Request) {
       // ─── Profile Aesthetics Actions ───────────────────────────────────────────
       case "SAVE_AESTHETIC": {
         // Fetch existing profile to compare and log history
-        const existing = await prisma.profile.findUnique({ where: { id: "profile" } });
+        let existing = await prisma.profile.findFirst({ where: { OR: [{ userId }, { id: userId }] } });
 
         if (existing) {
           // Push old avatar to history if it's changing
           if (payload.avatar !== undefined && payload.avatar !== existing.avatar && existing.avatar) {
             await prisma.profileHistory.create({
-              data: { assetType: "avatar", url: existing.avatar },
+              data: { userId, assetType: "avatar", url: existing.avatar },
             });
           }
           // Push old banner to history if it's changing
           if (payload.banner !== undefined && payload.banner !== existing.banner && existing.banner) {
             await prisma.profileHistory.create({
-              data: { assetType: "banner", url: existing.banner },
+              data: { userId, assetType: "banner", url: existing.banner },
             });
           }
           // Push old nameplate to history if it's changing
           if (payload.nameplate !== undefined && payload.nameplate !== existing.nameplate && existing.nameplate) {
             await prisma.profileHistory.create({
-              data: { assetType: "nameplate", url: existing.nameplate },
+              data: { userId, assetType: "nameplate", url: existing.nameplate },
             });
           }
         }
 
         const updatedProfile = await prisma.profile.update({
-          where: { id: "profile" },
+          where: { id: existing?.id || userId },
           data: {
+            userId,
             ...(payload.name !== undefined && { name: payload.name }),
             ...(payload.customTag !== undefined && { customTag: payload.customTag }),
             ...(payload.bio !== undefined && { bio: payload.bio }),
@@ -800,6 +822,7 @@ export async function POST(req: Request) {
 
         // Return updated profile + fresh history (last 10)
         const history = await prisma.profileHistory.findMany({
+          where: { userId },
           orderBy: { createdAt: "desc" },
           take: 10,
         });
@@ -809,6 +832,7 @@ export async function POST(req: Request) {
 
       case "GET_PROFILE_HISTORY": {
         const history = await prisma.profileHistory.findMany({
+          where: { userId },
           orderBy: { createdAt: "desc" },
           take: 10,
         });

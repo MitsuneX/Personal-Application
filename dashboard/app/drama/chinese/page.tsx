@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useCallback, Suspense, useEffect } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useCallback, Suspense, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
-import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants";
 import { DramaSearchModal } from "@/components/ui/DramaSearchModal";
 import { ManualDramaModal } from "@/components/ui/ManualDramaModal";
 import { MediaCard } from "@/components/cards/MediaCard";
@@ -14,22 +13,36 @@ import { useSearchParams } from "next/navigation";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 
 const CN = {
-  brutal: { text: "#3D0000", accent: "#C8102E", accent2: "#D4AF37" },
-  cyber:  { text: "#FFF8E7", accent: "#FFD700", accent2: "#C8102E" },
+  brutal: { text: "#3D0000", accent: "#C8102E", accent2: "#D4AF37", bg: "#FFF8F0" },
+  cyber:  { text: "#FFF8E7", accent: "#FFD700", accent2: "#C8102E", bg: "#030A1A" },
 };
 
-function CloudPattern({ isCyber, color }: { isCyber: boolean; color: string }) {
+function useCounter(target: number, duration = 1200) {
+  const [count, setCount] = useState(0);
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    if (target === 0) return;
+    const step = target / (duration / 16);
+    let current = 0;
+    const timer = setInterval(() => {
+      current += step;
+      if (current >= target) { setCount(target); clearInterval(timer); }
+      else setCount(Math.floor(current));
+    }, 16);
+    return () => clearInterval(timer);
+  }, [target, duration]);
+  return count;
+}
+
+function StatChip({ value, label, color, text }: { value: number; label: string; color: string; text: string }) {
+  const count = useCounter(value);
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-[0.06]">
-      {[...Array(6)].map((_, i) => (
-        <motion.div key={i}
-          className="absolute"
-          style={{ left: `${(i * 18) % 100}%`, top: `${(i * 23) % 80}%`, width: "60px", height: "30px", borderRadius: "50%", backgroundColor: color, filter: "blur(8px)" }}
-          animate={{ x: [0, 15, 0], opacity: [0.5, 1, 0.5] }}
-          transition={{ duration: 5 + i, repeat: Infinity, delay: i * 0.6 }}
-        />
-      ))}
-    </div>
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 280, damping: 22 }} className="flex flex-col items-start">
+      <p className="font-black text-2xl tabular-nums" style={{ color }}>{count}</p>
+      <p className="text-xs opacity-60 font-medium" style={{ color: text }}>{label}</p>
+    </motion.div>
   );
 }
 
@@ -41,7 +54,6 @@ function ChineseDramaPageContent() {
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
-
   const p = isCyber ? CN.cyber : CN.brutal;
 
   const editableEntries = allDramas
@@ -51,8 +63,7 @@ function ChineseDramaPageContent() {
       episodes: d.episodes, episodesWatched: d.episodesWatched,
       status: d.status, rating: d.rating ?? 8,
       genre: d.genre, year: d.year, platform: d.platform,
-      cast: d.cast,
-      isEditable: true,
+      cast: d.cast, isEditable: true,
       posterUrl: undefined as string | undefined,
       synopsis: undefined as string | undefined,
     }));
@@ -61,38 +72,31 @@ function ChineseDramaPageContent() {
     .filter(d => d.country === "chinese")
     .map(d => ({
       id: d.id, title: d.title,
-      episodes: d.totalEpisodes && d.totalEpisodes > 0 ? d.totalEpisodes : (d.type === "Movie" ? 1 : 16),
-      episodesWatched: d.episodesWatched ?? (d.statusBadge === "Classic" || d.statusBadge === "GOAT Status" ? (d.type === "Movie" ? 1 : 16) : 0),
+      episodes: d.type === "Movie" ? 1 : (d.totalEpisodes && d.totalEpisodes > 0 ? d.totalEpisodes : null),
+      episodesWatched: (() => {
+        if (d.episodesWatched != null) return d.episodesWatched;
+        const isComplete = d.statusBadge === "Classic" || d.statusBadge === "GOAT Status";
+        if (!isComplete) return 0;
+        if (d.type === "Movie") return 1;
+        return d.totalEpisodes && d.totalEpisodes > 0 ? d.totalEpisodes : 0;
+      })(),
       status: d.statusBadge === "Classic" || d.statusBadge === "GOAT Status" ? "Completed" : "Watching",
       rating: d.rating ? Math.round(parseFloat(d.rating)) : 8,
       genre: d.type ?? "Series", year: d.releaseYear ?? 2026, platform: "OMDb Log",
-      cast: d.mainActors,
-      isEditable: false,
+      cast: d.mainActors, isEditable: false,
       posterUrl: d.posterUrl ?? undefined,
       synopsis: d.plotSummary ?? undefined,
     }));
 
   const allMerged = [...editableEntries, ...logEntries];
+  const completedCount = allMerged.filter(d => d.status === "Completed").length;
+  const watchingCount  = allMerged.filter(d => d.status === "Watching").length;
 
-  const handleStatusChange = useCallback((id: string, status: string) => {
-    updateDrama(id, { status: status as any });
-  }, [updateDrama]);
-
-  const handleEpisodeChange = useCallback((id: string, watched: number, newStatus: string) => {
-    updateDrama(id, { episodesWatched: watched, status: newStatus as any });
-  }, [updateDrama]);
-
-  const handleTotalEpisodesChange = useCallback((id: string, total: number) => {
-    updateDrama(id, { episodes: total });
-  }, [updateDrama]);
-
-  const handleDramaLogEpisodeChange = useCallback((id: string, watched: number, newStatus: string) => {
-    updateDramaLog(id, { episodesWatched: watched });
-  }, [updateDramaLog]);
-
-  const handleDramaLogTotalChange = useCallback((id: string, total: number) => {
-    updateDramaLog(id, { totalEpisodes: total });
-  }, [updateDramaLog]);
+  const handleStatusChange = useCallback((id: string, status: string) => { updateDrama(id, { status: status as any }); }, [updateDrama]);
+  const handleEpisodeChange = useCallback((id: string, watched: number, newStatus: string) => { updateDrama(id, { episodesWatched: watched, status: newStatus as any }); }, [updateDrama]);
+  const handleTotalEpisodesChange = useCallback((id: string, total: number) => { updateDrama(id, { episodes: total }); }, [updateDrama]);
+  const handleDramaLogEpisodeChange = useCallback((id: string, watched: number, _: string) => { updateDramaLog(id, { episodesWatched: watched }); }, [updateDramaLog]);
+  const handleDramaLogTotalChange = useCallback((id: string, total: number) => { updateDramaLog(id, { totalEpisodes: total }); }, [updateDramaLog]);
 
   const handleDelete = useCallback((id: string) => {
     const drama = allMerged.find(d => d.id === id);
@@ -102,21 +106,9 @@ function ChineseDramaPageContent() {
       message: `Are you sure you want to remove "${drama.title}" from your watchlist?`,
       confirmText: "Remove C-Drama",
       variant: "danger",
-      itemPreview: {
-        title: drama.title,
-        subtitle: `Chinese Drama · ${drama.status || "Watchlist"}`,
-        imageUrl: (drama as any).posterUrl || (drama as any).coverUrl,
-        icon: "🐉",
-        category: drama.status,
-      },
+      itemPreview: { title: drama.title, subtitle: `Chinese Drama · ${drama.status || "Watchlist"}`, imageUrl: (drama as any).posterUrl, icon: "🐉", category: drama.status },
       successToast: `✓ "${drama.title}" removed from watchlist.`,
-      onConfirm: async () => {
-        if (drama.isEditable) {
-          await removeDrama(id);
-        } else {
-          await deleteDramaLog(id);
-        }
-      },
+      onConfirm: async () => { drama.isEditable ? await removeDrama(id) : await deleteDramaLog(id); },
     });
   }, [allMerged, confirm, deleteDramaLog, removeDrama]);
 
@@ -124,112 +116,140 @@ function ChineseDramaPageContent() {
   const targetId = searchParams?.get("id");
 
   useEffect(() => {
-    if (targetId) {
-      const timer = setTimeout(() => {
-        const el = document.getElementById(`media-card-${targetId}`);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-          el.style.outline = isCyber ? `3px solid ${p.accent}` : `3.5px solid ${p.accent}`;
-          el.style.outlineOffset = "4px";
-          el.style.borderRadius = "12px";
-          setTimeout(() => {
-            el.style.outline = "none";
-          }, 3000);
-        }
-      }, 600);
-      return () => clearTimeout(timer);
-    }
-  }, [targetId, isCyber, p.accent]);
+    if (!targetId) return;
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`media-card-${targetId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.style.outline = `3px solid ${p.accent}`;
+        el.style.outlineOffset = "4px";
+        el.style.borderRadius = "12px";
+        setTimeout(() => { el.style.outline = "none"; }, 3000);
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [targetId, p.accent]);
 
   return (
     <>
       <AppShell>
-        {/* ── Banner ── */}
+        {/* ── Premium Banner ── */}
         <motion.div
-          className="relative rounded-2xl overflow-hidden mb-8 p-6 md:p-8"
-          initial={{ opacity: 0, y: -20 }}
+          className="relative rounded-2xl overflow-hidden mb-8"
+          initial={{ opacity: 0, y: -24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 260, damping: 24 }}
+          transition={{ type: "spring", stiffness: 220, damping: 26 }}
           style={{
             background: isCyber
-              ? "linear-gradient(135deg, #030A1A 0%, rgba(200,16,46,0.12) 40%, rgba(212,175,55,0.1) 100%)"
+              ? "linear-gradient(135deg, #030A1A 0%, rgba(200,16,46,0.18) 50%, rgba(212,175,55,0.14) 100%)"
               : "linear-gradient(135deg, #FFF8F0 0%, #FFF0E0 60%, #FFE8C0 100%)",
-            border: isCyber ? "1px solid rgba(212,175,55,0.3)" : "3px solid #7A0000",
-            boxShadow: isCyber ? "0 0 60px rgba(255,215,0,0.1), 0 0 120px rgba(200,16,46,0.08)" : "6px 6px 0 rgba(0,0,0,1)",
+            border: isCyber ? "1px solid rgba(212,175,55,0.35)" : "3px solid #7A0000",
+            boxShadow: isCyber
+              ? "0 0 80px rgba(255,215,0,0.14), 0 0 160px rgba(200,16,46,0.08), inset 0 1px 0 rgba(212,175,55,0.15)"
+              : "6px 6px 0 rgba(0,0,0,1)",
           }}
         >
-          <CloudPattern isCyber={isCyber} color={isCyber ? "#FFD700" : "#C8102E"} />
+          {/* Shimmer line */}
+          {isCyber && (
+            <motion.div
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: "linear-gradient(105deg, transparent 30%, rgba(255,215,0,0.08) 50%, transparent 70%)" }}
+              animate={{ x: ["-100%", "200%"] }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: "linear", repeatDelay: 1.5 }}
+            />
+          )}
 
-          {/* Decorative dragon / seal */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-10">
-            {["🐉","🏮","🐉"].map((e, i) => (
-              <motion.span key={i} className="absolute text-4xl"
-                style={{ left: `${12 + i * 35}%`, top: `${5 + (i % 2) * 45}%` }}
-                animate={{ y: [0, 6, 0], opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 3 + i * 0.5, repeat: Infinity, delay: i * 0.4 }}
-              >{e}</motion.span>
+          {/* Floating Chinese cloud & lantern particles */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {["🐉", "🏮", "✨", "🏮", "🐉"].map((emoji, i) => (
+              <motion.span key={i} className="absolute text-4xl select-none"
+                style={{ left: `${10 + i * 20}%`, top: `${6 + (i % 2) * 50}%`, opacity: isCyber ? 0.08 : 0.12 }}
+                animate={{ y: [0, -8, 0], opacity: isCyber ? [0.06, 0.12, 0.06] : [0.08, 0.15, 0.08] }}
+                transition={{ duration: 3.5 + i * 0.5, repeat: Infinity, delay: i * 0.4 }}
+              >{emoji}</motion.span>
             ))}
+            <motion.div
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                right: "-80px", top: "-80px", width: "280px", height: "280px",
+                background: `radial-gradient(circle, ${isCyber ? "rgba(255,215,0,0.14)" : "rgba(200,16,46,0.12)"} 0%, transparent 70%)`,
+                filter: "blur(20px)",
+              }}
+              animate={{ scale: [1, 1.12, 1], opacity: [0.6, 1, 0.6] }}
+              transition={{ duration: 4, repeat: Infinity }}
+            />
           </div>
 
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="relative z-10 p-6 md:p-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-bold tracking-[0.25em] uppercase mb-2" style={{ color: p.accent }}>
+              <motion.p className="text-xs font-black tracking-[0.3em] uppercase mb-2" style={{ color: p.accent }}
+                initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
                 {isCyber ? "// C-DRAMA.ARCHIVE" : "C-Drama Collection"}
-              </p>
-              <h1 className="font-black text-3xl md:text-5xl mb-1"
-                style={{ color: p.text, fontFamily: isCyber ? "var(--font-orbitron)" : "inherit", textShadow: isCyber ? `0 0 20px ${p.accent}` : "none" }}>
+              </motion.p>
+              <motion.h1 className="font-black text-3xl md:text-5xl mb-1"
+                style={{ color: p.text, fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
+                  textShadow: isCyber ? `0 0 30px ${p.accent}, 0 0 80px ${p.accent2}55` : "none" }}
+                initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.15, type: "spring", stiffness: 220, damping: 24 }}>
                 {isCyber ? "中国 DRAMA" : "🇨🇳 Chinese Drama"}
-              </h1>
-              <p className="text-sm opacity-70" style={{ color: p.text }}>Epic wuxia, ancient palace intrigue, and modern romance from China</p>
+              </motion.h1>
+              <motion.p className="text-sm opacity-70" style={{ color: p.text }}
+                initial={{ opacity: 0 }} animate={{ opacity: 0.7 }} transition={{ delay: 0.25 }}>
+                Epic wuxia, ancient palace intrigue, and modern romance from China
+              </motion.p>
 
-              <div className="flex gap-4 mt-3">
-                <div><p className="font-black text-xl" style={{ color: p.accent }}>{allMerged.length}</p><p className="text-xs opacity-60" style={{ color: p.text }}>Total</p></div>
-                <div><p className="font-black text-xl" style={{ color: isCyber ? "#39FF14" : "#06D6A0" }}>{allMerged.filter(d => d.status === "Completed").length}</p><p className="text-xs opacity-60" style={{ color: p.text }}>Completed</p></div>
-                <div><p className="font-black text-xl" style={{ color: p.accent2 }}>{allMerged.filter(d => d.status === "Watching").length}</p><p className="text-xs opacity-60" style={{ color: p.text }}>Watching</p></div>
-              </div>
+              {/* Glass stats row */}
+              <motion.div
+                className="flex gap-6 mt-4 p-3 rounded-xl w-fit"
+                style={{
+                  background: isCyber ? "rgba(255,215,0,0.06)" : "rgba(255,255,255,0.55)",
+                  border: isCyber ? "1px solid rgba(212,175,55,0.2)" : "1.5px solid rgba(122,0,0,0.15)",
+                  backdropFilter: "blur(8px)",
+                }}
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+              >
+                <StatChip value={allMerged.length} label="Total" color={p.accent} text={p.text} />
+                <div style={{ width: "1px", alignSelf: "stretch", background: isCyber ? "rgba(212,175,55,0.15)" : "rgba(122,0,0,0.12)" }} />
+                <StatChip value={completedCount} label="Completed" color={isCyber ? "#39FF14" : "#06D6A0"} text={p.text} />
+                <div style={{ width: "1px", alignSelf: "stretch", background: isCyber ? "rgba(212,175,55,0.15)" : "rgba(122,0,0,0.12)" }} />
+                <StatChip value={watchingCount} label="Watching" color={p.accent2} text={p.text} />
+              </motion.div>
             </div>
           </div>
         </motion.div>
 
         {/* ── Drama Grid ── */}
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
-          variants={gridContainerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {allMerged.map((drama, i) => (
-            <motion.div key={drama.id} variants={cardVariants} custom={i}>
-              <MediaCard
-                id={drama.id}
-                title={drama.title}
-                category="chinese"
-                status={drama.status}
-                episodesWatched={drama.episodesWatched}
-                totalEpisodes={drama.episodes}
-                rating={drama.rating}
-                genre={drama.genre}
-                year={drama.year}
-                platform={drama.platform}
-                cast={drama.cast}
-                synopsis={drama.synopsis}
-                posterUrl={drama.posterUrl}
-                isEditable={drama.isEditable}
-                onStatusChange={drama.isEditable ? handleStatusChange : undefined}
-                onEpisodeChange={drama.isEditable ? handleEpisodeChange : handleDramaLogEpisodeChange}
-                onTotalEpisodesChange={drama.isEditable ? handleTotalEpisodesChange : handleDramaLogTotalChange}
-                onDelete={handleDelete}
-                index={i}
-              />
-            </motion.div>
-          ))}
-        </motion.div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <AnimatePresence>
+            {allMerged.map((drama, i) => (
+              <motion.div key={drama.id}
+                initial={{ opacity: 0, y: 24, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 260, damping: 24, delay: Math.min(i * 0.05, 0.4) }}
+              >
+                <MediaCard
+                  id={drama.id} title={drama.title} category="chinese"
+                  status={drama.status} episodesWatched={drama.episodesWatched}
+                  totalEpisodes={drama.episodes} rating={drama.rating}
+                  genre={drama.genre} year={drama.year} platform={drama.platform}
+                  cast={drama.cast} synopsis={drama.synopsis} posterUrl={drama.posterUrl}
+                  isEditable={drama.isEditable}
+                  onStatusChange={drama.isEditable ? handleStatusChange : undefined}
+                  onEpisodeChange={drama.isEditable ? handleEpisodeChange : handleDramaLogEpisodeChange}
+                  onTotalEpisodesChange={drama.isEditable ? handleTotalEpisodesChange : handleDramaLogTotalChange}
+                  onDelete={handleDelete} index={i}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
 
         {allMerged.length === 0 && (
-          <div className="text-center py-20 opacity-40">
-            <p className="text-4xl mb-3">🐉</p>
+          <motion.div className="text-center py-24" initial={{ opacity: 0 }} animate={{ opacity: 0.4 }}>
+            <p className="text-5xl mb-3">🐉</p>
             <p className="font-bold text-sm" style={{ color: p.text }}>No C-Dramas logged yet</p>
-          </div>
+          </motion.div>
         )}
       </AppShell>
 

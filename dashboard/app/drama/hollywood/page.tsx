@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useCallback, Suspense, useEffect } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useCallback, Suspense, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
-import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants";
 import { DramaSearchModal } from "@/components/ui/DramaSearchModal";
 import { ManualDramaModal } from "@/components/ui/ManualDramaModal";
 import { MediaCard } from "@/components/cards/MediaCard";
@@ -14,9 +13,38 @@ import { useSearchParams } from "next/navigation";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 
 const HW = {
-  brutal: { text: "#1E1B4B", accent: "#7C3AED", accent2: "#D97706" },
-  cyber:  { text: "#EDE9FE", accent: "#A78BFA", accent2: "#FCD34D" },
+  brutal: { text: "#1E1B4B", accent: "#7C3AED", accent2: "#D97706", bg: "#EDE0FF" },
+  cyber:  { text: "#EDE9FE", accent: "#A78BFA", accent2: "#FCD34D", bg: "#0A0618" },
 };
+
+function useCounter(target: number, duration = 1200) {
+  const [count, setCount] = useState(0);
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    if (target === 0) return;
+    const step = target / (duration / 16);
+    let current = 0;
+    const timer = setInterval(() => {
+      current += step;
+      if (current >= target) { setCount(target); clearInterval(timer); }
+      else setCount(Math.floor(current));
+    }, 16);
+    return () => clearInterval(timer);
+  }, [target, duration]);
+  return count;
+}
+
+function StatChip({ value, label, color, text }: { value: number; label: string; color: string; text: string }) {
+  const count = useCounter(value);
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 280, damping: 22 }} className="flex flex-col items-start">
+      <p className="font-black text-2xl tabular-nums" style={{ color }}>{count}</p>
+      <p className="text-xs opacity-60 font-medium" style={{ color: text }}>{label}</p>
+    </motion.div>
+  );
+}
 
 function HollywoodDramaPageContent() {
   const { theme } = useTheme();
@@ -26,7 +54,6 @@ function HollywoodDramaPageContent() {
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
-
   const p = isCyber ? HW.cyber : HW.brutal;
 
   const editableEntries = allDramas
@@ -36,8 +63,7 @@ function HollywoodDramaPageContent() {
       episodes: d.episodes, episodesWatched: d.episodesWatched,
       status: d.status, rating: d.rating ?? 8,
       genre: d.genre, year: d.year, platform: d.platform,
-      cast: d.cast,
-      isEditable: true,
+      cast: d.cast, isEditable: true,
       posterUrl: undefined as string | undefined,
       synopsis: undefined as string | undefined,
     }));
@@ -46,38 +72,31 @@ function HollywoodDramaPageContent() {
     .filter(d => d.country === "hollywood")
     .map(d => ({
       id: d.id, title: d.title,
-      episodes: d.totalEpisodes && d.totalEpisodes > 0 ? d.totalEpisodes : (d.type === "Movie" ? 1 : 16),
-      episodesWatched: d.episodesWatched ?? (d.statusBadge === "Classic" || d.statusBadge === "GOAT Status" ? (d.type === "Movie" ? 1 : 16) : 0),
+      episodes: d.type === "Movie" ? 1 : (d.totalEpisodes && d.totalEpisodes > 0 ? d.totalEpisodes : null),
+      episodesWatched: (() => {
+        if (d.episodesWatched != null) return d.episodesWatched;
+        const isComplete = d.statusBadge === "Classic" || d.statusBadge === "GOAT Status";
+        if (!isComplete) return 0;
+        if (d.type === "Movie") return 1;
+        return d.totalEpisodes && d.totalEpisodes > 0 ? d.totalEpisodes : 0;
+      })(),
       status: d.statusBadge === "Classic" || d.statusBadge === "GOAT Status" ? "Completed" : "Watching",
       rating: d.rating ? Math.round(parseFloat(d.rating)) : 8,
       genre: d.type ?? "Series", year: d.releaseYear ?? 2026, platform: "OMDb Log",
-      cast: d.mainActors,
-      isEditable: false,
+      cast: d.mainActors, isEditable: false,
       posterUrl: d.posterUrl ?? undefined,
       synopsis: d.plotSummary ?? undefined,
     }));
 
   const allMerged = [...editableEntries, ...logEntries];
+  const completedCount = allMerged.filter(d => d.status === "Completed").length;
+  const watchingCount  = allMerged.filter(d => d.status === "Watching").length;
 
-  const handleStatusChange = useCallback((id: string, status: string) => {
-    updateDrama(id, { status: status as any });
-  }, [updateDrama]);
-
-  const handleEpisodeChange = useCallback((id: string, watched: number, newStatus: string) => {
-    updateDrama(id, { episodesWatched: watched, status: newStatus as any });
-  }, [updateDrama]);
-
-  const handleTotalEpisodesChange = useCallback((id: string, total: number) => {
-    updateDrama(id, { episodes: total });
-  }, [updateDrama]);
-
-  const handleDramaLogEpisodeChange = useCallback((id: string, watched: number, newStatus: string) => {
-    updateDramaLog(id, { episodesWatched: watched });
-  }, [updateDramaLog]);
-
-  const handleDramaLogTotalChange = useCallback((id: string, total: number) => {
-    updateDramaLog(id, { totalEpisodes: total });
-  }, [updateDramaLog]);
+  const handleStatusChange = useCallback((id: string, status: string) => { updateDrama(id, { status: status as any }); }, [updateDrama]);
+  const handleEpisodeChange = useCallback((id: string, watched: number, newStatus: string) => { updateDrama(id, { episodesWatched: watched, status: newStatus as any }); }, [updateDrama]);
+  const handleTotalEpisodesChange = useCallback((id: string, total: number) => { updateDrama(id, { episodes: total }); }, [updateDrama]);
+  const handleDramaLogEpisodeChange = useCallback((id: string, watched: number, _: string) => { updateDramaLog(id, { episodesWatched: watched }); }, [updateDramaLog]);
+  const handleDramaLogTotalChange = useCallback((id: string, total: number) => { updateDramaLog(id, { totalEpisodes: total }); }, [updateDramaLog]);
 
   const handleDelete = useCallback((id: string) => {
     const drama = allMerged.find(d => d.id === id);
@@ -87,21 +106,9 @@ function HollywoodDramaPageContent() {
       message: `Are you sure you want to remove "${drama.title}" from your watchlist?`,
       confirmText: "Remove Series",
       variant: "danger",
-      itemPreview: {
-        title: drama.title,
-        subtitle: `Hollywood Series · ${drama.status || "Watchlist"}`,
-        imageUrl: (drama as any).posterUrl || (drama as any).coverUrl,
-        icon: "🎬",
-        category: drama.status,
-      },
+      itemPreview: { title: drama.title, subtitle: `Hollywood Series · ${drama.status || "Watchlist"}`, imageUrl: (drama as any).posterUrl, icon: "🎬", category: drama.status },
       successToast: `✓ "${drama.title}" removed from watchlist.`,
-      onConfirm: async () => {
-        if (drama.isEditable) {
-          await removeDrama(id);
-        } else {
-          await deleteDramaLog(id);
-        }
-      },
+      onConfirm: async () => { drama.isEditable ? await removeDrama(id) : await deleteDramaLog(id); },
     });
   }, [allMerged, confirm, deleteDramaLog, removeDrama]);
 
@@ -109,122 +116,139 @@ function HollywoodDramaPageContent() {
   const targetId = searchParams?.get("id");
 
   useEffect(() => {
-    if (targetId) {
-      const timer = setTimeout(() => {
-        const el = document.getElementById(`media-card-${targetId}`);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-          el.style.outline = isCyber ? `3px solid ${p.accent}` : `3.5px solid ${p.accent}`;
-          el.style.outlineOffset = "4px";
-          el.style.borderRadius = "12px";
-          setTimeout(() => {
-            el.style.outline = "none";
-          }, 3000);
-        }
-      }, 600);
-      return () => clearTimeout(timer);
-    }
-  }, [targetId, isCyber, p.accent]);
+    if (!targetId) return;
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`media-card-${targetId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.style.outline = `3px solid ${p.accent}`;
+        el.style.outlineOffset = "4px";
+        el.style.borderRadius = "12px";
+        setTimeout(() => { el.style.outline = "none"; }, 3000);
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [targetId, p.accent]);
 
   return (
     <>
       <AppShell>
-        {/* ── Banner ── */}
+        {/* ── Premium Banner ── */}
         <motion.div
-          className="relative rounded-2xl overflow-hidden mb-8 p-6 md:p-8"
-          initial={{ opacity: 0, y: -20 }}
+          className="relative rounded-2xl overflow-hidden mb-8"
+          initial={{ opacity: 0, y: -24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 260, damping: 24 }}
+          transition={{ type: "spring", stiffness: 220, damping: 26 }}
           style={{
             background: isCyber
-              ? "linear-gradient(135deg, #0A0618 0%, rgba(124,58,237,0.15) 40%, rgba(252,211,77,0.06) 100%)"
+              ? "linear-gradient(135deg, #0A0618 0%, rgba(124,58,237,0.18) 45%, rgba(252,211,77,0.10) 100%)"
               : "linear-gradient(135deg, #EDE0FF 0%, #F3E8FF 60%, #FEF3C7 100%)",
-            border: isCyber ? "1px solid rgba(167,139,250,0.3)" : "3px solid #4C1D95",
-            boxShadow: isCyber ? "0 0 60px rgba(167,139,250,0.15), 0 0 120px rgba(252,211,77,0.05)" : "6px 6px 0 rgba(0,0,0,1)",
+            border: isCyber ? "1px solid rgba(167,139,250,0.35)" : "3px solid #4C1D95",
+            boxShadow: isCyber
+              ? "0 0 80px rgba(167,139,250,0.18), 0 0 160px rgba(252,211,77,0.08), inset 0 1px 0 rgba(167,139,250,0.15)"
+              : "6px 6px 0 rgba(0,0,0,1)",
           }}
         >
-          {/* Star / spotlight decor */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-10">
-            {["⭐","✨","🌟","⭐","✨"].map((s, i) => (
-              <motion.span key={i} className="absolute text-4xl"
-                style={{ right: `${8 + i * 18}%`, top: `${10 + (i % 3) * 25}%` }}
-                animate={{ opacity: [0.4, 1, 0.4], scale: [1, 1.2, 1] }}
-                transition={{ duration: 2.5 + i * 0.5, repeat: Infinity, delay: i * 0.4 }}
-              >{s}</motion.span>
+          {/* Shimmer line */}
+          {isCyber && (
+            <motion.div
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: "linear-gradient(105deg, transparent 30%, rgba(167,139,250,0.08) 50%, transparent 70%)" }}
+              animate={{ x: ["-100%", "200%"] }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: "linear", repeatDelay: 1.5 }}
+            />
+          )}
+
+          {/* Hollywood stars & film reel particles */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {["⭐", "✨", "🌟", "🎬", "✨"].map((emoji, i) => (
+              <motion.span key={i} className="absolute text-4xl select-none"
+                style={{ right: `${8 + i * 18}%`, top: `${10 + (i % 3) * 25}%`, opacity: isCyber ? 0.08 : 0.12 }}
+                animate={{ scale: [1, 1.2, 1], opacity: isCyber ? [0.06, 0.14, 0.06] : [0.08, 0.16, 0.08] }}
+                transition={{ duration: 3.2 + i * 0.4, repeat: Infinity, delay: i * 0.3 }}
+              >{emoji}</motion.span>
             ))}
-            {isCyber && (
-              <motion.div
-                className="absolute inset-0"
-                style={{ background: "repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(167,139,250,0.04) 40px, rgba(167,139,250,0.04) 41px)" }}
-              />
-            )}
+            <motion.div
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                right: "-80px", top: "-80px", width: "280px", height: "280px",
+                background: `radial-gradient(circle, ${isCyber ? "rgba(167,139,250,0.14)" : "rgba(124,58,237,0.12)"} 0%, transparent 70%)`,
+                filter: "blur(20px)",
+              }}
+              animate={{ scale: [1, 1.12, 1], opacity: [0.6, 1, 0.6] }}
+              transition={{ duration: 4, repeat: Infinity }}
+            />
           </div>
 
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="relative z-10 p-6 md:p-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-bold tracking-[0.25em] uppercase mb-2" style={{ color: p.accent }}>
+              <motion.p className="text-xs font-black tracking-[0.3em] uppercase mb-2" style={{ color: p.accent }}
+                initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
                 {isCyber ? "// HOLLYWOOD.ARCHIVE" : "Hollywood Collection"}
-              </p>
-              <h1 className="font-black text-3xl md:text-5xl mb-1"
-                style={{ color: p.text, fontFamily: isCyber ? "var(--font-orbitron)" : "inherit", textShadow: isCyber ? `0 0 20px ${p.accent}, 0 0 60px ${p.accent2}` : "none" }}>
+              </motion.p>
+              <motion.h1 className="font-black text-3xl md:text-5xl mb-1"
+                style={{ color: p.text, fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
+                  textShadow: isCyber ? `0 0 30px ${p.accent}, 0 0 80px ${p.accent2}55` : "none" }}
+                initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.15, type: "spring", stiffness: 220, damping: 24 }}>
                 {isCyber ? "HOLLYWOOD_DRAMA" : "🎬 Hollywood Drama"}
-              </h1>
-              <p className="text-sm opacity-70" style={{ color: p.text }}>Blockbuster series, prestige TV, and cinematic universes from the West</p>
+              </motion.h1>
+              <motion.p className="text-sm opacity-70" style={{ color: p.text }}
+                initial={{ opacity: 0 }} animate={{ opacity: 0.7 }} transition={{ delay: 0.25 }}>
+                Blockbuster series, prestige TV, and cinematic universes from the West
+              </motion.p>
 
-              <div className="flex gap-4 mt-3">
-                <div><p className="font-black text-xl" style={{ color: p.accent }}>{allMerged.length}</p><p className="text-xs opacity-60" style={{ color: p.text }}>Total</p></div>
-                <div><p className="font-black text-xl" style={{ color: isCyber ? "#39FF14" : "#06D6A0" }}>{allMerged.filter(d => d.status === "Completed").length}</p><p className="text-xs opacity-60" style={{ color: p.text }}>Completed</p></div>
-                <div><p className="font-black text-xl" style={{ color: p.accent2 }}>{allMerged.filter(d => d.status === "Watching").length}</p><p className="text-xs opacity-60" style={{ color: p.text }}>Watching</p></div>
-              </div>
+              {/* Glass stats row */}
+              <motion.div
+                className="flex gap-6 mt-4 p-3 rounded-xl w-fit"
+                style={{
+                  background: isCyber ? "rgba(167,139,250,0.06)" : "rgba(255,255,255,0.55)",
+                  border: isCyber ? "1px solid rgba(167,139,250,0.2)" : "1.5px solid rgba(76,29,149,0.15)",
+                  backdropFilter: "blur(8px)",
+                }}
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+              >
+                <StatChip value={allMerged.length} label="Total" color={p.accent} text={p.text} />
+                <div style={{ width: "1px", alignSelf: "stretch", background: isCyber ? "rgba(167,139,250,0.15)" : "rgba(76,29,149,0.12)" }} />
+                <StatChip value={completedCount} label="Completed" color={isCyber ? "#39FF14" : "#06D6A0"} text={p.text} />
+                <div style={{ width: "1px", alignSelf: "stretch", background: isCyber ? "rgba(167,139,250,0.15)" : "rgba(76,29,149,0.12)" }} />
+                <StatChip value={watchingCount} label="Watching" color={p.accent2} text={p.text} />
+              </motion.div>
             </div>
           </div>
         </motion.div>
 
         {/* ── Drama Grid ── */}
-        {allMerged.length === 0 ? (
-          <motion.div
-            className="flex flex-col items-center justify-center py-24 gap-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <span className="text-6xl">🎬</span>
-            <p className="font-black text-xl" style={{ color: p.text }}>No Hollywood dramas yet</p>
-            <p className="text-sm opacity-60 text-center max-w-sm" style={{ color: p.text }}>
-              Add shows via the search or manual add button below.
-            </p>
-          </motion.div>
-        ) : (
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
-            variants={gridContainerVariants}
-            initial="hidden"
-            animate="visible"
-          >
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <AnimatePresence>
             {allMerged.map((drama, i) => (
-              <motion.div key={drama.id} variants={cardVariants} custom={i}>
+              <motion.div key={drama.id}
+                initial={{ opacity: 0, y: 24, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 260, damping: 24, delay: Math.min(i * 0.05, 0.4) }}
+              >
                 <MediaCard
-                  id={drama.id}
-                  title={drama.title}
-                  category="hollywood"
-                  status={drama.status}
-                  episodesWatched={drama.episodesWatched}
-                  totalEpisodes={drama.episodes}
-                  rating={drama.rating}
-                  genre={drama.genre}
-                  year={drama.year}
-                  platform={drama.platform}
-                  cast={drama.cast}
-                  synopsis={drama.synopsis}
-                  posterUrl={drama.posterUrl}
+                  id={drama.id} title={drama.title} category="hollywood"
+                  status={drama.status} episodesWatched={drama.episodesWatched}
+                  totalEpisodes={drama.episodes} rating={drama.rating}
+                  genre={drama.genre} year={drama.year} platform={drama.platform}
+                  cast={drama.cast} synopsis={drama.synopsis} posterUrl={drama.posterUrl}
                   isEditable={drama.isEditable}
                   onStatusChange={drama.isEditable ? handleStatusChange : undefined}
                   onEpisodeChange={drama.isEditable ? handleEpisodeChange : handleDramaLogEpisodeChange}
                   onTotalEpisodesChange={drama.isEditable ? handleTotalEpisodesChange : handleDramaLogTotalChange}
-                  onDelete={handleDelete}
-                  index={i}
+                  onDelete={handleDelete} index={i}
                 />
               </motion.div>
             ))}
+          </AnimatePresence>
+        </div>
+
+        {allMerged.length === 0 && (
+          <motion.div className="text-center py-24" initial={{ opacity: 0 }} animate={{ opacity: 0.4 }}>
+            <p className="text-5xl mb-3">🎬</p>
+            <p className="font-bold text-sm" style={{ color: p.text }}>No Hollywood series logged yet</p>
           </motion.div>
         )}
       </AppShell>

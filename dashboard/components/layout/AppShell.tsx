@@ -10,6 +10,7 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { TopLoader } from "@/components/ui/TopLoader";
 import { FloatingHeartEngine } from "@/components/ui/FloatingHeartEngine";
 import { GlobalMusicPlayer } from "@/components/ui/GlobalMusicPlayer";
+import { GuestBanner } from "@/components/ui/GuestBanner";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -119,6 +120,7 @@ export function AppShell({ children }: AppShellProps) {
 
         {/* Header topbar */}
         <Header onMenuToggle={() => setMobileOpen((v) => !v)} mobileOpen={mobileOpen} />
+        <GuestBanner />
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto relative z-10" style={{ scrollbarWidth: "thin" }}>

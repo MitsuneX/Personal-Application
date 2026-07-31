@@ -40,6 +40,7 @@ export interface CleanDramaResult {
   genre: string;
   rating: string;
   director?: string;
+  totalEpisodes: number | null;
 }
 
 interface ImdbRapidApiSearchHit {
@@ -163,17 +164,23 @@ export async function GET(req: NextRequest) {
           ? detail.Actors.split(",").map((a) => a.trim()).filter(Boolean)
           : [];
 
+        const isMovie = detail.Type !== "series";
+        // For movies: always 1 episode. For series: try to get from totalSeasons if known.
+        // OMDb doesn't expose totalEpisodes directly, so we leave it null for series.
+        const totalEpisodes: number | null = isMovie ? 1 : null;
+
         const clean: CleanDramaResult = {
           id: detail.imdbID,
           title: detail.Title,
           year: detail.Year,
-          type: detail.Type === "series" ? "Series" : "Movie",
+          type: isMovie ? "Movie" : "Series",
           poster: detail.Poster && detail.Poster !== "N/A" ? detail.Poster : null,
           overview: detail.Plot && detail.Plot !== "N/A" ? detail.Plot : "",
           cast: castList,
           genre: detail.Genre && detail.Genre !== "N/A" ? detail.Genre : "",
           rating: detail.imdbRating && detail.imdbRating !== "N/A" ? detail.imdbRating : "",
           director: detail.Director && detail.Director !== "N/A" ? detail.Director : undefined,
+          totalEpisodes,
         };
         return clean;
       } catch {
@@ -228,17 +235,19 @@ export async function GET(req: NextRequest) {
       const overview = detail.plot || detail.description || "";
       const poster = detail.posterUrl || detail.poster || null;
 
+      const isSeriesType = detail.type && detail.type.toLowerCase().includes("series");
       const clean: CleanDramaResult = {
         id,
         title,
         year: yearStr,
-        type: detail.type && detail.type.toLowerCase().includes("series") ? "Series" : "Movie",
+        type: isSeriesType ? "Series" : "Movie",
         poster: poster && poster !== "N/A" ? poster : null,
         overview: overview && overview !== "N/A" ? overview : "",
         cast: castList,
         genre: detail.genre && detail.genre !== "N/A" ? detail.genre : "",
         rating: ratingVal && ratingVal !== "N/A" ? ratingVal : "",
         director: detail.director && detail.director !== "N/A" ? detail.director : undefined,
+        totalEpisodes: isSeriesType ? null : 1,
       };
 
       if (mergedResults[id]) {

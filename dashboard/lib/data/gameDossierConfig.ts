@@ -257,6 +257,156 @@ const SPECIFIC_GAME_CONFIGS: Record<string, GameCapabilityConfig> = {
       { id: "vanguard",  name: "Vanguard",  icon: "🔮", description: "DP generation & early deployment", visualTokens: createVisualTokens("#6366F1") },
     ],
   },
+
+  // ── Girls' Frontline 2: Exilium ───────────────────────────────────────────
+  girlsfrontline2exilium: {
+    gameType: "Gacha Tactical RPG",
+    categoryLabel: "Doll Combat Roles",
+    characterLabel: "Doll",
+    resourcePresetsEnabled: true,
+    categories: [
+      { id: "assault",  name: "Assault",     icon: "🔫", description: "Primary DPS frontliner with high firepower", visualTokens: createVisualTokens("#E94560") },
+      { id: "sentinel", name: "Sentinel",    icon: "🎯", description: "Long-range sniper & precision support", visualTokens: createVisualTokens("#06B6D4") },
+      { id: "support",  name: "Support",     icon: "💊", description: "Healing, buffing & shield generation", visualTokens: createVisualTokens("#10B981") },
+      { id: "vanguard", name: "Vanguard",    icon: "🛡️", description: "Frontline tank & aggro control", visualTokens: createVisualTokens("#F59E0B") },
+      { id: "special",  name: "Special Ops", icon: "⚡", description: "Unique mechanics & area denial", visualTokens: createVisualTokens("#A78BFA") },
+    ],
+    elementSystem: {
+      sectionLabel: "Elemental Attributes",
+      elements: [
+        { id: "burn",     name: "Burn",       icon: "🔥", color: "#EF4444", description: "Fire DoT damage over time", visualTokens: createVisualTokens("#EF4444") },
+        { id: "freeze",   name: "Freeze",     icon: "❄️", color: "#60A5FA", description: "Ice control & movement slow", visualTokens: createVisualTokens("#60A5FA") },
+        { id: "electric", name: "Electric",   icon: "⚡", color: "#A78BFA", description: "Shock & chain lightning", visualTokens: createVisualTokens("#A78BFA") },
+        { id: "corrosion",name: "Corrosion",  icon: "☣️", color: "#22C55E", description: "Poison & defense reduction", visualTokens: createVisualTokens("#22C55E") },
+        { id: "hydro",    name: "Hydro",      icon: "💧", color: "#3B82F6", description: "Wet status & combo enabler", visualTokens: createVisualTokens("#3B82F6") },
+      ],
+    },
+  },
+
+  // ── Outerplane ────────────────────────────────────────────────────────────
+  outerplane: {
+    gameType: "Gacha Turn-Based RPG",
+    categoryLabel: "Hero Combat Classes",
+    characterLabel: "Hero",
+    resourcePresetsEnabled: true,
+    categories: [
+      { id: "warrior",  name: "Warrior",   icon: "⚔️", description: "Frontline melee DPS & tank", visualTokens: createVisualTokens("#EF4444") },
+      { id: "ranger",   name: "Ranger",    icon: "🏹", description: "Ranged physical damage dealer", visualTokens: createVisualTokens("#22C55E") },
+      { id: "mage",     name: "Mage",      icon: "🌀", description: "Burst magic damage & AoE", visualTokens: createVisualTokens("#8B5CF6") },
+      { id: "healer",   name: "Healer",    icon: "💚", description: "HP restoration & cleanse", visualTokens: createVisualTokens("#10B981") },
+      { id: "support",  name: "Support",   icon: "🎶", description: "Team buffs, shields & utility", visualTokens: createVisualTokens("#F59E0B") },
+    ],
+    elementSystem: {
+      sectionLabel: "Elements",
+      elements: [
+        { id: "fire",    name: "Fire",    icon: "🔥", color: "#EF4444", visualTokens: createVisualTokens("#EF4444") },
+        { id: "water",   name: "Water",   icon: "💧", color: "#3B82F6", visualTokens: createVisualTokens("#3B82F6") },
+        { id: "earth",   name: "Earth",   icon: "🪨", color: "#D97706", visualTokens: createVisualTokens("#D97706") },
+        { id: "wind",    name: "Wind",    icon: "💨", color: "#10B981", visualTokens: createVisualTokens("#10B981") },
+        { id: "light",   name: "Light",   icon: "✨", color: "#FCD34D", visualTokens: createVisualTokens("#FCD34D") },
+        { id: "dark",    name: "Dark",    icon: "🌑", color: "#7C3AED", visualTokens: createVisualTokens("#7C3AED") },
+      ],
+    },
+  },
+
+  // ── Tower of Fantasy ──────────────────────────────────────────────────────
+  toweroffantasy: {
+    gameType: "Open-World Gacha RPG",
+    categoryLabel: "Simulacra Team Roles",
+    characterLabel: "Simulacrum",
+    resourcePresetsEnabled: true,
+    categories: [
+      { id: "dps",     name: "DPS / Attacker",  icon: "🗡️", description: "Primary damage output simulacra", visualTokens: createVisualTokens("#EF4444") },
+      { id: "support", name: "Support / Buffer", icon: "🎶", description: "Team buff & energy regen", visualTokens: createVisualTokens("#F59E0B") },
+      { id: "healer",  name: "Healer",           icon: "💚", description: "HP restoration & resonance sustain", visualTokens: createVisualTokens("#10B981") },
+      { id: "subdps",  name: "Sub DPS / Burst",  icon: "⚡", description: "Burst damage & elemental combo", visualTokens: createVisualTokens("#8B5CF6") },
+    ],
+    elementSystem: {
+      sectionLabel: "Resonance Elements",
+      elements: [
+        { id: "flame",    name: "Flame",    icon: "🔥", color: "#EF4444", description: "Fire resonance", visualTokens: createVisualTokens("#EF4444") },
+        { id: "frost",    name: "Frost",    icon: "❄️", color: "#60A5FA", description: "Ice resonance", visualTokens: createVisualTokens("#60A5FA") },
+        { id: "volt",     name: "Volt",     icon: "⚡", color: "#A78BFA", description: "Electric resonance", visualTokens: createVisualTokens("#A78BFA") },
+        { id: "altered",  name: "Altered",  icon: "🌀", color: "#EC4899", description: "Dark matter resonance", visualTokens: createVisualTokens("#EC4899") },
+        { id: "physical", name: "Physical", icon: "💪", color: "#94A3B8", description: "Physical resonance", visualTokens: createVisualTokens("#94A3B8") },
+      ],
+    },
+  },
+
+  // ── Goddess of Victory: NIKKE ─────────────────────────────────────────────
+  goddessofvictorynikke: {
+    gameType: "Gacha Shooter RPG",
+    categoryLabel: "Burst & Combat Roles",
+    characterLabel: "NIKKE",
+    resourcePresetsEnabled: true,
+    categories: [
+      { id: "burst1",  name: "Burst Stage I",   icon: "1️⃣", description: "Burst I activators — opener skills", visualTokens: createVisualTokens("#3B82F6") },
+      { id: "burst2",  name: "Burst Stage II",  icon: "2️⃣", description: "Burst II bridge skills", visualTokens: createVisualTokens("#8B5CF6") },
+      { id: "burst3",  name: "Burst Stage III", icon: "3️⃣", description: "Burst III finishers — main damage", visualTokens: createVisualTokens("#EF4444") },
+      { id: "support", name: "Support",          icon: "💚", description: "Healer, shielder & buff support", visualTokens: createVisualTokens("#10B981") },
+    ],
+    elementSystem: {
+      sectionLabel: "Manufacturer Factions",
+      elements: [
+        { id: "elysion",   name: "Elysion",   icon: "🔵", color: "#3B82F6", description: "Holy & defensive NIKKE faction", visualTokens: createVisualTokens("#3B82F6") },
+        { id: "missilis",  name: "Missilis",  icon: "🟣", color: "#8B5CF6", description: "High-tech military corporation", visualTokens: createVisualTokens("#8B5CF6") },
+        { id: "tetra",     name: "Tetra",     icon: "🟡", color: "#EAB308", description: "Support & medical division", visualTokens: createVisualTokens("#EAB308") },
+        { id: "pilgrim",   name: "Pilgrim",   icon: "⬛", color: "#1E293B", description: "Unique & independent NIKKEs", visualTokens: createVisualTokens("#1E293B") },
+        { id: "abnormal",  name: "Abnormal",  icon: "🔴", color: "#EF4444", description: "Defective or rogue NIKKEs", visualTokens: createVisualTokens("#EF4444") },
+      ],
+    },
+  },
+
+  // ── Arknights: Endfield ───────────────────────────────────────────────────
+  arknightsendfield: {
+    gameType: "Action RPG",
+    categoryLabel: "Operator Classes",
+    characterLabel: "Operator",
+    resourcePresetsEnabled: true,
+    categories: [
+      { id: "assault",   name: "Assault",    icon: "⚔️", description: "Primary DPS operator", visualTokens: createVisualTokens("#EF4444") },
+      { id: "tank",      name: "Tank",       icon: "🛡️", description: "Frontline defense & HP", visualTokens: createVisualTokens("#F59E0B") },
+      { id: "support",   name: "Support",    icon: "🎶", description: "Team buffs & utility", visualTokens: createVisualTokens("#06B6D4") },
+      { id: "healer",    name: "Medic",      icon: "💚", description: "HP restoration operator", visualTokens: createVisualTokens("#10B981") },
+      { id: "specialist",name: "Specialist", icon: "⚡", description: "Unique & mixed role operators", visualTokens: createVisualTokens("#A78BFA") },
+    ],
+    elementSystem: {
+      sectionLabel: "Elements",
+      elements: [
+        { id: "physical",  name: "Physical",  icon: "💪", color: "#94A3B8", visualTokens: createVisualTokens("#94A3B8") },
+        { id: "fire",      name: "Fire",      icon: "🔥", color: "#EF4444", visualTokens: createVisualTokens("#EF4444") },
+        { id: "cryo",      name: "Cryo",      icon: "❄️", color: "#60A5FA", visualTokens: createVisualTokens("#60A5FA") },
+        { id: "electro",   name: "Electro",   icon: "⚡", color: "#A78BFA", visualTokens: createVisualTokens("#A78BFA") },
+        { id: "corrosion", name: "Corrosion", icon: "☣️", color: "#22C55E", visualTokens: createVisualTokens("#22C55E") },
+      ],
+    },
+  },
+
+  // ── Honkai Impact 3rd ─────────────────────────────────────────────────────
+  honkaiimpact3rd: {
+    gameType: "Gacha Action RPG",
+    categoryLabel: "Valkyrie Battlesuit Types",
+    characterLabel: "Battlesuit",
+    resourcePresetsEnabled: true,
+    categories: [
+      { id: "dps",     name: "DPS / Carry",       icon: "🗡️", description: "Primary physical or elemental DPS", visualTokens: createVisualTokens("#EF4444") },
+      { id: "support", name: "Support / Buffer",   icon: "✨", description: "Team damage amp & buffs", visualTokens: createVisualTokens("#F59E0B") },
+      { id: "healer",  name: "Healer",             icon: "💚", description: "HP restoration & cleanse", visualTokens: createVisualTokens("#10B981") },
+      { id: "subdps",  name: "Sub DPS",            icon: "⚡", description: "Off-field elemental rotation DPS", visualTokens: createVisualTokens("#8B5CF6") },
+    ],
+    elementSystem: {
+      sectionLabel: "Elemental Types",
+      elements: [
+        { id: "bio",      name: "BIO",      icon: "🟢", color: "#22C55E", description: "Biological element — Paralyze & Poison", visualTokens: createVisualTokens("#22C55E") },
+        { id: "mech",     name: "MECH",     icon: "⚙️", color: "#94A3B8", description: "Mechanical element — Stun", visualTokens: createVisualTokens("#94A3B8") },
+        { id: "psy",      name: "PSY",      icon: "💜", color: "#A78BFA", description: "Psychic element — Weaken", visualTokens: createVisualTokens("#A78BFA") },
+        { id: "quantum",  name: "QUA",      icon: "🌀", color: "#818CF8", description: "Quantum element — Impair", visualTokens: createVisualTokens("#818CF8") },
+        { id: "fire",     name: "FIRE",     icon: "🔥", color: "#EF4444", description: "Fire element — Ignite", visualTokens: createVisualTokens("#EF4444") },
+        { id: "ice",      name: "ICE",      icon: "❄️", color: "#60A5FA", description: "Frost element — Freeze", visualTokens: createVisualTokens("#60A5FA") },
+        { id: "lightning",name: "LIGHTNING",icon: "⚡", color: "#FACC15", description: "Lightning element — Bleed", visualTokens: createVisualTokens("#FACC15") },
+      ],
+    },
+  },
 };
 
 // ─── Generic Category Fallbacks ───────────────────────────────────────────────
@@ -347,6 +497,19 @@ const TITLE_ALIASES: Record<string, string> = {
   arknights: "arknights",
   ak: "arknights",
   valo: "valorant",
+  // New game aliases
+  gfl2: "girlsfrontline2exilium",
+  gf2: "girlsfrontline2exilium",
+  exilium: "girlsfrontline2exilium",
+  girlsfrontline2: "girlsfrontline2exilium",
+  tof: "toweroffantasy",
+  nikke: "goddessofvictorynikke",
+  goddessofvictory: "goddessofvictorynikke",
+  endfield: "arknightsendfield",
+  akendfield: "arknightsendfield",
+  hi3: "honkaiimpact3rd",
+  honkaiimpact3: "honkaiimpact3rd",
+  honkaiimpact: "honkaiimpact3rd",
 };
 
 // ─── Resolver ─────────────────────────────────────────────────────────────────
