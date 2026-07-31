@@ -150,6 +150,67 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true });
       }
 
+      case "UPDATE_PROJECT": {
+        const project = await prisma.projectItem.upsert({
+          where: { id: payload.id },
+          update: {
+            name: payload.name,
+            logo: payload.logo ?? null,
+            heroBanner: payload.heroBanner ?? null,
+            description: payload.description,
+            category: payload.category,
+            status: payload.status ?? "Live",
+            version: payload.version ?? "v1.0.0",
+            accentColor: payload.accentColor ?? "#00F5FF",
+            websiteUrl: payload.websiteUrl ?? null,
+            githubUrl: payload.githubUrl ?? null,
+            docsUrl: payload.docsUrl ?? null,
+            figmaUrl: payload.figmaUrl ?? null,
+            apiDocsUrl: payload.apiDocsUrl ?? null,
+            adminUrl: payload.adminUrl ?? null,
+            stagingUrl: payload.stagingUrl ?? null,
+            downloadUrl: payload.downloadUrl ?? null,
+            techStack: payload.techStack ?? [],
+            tags: payload.tags ?? [],
+            sortOrder: payload.sortOrder ?? 0,
+            isFeatured: payload.isFeatured ?? false,
+            isArchived: payload.isArchived ?? false,
+            stats: payload.stats ?? null,
+          },
+          create: {
+            id: payload.id,
+            name: payload.name,
+            logo: payload.logo || null,
+            heroBanner: payload.heroBanner || null,
+            description: payload.description,
+            category: payload.category,
+            status: payload.status || "Live",
+            version: payload.version || "v1.0.0",
+            accentColor: payload.accentColor || "#00F5FF",
+            websiteUrl: payload.websiteUrl || null,
+            githubUrl: payload.githubUrl || null,
+            docsUrl: payload.docsUrl || null,
+            figmaUrl: payload.figmaUrl || null,
+            apiDocsUrl: payload.apiDocsUrl || null,
+            adminUrl: payload.adminUrl || null,
+            stagingUrl: payload.stagingUrl || null,
+            downloadUrl: payload.downloadUrl || null,
+            techStack: payload.techStack || [],
+            tags: payload.tags || [],
+            sortOrder: payload.sortOrder || 0,
+            isFeatured: payload.isFeatured || false,
+            isArchived: payload.isArchived || false,
+            stats: payload.stats || null,
+          },
+        });
+        return NextResponse.json({ success: true, data: project });
+      }
+
+      case "DELETE_PROJECT": {
+        await prisma.projectItem.delete({ where: { id: payload.id } });
+        return NextResponse.json({ success: true });
+      }
+
       case "UPDATE_ANIME": {
         const anime = await prisma.anime.upsert({
           where: { id: payload.id },

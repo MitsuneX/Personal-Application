@@ -93,6 +93,36 @@ export interface GameShowcaseEntry {
   createdAt?: string;
 }
 
+export type ProjectStatus = "Live" | "Development" | "Beta" | "Maintenance" | "Archived" | "Experimental" | "Upcoming";
+
+export interface ProjectItemEntry {
+  id: string;
+  name: string;
+  logo?: string;
+  heroBanner?: string;
+  description: string;
+  category: string;
+  status: ProjectStatus;
+  version?: string;
+  accentColor: string;
+  websiteUrl?: string;
+  githubUrl?: string;
+  docsUrl?: string;
+  figmaUrl?: string;
+  apiDocsUrl?: string;
+  adminUrl?: string;
+  stagingUrl?: string;
+  downloadUrl?: string;
+  techStack?: string[];
+  tags?: string[];
+  sortOrder?: number;
+  isFeatured?: boolean;
+  isArchived?: boolean;
+  stats?: Record<string, any>;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 // ─── Media Types ──────────────────────────────────────────────────────────────
 
 export type MediaStatus = "GOAT Status" | "All-Star" | "Rising" | "Classic";
@@ -273,6 +303,7 @@ interface DashboardState {
   dossierCharacters: DossierCharacterEntry[];
   gameResources: GameResourceEntry[];
   gameShowcaseItems: GameShowcaseEntry[];
+  projects: ProjectItemEntry[];
   media: MediaEntry;
   animeList: AnimeEntry[];
   favoriteCharacters: FavoriteCharacter[];
@@ -299,6 +330,9 @@ interface DashboardState {
   addGameShowcaseItem: (item: GameShowcaseEntry) => Promise<void>;
   updateGameShowcaseItem: (id: string, data: Partial<GameShowcaseEntry>) => Promise<void>;
   removeGameShowcaseItem: (id: string) => Promise<void>;
+  addProject: (item: ProjectItemEntry) => Promise<void>;
+  updateProject: (id: string, data: Partial<ProjectItemEntry>) => Promise<void>;
+  removeProject: (id: string) => Promise<void>;
   updateMedia: (data: Partial<MediaEntry>) => void;
   addAnime: (anime: AnimeEntry) => Promise<void>;
   updateAnime: (id: string, data: Partial<AnimeEntry>) => Promise<void>;
@@ -452,6 +486,64 @@ const initialGameResources: GameResourceEntry[] = [
   { id: "res-gi-1", gameId: "game-4", name: "Game8 Builds & Tier List", url: "https://game8.co/games/Genshin-Impact", icon: "🏆", category: "Builds", description: "Best Artifact Sets & Team Compositions", enabled: true, sortOrder: 1 },
 ];
 
+const initialProjects: ProjectItemEntry[] = [
+  {
+    id: "proj-nexus-xenon",
+    name: "Nexus Xenon - Personal Command Center",
+    logo: "⚡",
+    description: "Next-gen full-stack command center, interactive HUD, gaming database, and AI statistics suite built with React 19 & Next.js 16.",
+    category: "Full-Stack Web",
+    status: "Live",
+    version: "v3.1.0",
+    accentColor: "#00F5FF",
+    websiteUrl: "https://github.com",
+    githubUrl: "https://github.com",
+    docsUrl: "https://github.com",
+    techStack: ["Next.js 16", "React 19", "TypeScript", "Prisma", "Supabase", "TailwindCSS", "Framer Motion"],
+    tags: ["Personal Dashboard", "HUD", "Gaming", "AI Scanner", "Open Source"],
+    sortOrder: 1,
+    isFeatured: true,
+    isArchived: false,
+    stats: { stars: 42, users: "1.2k", uptime: "99.9%" },
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "proj-anime-vault",
+    name: "Aura Anime & Drama Hub",
+    logo: "⛩️",
+    description: "High performance streaming index, drama tracking vault, character roster, and Japanese/Korean/Chinese media database.",
+    category: "Media Platform",
+    status: "Live",
+    version: "v2.4.0",
+    accentColor: "#FF6B35",
+    websiteUrl: "/anime",
+    githubUrl: "https://github.com",
+    techStack: ["React 19", "Zustand", "PostgreSQL", "Prisma"],
+    tags: ["Anime", "Drama", "Streaming", "Otaku"],
+    sortOrder: 2,
+    isFeatured: true,
+    isArchived: false,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "proj-game-dossier-scanner",
+    name: "Game Statistics Scanner Engine",
+    logo: "📊",
+    description: "Automated OCR & Vision AI analysis tool extracting gaming statistics directly from screenshots into structured dossiers.",
+    category: "AI & ML",
+    status: "Development",
+    version: "v1.2.0-beta",
+    accentColor: "#F59E0B",
+    websiteUrl: "/heroes",
+    techStack: ["TypeScript", "Canvas API", "OCR Engine", "Prisma"],
+    tags: ["OCR", "Vision AI", "Genshin", "HSR", "WuWa", "MLBB"],
+    sortOrder: 3,
+    isFeatured: false,
+    isArchived: false,
+    createdAt: new Date().toISOString(),
+  },
+];
+
 // ─── Zustand Store ────────────────────────────────────────────────────────────
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
@@ -460,6 +552,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   dossierCharacters: initialDossierCharacters,
   gameResources: initialGameResources,
   gameShowcaseItems: [],
+  projects: initialProjects,
   media: initialMedia,
   animeList: [],
   favoriteCharacters: [],
@@ -507,6 +600,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
             ? data.gameResources
             : get().gameResources,
           gameShowcaseItems: data.gameShowcaseItems || [],
+          projects: (data.projects && data.projects.length > 0)
+            ? data.projects
+            : get().projects,
           animeList: data.animeList || [],
           favoriteCharacters: data.favoriteCharacters || [],
           dramas: data.dramas || [],
@@ -740,6 +836,50 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
     } catch (err) {
       console.error("Failed to sync deleted showcase item:", err);
+    }
+  },
+
+  addProject: async (item) => {
+    set((s) => ({ projects: [item, ...s.projects] }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "UPDATE_PROJECT", payload: item }),
+      });
+    } catch (err) {
+      console.error("Failed to sync added project:", err);
+    }
+  },
+
+  updateProject: async (id, data) => {
+    set((s) => ({
+      projects: s.projects.map((p) => (p.id === id ? { ...p, ...data } : p)),
+    }));
+    try {
+      const item = get().projects.find((p) => p.id === id);
+      if (item) {
+        await fetch("/api/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "UPDATE_PROJECT", payload: item }),
+        });
+      }
+    } catch (err) {
+      console.error("Failed to sync updated project:", err);
+    }
+  },
+
+  removeProject: async (id) => {
+    set((s) => ({ projects: s.projects.filter((p) => p.id !== id) }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_PROJECT", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to sync deleted project:", err);
     }
   },
 

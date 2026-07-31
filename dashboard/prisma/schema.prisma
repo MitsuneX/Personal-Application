@@ -255,3 +255,31 @@ model HobbyLog {
   note      String?
   createdAt DateTime   @default(now())
 }
+
+model ProjectItem {
+  id          String   @id @default(uuid())
+  name        String
+  logo        String?
+  heroBanner  String?
+  description String
+  category    String   // e.g. "Full-Stack Web", "Mobile App", "AI & ML", "Game Dev", "Utility", "Open Source"
+  status      String   @default("Live") // "Live" | "Development" | "Beta" | "Maintenance" | "Archived" | "Experimental" | "Upcoming"
+  version     String?  @default("v1.0.0")
+  accentColor String   @default("#00F5FF")
+  websiteUrl  String?
+  githubUrl   String?
+  docsUrl     String?
+  figmaUrl    String?
+  apiDocsUrl  String?
+  adminUrl    String?
+  stagingUrl  String?
+  downloadUrl String?
+  techStack   Json?    // array of string technologies
+  tags        Json?    // array of string tags
+  sortOrder   Int      @default(0)
+  isFeatured  Boolean  @default(false)
+  isArchived  Boolean  @default(false)
+  stats       Json?    // e.g. { stars: 120, users: "5.2k" }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

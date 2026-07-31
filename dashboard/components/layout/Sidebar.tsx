@@ -22,6 +22,7 @@ const NAV_SECTIONS = [
     label: "Main",
     items: [
       { href: "/", icon: "🏠", label: "Dashboard", exact: true },
+      { href: "/visit", icon: "🌐", label: "Visit", activePrefixes: ["/visit"] },
     ],
   },
   {

@@ -4,28 +4,32 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/lib/theme";
+import { SearchResultItem } from "@/lib/search/searchRegistry";
 
-interface SearchResult {
-  id: string;
-  title: string;
-  subtitle: string;
-  url: string;
-}
+type SearchResponse = Record<string, SearchResultItem[]>;
 
-interface SearchResponse {
-  links?: SearchResult[];
-  notes?: SearchResult[];
-  games?: SearchResult[];
-  anime?: SearchResult[];
-  dramas?: SearchResult[];
-  characters?: SearchResult[];
-  talent?: SearchResult[];
-  gallery?: SearchResult[];
-  songs?: SearchResult[];
-  prompts?: SearchResult[];
-  hobbies?: SearchResult[];
-  profile?: SearchResult[];
-}
+const CATEGORY_META: Record<string, { label: string; icon: string }> = {
+  projects: { label: "Visit Project Hub", icon: "🌐" },
+  games: { label: "Game Database", icon: "🎮" },
+  dossierCharacters: { label: "Statistics Scanner", icon: "📊" },
+  gameShowcaseItems: { label: "Showcase Gallery", icon: "🖼️" },
+  links: { label: "Bookmarks & Links", icon: "🔗" },
+  notes: { label: "Notepad Workspaces", icon: "📝" },
+  animeList: { label: "Anime Series", icon: "⛩️" },
+  anime: { label: "Anime Series", icon: "⛩️" },
+  dramas: { label: "Dramas & Series", icon: "🎬" },
+  songs: { label: "Music Vault", icon: "🎵" },
+  gallery: { label: "Media Gallery", icon: "🖼️" },
+  favoriteCharacters: { label: "Favorite Characters", icon: "📖" },
+  characters: { label: "Favorite Characters", icon: "📖" },
+  hallOfFame: { label: "Hall of Fame", icon: "🏆" },
+  talent: { label: "Hall of Fame", icon: "🏆" },
+  savedPrompts: { label: "Saved AI Prompts", icon: "⚡" },
+  prompts: { label: "Saved AI Prompts", icon: "⚡" },
+  hobbies: { label: "Hobby Skills", icon: "🎯" },
+  profiles: { label: "User Profiles", icon: "👤" },
+  profile: { label: "User Profiles", icon: "👤" },
+};
 
 export function CommandPalette() {
   const { theme } = useTheme();
@@ -99,23 +103,18 @@ export function CommandPalette() {
   }, [query]);
 
   // Flattened items list across all categories for keyboard navigation
-  const categories = [
-    { label: "Bookmarks & Links", data: results.links || [], icon: "🔗" },
-    { label: "Notepad Workspaces", data: results.notes || [], icon: "📝" },
-    { label: "Games HUD", data: results.games || [], icon: "🎮" },
-    { label: "Anime Series", data: results.anime || [], icon: "⛩️" },
-    { label: "Dramas & Series", data: results.dramas || [], icon: "🎬" },
-    { label: "Music Vault", data: results.songs || [], icon: "🎵" },
-    { label: "Media Gallery", data: results.gallery || [], icon: "🖼️" },
-    { label: "Favorite Characters", data: results.characters || [], icon: "📖" },
-    { label: "Hall of Fame", data: results.talent || [], icon: "🏆" },
-    { label: "Saved AI Prompts", data: results.prompts || [], icon: "🤖" },
-    { label: "Hobby Skills", data: results.hobbies || [], icon: "🎯" },
-    { label: "User Profiles", data: results.profile || [], icon: "👤" },
-  ];
+  const activeCategories = Object.keys(results).map((key) => {
+    const meta = CATEGORY_META[key] || { label: key.toUpperCase(), icon: "🔍" };
+    return {
+      key,
+      label: meta.label,
+      icon: meta.icon,
+      data: results[key] || [],
+    };
+  }).filter((cat) => cat.data.length > 0);
 
-  const flattenedList: { item: SearchResult; categoryLabel: string }[] = [];
-  categories.forEach((cat) => {
+  const flattenedList: { item: SearchResultItem; categoryLabel: string }[] = [];
+  activeCategories.forEach((cat) => {
     cat.data.forEach((item) => {
       flattenedList.push({ item, categoryLabel: cat.label });
     });
@@ -192,7 +191,7 @@ export function CommandPalette() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
             transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            className="relative w-full max-w-2xl rounded-xl overflow-hidden pointer-events-auto flex flex-col max-h-[65vh]"
+            className="relative w-full max-w-2xl rounded-xl overflow-hidden pointer-events-auto flex flex-col max-h-[68vh]"
             style={modalStyle}
           >
             {/* Input Bar */}
@@ -201,7 +200,7 @@ export function CommandPalette() {
               <input
                 ref={inputRef}
                 type="text"
-                placeholder={isCyber ? "RUN COMMAND / SEARCH ALL REGISTRIES..." : "Search bookmarks, games, notes, anime..."}
+                placeholder={isCyber ? "RUN GLOBAL COMMAND / SEARCH ALL REGISTRIES..." : "Search projects, games, characters, anime, notes..."}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="flex-1 bg-transparent border-none outline-none text-sm font-semibold p-1"
@@ -226,7 +225,7 @@ export function CommandPalette() {
                 <div className="flex items-center justify-center py-10 gap-2.5">
                   <span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-cyan-400" />
                   <span className="text-xs font-bold font-mono tracking-wider opacity-60">
-                    {isCyber ? "SCANNING_CHANNELS..." : "Searching databases..."}
+                    {isCyber ? "SCANNING_GLOBAL_REGISTRIES..." : "Searching central index..."}
                   </span>
                 </div>
               )}
@@ -235,9 +234,9 @@ export function CommandPalette() {
                 <div className="text-center py-10 space-y-1">
                   <p className="text-2xl mb-1">📡</p>
                   <p className="text-xs font-black uppercase tracking-widest opacity-60" style={{ color: isCyber ? "#00F5FF" : "#000" }}>
-                    {isCyber ? "NO_COORDINATES_FOUND" : "No matching records found"}
+                    {isCyber ? "NO_MATCHING_REGISTRIES_FOUND" : "No matching records found"}
                   </p>
-                  <p className="text-[11px] opacity-40">Try searching for keywords like "Database", "Anime", "RPG", "Link", etc.</p>
+                  <p className="text-[11px] opacity-40">Try searching for keywords like "Visit", "Nexus", "Honkai", "Genshin", "Anime", etc.</p>
                 </div>
               )}
 
@@ -246,7 +245,7 @@ export function CommandPalette() {
                   <div className="text-center py-3">
                     <p className="text-xl mb-1">⌨️</p>
                     <p className="text-xs font-bold uppercase tracking-wider opacity-60">
-                      {isCyber ? "GLOBAL_COMMAND_CENTER_INDEX" : "Search files, bookmarks, entries, and logs"}
+                      {isCyber ? "GLOBAL_COMMAND_CENTER_INDEX" : "Quick Search & System Navigation"}
                     </p>
                   </div>
 
@@ -257,15 +256,16 @@ export function CommandPalette() {
                         borderColor: isCyber ? "rgba(0,245,255,0.1)" : "rgba(0,0,0,0.06)",
                       }}
                     >
-                      ⚡ Quick System Navigation
+                      ⚡ Recommended Quick Links
                     </div>
 
                     {[
-                      { title: "🔗 Bookmarks Directory & Links", subtitle: "Browse saved websites, databases, productivity & tools", url: "/links" },
-                      { title: "📜 Log Updates (Changelog)", subtitle: "View system release notes, v2.5.0 features & bug fixes", url: "/changelog" },
-                      { title: "🎵 Music Vault & Synced Lyrics", subtitle: "Open music workspace, search & synced lyrics", url: "/music" },
-                      { title: "🏆 Hall of Fame", subtitle: "Browse GOAT status rankings & champion entries", url: "/hall-of-fame" },
-                      { title: "👤 Profile Settings", subtitle: "Customize your avatar, banner, bio & tags", url: "/profile" },
+                      { title: "🌐 Visit Project Hub", subtitle: "Personal project portfolio & showcase hub", url: "/visit" },
+                      { title: "📊 Game Database & Dossiers", subtitle: "Game Roster, Statistics Scanner & Showcase Gallery", url: "/heroes" },
+                      { title: "🔗 Bookmarks Directory & Links", subtitle: "Browse saved websites, tools & external resources", url: "/links" },
+                      { title: "📜 Log Updates (Changelog)", subtitle: "View system release notes, v3.1.0 features & fixes", url: "/changelog" },
+                      { title: "🎵 Music Vault & Synced Lyrics", subtitle: "Open music workspace & audio playback", url: "/music" },
+                      { title: "👤 Profile Settings", subtitle: "Customize avatar, banner, bio & skills", url: "/profile" },
                     ].map((item, idx) => (
                       <div
                         key={idx}
@@ -295,10 +295,9 @@ export function CommandPalette() {
 
               {!loading && flattenedList.length > 0 && (
                 <div className="space-y-4">
-                  {categories.map((cat) => {
-                    if (cat.data.length === 0) return null;
+                  {activeCategories.map((cat) => {
                     return (
-                      <div key={cat.label} className="space-y-1.5">
+                      <div key={cat.key} className="space-y-1.5">
                         <div 
                           className="text-[9px] font-black tracking-widest uppercase pb-1 border-b flex items-center justify-between"
                           style={{
@@ -338,20 +337,30 @@ export function CommandPalette() {
                                   boxShadow: isActive && !isCyber ? "2px 2px 0px #000" : "none"
                                 }}
                               >
-                                <div className="min-w-0 flex-1 pr-4">
-                                  <p 
-                                    className="text-xs font-black truncate"
-                                    style={{
-                                      color: isActive
-                                        ? isCyber ? "#00F5FF" : "#000"
-                                        : isCyber ? "#E0E8FF" : "#1A1A1A"
-                                    }}
-                                  >
-                                    {item.title}
-                                  </p>
-                                  <p className="text-[10px] truncate mt-0.5 font-semibold opacity-70">
-                                    {item.subtitle}
-                                  </p>
+                                <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
+                                  <span className="text-base shrink-0">{item.icon || cat.icon}</span>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <p 
+                                        className="text-xs font-black truncate leading-tight"
+                                        style={{
+                                          color: isActive
+                                            ? isCyber ? "#00F5FF" : "#000"
+                                            : isCyber ? "#E0E8FF" : "#1A1A1A"
+                                        }}
+                                      >
+                                        {item.title}
+                                      </p>
+                                      {item.category && (
+                                        <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold opacity-80 border bg-black/10 dark:bg-white/10">
+                                          {item.category}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-[10px] truncate mt-0.5 font-semibold opacity-70">
+                                      {item.subtitle}
+                                    </p>
+                                  </div>
                                 </div>
                                 <span 
                                   className="text-[9px] font-mono tracking-wider opacity-70 uppercase shrink-0"
@@ -359,7 +368,7 @@ export function CommandPalette() {
                                     color: isActive && isCyber ? "#00F5FF" : undefined
                                   }}
                                 >
-                                  {isActive ? "↵ NAVIGATE" : "VIEW"}
+                                  {isActive ? "↵ NAVIGATE" : "OPEN"}
                                 </span>
                               </div>
                             );
@@ -379,7 +388,7 @@ export function CommandPalette() {
                 <span>↵ select</span>
               </div>
               <div>
-                <span>CTRL + K to close</span>
+                <span>CTRL + K to toggle</span>
               </div>
             </div>
           </motion.div>

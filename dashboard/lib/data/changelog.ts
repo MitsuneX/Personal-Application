@@ -13,6 +13,39 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v3.2.0",
+    date: "2026-07-31",
+    title: "Global Search Engine Architecture, Visit Project Hub & Motion System Overhaul",
+    badge: "GLOBAL SEARCH & VISIT HUB",
+    type: "minor",
+    summary: "Introduced a centralized Search Registry engine enabling modular indexing across all application modules, added Visit directly below Dashboard in the sidebar navigation, launched the Visit Project Hub portfolio showcase system with complete project management capabilities, and refined Framer Motion system transitions across all dialogs and navigation components.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🌐 Visit Project Hub (/visit): Launched a central project showcase hub displaying personal codebases, deployed services, tech stack pills, version tags, status indicators, and configurable action buttons.",
+          "🌐 Sidebar Navigation Update: Added permanent 'Visit' navigation item directly below Dashboard in the MAIN sidebar section.",
+          "🔍 Centralized Search Registry Engine (searchRegistry.ts): Created an expandable search provider registry architecture indexing Visit Projects, Game Database, Statistics Scanner, Showcase Gallery, Bookmarks, Notes, Anime, Dramas, Songs, Hall of Fame, Characters, Gallery, Prompts, Hobbies, and Profiles.",
+          "🛠️ Project Editor Modal: Management interface supporting Add, Edit, Delete, Archive, Logo & Banner uploads, Tech Stack tagging, and customizable quick action link buttons (Website, GitHub, Docs, Figma, Admin, Staging, Download).",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "Motion System Overhaul: Refined spring easings, card entrance staggers, tab indicator motion, hover micro-interactions, and modal backdrop animations across both Neo-Brutalism and Cyberpunk themes.",
+          "Dual Theme Excellence: Full responsive support for Neo-Brutalism offset shadow borders and Cyberpunk glowing neon HUD elements across viewports from 320px up to 1440px+.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "Prisma Schema Addition: Added ProjectItem database model with PostgreSQL sync via npx prisma db push.",
+          "API & Store Synchronization: Extended /api/dashboard and /api/action with UPDATE_PROJECT and DELETE_PROJECT handlers alongside Zustand dashboardStore sync.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v3.1.0",
     date: "2026-07-31",
     title: "Game Database Major Enhancement: Statistics Scanner & Showcase Gallery",
