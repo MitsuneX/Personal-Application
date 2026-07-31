@@ -2,7 +2,7 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
-## [3.2.1] - 2026-07-31
+## [3.5.0] - 2026-07-31
 
 ### 🔒 Enterprise Multi-User Architecture & Strict Data Isolation
 - **Database Schema Audit & Scoping**: Added `userId` scoping with indexes (`@@index([userId])`) across all 21 user-editable Prisma models (`Game`, `AiToolItem`, `Drama`, `DramaLog`, `ProjectItem`, `Note`, `Song`, `Playlist`, `HobbySkill`, `HobbyLog`, `HallOfFame`, `Anime`, `GalleryItem`, `Link`, etc.).
@@ -27,5 +27,11 @@ All notable changes to the Nexus Xenon Personal Dashboard project will be docume
   - *Arknights: Endfield* (Action RPG — Operator Classes & Elements)
   - *Honkai Impact 3rd* (Action RPG — Valkyrie Battlesuits & Elemental Types)
 
-## [3.1.0] - 2026-07-30
-- Initial AI & Games Library architecture with Prisma 7.8.0 singleton and dual-theme (Cyberpunk & Neo-Brutalism) rendering.
+## [3.4.0] - 2026-07-31
+- AI Library Personal Collection & Knowledge Hub with star ratings, usage tracking, strengths tag cloud, and launch analytics.
+
+## [3.3.0] - 2026-07-31
+- AI Library Personal Directory & Fast Launcher Module under Visit in sidebar.
+
+## [3.2.0] - 2026-07-31
+- Global Search Engine Architecture, Visit Project Hub & Motion System Overhaul.

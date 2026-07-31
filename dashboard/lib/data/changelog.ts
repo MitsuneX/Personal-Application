@@ -13,6 +13,34 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v3.5.0",
+    date: "2026-07-31",
+    title: "Multi-User Enterprise Architecture, Guest Sandbox Mode & Major AI/Games Expansion",
+    badge: "MULTI-USER & GUEST MODE 3.5",
+    type: "major",
+    summary: "Architected a full multi-user SaaS platform with strict user data isolation, database-level userId scoping across 21 models, a zero-persistence Guest Sandbox Mode, keyboard input navigation enhancements, 35 frontier AI tools, and 6 new gaming dossiers.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🔒 Strict User Data Isolation: Added userId scoping and database indexing across all 21 Prisma models. Server-side API filtering guarantees new accounts start with clean, isolated personal environments.",
+          "🚀 One-Click Guest Sandbox Mode: Added instant demo access on both Cyberpunk and Neo-Brutalist login screens with zero database persistence. All guest session modifications take place in-memory.",
+          "🚩 Persistent Guest Banner: Displays active sandbox mode indicator with an 'EXIT GUEST →' button to clear guest cookies and return to login.",
+          "⚡ Keyboard Navigation: Pressing Enter in the login email field automatically moves focus directly to the password input field.",
+          "🎮 6 New Gaming Dossiers: Added Girls' Frontline 2: Exilium, Outerplane, Tower of Fantasy, Goddess of Victory: NIKKE, Arknights: Endfield, and Honkai Impact 3rd with custom SVG icons, combat role breakdowns, and elemental systems.",
+          "🤖 35 Frontier AI Platforms: Expanded default AI collection to 35 well-known platforms across General AI, Coding AI, Research AI, and Search AI.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "Prisma Schema & Database Ownership: Updated schema.prisma with userId columns and indexes across all models. Executed migration script to transfer pre-existing records to primary owner account.",
+          "API & Security Audit: Updated /api/dashboard and /api/action with user ownership verification and guest mode short-circuiting.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v3.4.0",
     date: "2026-07-31",
     title: "AI Library Upgrade: Personal AI Collection & Knowledge Hub",
