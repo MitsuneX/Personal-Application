@@ -10,6 +10,8 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { ImageCropModal } from "@/components/ui/ImageCropModal";
 import { useRouter } from "next/navigation";
+import { useConfirm } from "@/lib/context/ConfirmContext";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const PLATFORMS = ["GitHub", "Twitter/X", "Discord", "Instagram", "LinkedIn", "Tiktok"];
 
@@ -18,6 +20,8 @@ export default function ProfilePage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { profile, updateProfile, profileHistory } = useDashboardStore();
+  const { confirm } = useConfirm();
+  const toast = useToast();
 
   const [name, setName] = useState("");
   const [tagline, setTagline] = useState("");
@@ -93,12 +97,13 @@ export default function ProfilePage() {
         setAvatar(data.url);
         // Direct local save option
         await updateProfile({ ...profile, avatar: data.url });
+        toast.success("Avatar uploaded and updated!");
       } else {
-        alert("Upload failed: " + (data.error || "Unknown error"));
+        toast.error("Upload failed: " + (data.error || "Unknown error"));
       }
     } catch (err) {
       console.error("Upload error:", err);
-      alert("Error uploading image");
+      toast.error("Error uploading image");
     } finally {
       setIsUploading(false);
       setCropImageSrc(null);
@@ -108,7 +113,7 @@ export default function ProfilePage() {
 
   const handleSocialChange = (index: number, field: string, value: string) => {
     const updated = [...socials];
-    updated[index] = { ...updated[index], [field]: value };
+    (updated[index] as any)[field] = value;
     setSocials(updated);
   };
 
@@ -120,17 +125,16 @@ export default function ProfilePage() {
     setSocials(socials.filter((_, i) => i !== index));
   };
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     try {
       await updateProfile({
         name: name.trim(),
         tagline: tagline.trim(),
-        location: location.trim(),
         bio: bio.trim(),
-        status: status as any,
         avatar: avatar.trim(),
+        location: location.trim(),
         borderStyle: borderStyle,
         skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
         socials: socials.filter((s) => s.handle.trim() !== ""),
@@ -138,10 +142,10 @@ export default function ProfilePage() {
         mbti: mbti,
         zodiac: zodiac,
       });
-      alert("Profile configurations updated successfully!");
+      toast.success("Profile configurations updated successfully!");
     } catch (err) {
       console.error("Failed to save profile:", err);
-      alert("Failed to update profile settings.");
+      toast.error("Failed to update profile settings.");
     } finally {
       setIsSaving(false);
     }
@@ -215,18 +219,33 @@ export default function ProfilePage() {
               </p>
               <button
                 type="button"
-                onClick={async () => {
-                  if (confirm("Are you sure you want to log out?")) {
-                    try {
-                      const { createClient } = await import("@/utils/supabase/client");
-                      const supabase = createClient();
-                      await supabase.auth.signOut();
-                    } catch (err) {
-                      console.error(err);
-                    }
-                    localStorage.removeItem("supabase.auth.token");
-                    router.push("/login");
-                  }
+                onClick={() => {
+                  confirm({
+                    title: "Account Logout",
+                    message: "Are you sure you want to sign out of Nexus Xenon?",
+                    confirmText: "Log Out",
+                    cancelText: "Stay Signed In",
+                    variant: "warning",
+                    actionType: "logout",
+                    itemPreview: {
+                      title: "Personal Dashboard Session",
+                      subtitle: profile.name ? `User: ${profile.name}` : "Nexus Xenon Command Center",
+                      imageUrl: avatar,
+                      icon: "🚪",
+                    },
+                    successToast: "✓ Logged out successfully.",
+                    onConfirm: async () => {
+                      try {
+                        const { createClient } = await import("@/utils/supabase/client");
+                        const supabase = createClient();
+                        await supabase.auth.signOut();
+                      } catch (err) {
+                        console.error(err);
+                      }
+                      localStorage.removeItem("supabase.auth.token");
+                      router.push("/login");
+                    },
+                  });
                 }}
                 className="w-full py-3 px-4 text-xs font-black rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
                 style={{
@@ -244,7 +263,7 @@ export default function ProfilePage() {
 
         {/* Right Side: Configuration Form */}
         <div className="xl:col-span-3">
-          <form onSubmit={handleSave} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             
             {/* 1. Core Profile Details Card */}
             <div
@@ -553,11 +572,24 @@ export default function ProfilePage() {
                     {Array.from(new Set(profileHistory.filter(h => h.assetType === "avatar").map(h => h.url))).map((url, i) => (
                       <div
                         key={i}
-                        onClick={async () => {
-                          if (confirm("Restore this past profile picture?")) {
-                            setAvatar(url);
-                            await updateProfile({ ...profile, avatar: url });
-                          }
+                        onClick={() => {
+                          confirm({
+                            title: "Restore Profile Picture",
+                            message: "Do you want to set this past avatar image as your active profile picture?",
+                            confirmText: "Restore Picture",
+                            variant: "info",
+                            actionType: "restore",
+                            itemPreview: {
+                              title: "Past Profile Picture",
+                              imageUrl: url,
+                              icon: "🖼️",
+                            },
+                            successToast: "✓ Profile picture restored!",
+                            onConfirm: async () => {
+                              setAvatar(url);
+                              await updateProfile({ ...profile, avatar: url });
+                            },
+                          });
                         }}
                         className="w-14 h-14 rounded-lg overflow-hidden border-2 cursor-pointer transition-all hover:scale-[1.08] active:scale-95 relative group"
                         style={{ borderColor: avatar === url ? (isCyber ? "#00F5FF" : "#FF6B35") : "transparent" }}

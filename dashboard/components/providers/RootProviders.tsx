@@ -7,6 +7,8 @@ import { SplashGuard } from "@/components/ui/SplashGuard";
 import { ThemeProvider } from "@/lib/theme";
 import { useRealtimeSync } from "@/lib/hooks/useRealtimeSync";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { ConfirmProvider } from "@/lib/context/ConfirmContext";
+import { GlobalConfirmModal } from "@/components/ui/GlobalConfirmModal";
 
 // Public routes that don't need the splash auth guard
 const PUBLIC_PATHS = ["/login", "/signup", "/auth"];
@@ -53,18 +55,21 @@ function AuthGateInner({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ─── Root provider: composes toast + auth + theme + splash ────────────────────
+// ─── Root provider: composes toast + confirm + auth + theme + splash ────────────────────
 
 export function RootProviders({ children }: { children: React.ReactNode }) {
   return (
     <ToastProvider>
-      <AuthProvider>
-        <ThemeProvider>
-          <AuthGateInner>
-            {children}
-          </AuthGateInner>
-        </ThemeProvider>
-      </AuthProvider>
+      <ConfirmProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <AuthGateInner>
+              {children}
+              <GlobalConfirmModal />
+            </AuthGateInner>
+          </ThemeProvider>
+        </AuthProvider>
+      </ConfirmProvider>
     </ToastProvider>
   );
 }

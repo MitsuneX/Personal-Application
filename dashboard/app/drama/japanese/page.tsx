@@ -11,6 +11,7 @@ import { ManualDramaModal } from "@/components/ui/ManualDramaModal";
 import { MediaCard } from "@/components/cards/MediaCard";
 import { FloatingFAB } from "@/components/ui/FloatingFAB";
 import { useSearchParams } from "next/navigation";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 // ── Japanese Palette (banner only) ───────────────────────────────────────────
 const JP = {
@@ -46,6 +47,7 @@ function JapaneseDramaPageContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { dramas: allDramas, dramaLog, deleteDramaLog, removeDrama, updateDrama, updateDramaLog, hallOfFame } = useDashboardStore();
+  const { confirm } = useConfirm();
 
   const [filterType, setFilterType] = useState<"all"|"actual"|"ultraman"|"kamen-rider"|"power-rangers"|"tokusatsu">("all");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -127,14 +129,29 @@ function JapaneseDramaPageContent() {
 
   const handleDelete = useCallback((id: string) => {
     const drama = allMerged.find(d => d.id === id);
-    if (drama && confirm(`Remove "${drama.title}" from watchlist?`)) {
-      if (drama.isEditable) {
-        removeDrama(id);
-      } else {
-        deleteDramaLog(id);
-      }
-    }
-  }, [allMerged, removeDrama, deleteDramaLog]);
+    if (!drama) return;
+    confirm({
+      title: "Remove Japanese Drama",
+      message: `Are you sure you want to remove "${drama.title}" from your watchlist?`,
+      confirmText: "Remove Drama",
+      variant: "danger",
+      itemPreview: {
+        title: drama.title,
+        subtitle: `Japanese Drama · ${drama.status || "Watchlist"}`,
+        imageUrl: (drama as any).posterUrl || (drama as any).coverUrl,
+        icon: "🌸",
+        category: drama.status,
+      },
+      successToast: `✓ "${drama.title}" removed from watchlist.`,
+      onConfirm: async () => {
+        if (drama.isEditable) {
+          await removeDrama(id);
+        } else {
+          await deleteDramaLog(id);
+        }
+      },
+    });
+  }, [allMerged, confirm, deleteDramaLog, removeDrama]);
 
   const searchParams = useSearchParams();
 

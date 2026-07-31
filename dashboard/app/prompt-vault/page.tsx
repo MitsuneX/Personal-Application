@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 const TARGET_AI_OPTIONS = [
   "ChatGPT",
@@ -33,6 +34,7 @@ export default function PromptVaultPage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { savedPrompts, addSavedPrompt, deleteSavedPrompt } = useDashboardStore();
+  const { confirm } = useConfirm();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -201,9 +203,23 @@ export default function PromptVaultPage() {
                     </button>
                     <button
                       onClick={() => {
-                        if (confirm(`Delete prompt "${prompt.title}"?`)) {
-                          deleteSavedPrompt(prompt.id);
-                        }
+                        confirm({
+                          title: "Delete AI Prompt",
+                          message: `Are you sure you want to delete prompt "${prompt.title}"?`,
+                          confirmText: "Delete Prompt",
+                          variant: "danger",
+                          itemPreview: {
+                            title: prompt.title,
+                            subtitle: `Target AI: ${prompt.targetAI || "General"}`,
+                            description: prompt.promptText,
+                            icon: "📝",
+                            category: prompt.targetAI,
+                          },
+                          successToast: `✓ Prompt "${prompt.title}" deleted.`,
+                          onConfirm: async () => {
+                            await deleteSavedPrompt(prompt.id);
+                          },
+                        });
                       }}
                       className="opacity-30 hover:opacity-100 hover:text-red-500 transition-all p-0.5 rounded"
                       title="Delete Prompt"

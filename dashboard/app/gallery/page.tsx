@@ -6,6 +6,7 @@ import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
 import { ImageCropModal } from "@/components/ui/ImageCropModal";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 interface FolderTreeNode {
@@ -19,6 +20,7 @@ export default function GalleryPage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { gallery, addGalleryItem, deleteGalleryItem } = useDashboardStore();
+  const { confirm } = useConfirm();
 
   // Navigation & Filtering state
   const [selectedFolder, setSelectedFolder] = useState<string>("All Folders");
@@ -276,11 +278,26 @@ export default function GalleryPage() {
     }
   };
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm("Remove this image from your gallery?")) {
-      await deleteGalleryItem(id);
-    }
+    const item = gallery.find((g) => g.id === id);
+    confirm({
+      title: "Remove Gallery Image",
+      message: `Are you sure you want to remove image "${item?.title || "Gallery Image"}"?`,
+      confirmText: "Remove Image",
+      variant: "danger",
+      itemPreview: {
+        title: item?.title || "Gallery Image",
+        subtitle: `${item?.category || "General"} · ${item?.folder || "Default Folder"}`,
+        imageUrl: item?.url,
+        icon: "🖼️",
+        category: item?.category,
+      },
+      successToast: `✓ Gallery image "${item?.title || "Image"}" removed.`,
+      onConfirm: async () => {
+        await deleteGalleryItem(id);
+      },
+    });
   };
 
   const [dragActive, setDragActive] = useState(false);

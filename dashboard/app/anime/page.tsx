@@ -13,6 +13,7 @@ import { MediaCard } from "@/components/cards/MediaCard";
 import { FloatingFAB } from "@/components/ui/FloatingFAB";
 import { useSearchParams } from "next/navigation";
 import { Modal } from "@/components/ui/modal";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 const STATUS_TABS = [
   { id: "all",             label: "All",          icon: "◈" },
@@ -34,6 +35,7 @@ function AnimePageContent() {
     deleteFavoriteCharacter,
     toggleFavoriteCharacter
   } = useDashboardStore();
+  const { confirm } = useConfirm();
 
   const [activeTab, setActiveTab] = useState("all");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -73,10 +75,25 @@ function AnimePageContent() {
 
   const handleDelete = useCallback((id: string) => {
     const anime = animeList.find(a => a.id === id);
-    if (anime && confirm(`Remove "${anime.title}" from watchlist?`)) {
-      removeAnime(id);
-    }
-  }, [animeList, removeAnime]);
+    if (!anime) return;
+    confirm({
+      title: "Remove Anime Entry",
+      message: `Are you sure you want to remove "${anime.title}" from your watchlist?`,
+      confirmText: "Remove Anime",
+      variant: "danger",
+      itemPreview: {
+        title: anime.title,
+        subtitle: `${anime.status || "Watchlist"} · ${anime.genre || "Anime"}`,
+        imageUrl: (anime as any).posterUrl || (anime as any).coverUrl,
+        icon: "🎬",
+        category: anime.status,
+      },
+      successToast: `✓ "${anime.title}" removed from watchlist.`,
+      onConfirm: async () => {
+        await removeAnime(id);
+      },
+    });
+  }, [animeList, confirm, removeAnime]);
 
   const searchParams = useSearchParams();
   const targetId = searchParams?.get("id");
@@ -270,9 +287,21 @@ function AnimePageContent() {
                       </button>
                       <button
                         onClick={() => {
-                          if (confirm(`Delete "${c.name}"?`)) {
-                            deleteFavoriteCharacter(c.id);
-                          }
+                          confirm({
+                            title: "Delete Favorite Character",
+                            message: `Are you sure you want to remove "${c.name}" from favorite characters?`,
+                            confirmText: "Delete Character",
+                            variant: "danger",
+                            itemPreview: {
+                              title: c.name,
+                              subtitle: `Anime: ${c.anime}`,
+                              icon: "⭐",
+                            },
+                            successToast: `✓ Character "${c.name}" deleted.`,
+                            onConfirm: async () => {
+                              await deleteFavoriteCharacter(c.id);
+                            },
+                          });
                         }}
                         className="p-1 text-[10px] bg-red-500 text-white rounded hover:bg-red-600 cursor-pointer"
                         title="Delete Character"

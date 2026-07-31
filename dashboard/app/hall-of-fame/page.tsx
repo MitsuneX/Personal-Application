@@ -9,6 +9,7 @@ import { HofEntryCard, getGroupForEntry, getGroupDetails, getTrend } from "@/com
 import type { HallOfFameEntry } from "@/lib/store/dashboardStore";
 import { useRouter } from "next/navigation";
 import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 type RankingTab = 
   | "overall" | "korean" | "japanese" | "chinese" | "indonesia" | "hollywood" // Group 1: Dramas
@@ -20,6 +21,7 @@ export default function HallOfFamePage() {
   const isCyber = theme === "cyber";
   const { hallOfFame, deleteHof, likeHof } = useDashboardStore();
   const router = useRouter();
+  const { confirm } = useConfirm();
   
   const [subTab, setSubTab] = useState<RankingTab>("overall");
   const [editorOpen, setEditorOpen] = useState(false);
@@ -34,11 +36,27 @@ export default function HallOfFamePage() {
     setEditorOpen(true);
   }, []);
 
-  const handleDelete = useCallback(async (id: string, name: string) => {
-    if (confirm(`Remove "${name}" from the database?`)) {
-      await deleteHof(id);
-    }
-  }, [deleteHof]);
+  const handleDelete = useCallback((id: string, name: string) => {
+    const entry = hallOfFame.find((h) => h.id === id);
+    confirm({
+      title: "Remove Hall of Fame Entry",
+      message: `Are you sure you want to remove "${name}" from Hall of Fame?`,
+      confirmText: "Remove Entry",
+      variant: "danger",
+      itemPreview: {
+        title: name,
+        subtitle: `${entry?.type || "Media"} · ${entry?.nationality || "Global"}`,
+        description: Array.isArray(entry?.knownFor) ? entry.knownFor.join(", ") : entry?.knownFor,
+        imageUrl: entry?.imageUrl,
+        icon: "👑",
+        category: entry?.type,
+      },
+      successToast: `✓ "${name}" removed from Hall of Fame.`,
+      onConfirm: async () => {
+        await deleteHof(id);
+      },
+    });
+  }, [confirm, deleteHof, hallOfFame]);
 
   const handleInteractionTap = useCallback((e: React.MouseEvent | React.TouchEvent, id: string) => {
     const now = Date.now();

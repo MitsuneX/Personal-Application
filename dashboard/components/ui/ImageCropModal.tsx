@@ -5,6 +5,7 @@ import Cropper from "react-easy-crop";
 import getCroppedImg from "@/utils/cropImage";
 import { Modal } from "@/components/ui/modal";
 import { useTheme } from "@/lib/theme";
+import { useToast } from "@/components/ui/ToastProvider";
 
 interface ImageCropModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export function ImageCropModal({
 }: ImageCropModalProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
+  const { error: toastError } = useToast();
 
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -45,7 +47,7 @@ export function ImageCropModal({
       }
     } catch (e) {
       console.error("Cropping error:", e);
-      alert("Failed to crop image.");
+      toastError("Failed to crop image.");
     } finally {
       setIsProcessing(false);
     }

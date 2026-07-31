@@ -8,6 +8,8 @@ import type { GameEntry, GameCategory } from "@/lib/store/dashboardStore";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 
 import { resolveGameIcon } from "@/lib/data/gameIcons";
+import { useConfirm } from "@/lib/context/ConfirmContext";
+import { useToast } from "@/components/ui/ToastProvider";
 
 interface GameEditorModalProps {
   isOpen: boolean;
@@ -37,6 +39,8 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { addGame, updateGame, removeGame } = useDashboardStore();
+  const { confirm } = useConfirm();
+  const { warning: toastWarning } = useToast();
 
   // Form states
   const [game, setGame] = useState("");
@@ -91,7 +95,7 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.match(/^image\/(png|jpeg|jpg|webp)$/i)) {
-      alert("Please select a valid image file (PNG, JPG, JPEG, or WEBP).");
+      toastWarning("Please select a valid image file (PNG, JPG, JPEG, or WEBP).");
       return;
     }
     const reader = new FileReader();
@@ -107,7 +111,7 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.match(/^image\/(png|jpeg|jpg|webp)$/i)) {
-      alert("Please select a valid image file (PNG, JPG, JPEG, or WEBP).");
+      toastWarning("Please select a valid image file (PNG, JPG, JPEG, or WEBP).");
       return;
     }
     const reader = new FileReader();
@@ -167,19 +171,33 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!gameToEdit) return;
-    if (!confirm("Are you sure you want to delete this title?")) return;
-
-    setIsDeleting(true);
-    try {
-      await removeGame(gameToEdit.id);
-      onClose();
-    } catch (err) {
-      console.error("Failed to delete game:", err);
-    } finally {
-      setIsDeleting(false);
-    }
+    const resolvedIcon = resolveGameIcon(gameToEdit.game, gameToEdit.icon);
+    confirm({
+      title: "Delete Game Database Entry",
+      message: `Are you sure you want to delete "${gameToEdit.game}" from your library?`,
+      confirmText: "Delete Game",
+      variant: "danger",
+      itemPreview: {
+        title: gameToEdit.game,
+        subtitle: `${gameToEdit.platform} · ${gameToEdit.category}`,
+        description: gameToEdit.rank ? `Rank: ${gameToEdit.rank}` : undefined,
+        imageUrl: gameToEdit.screenshot || ((resolvedIcon as any).isImage ? (resolvedIcon as any).value : undefined),
+        icon: (resolvedIcon as any).isEmoji ? (resolvedIcon as any).value : "🎮",
+        category: gameToEdit.category,
+      },
+      successToast: `✓ Game "${gameToEdit.game}" removed from database.`,
+      onConfirm: async () => {
+        setIsDeleting(true);
+        try {
+          await removeGame(gameToEdit.id);
+          onClose();
+        } finally {
+          setIsDeleting(false);
+        }
+      },
+    });
   };
 
   const inputStyles = {

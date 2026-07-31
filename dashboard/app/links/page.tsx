@@ -7,11 +7,13 @@ import { BentoCard } from "@/components/cards/BentoCard";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore, type LinkEntry } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 export default function LinksPage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { links, saveLink, deleteLink } = useDashboardStore();
+  const { confirm } = useConfirm();
 
   // Form states
   const [isOpen, setIsOpen] = useState(false);
@@ -239,7 +241,22 @@ export default function LinksPage() {
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
-                        if (confirm(`Delete "${link.title}" bookmark?`)) deleteLink(link.id);
+                        confirm({
+                          title: "Delete Bookmark Link",
+                          message: `Are you sure you want to delete bookmark "${link.title}"?`,
+                          confirmText: "Delete Bookmark",
+                          variant: "danger",
+                          itemPreview: {
+                            title: link.title,
+                            subtitle: link.url,
+                            icon: "🔗",
+                            category: link.category,
+                          },
+                          successToast: `✓ Bookmark "${link.title}" deleted.`,
+                          onConfirm: async () => {
+                            await deleteLink(link.id);
+                          },
+                        });
                       }}
                       className="p-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
                       title="Delete Bookmark"

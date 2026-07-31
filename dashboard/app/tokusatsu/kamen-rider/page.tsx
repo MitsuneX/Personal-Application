@@ -11,6 +11,7 @@ import { HofEntryCard, getGroupForEntry, getGroupDetails } from "@/components/ca
 import { CharacterVotePanel } from "@/components/ui/CharacterVotePanel";
 import type { HallOfFameEntry } from "@/lib/store/dashboardStore";
 import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 // Define a strict type for the theme object so TypeScript compilation passes
 interface ThemeStyles {
@@ -42,6 +43,7 @@ export default function KamenRiderPage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { hallOfFame, deleteHof } = useDashboardStore();
+  const { confirm } = useConfirm();
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<HallOfFameEntry | null>(null);
@@ -58,11 +60,27 @@ export default function KamenRiderPage() {
     setEditorOpen(true);
   }, []);
 
-  const handleDelete = useCallback(async (id: string, name: string) => {
-    if (confirm(`Remove "${name}" from Kamen Rider roster?`)) {
-      await deleteHof(id);
-    }
-  }, [deleteHof]);
+  const handleDelete = useCallback((id: string, name: string) => {
+    const entry = hallOfFame.find((h) => h.id === id);
+    confirm({
+      title: "Remove Kamen Rider Hero",
+      message: `Are you sure you want to remove "${name}" from Kamen Rider roster?`,
+      confirmText: "Remove Rider",
+      variant: "danger",
+      itemPreview: {
+        title: name,
+        subtitle: `Kamen Rider · ${entry?.nationality || "Global"}`,
+        description: Array.isArray(entry?.knownFor) ? entry.knownFor.join(", ") : entry?.knownFor,
+        imageUrl: entry?.imageUrl,
+        icon: "🏍️",
+        category: "Kamen Rider",
+      },
+      successToast: `✓ "${name}" removed from Kamen Rider roster.`,
+      onConfirm: async () => {
+        await deleteHof(id);
+      },
+    });
+  }, [confirm, deleteHof, hallOfFame]);
 
   const handleDoubleTap = (e: React.MouseEvent | React.TouchEvent, id: string) => {
     let clientX = 0, clientY = 0;

@@ -11,6 +11,7 @@ import { ManualDramaModal } from "@/components/ui/ManualDramaModal";
 import { MediaCard } from "@/components/cards/MediaCard";
 import { FloatingFAB } from "@/components/ui/FloatingFAB";
 import { useSearchParams } from "next/navigation";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 const KR = {
   brutal: { text: "#003366", accent: "#2EC4B6", accent2: "#E84855" },
@@ -21,6 +22,7 @@ function KoreanDramaPageContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { dramas: allDramas, dramaLog, deleteDramaLog, removeDrama, updateDrama, updateDramaLog } = useDashboardStore();
+  const { confirm } = useConfirm();
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
@@ -79,14 +81,29 @@ function KoreanDramaPageContent() {
 
   const handleDelete = useCallback((id: string) => {
     const drama = allMerged.find(d => d.id === id);
-    if (drama && confirm(`Remove "${drama.title}" from watchlist?`)) {
-      if (drama.isEditable) {
-        removeDrama(id);
-      } else {
-        deleteDramaLog(id);
-      }
-    }
-  }, [allMerged, removeDrama, deleteDramaLog]);
+    if (!drama) return;
+    confirm({
+      title: "Remove K-Drama Entry",
+      message: `Are you sure you want to remove "${drama.title}" from your watchlist?`,
+      confirmText: "Remove K-Drama",
+      variant: "danger",
+      itemPreview: {
+        title: drama.title,
+        subtitle: `Korean Drama · ${drama.status || "Watchlist"}`,
+        imageUrl: (drama as any).posterUrl || (drama as any).coverUrl,
+        icon: "🇰🇷",
+        category: drama.status,
+      },
+      successToast: `✓ "${drama.title}" removed from watchlist.`,
+      onConfirm: async () => {
+        if (drama.isEditable) {
+          await removeDrama(id);
+        } else {
+          await deleteDramaLog(id);
+        }
+      },
+    });
+  }, [allMerged, confirm, deleteDramaLog, removeDrama]);
 
   const searchParams = useSearchParams();
   const targetId = searchParams?.get("id");

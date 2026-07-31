@@ -30,6 +30,10 @@ interface ToastContextValue {
   toasts: Toast[];
   toast: (opts: Omit<Toast, "id">) => void;
   dismiss: (id: string) => void;
+  success: (message: string, title?: string) => void;
+  error: (message: string, title?: string) => void;
+  info: (message: string, title?: string) => void;
+  warning: (message: string, title?: string) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -61,8 +65,24 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "REMOVE", id });
   }, []);
 
+  const success = useCallback((message: string, title = "Success") => {
+    toast({ type: "success", title, message });
+  }, [toast]);
+
+  const error = useCallback((message: string, title = "Error") => {
+    toast({ type: "error", title, message });
+  }, [toast]);
+
+  const info = useCallback((message: string, title = "Info") => {
+    toast({ type: "info", title, message });
+  }, [toast]);
+
+  const warning = useCallback((message: string, title = "Warning") => {
+    toast({ type: "warning", title, message });
+  }, [toast]);
+
   return (
-    <ToastContext.Provider value={{ toasts: state.toasts, toast, dismiss }}>
+    <ToastContext.Provider value={{ toasts: state.toasts, toast, dismiss, success, error, info, warning }}>
       {children}
       <ToastViewport toasts={state.toasts} dismiss={dismiss} />
     </ToastContext.Provider>

@@ -8,6 +8,7 @@ import { Modal } from "@/components/ui/modal";
 import { analyzeGameScreenshot, ExtractedDossierResult } from "@/lib/data/gameScannerEngine";
 import { getGameDossierConfig } from "@/lib/data/gameDossierConfig";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { useToast } from "@/components/ui/ToastProvider";
 
 interface GameScannerModalProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export function GameScannerModal({
   const isCyber = theme === "cyber";
 
   const { dossierCharacters, addDossierCharacter, updateDossierCharacter } = useDashboardStore();
+  const { warning: toastWarning } = useToast();
   const config = getGameDossierConfig(gameTitle, gameCategory);
 
   // Scanner Steps: "upload" | "scanning" | "review"
@@ -71,7 +73,7 @@ export function GameScannerModal({
     if (!file) return;
 
     if (!file.type.match(/^image\/(png|jpeg|jpg|webp)$/i)) {
-      alert("Unsupported file type. Please upload a PNG, JPG, JPEG, or WEBP screenshot.");
+      toastWarning("Unsupported file type. Please upload a PNG, JPG, JPEG, or WEBP screenshot.");
       return;
     }
 

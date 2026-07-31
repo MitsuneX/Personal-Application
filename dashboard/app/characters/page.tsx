@@ -10,6 +10,7 @@ import { HofEntryCard, getGroupForEntry, getGroupDetails } from "@/components/ca
 import type { HallOfFameEntry } from "@/lib/store/dashboardStore";
 import { useSearchParams } from "next/navigation";
 import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
+import { useConfirm } from "@/lib/context/ConfirmContext";
  
 const TYPE_FILTERS = [
   { id: "all", label: "All Types" },
@@ -36,6 +37,7 @@ function CharactersContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { hallOfFame = [], deleteHof, likeHof } = useDashboardStore(); // Guard against undefined store
+  const { confirm } = useConfirm();
   const searchParams = useSearchParams();
  
   const [searchQuery, setSearchQuery] = useState("");
@@ -76,11 +78,27 @@ function CharactersContent() {
     setEditorOpen(true);
   }, []);
  
-  const handleDelete = useCallback(async (id: string, name: string) => {
-    if (confirm(`Remove "${name}" from the database?`)) {
-      await deleteHof(id);
-    }
-  }, [deleteHof]);
+  const handleDelete = useCallback((id: string, name: string) => {
+    const entry = hallOfFame.find((h) => h.id === id);
+    confirm({
+      title: "Remove Roster Database Entry",
+      message: `Are you sure you want to remove "${name}" from your roster database?`,
+      confirmText: "Remove Entry",
+      variant: "danger",
+      itemPreview: {
+        title: name,
+        subtitle: `${entry?.type || "Character"} · ${entry?.nationality || "Global"}`,
+        description: Array.isArray(entry?.knownFor) ? entry.knownFor.join(", ") : entry?.knownFor,
+        imageUrl: entry?.imageUrl,
+        icon: "🌟",
+        category: entry?.type,
+      },
+      successToast: `✓ "${name}" removed from database.`,
+      onConfirm: async () => {
+        await deleteHof(id);
+      },
+    });
+  }, [confirm, deleteHof, hallOfFame]);
  
   const handleDoubleTap = (e: React.MouseEvent | React.TouchEvent, id: string) => {
     let clientX = 0, clientY = 0;

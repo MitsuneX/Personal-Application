@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/modal";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore, AiToolItemEntry, AiPricingModel, AiUsageStatus } from "@/lib/store/dashboardStore";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 interface AiToolEditorModalProps {
   isOpen: boolean;
@@ -72,6 +73,7 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { addAiTool, updateAiTool, removeAiTool } = useDashboardStore();
+  const { confirm } = useConfirm();
 
   const [name, setName] = useState("");
   const [company, setCompany] = useState("");
@@ -292,19 +294,32 @@ export function AiToolEditorModal({ isOpen, onClose, toolToEdit }: AiToolEditorM
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!toolToEdit) return;
-    if (!confirm(`Delete AI platform "${toolToEdit.name}" permanently?`)) return;
-
-    setIsDeleting(true);
-    try {
-      await removeAiTool(toolToEdit.id);
-      onClose();
-    } catch (err) {
-      console.error("Failed to delete AI tool:", err);
-    } finally {
-      setIsDeleting(false);
-    }
+    confirm({
+      title: "Delete AI Platform Entry",
+      message: `Are you sure you want to remove "${toolToEdit.name}" from your AI Library?`,
+      confirmText: "Delete Platform",
+      variant: "danger",
+      itemPreview: {
+        title: toolToEdit.name,
+        subtitle: `${toolToEdit.company || "Independent"} · ${toolToEdit.category}`,
+        description: toolToEdit.description,
+        icon: toolToEdit.logo || "🤖",
+        imageUrl: toolToEdit.logo && toolToEdit.logo.startsWith("http") ? toolToEdit.logo : undefined,
+        category: toolToEdit.usageStatus || "Daily",
+      },
+      successToast: `✓ AI Platform "${toolToEdit.name}" removed from AI Library.`,
+      onConfirm: async () => {
+        setIsDeleting(true);
+        try {
+          await removeAiTool(toolToEdit.id);
+          onClose();
+        } finally {
+          setIsDeleting(false);
+        }
+      },
+    });
   };
 
   const inputStyles = {

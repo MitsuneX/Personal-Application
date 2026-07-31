@@ -11,6 +11,7 @@ import { ManualDramaModal } from "@/components/ui/ManualDramaModal";
 import { MediaCard } from "@/components/cards/MediaCard";
 import { FloatingFAB } from "@/components/ui/FloatingFAB";
 import { useSearchParams } from "next/navigation";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 const ID_THEME = {
   brutal: { text: "#1F2937", accent: "#E60000", accent2: "#FFFFFF", border: "#000000" },
@@ -38,6 +39,7 @@ function IndonesianDramaContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { dramas: allDramas, dramaLog, deleteDramaLog, removeDrama, updateDrama, updateDramaLog } = useDashboardStore();
+  const { confirm } = useConfirm();
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
@@ -187,14 +189,28 @@ function IndonesianDramaContent() {
                       updateDramaLog(item.id, { episodesWatched: newEp });
                     }
                   }}
-                  onDelete={async () => {
-                    if (confirm(`Delete "${item.title}"?`)) {
-                      if (item.isEditable) {
-                        await removeDrama(item.id);
-                      } else {
-                        await deleteDramaLog(item.id);
-                      }
-                    }
+                  onDelete={() => {
+                    confirm({
+                      title: "Remove Indonesian Drama",
+                      message: `Are you sure you want to remove "${item.title}" from your watchlist?`,
+                      confirmText: "Remove Drama",
+                      variant: "danger",
+                      itemPreview: {
+                        title: item.title,
+                        subtitle: `Indonesian Drama · ${item.status || "Watchlist"}`,
+                        imageUrl: item.posterUrl,
+                        icon: "🇮🇩",
+                        category: item.status,
+                      },
+                      successToast: `✓ "${item.title}" removed from watchlist.`,
+                      onConfirm: async () => {
+                        if (item.isEditable) {
+                          await removeDrama(item.id);
+                        } else {
+                          await deleteDramaLog(item.id);
+                        }
+                      },
+                    });
                   }}
                 />
               </motion.div>

@@ -1,0 +1,76 @@
+{
+  "packageId": "com.nexusxenon.app",
+  "host": "dairyxenon.vercel.app",
+  "name": "Nexus Xenon",
+  "launcherName": "Nexus Xenon",
+  "display": "standalone",
+  "themeColor": "#FF6B35",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#FFF5E4",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://dairyxenon.vercel.app/icons/icon-512.png",
+  "maskableIconUrl": "https://dairyxenon.vercel.app/icons/icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "C:\\Coding\\scripts\\Full Stack Personal Applications\\nexus-xenon-android\\android.keystore",
+    "alias": "nexus-xenon"
+  },
+  "appVersionName": "1",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "Anime Vault",
+      "shortName": "Anime",
+      "url": "https://dairyxenon.vercel.app/anime",
+      "chosenIconUrl": "https://dairyxenon.vercel.app/icons/icon-192.png"
+    },
+    {
+      "name": "Drama Vault",
+      "shortName": "Drama",
+      "url": "https://dairyxenon.vercel.app/drama",
+      "chosenIconUrl": "https://dairyxenon.vercel.app/icons/icon-192.png"
+    },
+    {
+      "name": "Music",
+      "shortName": "Music",
+      "url": "https://dairyxenon.vercel.app/music",
+      "chosenIconUrl": "https://dairyxenon.vercel.app/icons/icon-192.png"
+    },
+    {
+      "name": "Hall of Fame",
+      "shortName": "HOF",
+      "url": "https://dairyxenon.vercel.app/hall-of-fame",
+      "chosenIconUrl": "https://dairyxenon.vercel.app/icons/icon-192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://dairyxenon.vercel.app/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://dairyxenon.vercel.app/",
+  "minSdkVersion": 21,
+  "orientation": "any",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "appVersion": "1"
+}

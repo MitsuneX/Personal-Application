@@ -11,6 +11,7 @@ import { Modal } from "@/components/ui/modal";
 import { ImageCropModal } from "@/components/ui/ImageCropModal";
 import { GeniusArtistModal } from "@/components/ui/GeniusArtistModal";
 import { FloatingFAB } from "@/components/ui/FloatingFAB";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const MUSIC_TABS = [
   { id: "all", label: "All Tracks", icon: "◈" },
@@ -38,6 +39,7 @@ export default function MusicPage() {
     playTrack,
     togglePlay,
   } = useDashboardStore();
+  const toast = useToast();
 
   const [activeTab, setActiveTab] = useState("all");
   const [editorOpen, setEditorOpen] = useState(false);
@@ -89,11 +91,11 @@ export default function MusicPage() {
       } else if (song.youtubeId) {
         window.open(`https://www.youtube.com/watch?v=${song.youtubeId}`, "_blank");
       } else {
-        alert("Audio source URL not available for download.");
+        toast.warning("Audio source URL not available for download.");
       }
     } catch (err) {
       console.error("Download error:", err);
-      alert("Error downloading audio file.");
+      toast.error("Error downloading audio file.");
     }
   };
 
@@ -121,22 +123,25 @@ export default function MusicPage() {
         console.error("Cache error:", err);
       }
     }
-    alert(`Saved "${song.title}" to Vault & Offline Cache!`);
+    toast.success(`Saved "${song.title}" to Vault & Offline Cache!`);
   };
 
   // YouTube search handler
   const handleYouTubeSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
+
     setIsSearching(true);
+    setSearchResults([]);
     try {
-      const res = await fetch(`/api/music/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      const res = await fetch(`/api/search/youtube?q=${encodeURIComponent(searchQuery)}`);
       const data = await res.json();
-      if (data.results) {
-        setSearchResults(data.results);
+      if (Array.isArray(data.items)) {
+        setSearchResults(data.items);
       }
     } catch (err) {
-      console.error(err);
+      console.error("YouTube search error:", err);
+      toast.error("Failed to search YouTube.");
     } finally {
       setIsSearching(false);
     }
@@ -146,11 +151,13 @@ export default function MusicPage() {
     e.preventDefault();
     if (!newPlaylistName.trim()) return;
     const newPl: PlaylistEntry = {
-      id: "pl-" + Math.random().toString(36).substr(2, 9),
+      id: "playlist-" + Date.now(),
       name: newPlaylistName.trim(),
       songs: [],
+      createdAt: new Date().toISOString(),
     };
     await savePlaylist(newPl);
+    toast.success(`Playlist "${newPlaylistName}" created.`);
     setNewPlaylistName("");
     setPlaylistModalOpen(false);
   };
@@ -159,7 +166,7 @@ export default function MusicPage() {
     const existingSongs = playlist.songs || [];
     const updatedSongs = [...existingSongs, song];
     await savePlaylist({ ...playlist, songs: updatedSongs });
-    alert(`Added "${song.title}" to ${playlist.name}`);
+    toast.success(`Added "${song.title}" to ${playlist.name}`);
   };
 
   const filteredSongs = activeTab === "all"
@@ -603,6 +610,7 @@ interface SongEditorModalProps {
 }
 
 function SongEditorModal({ isOpen, onClose, songToEdit, isCyber, saveSong }: SongEditorModalProps) {
+  const toast = useToast();
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
   const [album, setAlbum] = useState("");
@@ -658,12 +666,12 @@ function SongEditorModal({ isOpen, onClose, songToEdit, isCyber, saveSong }: Son
       const data = await res.json();
       if (data.url) {
         setAudioUrl(data.url);
-        alert("Audio file uploaded successfully!");
+        toast.success("Audio file uploaded successfully!");
       } else {
-        alert("Audio upload failed: " + (data.error || "Unknown"));
+        toast.error("Audio upload failed: " + (data.error || "Unknown"));
       }
     } catch {
-      alert("Error uploading audio file");
+      toast.error("Error uploading audio file");
     } finally {
       setIsAudioUploading(false);
     }
@@ -693,10 +701,10 @@ function SongEditorModal({ isOpen, onClose, songToEdit, isCyber, saveSong }: Son
         setImageUrl(data.url);
         setImgError(false);
       } else {
-        alert("Upload failed: " + (data.error || "Unknown"));
+        toast.error("Upload failed: " + (data.error || "Unknown"));
       }
     } catch {
-      alert("Error uploading cover image");
+      toast.error("Error uploading cover image");
     } finally {
       setIsUploading(false);
       setCropImageSrc(null);
@@ -720,10 +728,11 @@ function SongEditorModal({ isOpen, onClose, songToEdit, isCyber, saveSong }: Son
         imageUrl: imageUrl.trim() || undefined,
         audioUrl: audioUrl.trim() || undefined,
       });
+      toast.success(`Track "${title.trim()}" saved.`);
       onClose();
     } catch (err) {
       console.error(err);
-      alert("Failed to save track settings");
+      toast.error("Failed to save track settings");
     } finally {
       setIsSaving(false);
     }
@@ -861,6 +870,7 @@ function OnlineMusicSearchModal({
   playTrack,
   saveSong,
 }: OnlineMusicSearchModalProps) {
+  const toast = useToast();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -970,7 +980,7 @@ function OnlineMusicSearchModal({
                           imageUrl: item.imageUrl,
                           youtubeId: item.youtubeId,
                         });
-                        alert(`Saved "${item.title}" to Music Vault!`);
+                        toast.success(`Saved "${item.title}" to Music Vault!`);
                       }}
                       className="px-2.5 py-1 text-[10px] font-black rounded border border-white/20 hover:bg-white/10 cursor-pointer"
                     >

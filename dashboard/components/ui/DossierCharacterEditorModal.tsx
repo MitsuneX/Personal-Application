@@ -6,6 +6,7 @@ import { useDashboardStore, DossierCharacterEntry } from "@/lib/store/dashboardS
 import { Modal } from "@/components/ui/modal";
 import { getGameDossierConfig } from "@/lib/data/gameDossierConfig";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 interface DossierCharacterEditorModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export function DossierCharacterEditorModal({
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { addDossierCharacter, updateDossierCharacter, removeDossierCharacter } = useDashboardStore();
+  const { confirm } = useConfirm();
 
   const config = getGameDossierConfig(gameTitle, gameCategory);
   const categoryOptions = config.categories.map((c) => c.name);
@@ -116,19 +118,31 @@ export function DossierCharacterEditorModal({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!characterToEdit) return;
-    if (!confirm(`Delete ${characterToEdit.name} from dossier?`)) return;
-
-    setIsDeleting(true);
-    try {
-      await removeDossierCharacter(characterToEdit.id);
-      onClose();
-    } catch (err) {
-      console.error("Failed to delete character:", err);
-    } finally {
-      setIsDeleting(false);
-    }
+    confirm({
+      title: "Delete Character Entry",
+      message: `Are you sure you want to remove ${characterToEdit.name} from the ${gameTitle || "game"} roster?`,
+      confirmText: "Delete Character",
+      variant: "danger",
+      itemPreview: {
+        title: characterToEdit.name,
+        subtitle: `${gameTitle || "Game"} · ${characterToEdit.role || characterToEdit.category}`,
+        imageUrl: characterToEdit.avatarUrl,
+        icon: "⚔️",
+        category: characterToEdit.category,
+      },
+      successToast: `✓ Character "${characterToEdit.name}" removed.`,
+      onConfirm: async () => {
+        setIsDeleting(true);
+        try {
+          await removeDossierCharacter(characterToEdit.id);
+          onClose();
+        } finally {
+          setIsDeleting(false);
+        }
+      },
+    });
   };
 
   const inputStyles = {

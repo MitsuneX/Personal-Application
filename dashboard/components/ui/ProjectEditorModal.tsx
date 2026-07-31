@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/modal";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore, ProjectItemEntry, ProjectStatus } from "@/lib/store/dashboardStore";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 interface ProjectEditorModalProps {
   isOpen: boolean;
@@ -45,6 +46,7 @@ export function ProjectEditorModal({ isOpen, onClose, projectToEdit }: ProjectEd
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { addProject, updateProject, removeProject } = useDashboardStore();
+  const { confirm } = useConfirm();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -224,19 +226,32 @@ export function ProjectEditorModal({ isOpen, onClose, projectToEdit }: ProjectEd
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!projectToEdit) return;
-    if (!confirm(`Delete project "${projectToEdit.name}" permanently?`)) return;
-
-    setIsDeleting(true);
-    try {
-      await removeProject(projectToEdit.id);
-      onClose();
-    } catch (err) {
-      console.error("Failed to delete project:", err);
-    } finally {
-      setIsDeleting(false);
-    }
+    confirm({
+      title: "Delete Project Showcase",
+      message: `Are you sure you want to delete project "${projectToEdit.name}"?`,
+      confirmText: "Delete Project",
+      variant: "danger",
+      itemPreview: {
+        title: projectToEdit.name,
+        subtitle: `${projectToEdit.category} · ${projectToEdit.status || "Live"}`,
+        description: projectToEdit.description,
+        icon: projectToEdit.logo || "🌐",
+        imageUrl: projectToEdit.heroBanner,
+        category: projectToEdit.category,
+      },
+      successToast: `✓ Project "${projectToEdit.name}" deleted successfully.`,
+      onConfirm: async () => {
+        setIsDeleting(true);
+        try {
+          await removeProject(projectToEdit.id);
+          onClose();
+        } finally {
+          setIsDeleting(false);
+        }
+      },
+    });
   };
 
   const inputStyles = {

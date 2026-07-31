@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 type SidebarTab = "all" | "curiosity";
 
@@ -12,6 +13,7 @@ export default function NotepadPage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { notes, saveNote, deleteNote, hobbySkills, logHobbyXP } = useDashboardStore();
+  const { confirm } = useConfirm();
 
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -67,17 +69,31 @@ export default function NotepadPage() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!activeNoteId) return;
-    if (confirm("Are you sure you want to delete this note?")) {
-      const remaining = notes.filter((n) => n.id !== activeNoteId);
-      await deleteNote(activeNoteId);
-      if (remaining.length > 0) {
-        setActiveNoteId(remaining[0].id);
-      } else {
-        setActiveNoteId(null);
-      }
-    }
+    const activeNote = notes.find((n) => n.id === activeNoteId);
+    confirm({
+      title: "Delete Notepad Document",
+      message: `Are you sure you want to delete note "${activeNote?.title || "Untitled"}"?`,
+      confirmText: "Delete Note",
+      variant: "danger",
+      itemPreview: {
+        title: activeNote?.title || "Untitled Note",
+        description: activeNote?.content,
+        icon: "📄",
+        category: activeNote?.isCuriosity ? "💡 Curiosity Log" : "Notepad",
+      },
+      successToast: `✓ Note "${activeNote?.title || "Untitled"}" deleted.`,
+      onConfirm: async () => {
+        const remaining = notes.filter((n) => n.id !== activeNoteId);
+        await deleteNote(activeNoteId);
+        if (remaining.length > 0) {
+          setActiveNoteId(remaining[0].id);
+        } else {
+          setActiveNoteId(null);
+        }
+      },
+    });
   };
 
   const handleSelectNote = (id: string) => {

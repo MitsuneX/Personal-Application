@@ -7,6 +7,7 @@ import getCroppedImg from "@/utils/cropImage";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
+import { useToast } from "@/components/ui/ToastProvider";
 import type { HallOfFameEntry, MediaStatus } from "@/lib/store/dashboardStore";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 
@@ -20,6 +21,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { updateHof } = useDashboardStore();
+  const { error: toastError } = useToast();
 
   const [name, setName] = useState("");
   const [type, setType] = useState<"actor" | "actress" | "anime" | "singer" | "tokusatsu" | "none">("actress");
@@ -128,11 +130,11 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
         setImgError(false);
         setCropImageSrc(null); // Return to main form
       } else {
-        alert("Upload failed: " + (data.error || "Unknown error"));
+        toastError("Upload failed: " + (data.error || "Unknown error"));
       }
     } catch (err) {
       console.error("Upload error:", err);
-      alert("Error uploading image");
+      toastError("Error uploading image");
     } finally {
       setIsUploading(false);
     }

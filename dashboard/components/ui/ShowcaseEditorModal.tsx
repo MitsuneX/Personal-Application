@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/modal";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore, GameShowcaseEntry } from "@/lib/store/dashboardStore";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 interface ShowcaseEditorModalProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ export function ShowcaseEditorModal({
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { addGameShowcaseItem, updateGameShowcaseItem, removeGameShowcaseItem } = useDashboardStore();
+  const { confirm } = useConfirm();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -137,19 +139,31 @@ export function ShowcaseEditorModal({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!itemToEdit) return;
-    if (!confirm(`Delete "${itemToEdit.title}" from showcase gallery?`)) return;
-
-    setIsDeleting(true);
-    try {
-      await removeGameShowcaseItem(itemToEdit.id);
-      onClose();
-    } catch (err) {
-      console.error("Failed to delete showcase item:", err);
-    } finally {
-      setIsDeleting(false);
-    }
+    confirm({
+      title: "Delete Showcase Gallery Item",
+      message: `Are you sure you want to remove "${itemToEdit.title}" from ${gameTitle} showcase?`,
+      confirmText: "Delete Item",
+      variant: "danger",
+      itemPreview: {
+        title: itemToEdit.title,
+        subtitle: `${gameTitle} · ${itemToEdit.category}`,
+        description: itemToEdit.description,
+        imageUrl: (itemToEdit as any).mediaUrl || (itemToEdit as any).imageUrl,
+        category: itemToEdit.category,
+      },
+      successToast: `✓ Showcase item "${itemToEdit.title}" deleted.`,
+      onConfirm: async () => {
+        setIsDeleting(true);
+        try {
+          await removeGameShowcaseItem(itemToEdit.id);
+          onClose();
+        } finally {
+          setIsDeleting(false);
+        }
+      },
+    });
   };
 
   const inputStyles = {

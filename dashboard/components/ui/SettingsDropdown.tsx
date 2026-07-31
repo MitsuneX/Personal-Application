@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { useRouter } from "next/navigation";
 import { ChangelogModal } from "@/components/ui/ChangelogModal";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 interface SettingsDropdownProps {
   onOpenAesthetics?: () => void;
@@ -14,6 +15,7 @@ export function SettingsDropdown({ onOpenAesthetics }: SettingsDropdownProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const router = useRouter();
+  const { confirm } = useConfirm();
 
   const [isOpen, setIsOpen] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
@@ -124,28 +126,38 @@ export function SettingsDropdown({ onOpenAesthetics }: SettingsDropdownProps) {
             {/* 4. Log Out Session */}
             <div className="pt-1 border-t" style={{ borderColor: isCyber ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)" }}>
               <button
-                onClick={async () => {
+                onClick={() => {
                   setIsOpen(false);
-                  if (confirm("Are you sure you want to log out?")) {
-                    try {
-                      const { createClient } = await import("@/utils/supabase/client");
-                      const supabase = createClient();
-                      await supabase.auth.signOut();
-                    } catch (err) {
-                      console.error(err);
-                    }
-                    localStorage.removeItem("supabase.auth.token");
-                    router.push("/login");
-                  }
+                  confirm({
+                    title: "Logout Confirmation",
+                    message: "Are you sure you want to sign out of Nexus Xenon?",
+                    confirmText: "Log Out",
+                    cancelText: "Stay Signed In",
+                    variant: "warning",
+                    actionType: "logout",
+                    itemPreview: {
+                      title: "Personal Dashboard Session",
+                      subtitle: "Nexus Xenon Command Center",
+                      icon: "🚪",
+                    },
+                    successToast: "✓ Logged out successfully.",
+                    onConfirm: async () => {
+                      try {
+                        const { createClient } = await import("@/utils/supabase/client");
+                        const supabase = createClient();
+                        await supabase.auth.signOut();
+                      } catch (err) {
+                        console.error(err);
+                      }
+                      localStorage.removeItem("supabase.auth.token");
+                      router.push("/login");
+                    },
+                  });
                 }}
-                className="w-full text-left px-3 py-2 text-xs font-black rounded-xl transition-all flex items-center gap-2 cursor-pointer"
-                style={{
-                  backgroundColor: isCyber ? "rgba(239, 68, 68, 0.15)" : "#FEE2E2",
-                  color: isCyber ? "#EF4444" : "#991B1B",
-                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-red-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors text-left cursor-pointer"
               >
                 <span>🚪</span>
-                <span>Log Out</span>
+                <span>Log Out Session</span>
               </button>
             </div>
           </motion.div>

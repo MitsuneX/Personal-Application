@@ -11,6 +11,7 @@ import { HofEntryCard, getGroupForEntry, getGroupDetails } from "@/components/ca
 import { CharacterVotePanel } from "@/components/ui/CharacterVotePanel";
 import type { HallOfFameEntry } from "@/lib/store/dashboardStore";
 import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 const ULTRAMAN_THEME = {
   cyber: {
@@ -33,6 +34,7 @@ export default function UltramanPage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { hallOfFame, deleteHof } = useDashboardStore();
+  const { confirm } = useConfirm();
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<HallOfFameEntry | null>(null);
@@ -49,11 +51,27 @@ export default function UltramanPage() {
     setEditorOpen(true);
   }, []);
 
-  const handleDelete = useCallback(async (id: string, name: string) => {
-    if (confirm(`Remove "${name}" from Ultraman roster?`)) {
-      await deleteHof(id);
-    }
-  }, [deleteHof]);
+  const handleDelete = useCallback((id: string, name: string) => {
+    const entry = hallOfFame.find((h) => h.id === id);
+    confirm({
+      title: "Remove Ultraman Hero",
+      message: `Are you sure you want to remove "${name}" from Ultraman roster?`,
+      confirmText: "Remove Hero",
+      variant: "danger",
+      itemPreview: {
+        title: name,
+        subtitle: `Ultraman Hero · ${entry?.nationality || "Global"}`,
+        description: Array.isArray(entry?.knownFor) ? entry.knownFor.join(", ") : entry?.knownFor,
+        imageUrl: entry?.imageUrl,
+        icon: "🔴",
+        category: "Ultraman",
+      },
+      successToast: `✓ "${name}" removed from Ultraman roster.`,
+      onConfirm: async () => {
+        await deleteHof(id);
+      },
+    });
+  }, [confirm, deleteHof, hallOfFame]);
 
   const handleDoubleTap = (e: React.MouseEvent | React.TouchEvent, id: string) => {
     let clientX = 0, clientY = 0;
