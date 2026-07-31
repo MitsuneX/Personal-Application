@@ -9,7 +9,8 @@ import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants"
 import { useDashboardStore, AiToolItemEntry } from "@/lib/store/dashboardStore";
 import { AiToolEditorModal } from "@/components/ui/AiToolEditorModal";
 import { AiToolDetailModal } from "@/components/ui/AiToolDetailModal";
-import { CustomSelect } from "@/components/ui/CustomSelect";
+import { FilterDropdown, FilterOption } from "@/components/ui/FilterDropdown";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 const PRICING_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   Free: { label: "🆓 Free", color: "#10B981", bg: "rgba(16,185,129,0.15)" },
@@ -29,13 +30,13 @@ const STATUS_PILLS: Record<string, { label: string; color: string; bg: string }>
   Archived: { label: "📦 Archived", color: "#64748B", bg: "rgba(100,116,139,0.15)" },
 };
 
-const SORT_OPTIONS = [
-  { value: "DEFAULT", label: "📌 Pinned & Display Order", icon: "📌" },
-  { value: "LAST_USED", label: "⏱️ Recently Used (Last Used)", icon: "⏱️" },
-  { value: "HIGHEST_RATED", label: "⭐ Highest Rated (5★ First)", icon: "⭐" },
-  { value: "ALPHABETICAL", label: "🔤 Alphabetical (A-Z)", icon: "🔤" },
-  { value: "MOST_LAUNCHED", label: "🔥 Most Launched Count", icon: "🔥" },
-  { value: "COMPANY", label: "🏢 Company / Developer", icon: "🏢" },
+const SORT_OPTIONS: FilterOption[] = [
+  { id: "DEFAULT", label: "📌 Pinned & Display Order", icon: "📌" },
+  { id: "LAST_USED", label: "⏱️ Recently Used (Last Used)", icon: "⏱️" },
+  { id: "HIGHEST_RATED", label: "⭐ Highest Rated (5★ First)", icon: "⭐" },
+  { id: "ALPHABETICAL", label: "🔤 Alphabetical (A-Z)", icon: "🔤" },
+  { id: "MOST_LAUNCHED", label: "🔥 Most Launched Count", icon: "🔥" },
+  { id: "COMPANY", label: "🏢 Company / Developer", icon: "🏢" },
 ];
 
 function isValidUrl(url?: string) {
@@ -80,9 +81,29 @@ function formatRelativeTime(dateStr?: string) {
 export default function AiLibraryPage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
+  const { confirm } = useConfirm();
 
   const aiTools = useDashboardStore((s) => s.aiTools) || [];
-  const { recordAiToolLaunch } = useDashboardStore();
+  const { recordAiToolLaunch, removeAiTool } = useDashboardStore();
+
+  const handleDeleteAiTool = (tool: AiToolItemEntry) => {
+    confirm({
+      title: `Delete ${tool.name}?`,
+      message: `Are you sure you want to permanently delete ${tool.name}? This action cannot be undone.`,
+      variant: "danger",
+      itemPreview: {
+        title: tool.name,
+        subtitle: tool.company || tool.category,
+        description: tool.description,
+        icon: typeof tool.logo === "string" && !tool.logo.includes("/") ? tool.logo : "🤖",
+        badge: tool.pricingModel,
+      },
+      onConfirm: async () => {
+        await removeAiTool(tool.id);
+      },
+      successToast: `Deleted ${tool.name}`,
+    });
+  };
 
   // Modal States
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -317,8 +338,10 @@ export default function AiLibraryPage() {
             </div>
 
             {/* Sorting Dropdown */}
-            <div className="w-full sm:w-64">
-              <CustomSelect
+            <div className="w-full sm:w-auto">
+              <FilterDropdown
+                label="Sort Order"
+                icon="📌"
                 value={sortBy}
                 onChange={(val) => setSortBy(val)}
                 options={SORT_OPTIONS}
@@ -531,17 +554,30 @@ export default function AiLibraryPage() {
                       : "4px 4px 0 #000000",
                   }}
                 >
-                  {/* Top Edit Button */}
-                  <button
-                    onClick={() => {
-                      setEditingTool(tool);
-                      setIsEditorOpen(true);
-                    }}
-                    className="absolute top-3.5 right-3.5 z-20 p-1.5 rounded-lg bg-black/60 text-white backdrop-blur-md opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity cursor-pointer text-xs"
-                    title="Edit AI Platform"
-                  >
-                    ✏️
-                  </button>
+                  {/* Top Action Buttons (Edit + Delete) */}
+                  <div className="absolute top-3.5 right-3.5 z-20 flex items-center gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingTool(tool);
+                        setIsEditorOpen(true);
+                      }}
+                      className="p-1.5 rounded-lg bg-black/70 text-white backdrop-blur-md hover:bg-black transition-colors cursor-pointer text-xs"
+                      title="Edit AI Platform"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteAiTool(tool);
+                      }}
+                      className="p-1.5 rounded-lg bg-red-600/80 text-white backdrop-blur-md hover:bg-red-600 transition-colors cursor-pointer text-xs"
+                      title="Delete AI Platform"
+                    >
+                      🗑️
+                    </button>
+                  </div>
 
                   {/* Card Main Body */}
                   <div className="p-5 flex-1 flex flex-col justify-between space-y-4">

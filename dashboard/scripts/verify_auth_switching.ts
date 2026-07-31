@@ -1,4 +1,4 @@
-﻿import prisma from "../lib/prisma";
+import prisma from "../lib/prisma";
 import { useDashboardStore } from "../lib/store/dashboardStore";
 
 async function verifyAuthSwitching() {
@@ -9,7 +9,7 @@ async function verifyAuthSwitching() {
   useDashboardStore.getState().resetUserStore();
   useDashboardStore.setState({
     isHydrated: true,
-    games: [{ id: "game-a1", game: "Account A Game", category: "Gacha RPG", isActive: true, mainCharacter: "Hero A", platform: "PC" }],
+    games: [{ id: "game-a1", game: "Account A Game", category: "Gacha RPG", isActive: true, mainCharacter: "Hero A", platform: "PC", accentColor: "#7C3AED" }],
   });
 
   let currentGames = useDashboardStore.getState().games;
@@ -32,7 +32,7 @@ async function verifyAuthSwitching() {
   console.log("\n[TEST C: Account B Instant Login Hydration]");
   useDashboardStore.setState({
     isHydrated: true,
-    games: [{ id: "game-b1", game: "Account B Game", category: "FPS", isActive: true, mainCharacter: "Hero B", platform: "PC" }],
+    games: [{ id: "game-b1", game: "Account B Game", category: "FPS", isActive: true, mainCharacter: "Hero B", platform: "PC", accentColor: "#00F5FF" }],
   });
 
   let stateAccountB = useDashboardStore.getState();

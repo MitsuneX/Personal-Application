@@ -122,6 +122,24 @@ export const GAME_ICON_REGISTRY: GameIconEntry[] = [
     aliases: ["honkai impact 3rd", "honkai impact 3", "hi3", "honkaiimpact3", "honkai impact", "hi3rd"],
     icon: "/game-icons/honkaiimpact3.svg",
   },
+  {
+    id: "stellasora",
+    name: "Stella Sora",
+    aliases: ["stella sora", "stella", "stellasora"],
+    icon: "/game-icons/stellasora.svg",
+  },
+  {
+    id: "r1999",
+    name: "Reverse: 1999",
+    aliases: ["reverse 1999", "reverse1999", "r1999", "1999", "reverse: 1999"],
+    icon: "/game-icons/r1999.svg",
+  },
+  {
+    id: "umamusume",
+    name: "Umamusume: Pretty Derby",
+    aliases: ["umamusume pretty derby", "umamusume", "pretty derby", "umamusumeprettyderby", "uma"],
+    icon: "/game-icons/umamusume.svg",
+  },
 ];
 
 export interface ResolvedIconResult {

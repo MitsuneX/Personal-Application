@@ -11,6 +11,8 @@ import { GameEditorModal } from "@/components/ui/GameEditorModal";
 import { ImageLightboxModal } from "@/components/ui/ImageLightboxModal";
 import { resolveGameIcon } from "@/lib/data/gameIcons";
 import type { GameEntry } from "@/lib/store/dashboardStore";
+import { useConfirm } from "@/lib/context/ConfirmContext";
+import { FilterDropdown, FilterOption } from "@/components/ui/FilterDropdown";
 
 const CATEGORY_ICONS: Record<string, string> = {
   "Gacha RPG":    "🎲",
@@ -36,12 +38,14 @@ function GameCard({
   isCyber, 
   index,
   onEditClick,
+  onDeleteClick,
   onScreenshotClick
 }: { 
   game: GameEntry; 
   isCyber: boolean; 
   index: number;
   onEditClick: (game: GameEntry) => void;
+  onDeleteClick?: (game: GameEntry) => void;
   onScreenshotClick?: (url: string, title: string) => void;
 }) {
   const rank = game?.rank || "";
@@ -81,23 +85,42 @@ function GameCard({
           />
         )}
 
-        {/* Action Controls */}
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onEditClick(game);
-          }}
-          className="absolute top-4 right-4 p-2 rounded-xl opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-200 hover:bg-black/10 dark:hover:bg-white/10 z-20 cursor-pointer text-xs flex items-center justify-center backdrop-blur-md"
-          style={{
-            color: isCyber ? "#00F5FF" : "#000",
-            border: isCyber ? "1px solid rgba(255,255,255,0.15)" : "1.5px solid #000",
-            backgroundColor: isCyber ? "rgba(10,15,30,0.75)" : "#fff",
-          }}
-          title="Edit Configuration"
-        >
-          ⚙️
-        </button>
+        {/* Action Controls (Edit & Delete) */}
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-200">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onEditClick(game);
+            }}
+            className="p-1.5 rounded-xl hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer text-xs flex items-center justify-center backdrop-blur-md"
+            style={{
+              color: isCyber ? "#00F5FF" : "#000",
+              border: isCyber ? "1px solid rgba(255,255,255,0.15)" : "1.5px solid #000",
+              backgroundColor: isCyber ? "rgba(10,15,30,0.75)" : "#fff",
+            }}
+            title="Edit Configuration"
+          >
+            ⚙️
+          </button>
+          {onDeleteClick && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDeleteClick(game);
+              }}
+              className="p-1.5 rounded-xl hover:bg-red-600 cursor-pointer text-xs flex items-center justify-center backdrop-blur-md text-white"
+              style={{
+                border: isCyber ? "1px solid rgba(239,68,68,0.4)" : "1.5px solid #000",
+                backgroundColor: isCyber ? "rgba(239,68,68,0.25)" : "#EF4444",
+              }}
+              title="Delete Game"
+            >
+              🗑️
+            </button>
+          )}
+        </div>
 
         {/* Premium Geometric Borders & Sci-Fi Corner Brackets */}
         {!isCyber && <div className="absolute top-0 left-0 right-0 h-2" style={{ backgroundColor: accent }} />}
@@ -310,8 +333,28 @@ function GameCard({
 export default function GamesPage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
+  const { confirm } = useConfirm();
   
   const games = useDashboardStore((s) => s.games) || [];
+  const { removeGame } = useDashboardStore();
+
+  const handleDeleteGame = (game: GameEntry) => {
+    confirm({
+      title: `Delete ${game.game}?`,
+      message: `Are you sure you want to permanently delete ${game.game}? This will also remove associated dossier data.`,
+      variant: "danger",
+      itemPreview: {
+        title: game.game,
+        subtitle: game.category,
+        description: `Platform: ${game.platform} • Main: ${game.mainCharacter || "N/A"}`,
+        badge: game.rank || undefined,
+      },
+      onConfirm: async () => {
+        await removeGame(game.id);
+      },
+      successToast: `Deleted ${game.game}`,
+    });
+  };
 
   // State Management for Interactive Filters & Search
   const [activeTab, setActiveTab] = useState<"all" | "gacha" | "competitive">("all");
@@ -494,30 +537,44 @@ export default function GamesPage() {
           })}
         </div>
 
-        {/* Interactive Live Search Input Bar */}
-        <div className="relative w-full md:w-72">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search titles, mains, handles..."
-            className="w-full px-3.5 py-2 pl-9 text-xs rounded-xl outline-none transition-all"
-            style={{
-              backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "#FFFFFF",
-              border: isCyber ? "1px solid rgba(255,255,255,0.12)" : "2px solid #000",
-              color: isCyber ? "#F8FAFC" : "#1A1A1A",
-              boxShadow: !isCyber ? "2px 2px 0 rgba(0,0,0,1)" : "none"
-            }}
+        {/* Interactive Filter & Live Search Bar */}
+        <div className="flex items-center gap-2.5 w-full md:w-auto">
+          <FilterDropdown
+            label="Category Filter"
+            icon="🎮"
+            value={activeTab}
+            onChange={(val) => setActiveTab(val as any)}
+            options={[
+              { id: "all", label: "All Game Registries", icon: "🌐" },
+              { id: "gacha", label: "Gacha RPG & Action", icon: "🎲" },
+              { id: "competitive", label: "Competitive & Pro Roster", icon: "🏆" },
+            ]}
           />
-          <span className="absolute left-3 top-2.5 text-xs opacity-50 select-none">🔍</span>
-          {searchQuery && (
-            <button 
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-2.5 text-xs opacity-60 hover:opacity-100 cursor-pointer font-bold"
-            >
-              ✕
-            </button>
-          )}
+
+          <div className="relative flex-1 md:w-64">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search titles, mains, handles..."
+              className="w-full px-3.5 py-2 pl-9 text-xs rounded-xl outline-none transition-all"
+              style={{
+                backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "#FFFFFF",
+                border: isCyber ? "1px solid rgba(255,255,255,0.12)" : "2px solid #000",
+                color: isCyber ? "#F8FAFC" : "#1A1A1A",
+                boxShadow: !isCyber ? "2px 2px 0 rgba(0,0,0,1)" : "none"
+              }}
+            />
+            <span className="absolute left-3 top-2.5 text-xs opacity-50 select-none">🔍</span>
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-2.5 text-xs opacity-60 hover:opacity-100 cursor-pointer font-bold"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -551,6 +608,7 @@ export default function GamesPage() {
                       isCyber={isCyber} 
                       index={i} 
                       onEditClick={handleEditClick}
+                      onDeleteClick={handleDeleteGame}
                       onScreenshotClick={handleScreenshotClick}
                     />
                   ))}
@@ -573,6 +631,7 @@ export default function GamesPage() {
                       isCyber={isCyber} 
                       index={i} 
                       onEditClick={handleEditClick}
+                      onDeleteClick={handleDeleteGame}
                       onScreenshotClick={handleScreenshotClick}
                     />
                   ))}

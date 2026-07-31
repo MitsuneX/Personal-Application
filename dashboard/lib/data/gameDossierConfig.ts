@@ -259,6 +259,103 @@ const SPECIFIC_GAME_CONFIGS: Record<string, GameCapabilityConfig> = {
   },
 
   // ── Girls' Frontline 2: Exilium ───────────────────────────────────────────
+  girlsfrontline2: {
+    gameType: "Tactical RPG",
+    categoryLabel: "Tactical Doll Classes",
+    characterLabel: "Tactical Doll",
+    resourcePresetsEnabled: true,
+    categories: [
+      { id: "vanguard", name: "Vanguard", icon: "⚔️", description: "High-mobility flanker & single-target strike", visualTokens: createVisualTokens("#EF4444") },
+      { id: "sentinel", name: "Sentinel", icon: "🎯", description: "Long-range marksman & precision sniper", visualTokens: createVisualTokens("#06B6D4") },
+      { id: "bulwark",  name: "Bulwark",  icon: "🛡️", description: "Heavy armor frontline & cover defender", visualTokens: createVisualTokens("#F59E0B") },
+      { id: "support",  name: "Support",  icon: "🔧", description: "Tactical buffer, repair & debuffer utility", visualTokens: createVisualTokens("#10B981") },
+    ],
+    elementSystem: {
+      sectionLabel: "Elemental Attributes",
+      elements: [
+        { id: "burn",      name: "Burn",      icon: "🔥", color: "#EF4444", visualTokens: createVisualTokens("#EF4444") },
+        { id: "corrosion", name: "Corrosion", icon: "🧪", color: "#10B981", visualTokens: createVisualTokens("#10B981") },
+        { id: "frost",     name: "Frost",     icon: "❄️", color: "#3B82F6", visualTokens: createVisualTokens("#3B82F6") },
+        { id: "electric",  name: "Electric",  icon: "⚡", color: "#A855F7", visualTokens: createVisualTokens("#A855F7") },
+        { id: "physical",  name: "Physical",  icon: "💥", color: "#94A3B8", visualTokens: createVisualTokens("#94A3B8") },
+      ],
+    },
+  },
+
+  // ── Stella Sora ────────────────────────────────────────────────────────────
+  stellasora: {
+    gameType: "Gacha RPG",
+    categoryLabel: "Star Positions & Classes",
+    characterLabel: "Stellaris",
+    resourcePresetsEnabled: true,
+    categories: [
+      { id: "vanguard", name: "Star Vanguard", icon: "⚔️", description: "Frontline offensive striker", visualTokens: createVisualTokens("#6C5CE7") },
+      { id: "weaver",   name: "Star Weaver",   icon: "🔮", description: "Magic burst & elemental caster", visualTokens: createVisualTokens("#A855F7") },
+      { id: "sentinel", name: "Star Sentinel", icon: "🛡️", description: "Defensive shield & party protection", visualTokens: createVisualTokens("#3B82F6") },
+      { id: "luminar",  name: "Star Luminar",  icon: "✨", description: "Radiant support & HP restoration", visualTokens: createVisualTokens("#FACC15") },
+    ],
+    elementSystem: {
+      sectionLabel: "Astral Elements",
+      elements: [
+        { id: "starlight", name: "Starlight", icon: "✨", color: "#FACC15", visualTokens: createVisualTokens("#FACC15") },
+        { id: "nebula",    name: "Nebula",    icon: "🌌", color: "#A855F7", visualTokens: createVisualTokens("#A855F7") },
+        { id: "solar",     name: "Solar",     icon: "☀️", color: "#EF4444", visualTokens: createVisualTokens("#EF4444") },
+        { id: "lunar",     name: "Lunar",     icon: "🌙", color: "#38BDF8", visualTokens: createVisualTokens("#38BDF8") },
+        { id: "void",      name: "Void",      icon: "🕳️", color: "#64748B", visualTokens: createVisualTokens("#64748B") },
+      ],
+    },
+  },
+
+  // ── Reverse: 1999 ─────────────────────────────────────────────────────────
+  reverse1999: {
+    gameType: "Turn-Based Tactical RPG",
+    categoryLabel: "Combat Roles",
+    characterLabel: "Arcanist",
+    resourcePresetsEnabled: true,
+    categories: [
+      { id: "dps",      name: "Damage Dealer", icon: "🗡️", description: "Main Arcanum burst & single/AoE strike", visualTokens: createVisualTokens("#EF4444") },
+      { id: "support",  name: "Support",       icon: "🎶", description: "Incantation buff & Moxie accelerator", visualTokens: createVisualTokens("#F59E0B") },
+      { id: "control",  name: "Control",       icon: "🔮", description: "Crowd control, Freeze, Disarm & Daze", visualTokens: createVisualTokens("#8B5CF6") },
+      { id: "debuffer", name: "Debuffer",      icon: "🌀", description: "Defense reduction & Damage Taken amplification", visualTokens: createVisualTokens("#06B6D4") },
+      { id: "healer",   name: "Sustainer",     icon: "💚", description: "Party HP restoration & Shield protection", visualTokens: createVisualTokens("#10B981") },
+    ],
+    elementSystem: {
+      sectionLabel: "Afflatus Types",
+      elements: [
+        { id: "mineral",   name: "Mineral",   icon: "🪨", color: "#D97706", description: "Earth Arcanum — Counters Star", visualTokens: createVisualTokens("#D97706") },
+        { id: "beast",     name: "Beast",     icon: "🐾", color: "#EF4444", description: "Beast Arcanum — Counters Plant", visualTokens: createVisualTokens("#EF4444") },
+        { id: "plant",     name: "Plant",     icon: "🌿", color: "#22C55E", description: "Nature Arcanum — Counters Mineral", visualTokens: createVisualTokens("#22C55E") },
+        { id: "star",      name: "Star",      icon: "⭐", color: "#3B82F6", description: "Astral Arcanum — Counters Beast", visualTokens: createVisualTokens("#3B82F6") },
+        { id: "spirit",    name: "Spirit",    icon: "👻", color: "#8B5CF6", description: "Mystic Arcanum — Neutral / Intellect counter", visualTokens: createVisualTokens("#8B5CF6") },
+        { id: "intellect", name: "Intellect", icon: "🧠", color: "#06B6D4", description: "Knowledge Arcanum — Neutral / Spirit counter", visualTokens: createVisualTokens("#06B6D4") },
+      ],
+    },
+  },
+
+  // ── Umamusume: Pretty Derby ────────────────────────────────────────────────
+  umamusumeprettyderby: {
+    gameType: "Racing Simulation RPG",
+    categoryLabel: "Running Styles (Tactics)",
+    characterLabel: "Horse Girl (Uma Musume)",
+    resourcePresetsEnabled: true,
+    categories: [
+      { id: "nige",    name: "Front-Runner (Nige)", icon: "🏃💨", description: "Lead from the start, high tempo pace", visualTokens: createVisualTokens("#EF4444") },
+      { id: "senko",   name: "Pace-Setter (Senko)", icon: "🏇",   description: "Stays right behind the lead, strategic mid-race break", visualTokens: createVisualTokens("#F59E0B") },
+      { id: "sashi",   name: "Late-Surger (Sashi)",  icon: "⚡",   description: "Positioned in the middle pack, powerful final corner burst", visualTokens: createVisualTokens("#10B981") },
+      { id: "oikomi",  name: "End-Surger (Oikomi)",  icon: "🚀",   description: "Back of the pack, explosive final stretch overtaking", visualTokens: createVisualTokens("#3B82F6") },
+    ],
+    elementSystem: {
+      sectionLabel: "Distance Aptitudes",
+      elements: [
+        { id: "short",  name: "Short (1000m - 1400m)",  icon: "⚡", color: "#EF4444", visualTokens: createVisualTokens("#EF4444") },
+        { id: "mile",   name: "Mile (1600m - 1800m)",   icon: "🏃", color: "#F59E0B", visualTokens: createVisualTokens("#F59E0B") },
+        { id: "medium", name: "Medium (2000m - 2400m)", icon: "🏆", color: "#10B981", visualTokens: createVisualTokens("#10B981") },
+        { id: "long",   name: "Long (2500m+)",          icon: "🛣️", color: "#3B82F6", visualTokens: createVisualTokens("#3B82F6") },
+      ],
+    },
+  },
+
+  // ── Girls' Frontline 2: Exilium ───────────────────────────────────────────
   girlsfrontline2exilium: {
     gameType: "Gacha Tactical RPG",
     categoryLabel: "Doll Combat Roles",

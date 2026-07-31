@@ -11,6 +11,7 @@ import type { HallOfFameEntry } from "@/lib/store/dashboardStore";
 import { useSearchParams } from "next/navigation";
 import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
 import { useConfirm } from "@/lib/context/ConfirmContext";
+import { FilterDropdown } from "@/components/ui/FilterDropdown";
  
 const TYPE_FILTERS = [
   { id: "all", label: "All Types" },
@@ -263,53 +264,22 @@ function CharactersContent() {
             }}
           />
         </div>
- 
-        <div className="flex flex-wrap gap-6 items-center">
-          <div className="flex flex-col gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Content Type</span>
-            <div className="flex flex-wrap gap-1.5">
-              {TYPE_FILTERS.map((tab) => {
-                const isActive = selectedType === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setSelectedType(tab.id)}
-                    className="px-3.5 py-1.5 text-[11px] font-semibold rounded-lg border transition-all duration-200 cursor-pointer"
-                    style={{
-                      backgroundColor: isActive ? (isCyber ? "rgba(0, 245, 255, 0.15)" : "#0f172a") : "transparent",
-                      borderColor: isActive ? (isCyber ? "#00F5FF" : "#0f172a") : (isCyber ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"),
-                      color: isActive ? (isCyber ? "#00F5FF" : "#FFF") : (isCyber ? "#94A3B8" : "#475569"),
-                    }}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
- 
-          <div className="flex flex-col gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Origin / Specialty</span>
-            <div className="flex flex-wrap gap-1.5">
-              {REGION_SPECIALTY_FILTERS.map((tab) => {
-                const isActive = selectedRegionSpecialty === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setSelectedRegionSpecialty(tab.id)}
-                    className="px-3.5 py-1.5 text-[11px] font-semibold rounded-lg border transition-all duration-200 cursor-pointer"
-                    style={{
-                      backgroundColor: isActive ? (isCyber ? "rgba(255, 20, 147, 0.15)" : "#0f172a") : "transparent",
-                      borderColor: isActive ? (isCyber ? "#FF1493" : "#0f172a") : (isCyber ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"),
-                      color: isActive ? (isCyber ? "#FF1493" : "#FFF") : (isCyber ? "#94A3B8" : "#475569"),
-                    }}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+
+        <div className="flex flex-wrap gap-4 items-center">
+          <FilterDropdown
+            label="Content Type"
+            icon="🎭"
+            value={selectedType}
+            onChange={(val) => setSelectedType(val)}
+            options={TYPE_FILTERS.map(t => ({ id: t.id, label: t.label }))}
+          />
+          <FilterDropdown
+            label="Origin / Specialty"
+            icon="🌐"
+            value={selectedRegionSpecialty}
+            onChange={(val) => setSelectedRegionSpecialty(val)}
+            options={REGION_SPECIALTY_FILTERS.map(t => ({ id: t.id, label: t.label }))}
+          />
         </div>
       </div>
  

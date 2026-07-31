@@ -1,4 +1,4 @@
-﻿import { GameEntry } from "@/lib/store/dashboardStore";
+import { GameEntry } from "@/lib/store/dashboardStore";
 
 /**
  * Default game seed entries.
@@ -89,5 +89,47 @@ export const DEFAULT_GAMES: GameEntry[] = [
     accentColor: "#9B59B6",
     profileLink: "https://honkaiimpact3.mihoyo.com",
     icon: "/game-icons/honkaiimpact3.svg",
+  },
+  {
+    id: "game-stellasora",
+    game: "Stella Sora",
+    handle: "",
+    platform: "Mobile",
+    rank: "SS",
+    mainCharacter: "Sora",
+    mainRole: "Star Vanguard",
+    category: "Gacha RPG",
+    isActive: true,
+    accentColor: "#6C5CE7",
+    profileLink: "https://stellasora.io",
+    icon: "/game-icons/stellasora.svg",
+  },
+  {
+    id: "game-r1999",
+    game: "Reverse: 1999",
+    handle: "",
+    platform: "Multi",
+    rank: "6★",
+    mainCharacter: "Regulus",
+    mainRole: "Star / Sub-DPS",
+    category: "Gacha RPG",
+    isActive: true,
+    accentColor: "#D2DAE2",
+    profileLink: "https://re1999.bluepoch.com",
+    icon: "/game-icons/r1999.svg",
+  },
+  {
+    id: "game-umamusume",
+    game: "Umamusume: Pretty Derby",
+    handle: "",
+    platform: "Mobile",
+    rank: "UG8",
+    mainCharacter: "Special Week",
+    mainRole: "Pace-Setter / Turf",
+    category: "Gacha RPG",
+    isActive: true,
+    accentColor: "#FF7675",
+    profileLink: "https://umamusume.jp",
+    icon: "/game-icons/umamusume.svg",
   },
 ];

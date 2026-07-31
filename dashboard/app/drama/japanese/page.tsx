@@ -11,6 +11,7 @@ import { MediaCard } from "@/components/cards/MediaCard";
 import { FloatingFAB } from "@/components/ui/FloatingFAB";
 import { useSearchParams } from "next/navigation";
 import { useConfirm } from "@/lib/context/ConfirmContext";
+import { FilterDropdown } from "@/components/ui/FilterDropdown";
 
 const JP = {
   brutal: { text: "#2D1B24", accent: "#C9184A", accent2: "#FF6B9D", bg: "#FFE4ED" },
@@ -261,37 +262,22 @@ function JapaneseDramaPageContent() {
           </div>
         </motion.div>
 
-        {/* ── Category Filter Pills ── */}
-        <div
-          className="mb-6 p-1.5 rounded-xl flex flex-wrap gap-1.5 text-xs font-bold w-fit max-w-full border overflow-x-auto"
-          style={{
-            backgroundColor: isCyber ? "rgba(0,0,0,0.3)" : "#FFFFFF",
-            borderColor: isCyber ? "rgba(255,105,180,0.15)" : "#000",
-            borderWidth: isCyber ? "1.5px" : "3px",
-            boxShadow: isCyber ? "none" : "4px 4px 0 #000",
-          }}
-        >
-          {[
-            { id: "all", label: "All Shows" },
-            { id: "actual", label: "Actual Dramas" },
-            { id: "ultraman", label: "🔴 Ultraman" },
-            { id: "kamen-rider", label: "🟢 Kamen Rider" },
-            { id: "power-rangers", label: "⚡ Power Rangers" },
-            { id: "tokusatsu", label: "🦸 All Tokusatsu" },
-          ].map(btn => {
-            const isActive = filterType === btn.id;
-            return (
-              <button key={btn.id}
-                onClick={() => setFilterType(btn.id as any)}
-                className="py-1.5 px-3 rounded-lg transition-all uppercase tracking-wider text-[10px] whitespace-nowrap cursor-pointer"
-                style={{
-                  backgroundColor: isActive ? (isCyber ? "rgba(255,105,180,0.2)" : "#FFB7C5") : "transparent",
-                  color: isActive ? (isCyber ? "#FF69B4" : "#000") : (isCyber ? "rgba(255,209,232,0.6)" : "#444"),
-                  border: isActive && !isCyber ? "2px solid #000" : "2px solid transparent",
-                }}
-              >{btn.label}</button>
-            );
-          })}
+        {/* ── Category Filter Dropdown ── */}
+        <div className="mb-6">
+          <FilterDropdown
+            label="Category Filter"
+            icon="🌸"
+            value={filterType}
+            onChange={(val) => setFilterType(val as any)}
+            options={[
+              { id: "all", label: "All Shows", icon: "🌸" },
+              { id: "actual", label: "Actual Dramas", icon: "📺" },
+              { id: "ultraman", label: "Ultraman Series", icon: "🔴" },
+              { id: "kamen-rider", label: "Kamen Rider Series", icon: "🟢" },
+              { id: "power-rangers", label: "Power Rangers / Super Sentai", icon: "⚡" },
+              { id: "tokusatsu", label: "All Tokusatsu Franchises", icon: "🦸" },
+            ]}
+          />
         </div>
 
         {/* ── Drama Grid ── */}

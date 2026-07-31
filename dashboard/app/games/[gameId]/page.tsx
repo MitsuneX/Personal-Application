@@ -15,6 +15,8 @@ import { GameEditorModal } from "@/components/ui/GameEditorModal";
 import { ImageLightboxModal } from "@/components/ui/ImageLightboxModal";
 import { GameScannerModal } from "@/components/ui/GameScannerModal";
 import { ShowcaseEditorModal } from "@/components/ui/ShowcaseEditorModal";
+import { useConfirm } from "@/lib/context/ConfirmContext";
+import { FilterDropdown } from "@/components/ui/FilterDropdown";
 
 const RESOURCE_CATEGORIES = [
   "Meta", "Tier List", "Heroes", "Characters", "Builds",
@@ -225,12 +227,64 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
 
+  const { confirm } = useConfirm();
   const games = useDashboardStore((s) => s.games) || [];
   const dossierCharacters = useDashboardStore((s) => s.dossierCharacters) || [];
   const gameResources = useDashboardStore((s) => s.gameResources) || [];
   const gameShowcaseItems = useDashboardStore((s) => s.gameShowcaseItems) || [];
-  const removeGameResource = useDashboardStore((s) => s.removeGameResource);
+  const { removeGameResource, removeDossierCharacter, removeGameShowcaseItem } = useDashboardStore();
   const currentGame = games.find((g) => g.id === gameId);
+
+  const handleDeleteDossierChar = (char: DossierCharacterEntry) => {
+    confirm({
+      title: `Delete ${char.name}?`,
+      message: `Are you sure you want to remove ${char.name} from this game's dossier?`,
+      variant: "danger",
+      itemPreview: {
+        title: char.name,
+        subtitle: char.category,
+        description: `Win Rate: ${char.winRate}% • Matches: ${char.matches}`,
+      },
+      onConfirm: async () => {
+        await removeDossierCharacter(char.id);
+      },
+      successToast: `Deleted ${char.name}`,
+    });
+  };
+
+  const handleDeleteResource = (res: GameResourceEntry) => {
+    confirm({
+      title: `Delete Resource Link?`,
+      message: `Are you sure you want to delete ${res.name}?`,
+      variant: "danger",
+      itemPreview: {
+        title: res.name,
+        subtitle: res.category,
+        description: res.url,
+      },
+      onConfirm: async () => {
+        await removeGameResource(res.id);
+      },
+      successToast: `Deleted ${res.name}`,
+    });
+  };
+
+  const handleDeleteShowcase = (item: GameShowcaseEntry) => {
+    confirm({
+      title: `Delete Showcase Entry?`,
+      message: `Are you sure you want to delete ${item.title}?`,
+      variant: "danger",
+      itemPreview: {
+        title: item.title,
+        subtitle: item.category,
+        description: item.description,
+      },
+      onConfirm: async () => {
+        await removeGameShowcaseItem(item.id);
+      },
+      successToast: `Deleted ${item.title}`,
+    });
+  };
 
   // Modal States
   const [isCharModalOpen, setIsCharModalOpen] = useState(false);
@@ -599,7 +653,7 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
                         title="Edit"
                       >✏️</button>
                       <button
-                        onClick={() => removeGameResource(res.id)}
+                        onClick={() => handleDeleteResource(res)}
                         className="p-1.5 rounded-lg text-xs hover:bg-red-500/20 cursor-pointer"
                         title="Delete"
                       >🗑️</button>
@@ -897,13 +951,29 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
                       boxShadow: isCyber ? `0 0 15px ${charAccent}20` : "4px 4px 0 #000",
                     }}
                   >
-                    <button
-                      onClick={() => { setEditingCharacter(char); setIsCharModalOpen(true); }}
-                      className="absolute top-3.5 right-3.5 p-1.5 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer text-xs"
-                      title="Edit Entry"
-                    >
-                      ✏️
-                    </button>
+                    <div className="absolute top-3.5 right-3.5 flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all z-20">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingCharacter(char);
+                          setIsCharModalOpen(true);
+                        }}
+                        className="p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer text-xs"
+                        title="Edit Entry"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteDossierChar(char);
+                        }}
+                        className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-500 cursor-pointer text-xs"
+                        title="Delete Entry"
+                      >
+                        🗑️
+                      </button>
+                    </div>
 
                     <div className="flex items-start gap-4">
                       <div
@@ -1133,14 +1203,30 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
                     )}
                   </div>
 
-                  {/* Edit Button */}
-                  <button
-                    onClick={() => { setEditingShowcaseItem(item); setIsShowcaseModalOpen(true); }}
-                    className="absolute top-2.5 right-2.5 z-20 p-1.5 rounded-lg bg-black/60 text-white backdrop-blur-md opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity cursor-pointer text-xs"
-                    title="Edit Item"
-                  >
-                    ✏️
-                  </button>
+                  {/* Action Buttons (Edit + Delete) */}
+                  <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingShowcaseItem(item);
+                        setIsShowcaseModalOpen(true);
+                      }}
+                      className="p-1.5 rounded-lg bg-black/70 text-white backdrop-blur-md hover:bg-black transition-colors cursor-pointer text-xs"
+                      title="Edit Item"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteShowcase(item);
+                      }}
+                      className="p-1.5 rounded-lg bg-red-600/80 text-white backdrop-blur-md hover:bg-red-600 transition-colors cursor-pointer text-xs"
+                      title="Delete Item"
+                    >
+                      🗑️
+                    </button>
+                  </div>
 
                   {/* Showcase Image container */}
                   <div

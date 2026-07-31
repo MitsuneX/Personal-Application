@@ -7,6 +7,7 @@ import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
 import { useConfirm } from "@/lib/context/ConfirmContext";
+import { FilterDropdown } from "@/components/ui/FilterDropdown";
 
 const TARGET_AI_OPTIONS = [
   "ChatGPT",
@@ -38,12 +39,17 @@ export default function PromptVaultPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [filterAI, setFilterAI] = useState("all");
 
   // Form State
   const [editId, setEditId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [targetAI, setTargetAI] = useState("ChatGPT");
   const [promptText, setPromptText] = useState("");
+
+  const filteredPrompts = filterAI === "all"
+    ? savedPrompts
+    : savedPrompts.filter((p) => p.targetAI === filterAI);
 
   const handleCopy = (id: string, text: string) => {
     navigator.clipboard.writeText(text);
@@ -127,8 +133,27 @@ export default function PromptVaultPage() {
         </div>
       </motion.div>
 
+      {/* Target AI Filter Bar */}
+      {savedPrompts.length > 0 && (
+        <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
+          <FilterDropdown
+            label="Filter Target AI"
+            icon="⚡"
+            value={filterAI}
+            onChange={(val) => setFilterAI(val)}
+            options={[
+              { id: "all", label: "All Target AIs", icon: "🌐" },
+              ...TARGET_AI_OPTIONS.map((opt) => ({ id: opt, label: opt })),
+            ]}
+          />
+          <span className="text-xs font-mono theme-text-muted">
+            Showing {filteredPrompts.length} of {savedPrompts.length} prompts
+          </span>
+        </div>
+      )}
+
       {/* Prompts Bento Grid */}
-      {savedPrompts.length === 0 ? (
+      {filteredPrompts.length === 0 ? (
         <motion.div
           className="text-center py-12 rounded-2xl"
           initial={{ opacity: 0 }}
@@ -139,8 +164,12 @@ export default function PromptVaultPage() {
           }}
         >
           <span className="text-4xl">⚡</span>
-          <h2 className="font-black text-lg theme-text-primary mt-2">No prompts stored yet</h2>
-          <p className="theme-text-muted text-xs mt-1">Click the add prompt button above to curate your first AI template.</p>
+          <h2 className="font-black text-lg theme-text-primary mt-2">
+            {savedPrompts.length === 0 ? "No prompts stored yet" : "No matching prompts found"}
+          </h2>
+          <p className="theme-text-muted text-xs mt-1">
+            {savedPrompts.length === 0 ? "Click the add prompt button above to curate your first AI template." : "Try switching your Target AI filter."}
+          </p>
         </motion.div>
       ) : (
         <motion.div
@@ -157,7 +186,7 @@ export default function PromptVaultPage() {
             },
           }}
         >
-          {savedPrompts.map((prompt) => {
+          {filteredPrompts.map((prompt) => {
             const colors = AI_COLORS[prompt.targetAI] || AI_COLORS.Other;
             const badgeBg = isCyber ? `${colors.cyber}15` : colors.brutal;
             const badgeText = isCyber ? colors.cyber : "#000";

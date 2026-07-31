@@ -10,6 +10,7 @@ import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants"
 import { useDashboardStore, ProjectItemEntry, ProjectStatus } from "@/lib/store/dashboardStore";
 import { ProjectEditorModal } from "@/components/ui/ProjectEditorModal";
 import { ImageLightboxModal } from "@/components/ui/ImageLightboxModal";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   Live: { label: "🟢 Live", color: "#10B981", bg: "rgba(16,185,129,0.15)" },
@@ -35,8 +36,29 @@ function isValidUrl(url?: string) {
 export default function VisitProjectHubPage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
+  const { confirm } = useConfirm();
 
   const projects = useDashboardStore((s) => s.projects) || [];
+  const { removeProject } = useDashboardStore();
+
+  const handleDeleteProject = (proj: ProjectItemEntry) => {
+    confirm({
+      title: `Delete ${proj.name}?`,
+      message: `Are you sure you want to permanently delete ${proj.name}? This action cannot be undone.`,
+      variant: "danger",
+      itemPreview: {
+        title: proj.name,
+        subtitle: proj.category,
+        description: proj.description,
+        icon: typeof proj.logo === "string" && !proj.logo.includes("/") ? proj.logo : "🌐",
+        badge: proj.status,
+      },
+      onConfirm: async () => {
+        await removeProject(proj.id);
+      },
+      successToast: `Deleted ${proj.name}`,
+    });
+  };
 
   // Modal States
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -344,17 +366,30 @@ export default function VisitProjectHubPage() {
                       : "4px 4px 0 #000000",
                   }}
                 >
-                  {/* Top Edit Button */}
-                  <button
-                    onClick={() => {
-                      setEditingProject(proj);
-                      setIsEditorOpen(true);
-                    }}
-                    className="absolute top-3.5 right-3.5 z-20 p-1.5 rounded-lg bg-black/60 text-white backdrop-blur-md opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity cursor-pointer text-xs"
-                    title="Edit Project"
-                  >
-                    ✏️
-                  </button>
+                  {/* Top Action Buttons (Edit + Delete) */}
+                  <div className="absolute top-3.5 right-3.5 z-20 flex items-center gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingProject(proj);
+                        setIsEditorOpen(true);
+                      }}
+                      className="p-1.5 rounded-lg bg-black/70 text-white backdrop-blur-md hover:bg-black transition-colors cursor-pointer text-xs"
+                      title="Edit Project"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteProject(proj);
+                      }}
+                      className="p-1.5 rounded-lg bg-red-600/80 text-white backdrop-blur-md hover:bg-red-600 transition-colors cursor-pointer text-xs"
+                      title="Delete Project"
+                    >
+                      🗑️
+                    </button>
+                  </div>
 
                   {/* Hero Banner Preview (if configured) */}
                   {proj.heroBanner && (
