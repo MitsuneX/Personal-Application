@@ -50,6 +50,21 @@ model Game {
   createdAt     DateTime @default(now())
 
   resources     GameExternalResource[]
+  showcaseItems GameShowcaseItem[]
+}
+
+model GameShowcaseItem {
+  id          String   @id @default(uuid())
+  gameId      String
+  title       String
+  description String?
+  imageUrl    String
+  category    String?  // e.g. "Pull / Gacha", "Build / Stats", "PvP / Ranked", "Achievement", "Collection"
+  tags        Json?    // array of tag strings
+  isFavorite  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
 }
 
 model GameExternalResource {

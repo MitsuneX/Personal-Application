@@ -13,6 +13,40 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v3.1.0",
+    date: "2026-07-31",
+    title: "Game Database Major Enhancement: Statistics Scanner & Showcase Gallery",
+    badge: "GAME DOSSIER 3.1",
+    type: "minor",
+    summary: "Renamed Character Intelligence Roster to 📊 Statistics Scanner, introduced a brand new 🖼 Showcase Gallery section for archiving personal game achievements and pull screenshots, and upgraded game dossier category cards to a configuration-driven visual token architecture supporting authentic game identities across Neo-Brutalism and Cyberpunk themes.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "📊 Statistics Scanner: Renamed section while keeping all AI screenshot OCR extraction, character level/winrate tracking, and auto-import features intact.",
+          "🖼 Showcase Gallery: Added dedicated showcase memory section directly below Statistics Scanner supporting image uploads, titles, descriptions, categories, tags (#Luck, #Achievement, #Build, #PvP, #Boss), and ⭐ Pinned favorites.",
+          "🖼️ Lightbox Modal Integration: Clicking any showcase image opens the existing fullscreen ImageLightboxModal with zoom and smooth backdrop dismiss.",
+          "Showcase Editor Modal: Custom modal supporting image file uploads, image URL input, category dropdown, tag suggestions, and instant database synchronization.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "Config-Driven Category Themes: Upgraded Category Breakdown & Element System cards to use rich visual tokens (gradient, glow, border, badgeBg, badgeText, progressColor) defined per game in gameDossierConfig.ts.",
+          "Authentic Game Identities: Tailored element/role identities for Genshin Impact, Wuthering Waves, Honkai: Star Rail, Mobile Legends, Valorant, Arknights, Dragon Ball Legends, and future games.",
+          "Dual Theme Excellence: Full responsive support for both Neo-Brutalism offset shadow style and Cyberpunk glowing glassmorphism aesthetic across desktop, tablet, and mobile viewports.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "Prisma Schema Addition: Added GameShowcaseItem model linked with Game via onDelete: Cascade.",
+          "API & Store Sync: Extended /api/dashboard and /api/action routes alongside Zustand dashboardStore with addGameShowcaseItem, updateGameShowcaseItem, and removeGameShowcaseItem actions.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v3.0.2",
     date: "2026-07-31",
     title: "Modal Main Content Area Horizontal Centering Engine Fix",

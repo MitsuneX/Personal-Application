@@ -7,13 +7,14 @@ import { AppShell } from "@/components/layout/AppShell";
 import { BentoCard } from "@/components/cards/BentoCard";
 import { useTheme } from "@/lib/theme";
 import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants";
-import { useDashboardStore, DossierCharacterEntry, GameResourceEntry } from "@/lib/store/dashboardStore";
+import { useDashboardStore, DossierCharacterEntry, GameResourceEntry, GameShowcaseEntry } from "@/lib/store/dashboardStore";
 import { resolveGameIcon } from "@/lib/data/gameIcons";
-import { getGameDossierConfig } from "@/lib/data/gameDossierConfig";
+import { getGameDossierConfig, getCategoryVisualTokens } from "@/lib/data/gameDossierConfig";
 import { DossierCharacterEditorModal } from "@/components/ui/DossierCharacterEditorModal";
 import { GameEditorModal } from "@/components/ui/GameEditorModal";
 import { ImageLightboxModal } from "@/components/ui/ImageLightboxModal";
 import { GameScannerModal } from "@/components/ui/GameScannerModal";
+import { ShowcaseEditorModal } from "@/components/ui/ShowcaseEditorModal";
 
 const RESOURCE_CATEGORIES = [
   "Meta", "Tier List", "Heroes", "Characters", "Builds",
@@ -62,49 +63,60 @@ function ResourceEditorModal({ isOpen, onClose, gameId, resourceToEdit }: Resour
     }
   }, [isOpen, resourceToEdit]);
 
-  const handleSave = () => {
-    if (!name.trim()) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !url.trim()) return;
+
     if (!isValidUrl(url.trim())) {
-      setUrlError("Please enter a valid http:// or https:// URL.");
+      setUrlError("Must be a valid URL starting with http:// or https://");
       return;
     }
+
+    const payload: GameResourceEntry = {
+      id: resourceToEdit?.id || `res-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      gameId,
+      name: name.trim(),
+      url: url.trim(),
+      icon: icon.trim() || undefined,
+      category,
+      description: description.trim() || undefined,
+      enabled,
+    };
+
     if (resourceToEdit) {
-      updateGameResource(resourceToEdit.id, { name, url, icon, category, description, enabled });
+      await updateGameResource(resourceToEdit.id, payload);
     } else {
-      addGameResource({
-        id: `res-${gameId}-${Date.now()}`,
-        gameId,
-        name, url, icon, category, description, enabled,
-        sortOrder: Date.now(),
-      });
+      await addGameResource(payload);
     }
     onClose();
   };
 
-  if (!isOpen) return null;
-
-  const inputStyle: React.CSSProperties = {
-    backgroundColor: isCyber ? "rgba(0,245,255,0.04)" : "#F8FAFC",
-    border: isCyber ? "1px solid rgba(0,245,255,0.25)" : "2px solid #000",
-    color: isCyber ? "#E0E8FF" : "#1A1A1A",
+  const inputStyle = {
+    backgroundColor: isCyber ? "rgba(10,15,30,0.75)" : "#F8FAFC",
+    color: isCyber ? "#F8FAFC" : "#0F172A",
+    borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#000000",
+    borderWidth: isCyber ? "1px" : "2px",
     borderRadius: "12px",
-    padding: "8px 12px",
-    width: "100%",
-    outline: "none",
+    padding: "10px 14px",
     fontSize: "13px",
+    fontWeight: 600,
+    outline: "none",
+    width: "100%",
   };
+
+  if (!isOpen) return null;
 
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         style={{
           backgroundColor: "rgba(0,0,0,0.6)",
           backdropFilter: "blur(6px)",
-          paddingLeft: "calc(var(--sidebar-width, 0px) + 1rem)",
+          paddingLeft: "calc(var(--sidebar-width, 0px) + 0.75rem)",
           transition: "padding-left 0.25s cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       >
@@ -121,89 +133,84 @@ function ResourceEditorModal({ isOpen, onClose, gameId, resourceToEdit }: Resour
         >
           <div className="flex items-center justify-between">
             <h3 className="font-black text-base theme-text-primary">
-              {resourceToEdit ? "Edit Resource" : "Add Resource"}
+              {resourceToEdit ? "Edit Resource Link" : "Add External Resource"}
             </h3>
             <button onClick={onClose} className="text-xl theme-text-muted cursor-pointer hover:opacity-70">✕</button>
           </div>
 
-          {/* Name */}
-          <div>
-            <label className="text-xs font-bold theme-text-muted mb-1 block uppercase tracking-wider">Name *</label>
-            <input style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Tier List" />
-          </div>
-
-          {/* URL */}
-          <div>
-            <label className="text-xs font-bold theme-text-muted mb-1 block uppercase tracking-wider">URL *</label>
-            <input style={inputStyle} value={url} onChange={(e) => { setUrl(e.target.value); setUrlError(""); }} placeholder="https://" />
-            {urlError && <p className="text-xs text-red-400 mt-1">{urlError}</p>}
-          </div>
-
-          {/* Icon + Category row */}
-          <div className="grid grid-cols-2 gap-3">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-xs font-bold theme-text-muted mb-1 block uppercase tracking-wider">Icon (emoji)</label>
-              <input style={inputStyle} value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="🔗" maxLength={4} />
+              <label className="text-xs font-bold theme-text-muted mb-1 block uppercase tracking-wider">Resource Name *</label>
+              <input style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Prydwen Tier List" required />
             </div>
+
             <div>
-              <label className="text-xs font-bold theme-text-muted mb-1 block uppercase tracking-wider">Category</label>
-              <select
-                style={{ ...inputStyle, cursor: "pointer" }}
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                {RESOURCE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <label className="text-xs font-bold theme-text-muted mb-1 block uppercase tracking-wider">URL *</label>
+              <input style={inputStyle} value={url} onChange={(e) => { setUrl(e.target.value); setUrlError(""); }} placeholder="https://" required />
+              {urlError && <p className="text-xs text-red-400 mt-1">{urlError}</p>}
             </div>
-          </div>
 
-          {/* Description */}
-          <div>
-            <label className="text-xs font-bold theme-text-muted mb-1 block uppercase tracking-wider">Description</label>
-            <input style={inputStyle} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional description" />
-          </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold theme-text-muted mb-1 block uppercase tracking-wider">Icon (Emoji)</label>
+                <input style={inputStyle} value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="🔗" maxLength={4} />
+              </div>
+              <div>
+                <label className="text-xs font-bold theme-text-muted mb-1 block uppercase tracking-wider">Category</label>
+                <select
+                  style={inputStyle}
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="cursor-pointer"
+                >
+                  {RESOURCE_CATEGORIES.map((c) => (
+                    <option key={c} value={c} className="bg-slate-900 text-white">{c}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
-          {/* Enabled toggle */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setEnabled(!enabled)}
-              className="w-10 h-5 rounded-full relative transition-colors cursor-pointer border-2 border-black"
-              style={{ backgroundColor: enabled ? (isCyber ? "#00F5FF" : "#FF6B35") : "#9CA3AF" }}
-            >
-              <span
-                className="absolute top-0.5 left-0.5 w-3.5 h-3.5 rounded-full bg-white transition-transform"
-                style={{ transform: enabled ? "translateX(20px)" : "translateX(0)" }}
+            <div>
+              <label className="text-xs font-bold theme-text-muted mb-1 block uppercase tracking-wider">Description</label>
+              <input style={inputStyle} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g. Meta rankings & equipment guides" />
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="checkbox"
+                id="resourceEnabled"
+                checked={enabled}
+                onChange={(e) => setEnabled(e.target.checked)}
+                className="w-4 h-4 rounded accent-amber-500 cursor-pointer"
               />
-            </button>
-            <span className="text-xs font-bold theme-text-muted">{enabled ? "Enabled" : "Disabled"}</span>
-          </div>
+              <label htmlFor="resourceEnabled" className="text-xs font-bold theme-text-primary cursor-pointer">
+                Enabled (visible on dossier)
+              </label>
+            </div>
 
-          {/* Actions */}
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={onClose}
-              className="flex-1 py-2 rounded-xl font-bold text-xs border-2 cursor-pointer"
-              style={{
-                borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000",
-                color: isCyber ? "#94A3B8" : "#4A4A4A",
-                backgroundColor: "transparent",
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              className="flex-1 py-2 rounded-xl font-extrabold text-xs cursor-pointer"
-              style={{
-                backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
-                color: isCyber ? "#000" : "#FFF",
-                border: isCyber ? "none" : "2px solid #000",
-                boxShadow: isCyber ? "0 0 12px rgba(0,245,255,0.4)" : "3px 3px 0 #000",
-              }}
-            >
-              Save
-            </button>
-          </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-xl text-xs font-bold border theme-text-muted cursor-pointer"
+                style={{ borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#000" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl text-xs font-black cursor-pointer text-white"
+                style={{
+                  backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
+                  color: isCyber ? "#050816" : "#FFF",
+                  border: isCyber ? "none" : "2px solid #000",
+                  boxShadow: isCyber ? "0 0 12px rgba(0,245,255,0.4)" : "3px 3px 0 #000",
+                }}
+              >
+                Save Resource
+              </button>
+            </div>
+          </form>
         </motion.div>
       </motion.div>
     </AnimatePresence>
@@ -221,6 +228,7 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
   const games = useDashboardStore((s) => s.games) || [];
   const dossierCharacters = useDashboardStore((s) => s.dossierCharacters) || [];
   const gameResources = useDashboardStore((s) => s.gameResources) || [];
+  const gameShowcaseItems = useDashboardStore((s) => s.gameShowcaseItems) || [];
   const removeGameResource = useDashboardStore((s) => s.removeGameResource);
   const currentGame = games.find((g) => g.id === gameId);
 
@@ -232,9 +240,13 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [isResourceModalOpen, setIsResourceModalOpen] = useState(false);
   const [editingResource, setEditingResource] = useState<GameResourceEntry | null>(null);
+  const [isShowcaseModalOpen, setIsShowcaseModalOpen] = useState(false);
+  const [editingShowcaseItem, setEditingShowcaseItem] = useState<GameShowcaseEntry | null>(null);
 
-  // Active Category Filter
+  // Active Filters
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>("ALL");
+  const [showcaseCategoryFilter, setShowcaseCategoryFilter] = useState<string>("ALL");
+  const [showcaseTagFilter, setShowcaseTagFilter] = useState<string>("ALL");
 
   if (!currentGame) {
     return (
@@ -264,15 +276,25 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
 
   // Filter dossier characters for this specific game
   const rawGameCharacters = dossierCharacters.filter((c) => c.gameId === currentGame.id);
-
-  // Filter by category selection if active
   const filteredCharacters = activeCategoryFilter === "ALL"
     ? rawGameCharacters
     : rawGameCharacters.filter((c) => c.category === activeCategoryFilter);
 
-  // Game-specific resources, enabled only in view mode
+  // Filter showcase gallery items for this specific game
+  const rawShowcaseItems = gameShowcaseItems.filter((i) => i.gameId === currentGame.id);
+  const filteredShowcaseItems = rawShowcaseItems.filter((item) => {
+    if (showcaseCategoryFilter !== "ALL" && item.category !== showcaseCategoryFilter) return false;
+    if (showcaseTagFilter !== "ALL" && (!item.tags || !item.tags.includes(showcaseTagFilter))) return false;
+    return true;
+  });
+
+  // Extract unique tags for showcase filter pills
+  const allShowcaseTags = Array.from(
+    new Set(rawShowcaseItems.flatMap((i) => i.tags || []))
+  ).filter(Boolean);
+
+  // Game-specific resources
   const allGameResources = gameResources.filter((r) => r.gameId === currentGame.id);
-  const enabledResources = allGameResources.filter((r) => r.enabled !== false);
 
   // Metrics
   const totalMatches = rawGameCharacters.reduce((sum, c) => sum + (c.matches || 0), 0);
@@ -328,6 +350,21 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
               }}
             >
               <span>📷</span> Scan Screenshot
+            </button>
+            <button
+              onClick={() => {
+                setEditingShowcaseItem(null);
+                setIsShowcaseModalOpen(true);
+              }}
+              className="px-3.5 py-2 rounded-xl font-extrabold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm"
+              style={{
+                backgroundColor: isCyber ? "rgba(191,95,255,0.15)" : "#E0F2FE",
+                color: isCyber ? "#BF5FFF" : "#0369A1",
+                border: isCyber ? "1px solid rgba(191,95,255,0.4)" : "2px solid #000",
+                boxShadow: isCyber ? "none" : "2px 2px 0 #000",
+              }}
+            >
+              <span>🖼️</span> Upload Showcase
             </button>
             <button
               onClick={() => setIsGameModalOpen(true)}
@@ -596,7 +633,7 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
           )}
         </motion.div>
 
-        {/* ── Element / Attribute System Section ── */}
+        {/* ── Element / Attribute System Section (Config-Driven Category Themes) ── */}
         {elementSystem && (
           <motion.div variants={cardVariants} className="space-y-3">
             <div className="flex items-center gap-2">
@@ -611,37 +648,46 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
               {elementSystem.elements.map((el) => {
                 const charCount = elementCharCounts[el.id] || 0;
+                const tokens = getCategoryVisualTokens(el, isCyber);
+
                 return (
                   <div
                     key={el.id}
-                    className="rounded-2xl p-4 border text-center relative overflow-hidden"
+                    className="rounded-2xl p-4 border text-center relative overflow-hidden transition-all hover:scale-[1.02]"
                     style={{
-                      backgroundColor: isCyber ? `${el.color}12` : "#FFFFFF",
-                      borderColor: isCyber ? `${el.color}50` : "#000",
+                      backgroundColor: isCyber ? tokens.gradient : "#FFFFFF",
+                      borderColor: isCyber ? tokens.border : "#000000",
                       borderWidth: isCyber ? "1px" : "2.5px",
-                      boxShadow: isCyber ? `0 0 12px ${el.color}25` : "3px 3px 0 #000",
+                      boxShadow: isCyber ? tokens.glow : "3px 3px 0 #000000",
                     }}
                   >
-                    {/* Cyber glow */}
+                    {/* Cyber glow background accent */}
                     {isCyber && (
                       <div
-                        className="absolute inset-0 rounded-2xl pointer-events-none"
-                        style={{ background: `radial-gradient(circle at 50% 0%, ${el.color}18, transparent 70%)` }}
+                        className="absolute inset-0 rounded-2xl pointer-events-none opacity-40"
+                        style={{ background: `radial-gradient(circle at 50% 0%, ${tokens.accentColor}33, transparent 70%)` }}
                       />
                     )}
                     <div className="relative z-10">
                       <div className="text-2xl mb-1.5">{el.icon}</div>
                       <p
                         className="font-black text-xs leading-tight"
-                        style={{ color: isCyber ? el.color : "#1A1A1A" }}
+                        style={{ color: isCyber ? tokens.accentColor : "#1A1A1A" }}
                       >
                         {el.name}
                       </p>
-                      <p className="text-[10px] font-mono mt-1 theme-text-muted">
+                      <span
+                        className="inline-block mt-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-bold"
+                        style={{
+                          backgroundColor: tokens.badgeBg,
+                          color: tokens.badgeText,
+                          border: isCyber ? `1px solid ${tokens.accentColor}40` : "1px solid #000",
+                        }}
+                      >
                         {charCount} {dossierConfig.characterLabel}{charCount !== 1 ? "s" : ""}
-                      </p>
+                      </span>
                       {el.description && (
-                        <p className="text-[10px] theme-text-muted mt-1.5 leading-tight line-clamp-2 hidden sm:block">
+                        <p className="text-[10px] theme-text-muted mt-1.5 leading-tight line-clamp-2 hidden sm:block opacity-90">
                           {el.description}
                         </p>
                       )}
@@ -653,7 +699,7 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
           </motion.div>
         )}
 
-        {/* ── Game-Aware Category Panels ── */}
+        {/* ── Game-Aware Category Panels (Config-Driven Category Themes) ── */}
         <motion.div variants={cardVariants} className="space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
@@ -679,15 +725,26 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
               </button>
               {dossierConfig.categories.map((cat) => {
                 const count = rawGameCharacters.filter((c) => c.category === cat.name).length;
+                const tokens = getCategoryVisualTokens(cat, isCyber);
+
                 return (
                   <button
                     key={cat.id}
                     onClick={() => setActiveCategoryFilter(cat.name)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                       activeCategoryFilter === cat.name
-                        ? "bg-amber-500 text-black border-2 border-black font-extrabold"
+                        ? "border-2 font-extrabold shadow-sm"
                         : "theme-text-muted hover:theme-text-primary bg-black/10 dark:bg-white/5"
                     }`}
+                    style={
+                      activeCategoryFilter === cat.name
+                        ? {
+                            backgroundColor: isCyber ? tokens.badgeBg : tokens.accentColor,
+                            color: isCyber ? tokens.accentColor : "#FFFFFF",
+                            borderColor: isCyber ? tokens.accentColor : "#000000",
+                          }
+                        : {}
+                    }
                   >
                     <span>{cat.icon}</span> {cat.name} ({count})
                   </button>
@@ -701,36 +758,43 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
             {dossierConfig.categories.map((cat) => {
               const catChars = rawGameCharacters.filter((c) => c.category === cat.name);
               const isActiveCat = activeCategoryFilter === cat.name;
+              const tokens = getCategoryVisualTokens(cat, isCyber);
 
               return (
                 <div
                   key={cat.id}
                   onClick={() => setActiveCategoryFilter(isActiveCat ? "ALL" : cat.name)}
-                  className="rounded-2xl p-4 border transition-all cursor-pointer relative overflow-hidden group"
+                  className="rounded-2xl p-4 border transition-all cursor-pointer relative overflow-hidden group hover:scale-[1.02]"
                   style={{
                     backgroundColor: isCyber
-                      ? (isActiveCat ? `${accent}20` : "rgba(10,15,30,0.6)")
+                      ? (isActiveCat ? tokens.gradient : "rgba(10,15,30,0.6)")
                       : (isActiveCat ? "#FEF08A" : "#FFFFFF"),
                     borderColor: isCyber
-                      ? (isActiveCat ? accent : "rgba(0,245,255,0.2)")
+                      ? (isActiveCat ? tokens.accentColor : tokens.border)
                       : "#000",
                     borderWidth: isCyber ? "1px" : "2.5px",
                     boxShadow: !isCyber
                       ? (isActiveCat ? "4px 4px 0 #000" : "3px 3px 0 #000")
-                      : (isActiveCat ? `0 0 15px ${accent}40` : "none"),
+                      : (isActiveCat ? tokens.glow : "none"),
                   }}
                 >
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <span className="text-xl">{cat.icon}</span>
                     <span
                       className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold"
-                      style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)" }}
+                      style={{
+                        backgroundColor: tokens.badgeBg,
+                        color: tokens.badgeText,
+                        border: isCyber ? `1.5px solid ${tokens.accentColor}40` : "1.5px solid #000",
+                      }}
                     >
                       {catChars.length} {catChars.length === 1 ? dossierConfig.characterLabel : `${dossierConfig.characterLabel}s`}
                     </span>
                   </div>
 
-                  <h3 className="font-black text-sm theme-text-primary leading-tight truncate">{cat.name}</h3>
+                  <h3 className="font-black text-sm leading-tight truncate" style={{ color: isCyber ? tokens.accentColor : "#1A1A1A" }}>
+                    {cat.name}
+                  </h3>
                   <p className="text-[11px] theme-text-muted mt-1 line-clamp-2 leading-relaxed">{cat.description}</p>
 
                   {catChars.length > 0 && (
@@ -738,7 +802,7 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
                       {catChars.slice(0, 3).map((char) => (
                         <div key={char.id} className="flex items-center justify-between text-[11px] font-mono">
                           <span className="font-bold theme-text-primary truncate">{char.name}</span>
-                          <span className="text-amber-500 font-bold">{char.winRate}%</span>
+                          <span className="font-bold" style={{ color: tokens.accentColor }}>{char.winRate}%</span>
                         </div>
                       ))}
                     </div>
@@ -749,15 +813,34 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
           </div>
         </motion.div>
 
-        {/* ── Character / Hero Roster Dossier Grid ── */}
+        {/* ── 1. RENAME "CHARACTER INTELLIGENCE ROSTER" -> 📊 Statistics Scanner ── */}
         <motion.div variants={cardVariants} className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-black theme-text-primary flex items-center gap-2">
-              <span>🗂️ {dossierConfig.characterLabel} Intelligence Roster</span>
-            </h2>
-            <span className="text-xs font-mono theme-text-muted">
-              Showing {filteredCharacters.length} of {rawGameCharacters.length} entries
-            </span>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <h2 className="text-xl font-black theme-text-primary flex items-center gap-2">
+                <span>📊 Statistics Scanner</span>
+              </h2>
+              <p className="text-xs theme-text-muted font-mono mt-0.5">
+                AI & OCR screenshot extraction, stats detection, and character data management
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsScannerOpen(true)}
+                className="px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+                style={{
+                  backgroundColor: isCyber ? "rgba(0,245,255,0.12)" : "#FEF08A",
+                  color: isCyber ? "#00F5FF" : "#854D0E",
+                  border: isCyber ? "1px solid rgba(0,245,255,0.3)" : "2px solid #000",
+                  boxShadow: isCyber ? "none" : "2px 2px 0 #000",
+                }}
+              >
+                <span>📷</span> Scan Screenshot
+              </button>
+              <span className="text-xs font-mono theme-text-muted">
+                Showing {filteredCharacters.length} of {rawGameCharacters.length} entries
+              </span>
+            </div>
           </div>
 
           {filteredCharacters.length === 0 ? (
@@ -771,7 +854,7 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
               }}
             >
               <div className="text-4xl">📸</div>
-              <h3 className="font-black text-base theme-text-primary">Your Game Database is Empty</h3>
+              <h3 className="font-black text-base theme-text-primary">Your Statistics Scanner is Empty</h3>
               <p className="text-xs theme-text-muted max-w-sm mx-auto">
                 Upload a game statistics screenshot and let the AI scanner automatically extract and build your profile.
               </p>
@@ -901,6 +984,227 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
           )}
         </motion.div>
 
+        {/* ── 2. NEW SECTION: 🖼 Showcase Gallery (Directly below Statistics Scanner) ── */}
+        <motion.div variants={cardVariants} className="space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h2 className="text-xl font-black theme-text-primary flex items-center gap-2">
+                <span>🖼 Showcase Gallery</span>
+              </h2>
+              <p className="text-xs theme-text-muted font-mono mt-0.5">
+                Personal showcase memories, lucky pulls, team builds, PvP moments, and achievements for {gameTitle}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => {
+                  setEditingShowcaseItem(null);
+                  setIsShowcaseModalOpen(true);
+                }}
+                className="px-3.5 py-1.5 rounded-xl font-extrabold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm"
+                style={{
+                  backgroundColor: isCyber ? "rgba(191,95,255,0.15)" : "#E0F2FE",
+                  color: isCyber ? "#BF5FFF" : "#0369A1",
+                  border: isCyber ? "1px solid rgba(191,95,255,0.4)" : "2px solid #000",
+                  boxShadow: isCyber ? "none" : "2px 2px 0 #000",
+                }}
+              >
+                <span>+</span> Add Showcase
+              </button>
+              <span className="text-xs font-mono theme-text-muted">
+                {rawShowcaseItems.length} {rawShowcaseItems.length === 1 ? "memory" : "memories"}
+              </span>
+            </div>
+          </div>
+
+          {/* Category & Tag Filter Pills for Showcase Gallery */}
+          {rawShowcaseItems.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap text-xs font-mono">
+              <span className="theme-text-muted font-bold">Filter:</span>
+              <button
+                onClick={() => { setShowcaseCategoryFilter("ALL"); setShowcaseTagFilter("ALL"); }}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  showcaseCategoryFilter === "ALL" && showcaseTagFilter === "ALL"
+                    ? "bg-amber-500 text-black border-2 border-black font-extrabold"
+                    : "theme-text-muted hover:theme-text-primary bg-black/10 dark:bg-white/5"
+                }`}
+              >
+                All Showcase ({rawShowcaseItems.length})
+              </button>
+
+              {/* Tag filters */}
+              {allShowcaseTags.map((tag) => {
+                const isSelected = showcaseTagFilter === tag;
+                return (
+                  <button
+                    key={tag}
+                    onClick={() => {
+                      setShowcaseTagFilter(isSelected ? "ALL" : tag);
+                      setShowcaseCategoryFilter("ALL");
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      isSelected
+                        ? "bg-cyan-500 text-black border-2 border-black font-extrabold"
+                        : "theme-text-muted hover:theme-text-primary bg-black/10 dark:bg-white/5"
+                    }`}
+                  >
+                    #{tag}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Gallery Items Grid / Empty State */}
+          {filteredShowcaseItems.length === 0 ? (
+            <div
+              className="p-8 rounded-2xl border text-center space-y-3"
+              style={{
+                backgroundColor: isCyber ? "rgba(10,15,30,0.6)" : "#FFFFFF",
+                borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000",
+                borderWidth: isCyber ? "1px" : "2.5px",
+                boxShadow: isCyber ? "none" : "4px 4px 0 #000",
+              }}
+            >
+              <div className="text-4xl">🖼️</div>
+              <h3 className="font-black text-base theme-text-primary">No memories have been added yet</h3>
+              <p className="text-xs theme-text-muted max-w-sm mx-auto">
+                Upload your first screenshot to start documenting your journey for {gameTitle}.
+              </p>
+              <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
+                <button
+                  onClick={() => { setEditingShowcaseItem(null); setIsShowcaseModalOpen(true); }}
+                  className="px-4 py-2 rounded-xl font-extrabold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-md"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#FEF08A",
+                    color: isCyber ? "#00F5FF" : "#854D0E",
+                    border: isCyber ? "1px solid rgba(0,245,255,0.4)" : "2px solid #000",
+                    boxShadow: isCyber ? "none" : "2px 2px 0 #000",
+                  }}
+                >
+                  <span>🖼️</span> Upload Screenshot
+                </button>
+                <button
+                  onClick={() => setIsScannerOpen(true)}
+                  className="px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-black border-2 border-black shadow-[2px_2px_0_#000] cursor-pointer"
+                >
+                  <span>📷</span> Scan Screenshot
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {filteredShowcaseItems.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  variants={cardVariants}
+                  custom={index}
+                  layout
+                  className="rounded-2xl border overflow-hidden flex flex-col relative group transition-all"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(10,15,30,0.85)" : "#FFFFFF",
+                    borderColor: isCyber ? (item.isFavorite ? "#FACC15" : "rgba(0,245,255,0.25)") : "#000000",
+                    borderWidth: isCyber ? "1px" : "2.5px",
+                    boxShadow: isCyber
+                      ? (item.isFavorite ? "0 0 20px rgba(250,204,21,0.25)" : "0 0 12px rgba(0,245,255,0.12)")
+                      : "4px 4px 0 #000000",
+                  }}
+                >
+                  {/* Top Badges overlay */}
+                  <div className="absolute top-2.5 left-2.5 right-2.5 z-10 flex items-center justify-between pointer-events-none">
+                    {item.category ? (
+                      <span
+                        className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider backdrop-blur-md shadow-sm pointer-events-auto"
+                        style={{
+                          backgroundColor: isCyber ? "rgba(5,8,22,0.8)" : "rgba(255,255,255,0.9)",
+                          color: isCyber ? "#00F5FF" : "#1A1A1A",
+                          border: isCyber ? "1px solid rgba(0,245,255,0.4)" : "1.5px solid #000",
+                        }}
+                      >
+                        {item.category}
+                      </span>
+                    ) : <div />}
+
+                    {item.isFavorite && (
+                      <span className="text-xs bg-amber-500/90 text-black px-2 py-0.5 rounded-md font-bold shadow-sm pointer-events-auto">
+                        ⭐ Pinned
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Edit Button */}
+                  <button
+                    onClick={() => { setEditingShowcaseItem(item); setIsShowcaseModalOpen(true); }}
+                    className="absolute top-2.5 right-2.5 z-20 p-1.5 rounded-lg bg-black/60 text-white backdrop-blur-md opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity cursor-pointer text-xs"
+                    title="Edit Item"
+                  >
+                    ✏️
+                  </button>
+
+                  {/* Showcase Image container */}
+                  <div
+                    onClick={() => setLightboxImage(item.imageUrl)}
+                    className="relative aspect-video w-full overflow-hidden bg-black/30 cursor-pointer group/img"
+                  >
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center font-bold text-white text-xs gap-1.5">
+                      <span>🔍 Fullscreen View</span>
+                    </div>
+                  </div>
+
+                  {/* Content Info */}
+                  <div className="p-4 flex-1 flex flex-col justify-between space-y-2">
+                    <div>
+                      <h3 className="font-black text-sm theme-text-primary leading-tight line-clamp-1">
+                        {item.title}
+                      </h3>
+                      {item.description && (
+                        <p className="text-xs theme-text-muted mt-1 leading-relaxed line-clamp-2">
+                          {item.description}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="pt-2 border-t border-white/10 flex items-center justify-between flex-wrap gap-2 text-[11px] font-mono theme-text-muted">
+                      {/* Tags */}
+                      <div className="flex flex-wrap gap-1">
+                        {item.tags && item.tags.length > 0 ? (
+                          item.tags.map((tag) => (
+                            <button
+                              key={tag}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowcaseTagFilter(showcaseTagFilter === tag ? "ALL" : tag);
+                              }}
+                              className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 transition-all cursor-pointer"
+                            >
+                              #{tag}
+                            </button>
+                          ))
+                        ) : (
+                          <span className="opacity-50">#showcase</span>
+                        )}
+                      </div>
+
+                      {/* Date */}
+                      {item.createdAt && (
+                        <span className="text-[10px] opacity-70">
+                          {new Date(item.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+
         {/* ── Modals & Lightbox ── */}
         <DossierCharacterEditorModal
           isOpen={isCharModalOpen}
@@ -925,11 +1229,19 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
           gameCategory={currentGame.category}
         />
 
+        <ShowcaseEditorModal
+          isOpen={isShowcaseModalOpen}
+          onClose={() => { setIsShowcaseModalOpen(false); setEditingShowcaseItem(null); }}
+          gameId={currentGame.id}
+          gameTitle={gameTitle}
+          itemToEdit={editingShowcaseItem}
+        />
+
         <ImageLightboxModal
           isOpen={!!lightboxImage}
           onClose={() => setLightboxImage(null)}
           imageUrl={lightboxImage || ""}
-          title={`${gameTitle} Screenshot`}
+          title={`${gameTitle} Showcase`}
         />
 
         <ResourceEditorModal

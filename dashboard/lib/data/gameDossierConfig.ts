@@ -1,9 +1,23 @@
 /**
- * Game-Aware Dossier Capability Configuration Engine
- * Drives: category labels, character labels, element systems, resource presets, game type
+ * Game-Aware Dossier Capability & Visual Theme Engine
+ * Drives: category labels, character labels, element systems, resource presets, visual tokens, theme identities
  */
 
 import { normalizeGameTitle } from "./gameIcons";
+
+// ─── Visual Tokens ────────────────────────────────────────────────────────────
+
+export interface CategoryVisualTokens {
+  accentColor: string;
+  gradient: string;
+  glow: string;
+  border: string;
+  badgeBg: string;
+  badgeText: string;
+  progressColor: string;
+  iconColor: string;
+  hoverAccent: string;
+}
 
 // ─── Element System ────────────────────────────────────────────────────────────
 
@@ -13,6 +27,7 @@ export interface GameElement {
   icon: string;           // emoji or short symbol
   color: string;          // accent hex
   description?: string;
+  visualTokens?: CategoryVisualTokens;
 }
 
 export interface ElementSystem {
@@ -27,6 +42,7 @@ export interface DossierCategoryItem {
   name: string;
   icon: string;
   description: string;
+  visualTokens?: CategoryVisualTokens;
 }
 
 // ─── Full Game Capability Config ──────────────────────────────────────────────
@@ -43,6 +59,23 @@ export interface GameCapabilityConfig {
 // Keep backwards compat alias
 export type GameDossierConfig = GameCapabilityConfig;
 
+// Helper to construct token set from accent hex
+export function createVisualTokens(hex: string, isCyber: boolean = false): CategoryVisualTokens {
+  return {
+    accentColor: hex,
+    gradient: isCyber
+      ? `linear-gradient(135deg, ${hex}33 0%, ${hex}08 100%)`
+      : `linear-gradient(135deg, ${hex}1F 0%, ${hex}08 100%)`,
+    glow: isCyber ? `0 0 20px ${hex}55, 0 0 40px ${hex}22` : `3px 3px 0px #000000`,
+    border: isCyber ? `${hex}66` : "#000000",
+    badgeBg: isCyber ? `${hex}26` : `${hex}1F`,
+    badgeText: isCyber ? hex : "#1A1A1A",
+    progressColor: hex,
+    iconColor: hex,
+    hoverAccent: `${hex}15`,
+  };
+}
+
 // ─── Specific Game Configs ────────────────────────────────────────────────────
 
 const SPECIFIC_GAME_CONFIGS: Record<string, GameCapabilityConfig> = {
@@ -54,13 +87,12 @@ const SPECIFIC_GAME_CONFIGS: Record<string, GameCapabilityConfig> = {
     characterLabel: "Hero",
     resourcePresetsEnabled: true,
     categories: [
-      { id: "exp",    name: "EXP Lane", icon: "⚔️",  description: "Solo lane durability & team-fight initiation" },
-      { id: "jungle", name: "Jungle",   icon: "🌲",  description: "Objective control, rotations & gank execution" },
-      { id: "mid",    name: "Mid Lane", icon: "🎯",  description: "High magic burst, crowd control & fast wave clear" },
-      { id: "gold",   name: "Gold Lane",icon: "🏹",  description: "Late-game physical DPS & hyper-carry scaling" },
-      { id: "roam",   name: "Roam",     icon: "🛡️",  description: "Vision control, peel & frontline protection" },
+      { id: "exp",    name: "EXP Lane", icon: "⚔️",  description: "Solo lane durability & team-fight initiation", visualTokens: createVisualTokens("#22C55E") },
+      { id: "jungle", name: "Jungle",   icon: "🌲",  description: "Objective control, rotations & gank execution", visualTokens: createVisualTokens("#EF4444") },
+      { id: "mid",    name: "Mid Lane", icon: "🎯",  description: "High magic burst, crowd control & fast wave clear", visualTokens: createVisualTokens("#A855F7") },
+      { id: "gold",   name: "Gold Lane",icon: "🏹",  description: "Late-game physical DPS & hyper-carry scaling", visualTokens: createVisualTokens("#FACC15") },
+      { id: "roam",   name: "Roam",     icon: "🛡️",  description: "Vision control, peel & frontline protection", visualTokens: createVisualTokens("#3B82F6") },
     ],
-    // No elements — MOBA mechanics do not use Genshin-style elemental systems
   },
 
   // ── Honkai: Star Rail ──────────────────────────────────────────────────────
@@ -70,27 +102,26 @@ const SPECIFIC_GAME_CONFIGS: Record<string, GameCapabilityConfig> = {
     characterLabel: "Character",
     resourcePresetsEnabled: true,
     categories: [
-      { id: "destruction",  name: "Destruction",  icon: "💥", description: "Heavy blast & survivability frontline DPS" },
-      { id: "hunt",         name: "Hunt",          icon: "🎯", description: "Single-target high-speed assassin DPS" },
-      { id: "erudition",    name: "Erudition",     icon: "⚡", description: "Multi-target AoE wave clear & burst" },
-      { id: "harmony",      name: "Harmony",       icon: "🎶", description: "Team ATK/CRIT buffers & action manipulators" },
-      { id: "nihility",     name: "Nihility",      icon: "🌀", description: "Enemy debuffers & Damage-over-Time (DoT)" },
-      { id: "preservation", name: "Preservation",  icon: "🛡️", description: "Shield generation & damage mitigation" },
-      { id: "abundance",    name: "Abundance",     icon: "💚", description: "HP restoration & cleanse sustain" },
-      { id: "remembrance",  name: "Remembrance",   icon: "❄️", description: "Memory & MoC specialized expansion path" },
-      { id: "elation",      name: "Elation",       icon: "🌟", description: "Follow-up & collective synergy resonance" },
+      { id: "destruction",  name: "Destruction",  icon: "💥", description: "Heavy blast & survivability frontline DPS", visualTokens: createVisualTokens("#DC2626") },
+      { id: "hunt",         name: "Hunt",          icon: "🎯", description: "Single-target high-speed assassin DPS", visualTokens: createVisualTokens("#059669") },
+      { id: "erudition",    name: "Erudition",     icon: "⚡", description: "Multi-target AoE wave clear & burst", visualTokens: createVisualTokens("#2563EB") },
+      { id: "harmony",      name: "Harmony",       icon: "🎶", description: "Team ATK/CRIT buffers & action manipulators", visualTokens: createVisualTokens("#D97706") },
+      { id: "nihility",     name: "Nihility",      icon: "🌀", description: "Enemy debuffers & Damage-over-Time (DoT)", visualTokens: createVisualTokens("#7C3AED") },
+      { id: "preservation", name: "Preservation",  icon: "🛡️", description: "Shield generation & damage mitigation", visualTokens: createVisualTokens("#F59E0B") },
+      { id: "abundance",    name: "Abundance",     icon: "💚", description: "HP restoration & cleanse sustain", visualTokens: createVisualTokens("#16A34A") },
+      { id: "remembrance",  name: "Remembrance",   icon: "❄️", description: "Memory & MoC specialized expansion path", visualTokens: createVisualTokens("#0EA5E9") },
+      { id: "elation",      name: "Elation",       icon: "🌟", description: "Follow-up & collective synergy resonance", visualTokens: createVisualTokens("#EC4899") },
     ],
-    // HSR uses "Elements" (fire/ice/wind/lightning/quantum/imaginary/physical)
     elementSystem: {
       sectionLabel: "Combat Elements",
       elements: [
-        { id: "fire",        name: "Fire",        icon: "🔥", color: "#EF4444" },
-        { id: "ice",         name: "Ice",         icon: "❄️", color: "#60A5FA" },
-        { id: "wind",        name: "Wind",        icon: "💨", color: "#34D399" },
-        { id: "lightning",   name: "Lightning",   icon: "⚡", color: "#A78BFA" },
-        { id: "quantum",     name: "Quantum",     icon: "🌀", color: "#818CF8" },
-        { id: "imaginary",   name: "Imaginary",   icon: "✨", color: "#FCD34D" },
-        { id: "physical",    name: "Physical",    icon: "💪", color: "#94A3B8" },
+        { id: "fire",        name: "Fire",        icon: "🔥", color: "#EF4444", visualTokens: createVisualTokens("#EF4444") },
+        { id: "ice",         name: "Ice",         icon: "❄️", color: "#60A5FA", visualTokens: createVisualTokens("#60A5FA") },
+        { id: "wind",        name: "Wind",        icon: "💨", color: "#34D399", visualTokens: createVisualTokens("#34D399") },
+        { id: "lightning",   name: "Lightning",   icon: "⚡", color: "#A78BFA", visualTokens: createVisualTokens("#A78BFA") },
+        { id: "quantum",     name: "Quantum",     icon: "🌀", color: "#818CF8", visualTokens: createVisualTokens("#818CF8") },
+        { id: "imaginary",   name: "Imaginary",   icon: "✨", color: "#FCD34D", visualTokens: createVisualTokens("#FCD34D") },
+        { id: "physical",    name: "Physical",    icon: "💪", color: "#94A3B8", visualTokens: createVisualTokens("#94A3B8") },
       ],
     },
   },
@@ -102,12 +133,11 @@ const SPECIFIC_GAME_CONFIGS: Record<string, GameCapabilityConfig> = {
     characterLabel: "Agent",
     resourcePresetsEnabled: true,
     categories: [
-      { id: "duelist",    name: "Duelist",    icon: "🔥", description: "Self-sufficient entry fraggers & duel takers" },
-      { id: "controller", name: "Controller", icon: "☁️", description: "Sightline suppression & smoke executioners" },
-      { id: "initiator",  name: "Initiator",  icon: "👁️", description: "Reconnaissance & site entry enablers" },
-      { id: "sentinel",   name: "Sentinel",   icon: "🛡️", description: "Defensive anchors & site lockdown experts" },
+      { id: "duelist",    name: "Duelist",    icon: "🔥", description: "Self-sufficient entry fraggers & duel takers", visualTokens: createVisualTokens("#FF4655") },
+      { id: "controller", name: "Controller", icon: "☁️", description: "Sightline suppression & smoke executioners", visualTokens: createVisualTokens("#00F5FF") },
+      { id: "initiator",  name: "Initiator",  icon: "👁️", description: "Reconnaissance & site entry enablers", visualTokens: createVisualTokens("#EAB308") },
+      { id: "sentinel",   name: "Sentinel",   icon: "🛡️", description: "Defensive anchors & site lockdown experts", visualTokens: createVisualTokens("#10B981") },
     ],
-    // No elemental system — Valorant abilities are not elemental
   },
 
   // ── Genshin Impact ────────────────────────────────────────────────────────
@@ -117,21 +147,21 @@ const SPECIFIC_GAME_CONFIGS: Record<string, GameCapabilityConfig> = {
     characterLabel: "Character",
     resourcePresetsEnabled: true,
     categories: [
-      { id: "maindps", name: "Main DPS",       icon: "🗡️", description: "On-field elemental damage driver" },
-      { id: "subdps",  name: "Sub DPS",        icon: "⚡", description: "Off-field elemental reaction enabler" },
-      { id: "support", name: "Support",        icon: "✨", description: "Elemental buffing & battery utility" },
-      { id: "healer",  name: "Healer / Shield", icon: "💚", description: "Party HP restoration & shield sustain" },
+      { id: "maindps", name: "Main DPS",       icon: "🗡️", description: "On-field elemental damage driver", visualTokens: createVisualTokens("#EF4444") },
+      { id: "subdps",  name: "Sub DPS",        icon: "⚡", description: "Off-field elemental reaction enabler", visualTokens: createVisualTokens("#8B5CF6") },
+      { id: "support", name: "Support",        icon: "✨", description: "Elemental buffing & battery utility", visualTokens: createVisualTokens("#F59E0B") },
+      { id: "healer",  name: "Healer / Shield", icon: "💚", description: "Party HP restoration & shield sustain", visualTokens: createVisualTokens("#10B981") },
     ],
     elementSystem: {
       sectionLabel: "Elements",
       elements: [
-        { id: "pyro",     name: "Pyro",     icon: "🔥", color: "#EF4444", description: "Fire reactions: Vaporize, Melt, Overloaded" },
-        { id: "hydro",    name: "Hydro",    icon: "💧", color: "#3B82F6", description: "Water reactions: Vaporize, Frozen, Bloom" },
-        { id: "anemo",    name: "Anemo",    icon: "💨", color: "#34D399", description: "Wind reactions: Swirl spread" },
-        { id: "electro",  name: "Electro",  icon: "⚡", color: "#8B5CF6", description: "Lightning reactions: Overloaded, Superconduct, Quicken" },
-        { id: "dendro",   name: "Dendro",   icon: "🌿", color: "#22C55E", description: "Nature reactions: Bloom, Quicken, Burgeon" },
-        { id: "cryo",     name: "Cryo",     icon: "❄️", color: "#67E8F9", description: "Ice reactions: Frozen, Melt, Superconduct" },
-        { id: "geo",      name: "Geo",      icon: "🪨", color: "#D97706", description: "Earth reactions: Crystallize shield" },
+        { id: "pyro",     name: "Pyro",     icon: "🔥", color: "#EF4444", description: "Fire reactions: Vaporize, Melt, Overloaded", visualTokens: createVisualTokens("#EF4444") },
+        { id: "hydro",    name: "Hydro",    icon: "💧", color: "#3B82F6", description: "Water reactions: Vaporize, Frozen, Bloom", visualTokens: createVisualTokens("#3B82F6") },
+        { id: "anemo",    name: "Anemo",    icon: "💨", color: "#10B981", description: "Wind reactions: Swirl spread", visualTokens: createVisualTokens("#10B981") },
+        { id: "electro",  name: "Electro",  icon: "⚡", color: "#8B5CF6", description: "Lightning reactions: Overloaded, Superconduct, Quicken", visualTokens: createVisualTokens("#8B5CF6") },
+        { id: "dendro",   name: "Dendro",   icon: "🌿", color: "#22C55E", description: "Nature reactions: Bloom, Quicken, Burgeon", visualTokens: createVisualTokens("#22C55E") },
+        { id: "cryo",     name: "Cryo",     icon: "❄️", color: "#06B6D4", description: "Ice reactions: Frozen, Melt, Superconduct", visualTokens: createVisualTokens("#06B6D4") },
+        { id: "geo",      name: "Geo",      icon: "🪨", color: "#D97706", description: "Earth reactions: Crystallize shield", visualTokens: createVisualTokens("#D97706") },
       ],
     },
   },
@@ -143,21 +173,20 @@ const SPECIFIC_GAME_CONFIGS: Record<string, GameCapabilityConfig> = {
     characterLabel: "Resonator",
     resourcePresetsEnabled: true,
     categories: [
-      { id: "dps",     name: "DPS / Main",    icon: "🗡️", description: "Primary on-field damage resonator" },
-      { id: "subdps",  name: "Sub DPS",       icon: "⚡", description: "Off-field concerto & coordinated atk" },
-      { id: "support", name: "Support",       icon: "🎶", description: "Concerto energy & team buffs" },
-      { id: "healer",  name: "Healer",        icon: "💚", description: "HP restoration & Forte sustain" },
+      { id: "dps",     name: "DPS / Main",    icon: "🗡️", description: "Primary on-field damage resonator", visualTokens: createVisualTokens("#EF4444") },
+      { id: "subdps",  name: "Sub DPS",       icon: "⚡", description: "Off-field concerto & coordinated atk", visualTokens: createVisualTokens("#A78BFA") },
+      { id: "support", name: "Support",       icon: "🎶", description: "Concerto energy & team buffs", visualTokens: createVisualTokens("#FCD34D") },
+      { id: "healer",  name: "Healer",        icon: "💚", description: "HP restoration & Forte sustain", visualTokens: createVisualTokens("#34D399") },
     ],
-    // Wuthering Waves uses its own Resonance Attribute system (not Genshin elements)
     elementSystem: {
       sectionLabel: "Resonance Attributes",
       elements: [
-        { id: "glacio",    name: "Glacio",    icon: "❄️", color: "#67E8F9", description: "Ice attribute — Glacio Erosion" },
-        { id: "fusion",    name: "Fusion",    icon: "🔥", color: "#EF4444", description: "Fire attribute — Fusion Erosion" },
-        { id: "electro",   name: "Electro",   icon: "⚡", color: "#A78BFA", description: "Lightning attribute — Electro Erosion" },
-        { id: "aero",      name: "Aero",      icon: "💨", color: "#34D399", description: "Wind attribute — Aero Erosion" },
-        { id: "spectro",   name: "Spectro",   icon: "✨", color: "#FCD34D", description: "Light attribute — Spectro Erosion" },
-        { id: "havoc",     name: "Havoc",     icon: "🌑", color: "#8B5CF6", description: "Dark/Chaos attribute — Havoc Erosion" },
+        { id: "glacio",    name: "Glacio",    icon: "❄️", color: "#38BDF8", description: "Ice attribute — Glacio Erosion", visualTokens: createVisualTokens("#38BDF8") },
+        { id: "fusion",    name: "Fusion",    icon: "🔥", color: "#F97316", description: "Fire attribute — Fusion Erosion", visualTokens: createVisualTokens("#F97316") },
+        { id: "electro",   name: "Electro",   icon: "⚡", color: "#A855F7", description: "Lightning attribute — Electro Erosion", visualTokens: createVisualTokens("#A855F7") },
+        { id: "aero",      name: "Aero",      icon: "💨", color: "#10B981", description: "Wind attribute — Aero Erosion", visualTokens: createVisualTokens("#10B981") },
+        { id: "spectro",   name: "Spectro",   icon: "✨", color: "#FACC15", description: "Light attribute — Spectro Erosion", visualTokens: createVisualTokens("#FACC15") },
+        { id: "havoc",     name: "Havoc",     icon: "🌑", color: "#E11D48", description: "Dark/Chaos attribute — Havoc Erosion", visualTokens: createVisualTokens("#E11D48") },
       ],
     },
   },
@@ -169,21 +198,20 @@ const SPECIFIC_GAME_CONFIGS: Record<string, GameCapabilityConfig> = {
     characterLabel: "Agent",
     resourcePresetsEnabled: true,
     categories: [
-      { id: "dps",     name: "Attack / DPS", icon: "🗡️", description: "Primary damage output driver" },
-      { id: "stun",    name: "Stun",         icon: "⚡", description: "Heavy daze meter buildup specialist" },
-      { id: "support", name: "Support",      icon: "🎶", description: "Team energy & damage buff utility" },
-      { id: "anomaly", name: "Anomaly",      icon: "🌀", description: "Attribute buildup & elemental anomaly" },
-      { id: "defense", name: "Defense",      icon: "🛡️", description: "Counter-attacks & guard mitigation" },
+      { id: "dps",     name: "Attack / DPS", icon: "🗡️", description: "Primary damage output driver", visualTokens: createVisualTokens("#EF4444") },
+      { id: "stun",    name: "Stun",         icon: "⚡", description: "Heavy daze meter buildup specialist", visualTokens: createVisualTokens("#EAB308") },
+      { id: "support", name: "Support",      icon: "🎶", description: "Team energy & damage buff utility", visualTokens: createVisualTokens("#06B6D4") },
+      { id: "anomaly", name: "Anomaly",      icon: "🌀", description: "Attribute buildup & elemental anomaly", visualTokens: createVisualTokens("#8B5CF6") },
+      { id: "defense", name: "Defense",      icon: "🛡️", description: "Counter-attacks & guard mitigation", visualTokens: createVisualTokens("#64748B") },
     ],
-    // ZZZ uses Attributes (not "elements"), but they function similarly
     elementSystem: {
       sectionLabel: "Attributes",
       elements: [
-        { id: "physical",   name: "Physical",   icon: "💪", color: "#94A3B8" },
-        { id: "fire",       name: "Fire",       icon: "🔥", color: "#EF4444" },
-        { id: "ice",        name: "Ice",        icon: "❄️", color: "#60A5FA" },
-        { id: "electric",   name: "Electric",   icon: "⚡", color: "#A78BFA" },
-        { id: "ether",      name: "Ether",      icon: "✨", color: "#34D399" },
+        { id: "physical",   name: "Physical",   icon: "💪", color: "#94A3B8", visualTokens: createVisualTokens("#94A3B8") },
+        { id: "fire",       name: "Fire",       icon: "🔥", color: "#EF4444", visualTokens: createVisualTokens("#EF4444") },
+        { id: "ice",        name: "Ice",        icon: "❄️", color: "#60A5FA", visualTokens: createVisualTokens("#60A5FA") },
+        { id: "electric",   name: "Electric",   icon: "⚡", color: "#A78BFA", visualTokens: createVisualTokens("#A78BFA") },
+        { id: "ether",      name: "Ether",      icon: "✨", color: "#34D399", visualTokens: createVisualTokens("#34D399") },
       ],
     },
   },
@@ -195,20 +223,19 @@ const SPECIFIC_GAME_CONFIGS: Record<string, GameCapabilityConfig> = {
     characterLabel: "Fighter",
     resourcePresetsEnabled: false,
     categories: [
-      { id: "melee",    name: "Melee",     icon: "👊", description: "Close-range physical striker" },
-      { id: "ranged",   name: "Ranged",    icon: "💥", description: "Energy blast & long-range attacker" },
-      { id: "support",  name: "Support",   icon: "🌟", description: "Team heal & buff booster" },
-      { id: "defense",  name: "Defense",   icon: "🛡️", description: "Tank & damage absorber" },
+      { id: "melee",    name: "Melee",     icon: "👊", description: "Close-range physical striker", visualTokens: createVisualTokens("#EF4444") },
+      { id: "ranged",   name: "Ranged",    icon: "💥", description: "Energy blast & long-range attacker", visualTokens: createVisualTokens("#EAB308") },
+      { id: "support",  name: "Support",   icon: "🌟", description: "Team heal & buff booster", visualTokens: createVisualTokens("#F59E0B") },
+      { id: "defense",  name: "Defense",   icon: "🛡️", description: "Tank & damage absorber", visualTokens: createVisualTokens("#10B981") },
     ],
-    // Dragon Ball has battle attributes (not elemental reactions like Genshin/WuWa)
     elementSystem: {
       sectionLabel: "Battle Attributes",
       elements: [
-        { id: "red",    name: "RED",    icon: "🔴", color: "#EF4444", description: "Effective against PUR" },
-        { id: "blue",   name: "BLU",    icon: "🔵", color: "#3B82F6", description: "Effective against RED" },
-        { id: "green",  name: "GRN",    icon: "🟢", color: "#22C55E", description: "Effective against BLU" },
-        { id: "yellow", name: "YEL",    icon: "🟡", color: "#EAB308", description: "Effective against GRN" },
-        { id: "purple", name: "PUR",    icon: "🟣", color: "#8B5CF6", description: "Effective against YEL" },
+        { id: "red",    name: "RED",    icon: "🔴", color: "#EF4444", description: "Effective against PUR", visualTokens: createVisualTokens("#EF4444") },
+        { id: "blue",   name: "BLU",    icon: "🔵", color: "#3B82F6", description: "Effective against RED", visualTokens: createVisualTokens("#3B82F6") },
+        { id: "green",  name: "GRN",    icon: "🟢", color: "#22C55E", description: "Effective against BLU", visualTokens: createVisualTokens("#22C55E") },
+        { id: "yellow", name: "YEL",    icon: "🟡", color: "#EAB308", description: "Effective against GRN", visualTokens: createVisualTokens("#EAB308") },
+        { id: "purple", name: "PUR",    icon: "🟣", color: "#8B5CF6", description: "Effective against YEL", visualTokens: createVisualTokens("#8B5CF6") },
       ],
     },
   },
@@ -220,16 +247,15 @@ const SPECIFIC_GAME_CONFIGS: Record<string, GameCapabilityConfig> = {
     characterLabel: "Operator",
     resourcePresetsEnabled: true,
     categories: [
-      { id: "guard",     name: "Guard",     icon: "⚔️", description: "Frontline DPS & blocking operator" },
-      { id: "defender",  name: "Defender",  icon: "🛡️", description: "High HP tanking & HP sustain" },
-      { id: "sniper",    name: "Sniper",    icon: "🎯", description: "Ranged physical/arts damage dealer" },
-      { id: "caster",    name: "Caster",    icon: "🌀", description: "Ranged arts damage dealer" },
-      { id: "medic",     name: "Medic",     icon: "💚", description: "HP restoration support" },
-      { id: "supporter", name: "Supporter", icon: "🎶", description: "Buff, debuff & utility" },
-      { id: "specialist", name: "Specialist",icon: "⚡", description: "Unique mechanics & repositioning" },
-      { id: "vanguard",  name: "Vanguard",  icon: "🔮", description: "DP generation & early deployment" },
+      { id: "guard",     name: "Guard",     icon: "⚔️", description: "Frontline DPS & blocking operator", visualTokens: createVisualTokens("#EF4444") },
+      { id: "defender",  name: "Defender",  icon: "🛡️", description: "High HP tanking & HP sustain", visualTokens: createVisualTokens("#F59E0B") },
+      { id: "sniper",    name: "Sniper",    icon: "🎯", description: "Ranged physical/arts damage dealer", visualTokens: createVisualTokens("#06B6D4") },
+      { id: "caster",    name: "Caster",    icon: "🌀", description: "Ranged arts damage dealer", visualTokens: createVisualTokens("#8B5CF6") },
+      { id: "medic",     name: "Medic",     icon: "💚", description: "HP restoration support", visualTokens: createVisualTokens("#10B981") },
+      { id: "supporter", name: "Supporter", icon: "🎶", description: "Buff, debuff & utility", visualTokens: createVisualTokens("#EAB308") },
+      { id: "specialist", name: "Specialist",icon: "⚡", description: "Unique mechanics & repositioning", visualTokens: createVisualTokens("#F43F5E") },
+      { id: "vanguard",  name: "Vanguard",  icon: "🔮", description: "DP generation & early deployment", visualTokens: createVisualTokens("#6366F1") },
     ],
-    // Arknights has damage types (Physical / Arts / True) but not a true elemental system
   },
 };
 
@@ -241,11 +267,11 @@ const GENERIC_CATEGORY_CONFIGS: Record<string, GameCapabilityConfig> = {
     categoryLabel: "Lanes & Positions",
     characterLabel: "Hero",
     categories: [
-      { id: "exp",    name: "EXP Lane",  icon: "⚔️", description: "Solo fighters & tanks" },
-      { id: "jungle", name: "Jungle",    icon: "🌲", description: "Objective control & ganks" },
-      { id: "mid",    name: "Mid Lane",  icon: "🎯", description: "Burst mages & assassins" },
-      { id: "gold",   name: "Gold Lane", icon: "🏹", description: "Marksmen & carries" },
-      { id: "roam",   name: "Roam",      icon: "🛡️", description: "Support & vision" },
+      { id: "exp",    name: "EXP Lane",  icon: "⚔️", description: "Solo fighters & tanks", visualTokens: createVisualTokens("#22C55E") },
+      { id: "jungle", name: "Jungle",    icon: "🌲", description: "Objective control & ganks", visualTokens: createVisualTokens("#EF4444") },
+      { id: "mid",    name: "Mid Lane",  icon: "🎯", description: "Burst mages & assassins", visualTokens: createVisualTokens("#A855F7") },
+      { id: "gold",   name: "Gold Lane", icon: "🏹", description: "Marksmen & carries", visualTokens: createVisualTokens("#FACC15") },
+      { id: "roam",   name: "Roam",      icon: "🛡️", description: "Support & vision", visualTokens: createVisualTokens("#3B82F6") },
     ],
   },
   fps: {
@@ -253,10 +279,10 @@ const GENERIC_CATEGORY_CONFIGS: Record<string, GameCapabilityConfig> = {
     categoryLabel: "Tactical Roles",
     characterLabel: "Agent / Operator",
     categories: [
-      { id: "duelist",  name: "Offense / Duelist",  icon: "🔥", description: "Entry fraggers & damage" },
-      { id: "recon",    name: "Recon / Intel",       icon: "👁️", description: "Information & scanning" },
-      { id: "support",  name: "Support / Utility",   icon: "☁️", description: "Smokes & healing utility" },
-      { id: "anchor",   name: "Defense / Anchor",    icon: "🛡️", description: "Site hold & lockdown" },
+      { id: "duelist",  name: "Offense / Duelist",  icon: "🔥", description: "Entry fraggers & damage", visualTokens: createVisualTokens("#FF4655") },
+      { id: "recon",    name: "Recon / Intel",       icon: "👁️", description: "Information & scanning", visualTokens: createVisualTokens("#EAB308") },
+      { id: "support",  name: "Support / Utility",   icon: "☁️", description: "Smokes & healing utility", visualTokens: createVisualTokens("#00F5FF") },
+      { id: "anchor",   name: "Defense / Anchor",    icon: "🛡️", description: "Site hold & lockdown", visualTokens: createVisualTokens("#10B981") },
     ],
   },
   gacharpg: {
@@ -264,10 +290,10 @@ const GENERIC_CATEGORY_CONFIGS: Record<string, GameCapabilityConfig> = {
     categoryLabel: "Combat Roles",
     characterLabel: "Character",
     categories: [
-      { id: "maindps", name: "Main DPS",      icon: "💥", description: "Primary damage dealer" },
-      { id: "subdps",  name: "Sub DPS",       icon: "⚡", description: "Secondary damage & burst" },
-      { id: "buffer",  name: "Buffer / Support", icon: "🎶", description: "Stat buffers & utility" },
-      { id: "sustain", name: "Sustain / Healer", icon: "💚", description: "Shields & healing" },
+      { id: "maindps", name: "Main DPS",      icon: "💥", description: "Primary damage dealer", visualTokens: createVisualTokens("#EF4444") },
+      { id: "subdps",  name: "Sub DPS",       icon: "⚡", description: "Secondary damage & burst", visualTokens: createVisualTokens("#8B5CF6") },
+      { id: "buffer",  name: "Buffer / Support", icon: "🎶", description: "Stat buffers & utility", visualTokens: createVisualTokens("#F59E0B") },
+      { id: "sustain", name: "Sustain / Healer", icon: "💚", description: "Shields & healing", visualTokens: createVisualTokens("#10B981") },
     ],
   },
   fighting: {
@@ -275,9 +301,9 @@ const GENERIC_CATEGORY_CONFIGS: Record<string, GameCapabilityConfig> = {
     categoryLabel: "Fighter Roster",
     characterLabel: "Fighter",
     categories: [
-      { id: "main", name: "Main Fighter",    icon: "🥊", description: "Primary tournament main" },
-      { id: "sec",  name: "Secondary Main", icon: "⚡", description: "Secondary pocket pick" },
-      { id: "flex", name: "Flex / Sub",     icon: "🔄", description: "Situational counter-pick" },
+      { id: "main", name: "Main Fighter",    icon: "🥊", description: "Primary tournament main", visualTokens: createVisualTokens("#EF4444") },
+      { id: "sec",  name: "Secondary Main", icon: "⚡", description: "Secondary pocket pick", visualTokens: createVisualTokens("#3B82F6") },
+      { id: "flex", name: "Flex / Sub",     icon: "🔄", description: "Situational counter-pick", visualTokens: createVisualTokens("#F59E0B") },
     ],
   },
   rpg: {
@@ -285,10 +311,10 @@ const GENERIC_CATEGORY_CONFIGS: Record<string, GameCapabilityConfig> = {
     categoryLabel: "Character Classes",
     characterLabel: "Character",
     categories: [
-      { id: "dps",     name: "DPS",      icon: "🗡️", description: "Primary damage dealer" },
-      { id: "tank",    name: "Tank",     icon: "🛡️", description: "Frontline protector" },
-      { id: "healer",  name: "Healer",   icon: "💚", description: "HP restoration" },
-      { id: "support", name: "Support",  icon: "✨", description: "Utility & buffs" },
+      { id: "dps",     name: "DPS",      icon: "🗡️", description: "Primary damage dealer", visualTokens: createVisualTokens("#EF4444") },
+      { id: "tank",    name: "Tank",     icon: "🛡️", description: "Frontline protector", visualTokens: createVisualTokens("#F59E0B") },
+      { id: "healer",  name: "Healer",   icon: "💚", description: "HP restoration", visualTokens: createVisualTokens("#10B981") },
+      { id: "support", name: "Support",  icon: "✨", description: "Utility & buffs", visualTokens: createVisualTokens("#3B82F6") },
     ],
   },
   default: {
@@ -296,17 +322,16 @@ const GENERIC_CATEGORY_CONFIGS: Record<string, GameCapabilityConfig> = {
     categoryLabel: "Roster Breakdown",
     characterLabel: "Character",
     categories: [
-      { id: "main",      name: "Main Roster",     icon: "👑", description: "Primary played characters" },
-      { id: "secondary", name: "Secondary Pick",  icon: "⚡", description: "Pocket picks" },
-      { id: "flex",      name: "Flex / Sub",      icon: "🔄", description: "Situational flex choices" },
-      { id: "utility",   name: "Support / Utility",icon: "🛡️", description: "Utility & assistance" },
+      { id: "main",      name: "Main Roster",     icon: "👑", description: "Primary played characters", visualTokens: createVisualTokens("#F59E0B") },
+      { id: "secondary", name: "Secondary Pick",  icon: "⚡", description: "Pocket picks", visualTokens: createVisualTokens("#3B82F6") },
+      { id: "flex",      name: "Flex / Sub",      icon: "🔄", description: "Situational flex choices", visualTokens: createVisualTokens("#8B5CF6") },
+      { id: "utility",   name: "Support / Utility",icon: "🛡️", description: "Utility & assistance", visualTokens: createVisualTokens("#10B981") },
     ],
   },
 };
 
 // ─── Alias normalizations ─────────────────────────────────────────────────────
 
-/** Extra alias mappings that normalizeGameTitle may not cover */
 const TITLE_ALIASES: Record<string, string> = {
   mlbb: "mobilelegends",
   ml: "mobilelegends",
@@ -326,10 +351,6 @@ const TITLE_ALIASES: Record<string, string> = {
 
 // ─── Resolver ─────────────────────────────────────────────────────────────────
 
-/**
- * Resolves the game-aware capability config for any game title and category.
- * Priority: specific title → title alias → generic category → default fallback.
- */
 export function getGameDossierConfig(
   gameTitle?: string,
   gameCategory?: string
@@ -355,4 +376,44 @@ export function getGameDossierConfig(
   }
 
   return GENERIC_CATEGORY_CONFIGS.default;
+}
+
+/**
+ * Returns visual tokens for any category item, element, or custom string name.
+ */
+export function getCategoryVisualTokens(
+  categoryItem: DossierCategoryItem | GameElement | string,
+  isCyber: boolean = false
+): CategoryVisualTokens {
+  if (typeof categoryItem !== "string" && categoryItem.visualTokens) {
+    return isCyber ? createVisualTokens(categoryItem.visualTokens.accentColor, true) : categoryItem.visualTokens;
+  }
+
+  const name = typeof categoryItem === "string" ? categoryItem : categoryItem.name;
+  const lower = name.toLowerCase();
+
+  // Color keyword heuristics
+  if (lower.includes("pyro") || lower.includes("fire") || lower.includes("fusion") || lower.includes("red") || lower.includes("destruction") || lower.includes("jungle") || lower.includes("duelist") || lower.includes("guard")) {
+    return createVisualTokens("#EF4444", isCyber);
+  }
+  if (lower.includes("hydro") || lower.includes("water") || lower.includes("blue") || lower.includes("erudition") || lower.includes("roam") || lower.includes("blu")) {
+    return createVisualTokens("#3B82F6", isCyber);
+  }
+  if (lower.includes("anemo") || lower.includes("wind") || lower.includes("aero") || lower.includes("green") || lower.includes("hunt") || lower.includes("dendro") || lower.includes("exp") || lower.includes("grn") || lower.includes("medic")) {
+    return createVisualTokens("#10B981", isCyber);
+  }
+  if (lower.includes("electro") || lower.includes("lightning") || lower.includes("purple") || lower.includes("nihility") || lower.includes("mid") || lower.includes("pur") || lower.includes("caster")) {
+    return createVisualTokens("#8B5CF6", isCyber);
+  }
+  if (lower.includes("cryo") || lower.includes("ice") || lower.includes("glacio") || lower.includes("remembrance") || lower.includes("sniper")) {
+    return createVisualTokens("#06B6D4", isCyber);
+  }
+  if (lower.includes("geo") || lower.includes("gold") || lower.includes("spectro") || lower.includes("harmony") || lower.includes("preservation") || lower.includes("yel") || lower.includes("supporter")) {
+    return createVisualTokens("#F59E0B", isCyber);
+  }
+  if (lower.includes("havoc") || lower.includes("dark") || lower.includes("specialist")) {
+    return createVisualTokens("#E11D48", isCyber);
+  }
+
+  return createVisualTokens("#3B82F6", isCyber);
 }

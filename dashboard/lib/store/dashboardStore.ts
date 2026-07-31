@@ -81,6 +81,18 @@ export interface GameResourceEntry {
   sortOrder?: number;
 }
 
+export interface GameShowcaseEntry {
+  id: string;
+  gameId: string;
+  title: string;
+  description?: string;
+  imageUrl: string;
+  category?: string;
+  tags?: string[];
+  isFavorite?: boolean;
+  createdAt?: string;
+}
+
 // ─── Media Types ──────────────────────────────────────────────────────────────
 
 export type MediaStatus = "GOAT Status" | "All-Star" | "Rising" | "Classic";
@@ -260,6 +272,7 @@ interface DashboardState {
   games: GameEntry[];
   dossierCharacters: DossierCharacterEntry[];
   gameResources: GameResourceEntry[];
+  gameShowcaseItems: GameShowcaseEntry[];
   media: MediaEntry;
   animeList: AnimeEntry[];
   favoriteCharacters: FavoriteCharacter[];
@@ -283,6 +296,9 @@ interface DashboardState {
   addGameResource: (item: GameResourceEntry) => Promise<void>;
   updateGameResource: (id: string, data: Partial<GameResourceEntry>) => Promise<void>;
   removeGameResource: (id: string) => Promise<void>;
+  addGameShowcaseItem: (item: GameShowcaseEntry) => Promise<void>;
+  updateGameShowcaseItem: (id: string, data: Partial<GameShowcaseEntry>) => Promise<void>;
+  removeGameShowcaseItem: (id: string) => Promise<void>;
   updateMedia: (data: Partial<MediaEntry>) => void;
   addAnime: (anime: AnimeEntry) => Promise<void>;
   updateAnime: (id: string, data: Partial<AnimeEntry>) => Promise<void>;
@@ -443,6 +459,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   games: [],
   dossierCharacters: initialDossierCharacters,
   gameResources: initialGameResources,
+  gameShowcaseItems: [],
   media: initialMedia,
   animeList: [],
   favoriteCharacters: [],
@@ -489,6 +506,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           gameResources: (data.gameResources && data.gameResources.length > 0)
             ? data.gameResources
             : get().gameResources,
+          gameShowcaseItems: data.gameShowcaseItems || [],
           animeList: data.animeList || [],
           favoriteCharacters: data.favoriteCharacters || [],
           dramas: data.dramas || [],
@@ -678,6 +696,50 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
     } catch (err) {
       console.error("Failed to sync deleted game resource:", err);
+    }
+  },
+
+  addGameShowcaseItem: async (item) => {
+    set((s) => ({ gameShowcaseItems: [item, ...s.gameShowcaseItems] }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "UPDATE_GAME_SHOWCASE_ITEM", payload: item }),
+      });
+    } catch (err) {
+      console.error("Failed to sync added showcase item:", err);
+    }
+  },
+
+  updateGameShowcaseItem: async (id, data) => {
+    set((s) => ({
+      gameShowcaseItems: s.gameShowcaseItems.map((item) => (item.id === id ? { ...item, ...data } : item)),
+    }));
+    try {
+      const item = get().gameShowcaseItems.find((i) => i.id === id);
+      if (item) {
+        await fetch("/api/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "UPDATE_GAME_SHOWCASE_ITEM", payload: item }),
+        });
+      }
+    } catch (err) {
+      console.error("Failed to sync updated showcase item:", err);
+    }
+  },
+
+  removeGameShowcaseItem: async (id) => {
+    set((s) => ({ gameShowcaseItems: s.gameShowcaseItems.filter((i) => i.id !== id) }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_GAME_SHOWCASE_ITEM", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to sync deleted showcase item:", err);
     }
   },
 
