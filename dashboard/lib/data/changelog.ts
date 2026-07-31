@@ -13,6 +13,38 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v3.7.0",
+    date: "2026-07-31",
+    title: "Game Database Expansion, Dual-Themed FilterDropdown & Global Card Delete Engine",
+    badge: "CARD MANAGEMENT & FILTERS 3.7",
+    type: "minor",
+    summary: "Restored Girls' Frontline 2: Exilium and added Stella Sora, Reverse: 1999, and Umamusume: Pretty Derby to PostgreSQL DB with game-specific dossier structures, launched a shared reusable dual-themed FilterDropdown component with viewport collision detection, and added global card-level Delete actions with GlobalConfirmModal persistence.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🎮 4 Restored & Seeded Games: Restored Girls' Frontline 2: Exilium and added Stella Sora, Reverse: 1999, and Umamusume: Pretty Derby into PostgreSQL database for owner account with zero duplication.",
+          "🎨 Custom Vector SVG Icons: Added stellasora.svg, r1999.svg, and umamusume.svg in /public/game-icons/ with title & alias normalization in gameIcons.ts.",
+          "📊 Game-Specific Dossier Capabilities: Configured custom gameplay classifications (Tactical Doll Classes, Star Positions, Afflatus Types, Running Styles & Distance Aptitudes) in gameDossierConfig.ts.",
+          "🎛️ Dual-Themed FilterDropdown (FilterDropdown.tsx): Created a shared reusable popover component supporting option groups, active checkmarks, viewport bottom collision detection, click-outside and Escape key handlers for both Cyberpunk and Neo-Brutalist themes.",
+          "🗑️ Global Card-Level Delete Action: Integrated consistent card-level Delete buttons (🗑️) with GlobalConfirmModal across AI Library, Visits/Projects, Games Library, Game Database, Drama, Characters Directory, and Prompt Vault.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "✨ Dual-Theme Aesthetic Parity: Ensured all FilterDropdown popovers and Delete confirm modals match Cyberpunk neon glow and Neo-Brutalism offset shadow themes.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🔒 Database Deletion Sync: Card deletions optimistically filter client Zustand state and send persistent delete actions to PostgreSQL API endpoints.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v3.6.0",
     date: "2026-07-31",
     title: "Account Switching Synchronization & Theme-Adaptive Password Recovery",

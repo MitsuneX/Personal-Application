@@ -67,7 +67,7 @@ export default function ChangelogPage() {
                 boxShadow: isCyber ? "0 0 15px rgba(0,245,255,0.2)" : "3px 3px 0 #000000",
               }}
             >
-              CURRENT BUILD: v2.5.0
+              CURRENT BUILD: v3.7.0
             </div>
           </div>
         </motion.div>
