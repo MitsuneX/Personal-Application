@@ -278,6 +278,8 @@ export function HofEntryCard({
   return (
     <motion.div
       variants={cardVariants}
+      initial="hidden"
+      animate="visible"
       custom={idx}
       id={`entry-${entry.id}`}
       className="group relative cursor-pointer cursor-context-menu select-none w-full max-w-[280px]"

@@ -552,6 +552,7 @@ export default function HallOfFamePage() {
                 {/* 🥈 Rank #2 Silver Podium */}
                 {top2 ? (
                   <motion.div
+                    key={top2.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
@@ -579,6 +580,7 @@ export default function HallOfFamePage() {
                 {/* 👑 Rank #1 Gold Champion Podium */}
                 {top1 ? (
                   <motion.div
+                    key={top1.id}
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ type: "spring", stiffness: 300, damping: 25 }}
@@ -608,6 +610,7 @@ export default function HallOfFamePage() {
                 {/* 🥉 Rank #3 Bronze Podium */}
                 {top3 ? (
                   <motion.div
+                    key={top3.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
