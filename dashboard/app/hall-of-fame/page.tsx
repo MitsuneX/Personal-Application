@@ -25,21 +25,22 @@ import {
 
 type RankingSubTab =
   | "overall"
-  | "drama"
-  | "anime"
-  | "tokusatsu"
-  | "music"
-  | "actor"
-  | "actress"
-  | "singer"
   | "korean"
   | "japanese"
   | "chinese"
-  | "hollywood"
   | "indonesia"
-  | "ultraman"
-  | "kamen_rider"
-  | "power_rangers";
+  | "hollywood"
+  | "singer"
+  | "actor_only"
+  | "actress_only"
+  | "anime_ranked"
+  | "toku_overall"
+  | "korean_actor"
+  | "korean_actress"
+  | "japanese_actor"
+  | "japanese_actress"
+  | "chinese_actor"
+  | "chinese_actress";
 
 type SeasonTab = "overall" | "s2026" | "s2025" | "monthly" | "community";
 
@@ -54,6 +55,9 @@ export default function HallOfFamePage() {
   // Filter Bar State
   const [subTab, setSubTab] = useState<RankingSubTab>("overall");
   const [seasonTab, setSeasonTab] = useState<SeasonTab>("overall");
+  const [regionFilter, setRegionFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [viewLayoutMode, setViewLayoutMode] = useState<"podium_roster" | "full_grid">("podium_roster");
   const [activeViewSection, setActiveViewSection] = useState<"podium" | "records" | "analytics" | "feed">("podium");
 
   // Modals & Search State
@@ -69,6 +73,8 @@ export default function HallOfFamePage() {
   useEffect(() => {
     const handleRecalc = () => {
       setSubTab("overall");
+      setRegionFilter("all");
+      setTypeFilter("all");
     };
     window.addEventListener("recalculate-goat-rankings", handleRecalc);
     return () => window.removeEventListener("recalculate-goat-rankings", handleRecalc);
@@ -116,39 +122,68 @@ export default function HallOfFamePage() {
     setIsCompareOpen(true);
   };
 
-  // Helper functions to identify HOF entries
-  const isSingerEntry = (entry: HallOfFameEntry) => {
+  // Helper matching functions
+  const matchRegion = (entry: HallOfFameEntry, targetRegion: string) => {
+    if (targetRegion === "all") return true;
+    const nat = (entry.nationality || "").toLowerCase();
     const group = getGroupForEntry(entry);
-    return group === "__other__" || entry.nationality?.toLowerCase() === "singer" || entry.type === "singer";
+
+    if (targetRegion === "Korea" || targetRegion === "korean")
+      return nat.includes("korea") || nat.includes("kr") || group === "Korea";
+    if (targetRegion === "Japan" || targetRegion === "japanese")
+      return nat.includes("japan") || nat.includes("jp") || group === "Japan";
+    if (targetRegion === "China" || targetRegion === "chinese")
+      return nat.includes("chin") || nat.includes("cn") || group === "China";
+    if (targetRegion === "Indonesia" || targetRegion === "indonesia")
+      return nat.includes("indo") || nat.includes("id") || group === "Indonesia";
+    if (targetRegion === "Hollywood" || targetRegion === "hollywood")
+      return nat.includes("holly") || nat.includes("american") || nat.includes("us") || group === "Hollywood";
+
+    return true;
   };
 
-  const isAnimeEntry = (entry: HallOfFameEntry) => entry.type === "anime";
-  const isTokusatsuEntry = (entry: HallOfFameEntry) => entry.type === "tokusatsu" || !!entry.tokusatsuFranchise;
+  const matchType = (entry: HallOfFameEntry, targetType: string) => {
+    if (targetType === "all") return true;
+    if (targetType === "actor") return entry.type === "actor";
+    if (targetType === "actress") return entry.type === "actress";
+    if (targetType === "singer") return entry.type === "singer" || (entry.nationality || "").toLowerCase().includes("singer") || !!entry.singerType;
+    if (targetType === "anime") return entry.type === "anime";
+    if (targetType === "tokusatsu") return entry.type === "tokusatsu" || !!entry.tokusatsuFranchise;
+    return true;
+  };
 
   const filterBySubTab = (itemsList: HallOfFameEntry[]) => {
-    if (subTab === "overall") return itemsList;
+    let list = itemsList;
 
-    // Content category filters
-    if (subTab === "drama") return itemsList.filter((e) => !isSingerEntry(e) && !isTokusatsuEntry(e) && !isAnimeEntry(e));
-    if (subTab === "anime") return itemsList.filter((e) => isAnimeEntry(e));
-    if (subTab === "tokusatsu") return itemsList.filter((e) => isTokusatsuEntry(e));
-    if (subTab === "music" || subTab === "singer") return itemsList.filter((e) => isSingerEntry(e));
-    if (subTab === "ultraman") return itemsList.filter((e) => (e.tokusatsuFranchise || "").toLowerCase().includes("ultra"));
-    if (subTab === "kamen_rider") return itemsList.filter((e) => (e.tokusatsuFranchise || "").toLowerCase().includes("kamen"));
-    if (subTab === "power_rangers") return itemsList.filter((e) => (e.tokusatsuFranchise || "").toLowerCase().includes("ranger"));
+    // Apply primary subTab preset filters
+    if (subTab === "korean") list = list.filter((e) => matchRegion(e, "Korea"));
+    else if (subTab === "japanese") list = list.filter((e) => matchRegion(e, "Japan"));
+    else if (subTab === "chinese") list = list.filter((e) => matchRegion(e, "China"));
+    else if (subTab === "indonesia") list = list.filter((e) => matchRegion(e, "Indonesia"));
+    else if (subTab === "hollywood") list = list.filter((e) => matchRegion(e, "Hollywood"));
+    else if (subTab === "singer") list = list.filter((e) => matchType(e, "singer"));
+    else if (subTab === "actor_only") list = list.filter((e) => e.type === "actor");
+    else if (subTab === "actress_only") list = list.filter((e) => e.type === "actress");
+    else if (subTab === "anime_ranked") list = list.filter((e) => e.type === "anime");
+    else if (subTab === "toku_overall") list = list.filter((e) => e.type === "tokusatsu" || !!e.tokusatsuFranchise);
+    
+    // Explicit Compound Sub-Tabs
+    else if (subTab === "korean_actor") list = list.filter((e) => matchRegion(e, "Korea") && e.type === "actor");
+    else if (subTab === "korean_actress") list = list.filter((e) => matchRegion(e, "Korea") && e.type === "actress");
+    else if (subTab === "japanese_actor") list = list.filter((e) => matchRegion(e, "Japan") && e.type === "actor");
+    else if (subTab === "japanese_actress") list = list.filter((e) => matchRegion(e, "Japan") && e.type === "actress");
+    else if (subTab === "chinese_actor") list = list.filter((e) => matchRegion(e, "China") && e.type === "actor");
+    else if (subTab === "chinese_actress") list = list.filter((e) => matchRegion(e, "China") && e.type === "actress");
 
-    // Profession / Type filters
-    if (subTab === "actor") return itemsList.filter((e) => e.type === "actor");
-    if (subTab === "actress") return itemsList.filter((e) => e.type === "actress");
+    // Apply Secondary Multi-Dimensional Controls
+    if (regionFilter !== "all") {
+      list = list.filter((e) => matchRegion(e, regionFilter));
+    }
+    if (typeFilter !== "all") {
+      list = list.filter((e) => matchType(e, typeFilter));
+    }
 
-    // Regional filters
-    if (subTab === "korean") return itemsList.filter((e) => getGroupForEntry(e) === "Korea");
-    if (subTab === "japanese") return itemsList.filter((e) => getGroupForEntry(e) === "Japan");
-    if (subTab === "chinese") return itemsList.filter((e) => getGroupForEntry(e) === "China");
-    if (subTab === "indonesia") return itemsList.filter((e) => getGroupForEntry(e) === "Indonesia");
-    if (subTab === "hollywood") return itemsList.filter((e) => getGroupForEntry(e) === "Hollywood");
-
-    return itemsList;
+    return list;
   };
 
   const sortedList = useMemo(() => {
@@ -171,7 +206,7 @@ export default function HallOfFamePage() {
       if (aLikes !== bLikes) return bLikes - aLikes;
       return (a.name || "").localeCompare(b.name || "");
     });
-  }, [hallOfFame, subTab, searchQuery]);
+  }, [hallOfFame, subTab, regionFilter, typeFilter, searchQuery]);
 
   // Derived Statistics & Records
   const statsOverview = useMemo(() => {
@@ -189,7 +224,7 @@ export default function HallOfFamePage() {
   const hallAnalytics = useMemo(() => computeHallAnalytics(hallOfFame), [hallOfFame]);
   const activityFeed = useMemo(() => generateActivityFeed(hallOfFame), [hallOfFame]);
 
-  // Unified Single Source of Truth Dataset Slicing
+  // Single Source Dataset Slicing
   const top1 = sortedList[0];
   const top2 = sortedList[1];
   const top3 = sortedList[2];
@@ -218,9 +253,13 @@ export default function HallOfFamePage() {
         },
         {
           id: "podium-recalc",
-          label: "Recalculate Leaderboard",
+          label: "Reset Leaderboard Filters",
           icon: "⚡",
-          onClick: () => setSubTab("overall"),
+          onClick: () => {
+            setSubTab("overall");
+            setRegionFilter("all");
+            setTypeFilter("all");
+          },
         },
       ],
       "Championship Podium"
@@ -318,7 +357,7 @@ export default function HallOfFamePage() {
           </div>
         </motion.div>
 
-        {/* ── REORGANIZED GROUPED FILTER TOOLBAR ── */}
+        {/* ── FILTER & CATEGORY TOOLBAR ── */}
         <div
           className="p-5 rounded-3xl border space-y-4 font-mono text-xs shadow-lg"
           style={{
@@ -327,153 +366,154 @@ export default function HallOfFamePage() {
             borderWidth: isCyber ? "1px" : "2px",
           }}
         >
-          {/* Row 1: Season & View Section Controls */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-3" style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0" }}>
-            {/* Season Filter Group */}
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-              <span className="text-[10px] uppercase font-bold theme-text-muted shrink-0">SEASON:</span>
-              {[
-                { id: "overall", label: "Overall Legacy", icon: "🌐" },
-                { id: "s2026", label: "2026 Season", icon: "⚡" },
-                { id: "s2025", label: "2025 Season", icon: "🏛️" },
-                { id: "monthly", label: "Monthly", icon: "📅" },
-                { id: "community", label: "Community", icon: "💖" },
-              ].map((st) => (
+          {/* Section 1: Pre-v5 Preset Sub-Tabs */}
+          <div className="space-y-2 border-b pb-3" style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0" }}>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase font-bold theme-text-muted">PRESET CATEGORY TABS:</span>
+              <div className="flex items-center gap-2">
                 <button
-                  key={st.id}
-                  onClick={() => setSeasonTab(st.id as SeasonTab)}
-                  className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap flex items-center gap-1.5 cursor-pointer transition-all ${
-                    seasonTab === st.id
-                      ? isCyber
-                        ? "bg-amber-500 text-black font-black"
-                        : "bg-[#FEF08A] text-black border border-black font-black"
-                      : "theme-text-muted opacity-70 hover:opacity-100"
-                  }`}
+                  onClick={() => setViewLayoutMode(viewLayoutMode === "podium_roster" ? "full_grid" : "podium_roster")}
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-bold border bg-black/5 dark:bg-white/5 cursor-pointer hover:bg-amber-500/20"
                 >
-                  <span>{st.icon}</span>
-                  <span>{st.label}</span>
+                  {viewLayoutMode === "podium_roster" ? "👁️ Mode: Podium + Roster" : "👁️ Mode: Full Grid (All)"}
                 </button>
-              ))}
+              </div>
             </div>
 
-            {/* View Mode Group */}
-            <div className="flex items-center gap-1.5 shrink-0 overflow-x-auto scrollbar-none">
-              <span className="text-[10px] uppercase font-bold theme-text-muted shrink-0">VIEW:</span>
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-wrap">
               {[
-                { id: "podium", label: "Podium", icon: "🏆" },
-                { id: "records", label: "Records", icon: "📜" },
-                { id: "analytics", label: "Analytics", icon: "📊" },
-                { id: "feed", label: "Feed", icon: "⚡" },
-              ].map((vm) => (
-                <button
-                  key={vm.id}
-                  onClick={() => setActiveViewSection(vm.id as any)}
-                  className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all ${
-                    activeViewSection === vm.id
-                      ? isCyber
-                        ? "bg-[#00F5FF]/20 text-[#00F5FF] border border-[#00F5FF]"
-                        : "bg-black text-white border border-black"
-                      : "bg-black/5 dark:bg-white/5 theme-text-muted hover:bg-black/10"
-                  }`}
-                >
-                  <span>{vm.icon}</span>
-                  <span>{vm.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Row 2: Content & Profession Filters */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-3" style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0" }}>
-            {/* Content Categories */}
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-              <span className="text-[10px] uppercase font-bold theme-text-muted shrink-0">CONTENT:</span>
-              {[
-                { id: "overall", label: "All Content", icon: "🌐" },
-                { id: "drama", label: "Drama", icon: "🎭" },
-                { id: "anime", label: "Anime", icon: "⛩️" },
-                { id: "tokusatsu", label: "Tokusatsu", icon: "🦸" },
-                { id: "music", label: "Music", icon: "🎵" },
-              ].map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSubTab(cat.id as RankingSubTab)}
-                  className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all ${
-                    subTab === cat.id
-                      ? isCyber
-                        ? "bg-cyan-400 text-black font-black"
-                        : "bg-black text-white font-black"
-                      : "bg-black/5 dark:bg-white/5 theme-text-muted hover:bg-black/10"
-                  }`}
-                >
-                  <span>{cat.icon}</span>
-                  <span>{cat.label}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Profession / Types */}
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-              <span className="text-[10px] uppercase font-bold theme-text-muted shrink-0">PROFESSION:</span>
-              {[
-                { id: "actor", label: "Actors", icon: "🎭" },
-                { id: "actress", label: "Actresses", icon: "💫" },
-                { id: "singer", label: "Singers", icon: "🎤" },
-              ].map((prof) => (
-                <button
-                  key={prof.id}
-                  onClick={() => setSubTab(prof.id as RankingSubTab)}
-                  className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all ${
-                    subTab === prof.id
-                      ? isCyber
-                        ? "bg-purple-500 text-white font-black"
-                        : "bg-purple-600 text-white font-black"
-                      : "bg-black/5 dark:bg-white/5 theme-text-muted hover:bg-black/10"
-                  }`}
-                >
-                  <span>{prof.icon}</span>
-                  <span>{prof.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Row 3: Regional Origins & Search Input */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            {/* Regional Origin Filter Group */}
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none w-full sm:w-auto">
-              <span className="text-[10px] uppercase font-bold theme-text-muted shrink-0">REGION:</span>
-              {[
-                { id: "korean", label: "🇰🇷 Korea" },
-                { id: "japanese", label: "🇯🇵 Japan" },
-                { id: "chinese", label: "🇨🇳 China" },
+                { id: "overall", label: "🌐 Overall Legacy" },
+                { id: "korean", label: "🇰🇷 Korean" },
+                { id: "japanese", label: "🇯🇵 Japanese" },
+                { id: "chinese", label: "🇨🇳 Chinese" },
+                { id: "indonesia", label: "🇮🇩 Indonesian" },
                 { id: "hollywood", label: "🎬 Hollywood" },
-                { id: "indonesia", label: "🇮🇩 Indonesia" },
-              ].map((reg) => (
+                { id: "singer", label: "🎤 Singers" },
+                { id: "actor_only", label: "🎭 Male Actors" },
+                { id: "actress_only", label: "💫 Actresses" },
+                { id: "anime_ranked", label: "⛩️ Anime Ranked" },
+                { id: "toku_overall", label: "🦸 Tokusatsu" },
+              ].map((tab) => (
                 <button
-                  key={reg.id}
-                  onClick={() => setSubTab(reg.id as RankingSubTab)}
+                  key={tab.id}
+                  onClick={() => {
+                    setSubTab(tab.id as RankingSubTab);
+                    setRegionFilter("all");
+                    setTypeFilter("all");
+                  }}
                   className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all ${
-                    subTab === reg.id
+                    subTab === tab.id && regionFilter === "all" && typeFilter === "all"
                       ? isCyber
-                        ? "bg-emerald-400 text-black font-black"
-                        : "bg-emerald-500 text-white font-black"
+                        ? "bg-amber-500 text-black font-black shadow-[0_0_15px_rgba(245,158,11,0.4)]"
+                        : "bg-black text-white font-black border border-black"
                       : "bg-black/5 dark:bg-white/5 theme-text-muted hover:bg-black/10"
                   }`}
                 >
-                  <span>{reg.label}</span>
+                  {tab.label}
                 </button>
               ))}
             </div>
+          </div>
 
-            {/* Live Search Field */}
-            <div className="w-full sm:w-72 shrink-0">
+          {/* Section 2: Specialized Compound Filters (Japanese Actor Only, Korean Actress Only, etc.) */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-3" style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0" }}>
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none flex-wrap">
+              <span className="text-[10px] uppercase font-bold text-amber-500 shrink-0">SPECIAL COMPOUND FILTERS:</span>
+              {[
+                { id: "japanese_actor", label: "🇯🇵 Japanese Actor Only" },
+                { id: "japanese_actress", label: "🇯🇵 Japanese Actress Only" },
+                { id: "korean_actor", label: "🇰🇷 Korean Actor Only" },
+                { id: "korean_actress", label: "🇰🇷 Korean Actress Only" },
+                { id: "chinese_actor", label: "🇨🇳 Chinese Actor Only" },
+                { id: "chinese_actress", label: "🇨🇳 Chinese Actress Only" },
+              ].map((cp) => (
+                <button
+                  key={cp.id}
+                  onClick={() => {
+                    setSubTab(cp.id as RankingSubTab);
+                    setRegionFilter("all");
+                    setTypeFilter("all");
+                  }}
+                  className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all ${
+                    subTab === cp.id
+                      ? isCyber
+                        ? "bg-[#00F5FF] text-black font-black"
+                        : "bg-cyan-500 text-white font-black"
+                      : "bg-black/5 dark:bg-white/5 theme-text-muted hover:bg-black/10"
+                  }`}
+                >
+                  {cp.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Section 3: Multi-Dimensional Controls (Region dropdown/chips + Type dropdown/chips + Search) */}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-wrap w-full md:w-auto">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] uppercase font-bold theme-text-muted">REGION:</span>
+                <select
+                  value={regionFilter}
+                  onChange={(e) => setRegionFilter(e.target.value)}
+                  className="px-2.5 py-1.5 rounded-xl border text-xs font-mono font-bold cursor-pointer"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(255,255,255,0.08)" : "#F8FAFC",
+                    color: isCyber ? "#FFF" : "#000",
+                    borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000",
+                  }}
+                >
+                  <option value="all">All Regions</option>
+                  <option value="Korea">🇰🇷 Korea</option>
+                  <option value="Japan">🇯🇵 Japan</option>
+                  <option value="China">🇨🇳 China</option>
+                  <option value="Hollywood">🎬 Hollywood</option>
+                  <option value="Indonesia">🇮🇩 Indonesia</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] uppercase font-bold theme-text-muted">TYPE:</span>
+                <select
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                  className="px-2.5 py-1.5 rounded-xl border text-xs font-mono font-bold cursor-pointer"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(255,255,255,0.08)" : "#F8FAFC",
+                    color: isCyber ? "#FFF" : "#000",
+                    borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000",
+                  }}
+                >
+                  <option value="all">All Types</option>
+                  <option value="actor">🎭 Actor</option>
+                  <option value="actress">💫 Actress</option>
+                  <option value="singer">🎤 Singer</option>
+                  <option value="anime">⛩️ Anime</option>
+                  <option value="tokusatsu">🦸 Tokusatsu</option>
+                </select>
+              </div>
+
+              {(regionFilter !== "all" || typeFilter !== "all") && (
+                <button
+                  onClick={() => {
+                    setRegionFilter("all");
+                    setTypeFilter("all");
+                  }}
+                  className="px-2.5 py-1 rounded-xl text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/40 cursor-pointer"
+                >
+                  Clear Refinements ✕
+                </button>
+              )}
+            </div>
+
+            {/* Live Search */}
+            <div className="w-full md:w-64 shrink-0">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search legend name or works..."
-                className="w-full px-3.5 py-2 rounded-xl border text-xs font-mono focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-xl border text-xs font-mono focus:outline-none"
                 style={{
                   backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#FFFFFF",
                   color: isCyber ? "#FFF" : "#000",
@@ -485,19 +525,21 @@ export default function HallOfFamePage() {
           </div>
         </div>
 
-        {/* ── 1. CHAMPIONS PODIUM SECTION (UNIFORM SIZING) ── */}
-        {(activeViewSection === "podium" || activeViewSection === "records") && (
+        {/* ── 1. CHAMPIONS PODIUM SECTION ── */}
+        {(activeViewSection === "podium" || activeViewSection === "records") && viewLayoutMode === "podium_roster" && (
           <div onContextMenu={handlePodiumContextMenu} className="space-y-6">
             {sortedList.length === 0 ? (
               <div className="text-center py-16 p-6 rounded-3xl border border-dashed text-xs font-mono theme-text-muted space-y-3">
                 <div className="text-4xl">👑</div>
-                <h3 className="font-black text-base theme-text-primary">No legends found in this filtered view.</h3>
+                <h3 className="font-black text-base theme-text-primary">No legends found matching active filters.</h3>
                 <p className="max-w-md mx-auto">
-                  Try switching category pills or click reset below.
+                  Try clearing search or switching sub-tabs above.
                 </p>
                 <button
                   onClick={() => {
                     setSubTab("overall");
+                    setRegionFilter("all");
+                    setTypeFilter("all");
                     setSearchQuery("");
                   }}
                   className="px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-black border-2 border-black shadow-[2px_2px_0_#000] cursor-pointer"
@@ -506,7 +548,7 @@ export default function HallOfFamePage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end justify-items-center max-w-5xl mx-auto pt-6 pb-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end justify-items-center max-w-5xl mx-auto pt-4 pb-2">
                 {/* 🥈 Rank #2 Silver Podium */}
                 {top2 ? (
                   <motion.div
@@ -723,24 +765,34 @@ export default function HallOfFamePage() {
           </div>
         )}
 
-        {/* ── FULL LEADERBOARD GRID (Ranks #4+ Sequential) ── */}
+        {/* ── FULL LEADERBOARD ROSTER GRID (ALWAYS VISIBLE & SEQUENTIAL) ── */}
         <div className="space-y-4 pt-6">
           <div className="flex items-center justify-between border-b pb-2">
-            <h3 className="text-sm font-black uppercase tracking-widest font-mono theme-text-primary">
-              Top Contenders & Hall Roster
+            <h3 className="text-sm font-black uppercase tracking-widest font-mono theme-text-primary flex items-center gap-2">
+              <span>Top Contenders & Hall Roster</span>
+              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/20 text-amber-400">
+                {sortedList.length} Total
+              </span>
             </h3>
             {sortedList.length > 0 && (
               <span className="text-xs font-mono theme-text-muted font-bold">
-                {restOfList.length > 0 ? `Showing Ranks #4 – #${sortedList.length}` : `All ${sortedList.length} Entries Featured on Podium`}
+                {viewLayoutMode === "full_grid"
+                  ? `Showing Ranks #1 – #${sortedList.length}`
+                  : restOfList.length > 0
+                  ? `Showing Ranks #4 – #${sortedList.length}`
+                  : `All ${sortedList.length} Entries Featured on Podium Above`}
               </span>
             )}
           </div>
 
-          {restOfList.length === 0 ? (
+          {/* Grid Render Logic */}
+          {(viewLayoutMode === "full_grid" ? sortedList : restOfList).length === 0 ? (
             <div className="p-8 rounded-2xl border border-dashed text-center font-mono text-xs theme-text-muted space-y-2">
               <div className="text-2xl">✨</div>
               {sortedList.length > 0 ? (
-                <p className="font-bold">All entries in this category are featured on the Champions Podium above!</p>
+                <p className="font-bold">
+                  All {sortedList.length} entries in this category are featured on the Champions Podium above! Switch to &quot;Full Grid&quot; mode to view all cards together.
+                </p>
               ) : (
                 <p className="font-bold">No legends found matching your current filter criteria.</p>
               )}
@@ -748,13 +800,14 @@ export default function HallOfFamePage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <AnimatePresence mode="popLayout">
-                {restOfList.map((entry, idx) => {
+                {(viewLayoutMode === "full_grid" ? sortedList : restOfList).map((entry, idx) => {
                   const groupDetails = getGroupDetails(getGroupForEntry(entry));
+                  const displayRank = viewLayoutMode === "full_grid" ? idx : idx + 3;
                   return (
                     <HofEntryCard
                       key={entry.id}
                       entry={entry}
-                      idx={idx + 3}
+                      idx={displayRank}
                       isCyber={isCyber}
                       group={groupDetails}
                       onEdit={handleEdit}
