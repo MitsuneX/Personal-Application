@@ -396,6 +396,7 @@ export interface HallOfFameEntry {
   note?: string;
   imageUrl?: string;
   rank: number | null;
+  prevRank?: number | null;
   likes: number;
   isChampion: boolean;
   isFavorite?: boolean;

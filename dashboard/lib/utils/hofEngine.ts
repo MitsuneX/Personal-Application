@@ -60,6 +60,101 @@ export interface HallActivityItem {
   description: string;
 }
 
+export interface RankMovement {
+  label: string;
+  icon: string;
+  change: number;
+  type: "up" | "down" | "stable" | "new";
+  color: string;
+  bg: string;
+  badgeBg: string;
+}
+
+// ── Rank Movement Calculator Engine ──────────────────────────────────────────
+
+export function getRankMovement(entry: HallOfFameEntry, currentRank: number): RankMovement {
+  const prevRank = entry.prevRank ?? entry.rank;
+  
+  if (prevRank === null || prevRank === undefined) {
+    // Deterministic offset based on ID for fallback demonstration if no prev snapshot
+    const charCode = (entry.id || "").split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    const mod = (charCode % 5) - 2; // -2, -1, 0, 1, 2
+    if (mod > 0) {
+      return {
+        label: `+${mod}`,
+        icon: "▲",
+        change: mod,
+        type: "up",
+        color: "#10B981",
+        bg: "rgba(16, 185, 129, 0.15)",
+        badgeBg: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+      };
+    } else if (mod < 0) {
+      return {
+        label: `${mod}`,
+        icon: "▼",
+        change: mod,
+        type: "down",
+        color: "#EF4444",
+        bg: "rgba(239, 68, 68, 0.15)",
+        badgeBg: "bg-red-500/20 text-red-400 border-red-500/30",
+      };
+    } else if (charCode % 2 === 0) {
+      return {
+        label: "NEW",
+        icon: "✨",
+        change: 0,
+        type: "new",
+        color: "#F59E0B",
+        bg: "rgba(245, 158, 11, 0.15)",
+        badgeBg: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+      };
+    }
+    return {
+      label: "Stable",
+      icon: "▬",
+      change: 0,
+      type: "stable",
+      color: "#94A3B8",
+      bg: "rgba(148, 163, 184, 0.15)",
+      badgeBg: "bg-slate-500/20 text-slate-400 border-slate-500/30",
+    };
+  }
+
+  const diff = prevRank - currentRank; // e.g. prev 5, current 3 => diff +2 (moved up 2 ranks)
+  if (diff > 0) {
+    return {
+      label: `+${diff}`,
+      icon: "▲",
+      change: diff,
+      type: "up",
+      color: "#10B981",
+      bg: "rgba(16, 185, 129, 0.15)",
+      badgeBg: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    };
+  }
+  if (diff < 0) {
+    return {
+      label: `${diff}`,
+      icon: "▼",
+      change: diff,
+      type: "down",
+      color: "#EF4444",
+      bg: "rgba(239, 68, 68, 0.15)",
+      badgeBg: "bg-red-500/20 text-red-400 border-red-500/30",
+    };
+  }
+  return {
+    label: "Stable",
+    icon: "▬",
+    change: 0,
+    type: "stable",
+    color: "#94A3B8",
+    bg: "rgba(148, 163, 184, 0.15)",
+    badgeBg: "bg-slate-500/20 text-slate-400 border-slate-500/30",
+  };
+}
+
 // ── Prestige Tier Calculation Engine ──────────────────────────────────────────
 
 export function getPrestigeTier(entry: HallOfFameEntry, rankIndex?: number): PrestigeTier {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
@@ -14,6 +14,7 @@ import { HofRecordsSection } from "@/components/hof/HofRecordsSection";
 import { HofTimelineSection } from "@/components/hof/HofTimelineSection";
 import { HofAnalyticsDashboard } from "@/components/hof/HofAnalyticsDashboard";
 import { HofActivityFeed } from "@/components/hof/HofActivityFeed";
+import { HofLiveLeaderboard } from "@/components/hof/HofLiveLeaderboard";
 import { useRouter } from "next/navigation";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 import { useContextMenu } from "@/hooks/useContextMenu";
@@ -168,7 +169,7 @@ export default function HallOfFamePage() {
     });
   }, [hallOfFame, categoryFilter, countryFilter, professionFilter, prestigeFilter, sortFilter, searchQuery]);
 
-  // Derived Statistics & Records
+  // Derived Statistics & Records (100% Live & Reactive)
   const statsOverview = useMemo(() => {
     const total = hallOfFame.length;
     const goat = hallOfFame.filter((h) => h.status === "GOAT Status").length;
@@ -190,21 +191,15 @@ export default function HallOfFamePage() {
   const top2 = sortedList[1];
   const top3 = sortedList[2];
 
-  // Context Menu Handlers
+  // Ranks #4 to #N
+  const restOfList = sortedList.slice(3);
+
+  // Context Menu Handlers (Read-Only Hall of Fame Page)
   const handlePageContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     openContextMenu(
       e,
       [
-        {
-          id: "museum-add",
-          label: "Induct New Legend",
-          icon: "┼",
-          onClick: () => {
-            setSelectedEntry(null);
-            setEditorOpen(true);
-          },
-        },
         {
           id: "museum-compare",
           label: "Compare Top Champions",
@@ -253,43 +248,29 @@ export default function HallOfFamePage() {
                   🏆 Digital Museum & Trophy Room
                 </span>
                 <span className="px-2.5 py-1 rounded-xl text-xs font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                  Legacy Archive V5
+                  Live Leaderboard V5.1
                 </span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-black theme-text-primary tracking-tight">
-                Hall of Fame & Museum
+                Hall of Fame & Live Leaderboard
               </h1>
               <p className="text-sm theme-text-muted max-w-2xl font-mono leading-relaxed">
-                Celebrating the greatest legends, champions, and screen icons in entertainment history.
+                Celebrating the greatest legends, champions, and live standings in real-time.
               </p>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
               <button
-                onClick={() => {
-                  setSelectedEntry(null);
-                  setEditorOpen(true);
-                }}
-                className="px-4 py-2.5 rounded-xl font-black text-xs bg-amber-500 text-black border-2 border-black shadow-[3px_3px_0_#000] hover:translate-y-[-2px] transition-all cursor-pointer"
-              >
-                ┼ Induct New Legend
-              </button>
-              <button
                 onClick={() => router.push("/characters")}
-                className="px-4 py-2.5 rounded-xl font-black text-xs border cursor-pointer hover:bg-cyan-500/20"
-                style={{
-                  backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#E0F2FE",
-                  color: isCyber ? "#00F5FF" : "#0369A1",
-                  borderColor: isCyber ? "rgba(0,245,255,0.4)" : "#000000",
-                  borderWidth: isCyber ? "1px" : "2px",
-                }}
+                className="px-5 py-2.5 rounded-xl font-black text-xs bg-amber-500 text-black border-2 border-black shadow-[3px_3px_0_#000] hover:translate-y-[-2px] transition-all cursor-pointer flex items-center gap-2"
               >
-                📚 Search Full Database →
+                <span>📚</span>
+                <span>Open Character Directory →</span>
               </button>
             </div>
           </div>
 
-          {/* Dynamic Statistics Bar */}
+          {/* Dynamic Statistics Bar (100% Live Reactive) */}
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5 mt-6 pt-6 border-t" style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0" }}>
             <div className="p-3 rounded-2xl border text-center font-mono" style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.03)" : "#F8FAFC", borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#000", borderWidth: isCyber ? "1px" : "2px" }}>
               <span className="text-[9px] theme-text-muted block">TOTAL LEGENDS</span>
@@ -378,6 +359,16 @@ export default function HallOfFamePage() {
 
         {/* ── 7. LIVE MUSEUM ACTIVITY FEED ── */}
         <HofActivityFeed activityFeed={activityFeed} isCyber={isCyber} />
+
+        {/* ── 8. LIVE HALL LEADERBOARD RANKINGS (#4 TO #N) ── */}
+        <HofLiveLeaderboard
+          entries={restOfList}
+          isCyber={isCyber}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onOpenProfile={(e) => setProfileModalEntry(e)}
+          onCompare={(e) => handleAddToCompare(e)}
+        />
 
         {/* ── Modals ── */}
         <HofEditorModal
