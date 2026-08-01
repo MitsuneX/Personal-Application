@@ -2,6 +2,31 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [4.4.0] - 2026-08-01
+
+### 🖱️ Universal Context Menu System (Desktop-Grade Right-Click Engine)
+
+**Core System Architecture**
+- **`ContextMenuProvider` & `ContextMenu`**: Built a global overlay-portal context menu engine (`components/ui/ContextMenuProvider.tsx`, `components/ui/ContextMenu.tsx`).
+- **Context-Aware Menu Builders**: Created `lib/context-menu/builders.ts` with helper generators (`buildGameCardMenu`, `buildMediaCardMenu`, `buildGalleryMenu`, `buildBookmarkMenu`).
+- **Viewport Safe Boundaries**: Menu dynamically shifts and clamps inside safe viewport bounds, supporting auto-flip and collision avoidance.
+- **Full Mobile Support**: Automatically converts into a sleek bottom sheet on mobile screens (`< 640px`) with touch backdrop and smooth spring physics.
+- **Keyboard Navigation**: Full support for ArrowUp / ArrowDown navigation, Enter selection, and Escape dismissal.
+
+**Module Integration Across Workspace**
+- **Games Vault (`/games`)**: Integrated context menu on game cards (Open Game, Edit Config, Copy UID, Manage Roster, Delete).
+- **Game Database Hub (`/heroes`)**: Integrated right-click dossier context menu on game dossiers.
+- **Anime & Drama Vaults (`/anime`, `/drama/*`)**: Added right-click context menus to `MediaCard` instances (+1 Episode progress, Status cycle, Delete).
+- **Media Gallery (`/gallery`)**: Migrated gallery items from local context menu state to global context menu system (Open Lightbox, Delete Image).
+- **Bookmarks & Quick Links (`/links`)**: Integrated right-click context menu (Visit Link, Copy URL, Edit Bookmark, Delete).
+- **Hall of Fame (`/hall-of-fame`)**: Added context menu to `HofEntryCard` (Heart Entry, Edit Details, Remove Entry).
+- **Notepad & Notes (`/notepad`)**: Added context menu to note list items (Open Note, Copy Text, Delete Note).
+- **Prompt Vault (`/prompt-vault`)**: Added context menu to AI prompt cards (Copy Prompt Text, Edit Prompt, Delete).
+- **Dashboard Workspace (`/`)**: Added background right-click quick navigation menu to switch pages and toggle themes.
+
+**UID Dual-Action Interaction Refactor**
+- Refactored `GameUidBadge`: Clicking UIDs with profile links opens a dual-action trigger (Explore Link or Copy UID); UIDs without profile links offer instant 1-click copy with feedbackToast.
+
 ## [4.3.0] - 2026-08-01
 
 ### 👤 Profile Popout System — Production Rebuild (Root Cause Fix)

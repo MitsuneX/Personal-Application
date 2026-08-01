@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { usePathname, useRouter } from "next/navigation";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
+import { useContextMenu } from "@/hooks/useContextMenu";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -31,6 +32,8 @@ export interface MediaCardProps {
   onDelete?: (id: string) => void;
   hofStars?: { id: string; name: string; tokusatsuFranchise?: string | null }[];
   index?: number;
+  /** Supply a ready-built items array to enable a custom right-click menu on this card. */
+  contextMenuItems?: import("@/lib/context-menu/menuDefinitions").ContextMenuItem[];
 }
 
 // ─── Cultural Theme Map ─────────────────────────────────────────────────────────
@@ -363,10 +366,18 @@ export function MediaCard({
   isEditable = false,
   onStatusChange, onEpisodeChange, onTotalEpisodesChange, onDelete,
   hofStars, index = 0,
+  contextMenuItems,
 }: MediaCardProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { hallOfFame } = useDashboardStore();
+  const { openContextMenu } = useContextMenu();
+
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    if (!contextMenuItems || contextMenuItems.length === 0) return;
+    e.preventDefault();
+    openContextMenu(e, contextMenuItems, title);
+  }, [contextMenuItems, openContextMenu, title]);
 
   const t = isCyber ? THEMES[category].cyber : THEMES[category].brutal;
   const accent = t.accent;
@@ -488,9 +499,10 @@ export function MediaCard({
   return (
     <div
       id={`media-card-${id}`}
-      className="relative w-full h-full"
+      className={`relative w-full h-full${contextMenuItems && contextMenuItems.length > 0 ? " cursor-context-menu" : ""}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onContextMenu={contextMenuItems && contextMenuItems.length > 0 ? handleContextMenu : undefined}
     >
       {/* ── Base Card (rounded, overflow-hidden) ── */}
       <div

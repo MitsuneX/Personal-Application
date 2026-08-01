@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { useConfirm } from "@/lib/context/ConfirmContext";
+import { useContextMenu } from "@/hooks/useContextMenu";
 
 type SidebarTab = "all" | "curiosity";
 
@@ -14,6 +15,7 @@ export default function NotepadPage() {
   const isCyber = theme === "cyber";
   const { notes, saveNote, deleteNote, hobbySkills, logHobbyXP } = useDashboardStore();
   const { confirm } = useConfirm();
+  const { openContextMenu } = useContextMenu();
 
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -190,7 +192,57 @@ export default function NotepadPage() {
                     key={note.id}
                     layoutId={`note-${note.id}`}
                     onClick={() => handleSelectNote(note.id)}
-                    className="p-3 rounded-lg border-adaptive-unique cursor-pointer transition-all relative overflow-hidden"
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      openContextMenu(
+                        e,
+                        [
+                          {
+                            id: "select",
+                            label: "Open Note",
+                            icon: "📝",
+                            onClick: () => handleSelectNote(note.id),
+                          },
+                          {
+                            id: "copy",
+                            label: "Copy Note Text",
+                            icon: "📋",
+                            onClick: () => {
+                              if (typeof window !== "undefined") {
+                                navigator.clipboard.writeText(`${note.title}\n\n${note.content}`).catch(() => {});
+                              }
+                            },
+                          },
+                          {
+                            id: "delete",
+                            label: "Delete Note",
+                            icon: "🗑️",
+                            danger: true,
+                            divider: true,
+                            onClick: () => {
+                              confirm({
+                                title: "Delete Notepad Document",
+                                message: `Are you sure you want to delete note "${note.title || "Untitled"}"?`,
+                                confirmText: "Delete Note",
+                                variant: "danger",
+                                itemPreview: {
+                                  title: note.title || "Untitled Note",
+                                  description: note.content,
+                                  icon: "📄",
+                                  category: note.isCuriosity ? "💡 Curiosity Log" : "Notepad",
+                                },
+                                successToast: `✓ Note "${note.title || "Untitled"}" deleted.`,
+                                onConfirm: async () => {
+                                  await deleteNote(note.id);
+                                },
+                              });
+                            },
+                          },
+                        ],
+                        note.title || "Note"
+                      );
+                    }}
+                    className="p-3 rounded-lg border-adaptive-unique cursor-pointer cursor-context-menu transition-all relative overflow-hidden"
                     whileHover={{ scale: 1.01 }}
                     style={{
                       backgroundColor: isActive

@@ -8,6 +8,7 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 import { FilterDropdown } from "@/components/ui/FilterDropdown";
+import { useContextMenu } from "@/hooks/useContextMenu";
 
 const TARGET_AI_OPTIONS = [
   "ChatGPT",
@@ -36,6 +37,7 @@ export default function PromptVaultPage() {
   const isCyber = theme === "cyber";
   const { savedPrompts, addSavedPrompt, deleteSavedPrompt } = useDashboardStore();
   const { confirm } = useConfirm();
+  const { openContextMenu } = useContextMenu();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -230,7 +232,52 @@ export default function PromptVaultPage() {
                   hidden: { opacity: 0, y: 15 },
                   visible: { opacity: 1, y: 0 },
                 }}
-                className="rounded-2xl p-5 flex flex-col gap-3 relative overflow-hidden transition-all duration-300"
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  openContextMenu(
+                    e,
+                    [
+                      {
+                        id: "copy",
+                        label: "Copy Prompt Text",
+                        icon: "📋",
+                        onClick: () => handleCopy(prompt.id, prompt.promptText),
+                      },
+                      {
+                        id: "edit",
+                        label: "Edit Prompt",
+                        icon: "✏️",
+                        onClick: () => {
+                          setEditId(prompt.id);
+                          setTitle(prompt.title);
+                          setTargetAI(prompt.targetAI);
+                          setPromptText(prompt.promptText);
+                          setModalOpen(true);
+                        },
+                      },
+                      {
+                        id: "delete",
+                        label: "Delete Prompt",
+                        icon: "🗑️",
+                        danger: true,
+                        divider: true,
+                        onClick: () => {
+                          confirm({
+                            title: "Delete AI Prompt",
+                            message: `Are you sure you want to delete prompt "${prompt.title}"?`,
+                            confirmText: "Delete Prompt",
+                            variant: "danger",
+                            itemPreview: { title: prompt.title, description: prompt.promptText, icon: "🤖", category: prompt.targetAI },
+                            successToast: `✓ Prompt "${prompt.title}" deleted.`,
+                            onConfirm: async () => { await deleteSavedPrompt(prompt.id); },
+                          });
+                        },
+                      },
+                    ],
+                    prompt.title
+                  );
+                }}
+                className="rounded-2xl p-5 flex flex-col gap-3 relative overflow-hidden transition-all duration-300 cursor-context-menu"
                 style={{
                   background: isCyber ? "rgba(10,15,30,0.6)" : "#F0FAFA",
                   border: isCyber ? "1px solid rgba(0,245,255,0.15)" : "2px solid #000",

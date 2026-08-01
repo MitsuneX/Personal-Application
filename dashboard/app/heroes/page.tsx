@@ -13,6 +13,8 @@ import { getGameDossierConfig } from "@/lib/data/gameDossierConfig";
 import { DossierCharacterEditorModal } from "@/components/ui/DossierCharacterEditorModal";
 import { GameScannerModal } from "@/components/ui/GameScannerModal";
 import { GameUidBadge } from "@/components/ui/GameUidBadge";
+import { useContextMenu } from "@/hooks/useContextMenu";
+import { buildGameCardMenu } from "@/lib/context-menu/builders";
 
 export default function GameDatabaseOverviewPage() {
   const { theme } = useTheme();
@@ -20,6 +22,7 @@ export default function GameDatabaseOverviewPage() {
 
   const games = useDashboardStore((s) => s.games) || [];
   const dossierCharacters = useDashboardStore((s) => s.dossierCharacters) || [];
+  const { openContextMenu } = useContextMenu();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGameFilter, setSelectedGameFilter] = useState<string>("ALL");
@@ -107,13 +110,51 @@ export default function GameDatabaseOverviewPage() {
                 ? Math.round(gameChars.reduce((acc, c) => acc + (c.winRate || 0), 0) / gameChars.length)
                 : 0;
 
+              const handleDossierContextMenu = (e: React.MouseEvent) => {
+                e.preventDefault();
+                openContextMenu(
+                  e,
+                  [
+                    {
+                      id: "view",
+                      label: `View ${game.game} Dossier`,
+                      icon: "📊",
+                      onClick: () => {
+                        if (typeof window !== "undefined") window.location.href = `/games/${game.id}`;
+                      },
+                    },
+                    {
+                      id: "roster",
+                      label: "Manage Roster & Characters",
+                      icon: "👥",
+                      onClick: () => {
+                        if (typeof window !== "undefined") window.location.href = `/games/${game.id}?tab=roster`;
+                      },
+                    },
+                    {
+                      id: "copy-uid",
+                      label: `Copy UID (${game.handle || "N/A"})`,
+                      icon: "📋",
+                      disabled: !game.handle,
+                      onClick: () => {
+                        if (game.handle && typeof window !== "undefined") {
+                          navigator.clipboard.writeText(game.handle).catch(() => {});
+                        }
+                      },
+                    },
+                  ],
+                  game.game
+                );
+              };
+
               return (
                 <motion.div
                   key={game.id}
                   variants={cardVariants}
                   custom={idx}
                   layout
-                  className="rounded-2xl p-5 border flex flex-col justify-between relative overflow-hidden group transition-all"
+                  onContextMenu={handleDossierContextMenu}
+                  className="rounded-2xl p-5 border flex flex-col justify-between relative overflow-hidden group transition-all cursor-context-menu"
                   style={{
                     backgroundColor: isCyber ? "rgba(10,15,30,0.85)" : "#FFFFFF",
                     borderColor: isCyber ? `${game.accentColor || "#00F5FF"}40` : "#000",

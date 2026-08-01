@@ -11,6 +11,7 @@ import { MediaCard } from "@/components/cards/MediaCard";
 import { FloatingFAB } from "@/components/ui/FloatingFAB";
 import { useSearchParams } from "next/navigation";
 import { useConfirm } from "@/lib/context/ConfirmContext";
+import { buildMediaCardMenu } from "@/lib/context-menu/builders";
 
 const HW = {
   brutal: { text: "#1E1B4B", accent: "#7C3AED", accent2: "#D97706", bg: "#EDE0FF" },
@@ -239,6 +240,11 @@ function HollywoodDramaPageContent() {
                   onEpisodeChange={drama.isEditable ? handleEpisodeChange : handleDramaLogEpisodeChange}
                   onTotalEpisodesChange={drama.isEditable ? handleTotalEpisodesChange : handleDramaLogTotalChange}
                   onDelete={handleDelete} index={i}
+                  contextMenuItems={buildMediaCardMenu({
+                    title: drama.title,
+                    onAddProgress: () => (drama.isEditable ? handleEpisodeChange : handleDramaLogEpisodeChange)(drama.id, drama.episodesWatched + 1, drama.status),
+                    onDelete: () => handleDelete(drama.id),
+                  })}
                 />
               </motion.div>
             ))}

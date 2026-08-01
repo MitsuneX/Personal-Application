@@ -7,7 +7,7 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
 import { ImageCropModal } from "@/components/ui/ImageCropModal";
 import { useConfirm } from "@/lib/context/ConfirmContext";
-import { ContextMenu, type ContextMenuItem } from "@/components/ui/ContextMenu";
+import { useContextMenu } from "@/hooks/useContextMenu";
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 interface FolderTreeNode {
@@ -73,7 +73,7 @@ export default function GalleryPage() {
   const [lightboxIndex, setLightboxIndex] = useState<number>(-1);
 
   // Context Menu state
-  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; itemId: string } | null>(null);
+  const { openContextMenu } = useContextMenu();
 
   const openLightbox = useCallback((item: { url: string; title: string; caption?: string | null; tags?: string[] | null; category?: string; folder?: string }, idx: number) => {
     setLightboxUrl(item.url);
@@ -740,7 +740,25 @@ export default function GalleryPage() {
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: idx * 0.04 }}
                             onClick={() => openLightbox(item, filteredGallery.indexOf(item))}
-                            onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ x: e.clientX, y: e.clientY, itemId: item.id }); }}
+                            onContextMenu={(e) => {
+                              e.preventDefault();
+                              openContextMenu(e, [
+                                {
+                                  id: "view",
+                                  label: "Open Full Preview",
+                                  icon: "🔍",
+                                  onClick: () => openLightbox(item, filteredGallery.indexOf(item)),
+                                },
+                                {
+                                  id: "delete",
+                                  label: "Delete Image",
+                                  icon: "🗑️",
+                                  danger: true,
+                                  divider: true,
+                                  onClick: () => handleDelete(item.id, { stopPropagation: () => {} } as React.MouseEvent),
+                                },
+                              ], item.title);
+                            }}
                             className="group relative cursor-pointer overflow-hidden aspect-square bg-black/10"
                             style={{
                               borderRadius: isCyber ? "12px" : "0px",
@@ -783,7 +801,25 @@ export default function GalleryPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.03 }}
                   onClick={() => openLightbox(item, idx)}
-                  onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ x: e.clientX, y: e.clientY, itemId: item.id }); }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    openContextMenu(e, [
+                      {
+                        id: "view",
+                        label: "Open Full Preview",
+                        icon: "🔍",
+                        onClick: () => openLightbox(item, idx),
+                      },
+                      {
+                        id: "delete",
+                        label: "Delete Image",
+                        icon: "🗑️",
+                        danger: true,
+                        divider: true,
+                        onClick: () => handleDelete(item.id, { stopPropagation: () => {} } as React.MouseEvent),
+                      },
+                    ], item.title);
+                  }}
                   className="group relative cursor-pointer overflow-hidden bg-black/10 break-inside-avoid mb-5"
                   style={{
                     borderRadius: isCyber ? "16px" : "0px",
@@ -835,7 +871,25 @@ export default function GalleryPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: idx * 0.04 }}
                   onClick={() => openLightbox(item, idx)}
-                  onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ x: e.clientX, y: e.clientY, itemId: item.id }); }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    openContextMenu(e, [
+                      {
+                        id: "view",
+                        label: "Open Full Preview",
+                        icon: "🔍",
+                        onClick: () => openLightbox(item, idx),
+                      },
+                      {
+                        id: "delete",
+                        label: "Delete Image",
+                        icon: "🗑️",
+                        danger: true,
+                        divider: true,
+                        onClick: () => handleDelete(item.id, { stopPropagation: () => {} } as React.MouseEvent),
+                      },
+                    ], item.title);
+                  }}
                   className="group relative cursor-pointer overflow-hidden aspect-video bg-black/10 transition-transform duration-200"
                   style={{
                     borderRadius: isCyber ? "16px" : "0px",
@@ -1280,39 +1334,7 @@ export default function GalleryPage() {
         onCropComplete={handleCropComplete}
       />
 
-      {/* ── Right-click Context Menu ── */}
-      {ctxMenu && (
-        <ContextMenu
-          isOpen={!!ctxMenu}
-          x={ctxMenu.x}
-          y={ctxMenu.y}
-          onClose={() => setCtxMenu(null)}
-          title="Image Actions"
-          items={([
-            {
-              id: "view",
-              label: "Open Full Preview",
-              icon: "🔍",
-              onClick: () => {
-                const item = filteredGallery.find((g) => g.id === ctxMenu.itemId);
-                const idx = filteredGallery.findIndex((g) => g.id === ctxMenu.itemId);
-                if (item) openLightbox(item, idx);
-              },
-            },
-            {
-              id: "delete",
-              label: "Delete Image",
-              icon: "🗑️",
-              danger: true,
-              divider: true,
-              onClick: () => {
-                const fakeEvent = { stopPropagation: () => {} } as React.MouseEvent;
-                handleDelete(ctxMenu.itemId, fakeEvent);
-              },
-            },
-          ] as ContextMenuItem[])}
-        />
-      )}
+
     </AppShell>
   );
 }

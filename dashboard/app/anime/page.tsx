@@ -14,6 +14,7 @@ import { FloatingFAB } from "@/components/ui/FloatingFAB";
 import { useSearchParams } from "next/navigation";
 import { Modal } from "@/components/ui/modal";
 import { useConfirm } from "@/lib/context/ConfirmContext";
+import { buildMediaCardMenu } from "@/lib/context-menu/builders";
 
 const STATUS_TABS = [
   { id: "all",             label: "All",          icon: "◈" },
@@ -211,6 +212,13 @@ function AnimePageContent() {
                   onTotalEpisodesChange={handleTotalEpisodesChange}
                   onDelete={handleDelete}
                   index={i}
+                  contextMenuItems={buildMediaCardMenu({
+                    title: anime.title,
+                    isFavorite: false,
+                    onAddProgress: () => handleEpisodeChange(anime.id, anime.episodesWatched + 1, anime.status),
+                    onEdit: undefined,
+                    onDelete: () => handleDelete(anime.id),
+                  })}
                 />
               </motion.div>
             ))}

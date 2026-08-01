@@ -15,12 +15,16 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants";
 import { RecommendationWidget } from "@/components/ui/RecommendationWidget";
 import { FocusWidget } from "@/components/dashboard/FocusWidget";
+import { useContextMenu } from "@/hooks/useContextMenu";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function DashboardPage() {
-  const { theme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const isCyber = theme === "cyber";
   const { games, animeList, dramas, dramaLog, hallOfFame } = useDashboardStore();
+  const { openContextMenu } = useContextMenu();
+  const router = useRouter();
 
   const totalEps = animeList.reduce((s, a) => s + a.episodesWatched, 0);
   const completedAnime = animeList.filter((a) => a.status === "Completed").length;
@@ -35,8 +39,56 @@ export default function DashboardPage() {
     { label: "Hall of Fame",    value: hallOfFame.length, icon: "🏆", href: "/hall-of-fame", color: isCyber ? "#FFD700" : "#FF6B35" },
   ];
 
+  const handleBackgroundContextMenu = (e: React.MouseEvent) => {
+    // Only open context menu if right clicking container background
+    openContextMenu(
+      e,
+      [
+        {
+          id: "nav-games",
+          label: "Go to Games Vault",
+          icon: "🎮",
+          onClick: () => router.push("/games"),
+        },
+        {
+          id: "nav-anime",
+          label: "Go to Anime Library",
+          icon: "⛩️",
+          onClick: () => router.push("/anime"),
+        },
+        {
+          id: "nav-drama",
+          label: "Go to Drama Hub",
+          icon: "🎬",
+          onClick: () => router.push("/drama"),
+        },
+        {
+          id: "nav-hof",
+          label: "Go to Hall of Fame",
+          icon: "🏆",
+          onClick: () => router.push("/hall-of-fame"),
+        },
+        {
+          id: "nav-gallery",
+          label: "Go to Media Gallery",
+          icon: "🖼️",
+          onClick: () => router.push("/gallery"),
+        },
+        {
+          id: "theme-toggle",
+          label: `Switch Theme to ${isCyber ? "Neo-Brutalism" : "Cyberpunk"}`,
+          icon: isCyber ? "☀️" : "🌙",
+          divider: true,
+          onClick: () => setTheme(isCyber ? "brutal" : "cyber"),
+        },
+      ],
+      "Dashboard Quick Menu"
+    );
+  };
+
   return (
-    <AppShell>
+    <div onContextMenu={handleBackgroundContextMenu}>
+      <AppShell>
       {/* ── Page header ── */}
       <motion.div
         className="mb-6"
@@ -167,5 +219,6 @@ export default function DashboardPage() {
         </span>
       </motion.footer>
     </AppShell>
+  </div>
   );
 }

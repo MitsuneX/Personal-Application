@@ -12,6 +12,7 @@ import { TopLoader } from "@/components/ui/TopLoader";
 import { FloatingHeartEngine } from "@/components/ui/FloatingHeartEngine";
 import { GlobalMusicPlayer } from "@/components/ui/GlobalMusicPlayer";
 import { GuestBanner } from "@/components/ui/GuestBanner";
+import { ContextMenuProvider } from "@/components/ui/ContextMenuProvider";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -61,7 +62,7 @@ export function AppShell({ children }: AppShellProps) {
   }, [isHydrated, user?.id, fetchDashboard]);
 
   return (
-    <>
+    <ContextMenuProvider>
       <FloatingHeartEngine />
       <TopLoader />
       <GlobalMusicPlayer />
@@ -79,54 +80,41 @@ export function AppShell({ children }: AppShellProps) {
           <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={handleToggleSidebar} />
         </motion.div>
 
-      {/* ── Mobile Drawer Overlay ── */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              key="backdrop"
-              className="fixed inset-0 z-50 md:hidden"
-              style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setMobileOpen(false)}
-            />
-            {/* Drawer */}
-            <motion.div
-              key="drawer"
-              className="fixed top-0 left-0 z-[60] h-full md:hidden"
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            >
-              {/* Swipe handle indicator */}
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-white/20 z-10" />
-              <Sidebar isMobileDrawer onClose={() => setMobileOpen(false)} />
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* ── Main Area ── */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-        {/* Cyber ambient orbs */}
+        {/* ── Mobile Drawer Overlay ── */}
         <AnimatePresence>
-          {isCyber && <CyberAmbient />}
-        </AnimatePresence>
-        {/* Brutal grid */}
-        <AnimatePresence>
-          {!isCyber && <BrutalGrid />}
+          {mobileOpen && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                key="backdrop"
+                className="fixed inset-0 z-50 md:hidden"
+                style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setMobileOpen(false)}
+              />
+              {/* Drawer */}
+              <motion.div
+                key="drawer"
+                className="fixed top-0 left-0 z-[60] h-full md:hidden"
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-white/20 z-10" />
+                <Sidebar isMobileDrawer onClose={() => setMobileOpen(false)} />
+              </motion.div>
+            </>
+          )}
         </AnimatePresence>
 
-        {/* Header topbar */}
-        <Header onMenuToggle={() => setMobileOpen((v) => !v)} mobileOpen={mobileOpen} />
-        <GuestBanner />
+        {/* Main Content Area */}
+        <main className="flex-1 flex flex-col min-w-0 transition-all duration-300">
+          {/* Header */}
+          <Header onMenuToggle={() => setMobileOpen((o) => !o)} mobileOpen={mobileOpen} />
 
-        {/* Page content */}
-        <main className="flex-1 overflow-y-auto relative z-10" style={{ scrollbarWidth: "thin" }}>
           {/* Theme flash */}
           <AnimatePresence>
             {isTransitioning && (
@@ -147,13 +135,12 @@ export function AppShell({ children }: AppShellProps) {
           </AnimatePresence>
 
           {/* Content with padding */}
-          <div className="w-full max-w-screen-2xl mx-auto px-4 md:px-6 lg:px-8 py-6">
+          <div className="w-full max-w-screen-2xl mx-auto px-4 md:px-6 lg:px-8 py-6 overflow-y-auto h-full">
             <PageWrapper>{children}</PageWrapper>
           </div>
         </main>
-      </div>
-    </motion.div>
-    </>
+      </motion.div>
+    </ContextMenuProvider>
   );
 }
 

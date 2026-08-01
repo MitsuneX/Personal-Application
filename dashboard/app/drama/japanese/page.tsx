@@ -12,6 +12,7 @@ import { FloatingFAB } from "@/components/ui/FloatingFAB";
 import { useSearchParams } from "next/navigation";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 import { FilterDropdown } from "@/components/ui/FilterDropdown";
+import { buildMediaCardMenu } from "@/lib/context-menu/builders";
 
 const JP = {
   brutal: { text: "#2D1B24", accent: "#C9184A", accent2: "#FF6B9D", bg: "#FFE4ED" },
@@ -301,6 +302,11 @@ function JapaneseDramaPageContent() {
                   onEpisodeChange={drama.isEditable ? handleEpisodeChange : handleDramaLogEpisodeChange}
                   onTotalEpisodesChange={drama.isEditable ? handleTotalEpisodesChange : handleDramaLogTotalChange}
                   onDelete={handleDelete} hofStars={getHofStars(drama)} index={i}
+                  contextMenuItems={buildMediaCardMenu({
+                    title: drama.title,
+                    onAddProgress: () => (drama.isEditable ? handleEpisodeChange : handleDramaLogEpisodeChange)(drama.id, drama.episodesWatched + 1, drama.status),
+                    onDelete: () => handleDelete(drama.id),
+                  })}
                 />
               </motion.div>
             ))}

@@ -11,6 +11,8 @@ import { GameEditorModal } from "@/components/ui/GameEditorModal";
 import { ImageLightboxModal } from "@/components/ui/ImageLightboxModal";
 import { GameUidBadge } from "@/components/ui/GameUidBadge";
 import { resolveGameIcon } from "@/lib/data/gameIcons";
+import { useContextMenu } from "@/hooks/useContextMenu";
+import { buildGameCardMenu } from "@/lib/context-menu/builders";
 import type { GameEntry } from "@/lib/store/dashboardStore";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 
@@ -55,11 +57,37 @@ function GameCard({
   const gameCategory = game?.category || "General";
 
   const iconRes = resolveGameIcon(gameTitle, game?.icon);
+  const { openContextMenu } = useContextMenu();
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    openContextMenu(
+      e,
+      buildGameCardMenu({
+        game,
+        onOpen: () => {
+          if (typeof window !== "undefined") window.location.href = `/games/${game.id}`;
+        },
+        onEdit: () => onEditClick(game),
+        onCopyUid: game.handle
+          ? () => {
+              if (typeof window !== "undefined") navigator.clipboard.writeText(game.handle!).catch(() => {});
+            }
+          : undefined,
+        onManageCharacters: () => {
+          if (typeof window !== "undefined") window.location.href = `/games/${game.id}`;
+        },
+        onDelete: onDeleteClick ? () => onDeleteClick(game) : undefined,
+      }),
+      gameTitle
+    );
+  };
 
   return (
     <motion.div variants={cardVariants} custom={index} layout>
       <motion.div
-        className="rounded-2xl p-6 h-full flex flex-col gap-5 relative overflow-hidden group transition-all duration-300"
+        onContextMenu={handleContextMenu}
+        className="rounded-2xl p-6 h-full flex flex-col gap-5 relative overflow-hidden group transition-all duration-300 cursor-context-menu"
         style={{
           background: isCyber 
             ? `linear-gradient(135deg, rgba(10,15,30,0.85) 0%, ${accent}12 100%)` 

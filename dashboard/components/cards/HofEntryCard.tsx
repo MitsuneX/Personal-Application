@@ -7,6 +7,7 @@ import { cardVariants } from "@/lib/theme/motionVariants";
 import type { MediaStatus, HallOfFameEntry } from "@/lib/store/dashboardStore";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useContextMenu } from "@/hooks/useContextMenu";
 
 // ─── Constants & Styles ────────────────────────────────────────────────────────
 
@@ -48,30 +49,30 @@ export const NATIONALITY_GROUPS = [
     accentColor: "#FFD700",
     accentBg: "rgba(255,215,0,0.06)",
     accentBorder: "rgba(255,215,0,0.3)",
-    brutalBorder: "#B59300",
+    brutalBorder: "#CC8800",
     brutalBg: "#FFFDF0",
   },
   {
     code: "Indonesia",
     title: "🇮🇩 Indonesian",
-    description: "Indonesian film stars and legendary screen talents",
-    accentColor: "#E60000",
-    accentBg: "rgba(230,0,0,0.06)",
-    accentBorder: "rgba(230,0,0,0.3)",
-    brutalBorder: "#800000",
-    brutalBg: "#FFE6E6",
+    description: "Local legends and cinematic powerhouses",
+    accentColor: "#FF4444",
+    accentBg: "rgba(255,68,68,0.06)",
+    accentBorder: "rgba(255,68,68,0.3)",
+    brutalBorder: "#CC0000",
+    brutalBg: "#FFF5F5",
   },
 ];
 
 export const OTHER_GROUP = {
-  code: "__other__",
-  title: "🎤 Singer",
-  description: "Vocal powerhouses and musical legends",
-  accentColor: "#00F5FF",
-  accentBg: "rgba(0,245,255,0.06)",
-  accentBorder: "rgba(0,245,255,0.3)",
-  brutalBorder: "#007A8A",
-  brutalBg: "#F0FFFE",
+  code: "Other",
+  title: "⭐ Global Legends",
+  description: "Worldwide hall of fame favorites",
+  accentColor: "#A855F7",
+  accentBg: "rgba(168,85,247,0.06)",
+  accentBorder: "rgba(168,85,247,0.3)",
+  brutalBorder: "#7E22CE",
+  brutalBg: "#FAF5FF",
 };
 
 export const ANIME_GROUP = {
@@ -157,6 +158,7 @@ export function HofEntryCard({ entry, idx, isCyber, group, onEdit, onDelete, sho
   const [imgError, setImgError] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
   const { likeHof, dramas, dramaLog, animeList } = useDashboardStore();
+  const { openContextMenu } = useContextMenu();
   const router = useRouter();
 
   // Clean Double tap and Click handlers
@@ -205,16 +207,47 @@ export function HofEntryCard({ entry, idx, isCyber, group, onEdit, onDelete, sho
   else if (podiumRank === 3) nameBorderStyle = "#B45309";
   else nameBorderStyle = isCyber ? group.accentBorder : group.brutalBorder;
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    openContextMenu(
+      e,
+      [
+        {
+          id: "like",
+          label: `Heart ${entry.name}`,
+          icon: "❤️",
+          onClick: () => likeHof(entry.id),
+        },
+        {
+          id: "edit",
+          label: "Edit Entry Details",
+          icon: "⚙️",
+          onClick: () => onEdit(entry),
+        },
+        {
+          id: "delete",
+          label: "Remove from Hall of Fame",
+          icon: "🗑️",
+          danger: true,
+          divider: true,
+          onClick: () => onDelete(entry.id, entry.name),
+        },
+      ],
+      entry.name
+    );
+  };
+
   return (
     <motion.div
       variants={cardVariants}
       custom={idx}
       id={`entry-${entry.id}`}
-      className="group relative cursor-pointer select-none w-full max-w-[280px]"
+      className="group relative cursor-pointer cursor-context-menu select-none w-full max-w-[280px]"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onDoubleClick={handleDoubleClick}
       onTouchEnd={handleTouchEnd}
+      onContextMenu={handleContextMenu}
     >
       <div
         className="rounded-2xl overflow-hidden h-full flex flex-col relative transition-all"

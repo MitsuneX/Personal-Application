@@ -13,6 +13,32 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v4.4.1",
+    date: "2026-08-01",
+    title: "Universal Desktop-Grade Context Menu System",
+    badge: "UNIVERSAL CONTEXT MENU",
+    type: "major",
+    summary: "Implemented a universal, context-aware right-click menu system across all application modules (Games, Game Database, Anime, Drama, Gallery, Bookmarks, Hall of Fame, Notepad, Prompt Vault, and Dashboard Home).",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🖱️ Context-Aware Right-Click Engine: Context menus dynamically change depending on what item or background space you right-click.",
+          "📱 Mobile Bottom Sheet: Automatically transforms into a mobile bottom sheet modal on touch devices (< 640px).",
+          "⌨️ Full Keyboard Navigation: Supports ArrowUp, ArrowDown, Enter, and Escape hotkeys.",
+          "🌐 Universal Coverage: Integrated into Games, Anime, Drama, Gallery, Links, Hall of Fame, Notepad, Prompt Vault, and Dashboard Home.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🛡️ Viewport Boundary Clamping: Smart positioning engine prevents context menus from overflowing screen edges.",
+          "⚡ Instant Reactivity: Fully synchronized with Zustand store actions and Confirm dialogs.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v4.4.0",
     date: "2026-08-01",
     title: "Unified FloatingPopover System & Interactive UID Management",

@@ -8,12 +8,15 @@ import { useTheme } from "@/lib/theme";
 import { useDashboardStore, type LinkEntry } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
 import { useConfirm } from "@/lib/context/ConfirmContext";
+import { useContextMenu } from "@/hooks/useContextMenu";
+import { buildBookmarkMenu } from "@/lib/context-menu/builders";
 
 export default function LinksPage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { links, saveLink, deleteLink } = useDashboardStore();
   const { confirm } = useConfirm();
+  const { openContextMenu } = useContextMenu();
 
   // Form states
   const [isOpen, setIsOpen] = useState(false);
@@ -192,7 +195,43 @@ export default function LinksPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: li * 0.04 }}
-                    className="relative group rounded-2xl overflow-hidden"
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      openContextMenu(
+                        e,
+                        buildBookmarkMenu({
+                          bookmark: link,
+                          onOpenLink: () => window.open(link.url, "_blank"),
+                          onCopyUrl: () => navigator.clipboard.writeText(link.url).catch(() => {}),
+                          onEdit: () => {
+                            setEditId(link.id);
+                            setTitle(link.title);
+                            setUrl(link.url);
+                            if (["Watch", "Entertainment", "Book", "Productivity", "Misc"].includes(link.category)) {
+                              setCategory(link.category);
+                              setCustomCategory("");
+                            } else {
+                              setCategory("Custom");
+                              setCustomCategory(link.category);
+                            }
+                            setIsOpen(true);
+                          },
+                          onDelete: () => {
+                            confirm({
+                              title: "Delete Bookmark Link",
+                              message: `Delete bookmark "${link.title}"?`,
+                              confirmText: "Delete Bookmark",
+                              variant: "danger",
+                              itemPreview: { title: link.title, subtitle: link.url, icon: "🔗", category: link.category },
+                              successToast: `✓ Bookmark "${link.title}" deleted.`,
+                              onConfirm: async () => { await deleteLink(link.id); },
+                            });
+                          },
+                        }),
+                        link.title
+                      );
+                    }}
+                    className="relative group rounded-2xl overflow-hidden cursor-context-menu"
                     style={{
                       backgroundColor: isCyber ? "rgba(10,15,30,0.8)" : "#FFFFFF",
                       borderColor: isCyber ? "rgba(0,245,255,0.15)" : "#000",
