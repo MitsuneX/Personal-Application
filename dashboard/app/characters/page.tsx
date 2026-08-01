@@ -1,352 +1,453 @@
 "use client";
- 
-import React, { useState, useCallback, useEffect, Suspense } from "react";
+
+import React, { useState, useCallback, useEffect, useMemo, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
-import { useDashboardStore } from "@/lib/store/dashboardStore";
+import { useDashboardStore, HallOfFameEntry, DossierCharacterEntry } from "@/lib/store/dashboardStore";
 import { HofEditorModal } from "@/components/ui/HofEditorModal";
 import { HofEntryCard, getGroupForEntry, getGroupDetails } from "@/components/cards/HofEntryCard";
-import type { HallOfFameEntry } from "@/lib/store/dashboardStore";
+import { DossierCharacterCard } from "@/components/cards/DossierCharacterCard";
+import { CharacterPreviewModal } from "@/components/ui/CharacterPreviewModal";
 import { useSearchParams } from "next/navigation";
-import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 import { FilterDropdown } from "@/components/ui/FilterDropdown";
- 
-const TYPE_FILTERS = [
-  { id: "all", label: "All Types" },
-  { id: "actor", label: "Actors" },
-  { id: "actress", label: "Actresses" },
-  { id: "anime", label: "Anime" },
-  { id: "ultraman", label: "Ultraman" },
-  { id: "kamen-rider", label: "Kamen Rider" },
-  { id: "power-rangers", label: "Power Rangers" }
+import { BentoCard } from "@/components/cards/BentoCard";
+
+const CATEGORY_PILLS = [
+  { id: "all", label: "All Entities", icon: "🌐" },
+  { id: "actress", label: "Actresses", icon: "💫" },
+  { id: "actor", label: "Actors", icon: "🎭" },
+  { id: "anime", label: "Anime", icon: "⛩️" },
+  { id: "game", label: "Game Roster", icon: "🎮" },
+  { id: "tokusatsu", label: "Tokusatsu", icon: "🎬" },
+  { id: "vtuber", label: "VTubers", icon: "👾" },
+  { id: "singer", label: "Singers", icon: "🎤" },
+  { id: "other", label: "Other Collectibles", icon: "🌟" },
 ];
- 
-const REGION_SPECIALTY_FILTERS = [
+
+const NATIONALITY_OPTIONS = [
   { id: "all", label: "All Origins" },
-  { id: "Korea", label: "🇰🇷 Korean" },
-  { id: "Japan", label: "🇯🇵 Japanese" },
-  { id: "China", label: "🇨🇳 Chinese" },
+  { id: "Korea", label: "🇰🇷 Korea" },
+  { id: "Japan", label: "🇯🇵 Japan" },
+  { id: "China", label: "🇨🇳 China" },
   { id: "Indonesia", label: "🇮🇩 Indonesia" },
   { id: "Hollywood", label: "🎬 Hollywood" },
-  { id: "Anime", label: "⛩️ Anime" },
-  { id: "Singer", label: "🎤 Singer" }
+  { id: "American", label: "🇺🇸 American" },
 ];
- 
+
+const SORT_OPTIONS = [
+  { id: "popular", label: "Most Popular / Likes" },
+  { id: "az", label: "Name (A-Z)" },
+  { id: "za", label: "Name (Z-A)" },
+  { id: "newest", label: "Recently Added" },
+];
+
 function CharactersContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { hallOfFame = [], deleteHof, likeHof } = useDashboardStore(); // Guard against undefined store
+  const { hallOfFame = [], dossierCharacters = [], deleteHof, removeDossierCharacter } = useDashboardStore();
   const { confirm } = useConfirm();
   const searchParams = useSearchParams();
- 
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedType, setSelectedType] = useState("all");
-  const [selectedRegionSpecialty, setSelectedRegionSpecialty] = useState("all");
- 
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedNationality, setSelectedNationality] = useState("all");
+  const [selectedSort, setSelectedSort] = useState("popular");
+  const [favoriteOnly, setFavoriteOnly] = useState(false);
+  const [goatOnly, setGoatOnly] = useState(false);
+
   const [editorOpen, setEditorOpen] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<HallOfFameEntry | null>(null);
- 
+  const [selectedHofEntry, setSelectedHofEntry] = useState<HallOfFameEntry | null>(null);
+  const [previewCharacter, setPreviewCharacter] = useState<DossierCharacterEntry | null>(null);
+
   const targetSearch = searchParams?.get("search") || null;
   const targetId = searchParams?.get("id") || null;
- 
+
   useEffect(() => {
     if (targetSearch) {
       setSearchQuery(targetSearch);
     }
   }, [targetSearch]);
- 
+
   useEffect(() => {
     if (targetId) {
       const timer = setTimeout(() => {
         const el = document.getElementById(`entry-${targetId}`);
         if (el) {
           el.scrollIntoView({ behavior: "smooth", block: "center" });
-          el.animate([
-            { filter: 'brightness(1.5)', transform: 'scale(1.05)' },
-            { filter: 'brightness(1)', transform: 'scale(1)' }
-          ], { duration: 800, easing: 'ease-out' });
+          el.animate(
+            [
+              { filter: "brightness(1.5)", transform: "scale(1.05)" },
+              { filter: "brightness(1)", transform: "scale(1)" },
+            ],
+            { duration: 800, easing: "ease-out" }
+          );
         }
       }, 500);
-      
       return () => clearTimeout(timer);
     }
   }, [targetId]);
- 
-  const handleEdit = useCallback((entry: HallOfFameEntry) => {
-    setSelectedEntry(entry);
+
+  // Combined Master Dynamic Statistics
+  const stats = useMemo(() => {
+    const totalEntries = hallOfFame.length + dossierCharacters.length;
+    const actresses = hallOfFame.filter((h) => h.type === "actress").length;
+    const actors = hallOfFame.filter((h) => h.type === "actor").length;
+    const anime = hallOfFame.filter((h) => h.type === "anime").length;
+    const games = dossierCharacters.length;
+    const tokusatsu = hallOfFame.filter(
+      (h) => h.type === "tokusatsu" || !!h.tokusatsuFranchise
+    ).length;
+    const singers = hallOfFame.filter(
+      (h) => h.type === "singer" || h.nationality === "Singer"
+    ).length;
+    const favorites =
+      hallOfFame.filter((h) => h.isFavorite).length +
+      dossierCharacters.filter((c) => c.isFavorite).length;
+    const goatMembers = hallOfFame.filter((h) => h.status === "GOAT Status").length;
+
+    return {
+      totalEntries,
+      actresses,
+      actors,
+      anime,
+      games,
+      tokusatsu,
+      singers,
+      favorites,
+      goatMembers,
+    };
+  }, [hallOfFame, dossierCharacters]);
+
+  // Filtered Roster
+  const filteredHofList = useMemo(() => {
+    let list = [...hallOfFame];
+
+    // Category Filter
+    if (selectedCategory !== "all") {
+      list = list.filter((item) => {
+        if (selectedCategory === "tokusatsu") {
+          return item.type === "tokusatsu" || !!item.tokusatsuFranchise;
+        }
+        if (selectedCategory === "singer") {
+          return item.type === "singer" || item.nationality === "Singer";
+        }
+        return item.type === selectedCategory;
+      });
+    }
+
+    // Nationality Filter
+    if (selectedNationality !== "all") {
+      list = list.filter(
+        (item) => (item.nationality || "").toLowerCase() === selectedNationality.toLowerCase()
+      );
+    }
+
+    // Favorite Filter
+    if (favoriteOnly) {
+      list = list.filter((item) => item.isFavorite);
+    }
+
+    // GOAT Filter
+    if (goatOnly) {
+      list = list.filter((item) => item.status === "GOAT Status");
+    }
+
+    // Search Query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter((item) => {
+        const matchName = (item.name || "").toLowerCase().includes(q);
+        const matchKnown = (Array.isArray(item.knownFor) ? item.knownFor.join(" ") : item.knownFor || "")
+          .toLowerCase()
+          .includes(q);
+        const matchNote = (item.note || "").toLowerCase().includes(q);
+        return matchName || matchKnown || matchNote;
+      });
+    }
+
+    // Sorting
+    list.sort((a, b) => {
+      if (selectedSort === "popular") {
+        return (b.likes || 0) - (a.likes || 0);
+      }
+      if (selectedSort === "az") {
+        return (a.name || "").localeCompare(b.name || "");
+      }
+      if (selectedSort === "za") {
+        return (b.name || "").localeCompare(a.name || "");
+      }
+      return 0;
+    });
+
+    return list;
+  }, [hallOfFame, selectedCategory, selectedNationality, favoriteOnly, goatOnly, searchQuery, selectedSort]);
+
+  const handleEditHof = useCallback((entry: HallOfFameEntry) => {
+    setSelectedHofEntry(entry);
     setEditorOpen(true);
   }, []);
- 
-  const handleDelete = useCallback((id: string, name: string) => {
-    const entry = hallOfFame.find((h) => h.id === id);
-    confirm({
-      title: "Remove Roster Database Entry",
-      message: `Are you sure you want to remove "${name}" from your roster database?`,
-      confirmText: "Remove Entry",
-      variant: "danger",
-      itemPreview: {
-        title: name,
-        subtitle: `${entry?.type || "Character"} · ${entry?.nationality || "Global"}`,
-        description: Array.isArray(entry?.knownFor) ? entry.knownFor.join(", ") : entry?.knownFor,
-        imageUrl: entry?.imageUrl,
-        icon: "🌟",
-        category: entry?.type,
-      },
-      successToast: `✓ "${name}" removed from database.`,
-      onConfirm: async () => {
-        await deleteHof(id);
-      },
-    });
-  }, [confirm, deleteHof, hallOfFame]);
- 
-  const handleDoubleTap = (e: React.MouseEvent | React.TouchEvent, id: string) => {
-    let clientX = 0, clientY = 0;
-    if (e && 'touches' in e && e.touches.length > 0) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else if (e && 'clientX' in e) {
-      clientX = (e as React.MouseEvent).clientX;
-      clientY = (e as React.MouseEvent).clientY;
-    }
-    if (clientX && clientY) {
-      triggerHeartEffect(clientX, clientY);
-    }
-  };
- 
-  const sortedByLikes = [...hallOfFame].sort((a, b) => {
-    const aLikes = a?.likes || 0;
-    const bLikes = b?.likes || 0;
-    if (aLikes !== bLikes) return bLikes - aLikes;
-    return (a?.name || "").localeCompare(b?.name || "");
-  });
- 
-  const filteredDirectoryList = sortedByLikes.filter((entry) => {
-    if (!entry) return false;
 
-    const query = searchQuery.toLowerCase();
-    
-    // SAFE SEARCH: Fallback array/strings to prevent "undefined" runtime crashes
-    const matchesSearch = 
-      (entry.name || "").toLowerCase().includes(query) ||
-      (entry.note || "").toLowerCase().includes(query) ||
-      (entry.knownFor || []).some(work => (work || "").toLowerCase().includes(query));
- 
-    let matchesType = false;
-    if (selectedType === "all") {
-      matchesType = true;
-    } else if (selectedType === "ultraman") {
-      matchesType = entry.tokusatsuFranchise === "Ultraman";
-    } else if (selectedType === "kamen-rider") {
-      matchesType = entry.tokusatsuFranchise === "Kamen Rider";
-    } else if (selectedType === "power-rangers") {
-      matchesType = entry.tokusatsuFranchise === "Power Rangers";
-    } else {
-      matchesType = entry.type === selectedType;
-    }
- 
-    let matchesRegionSpecialty = true;
-    if (selectedRegionSpecialty !== "all") {
-      const groupCode = getGroupForEntry(entry);
-      if (selectedRegionSpecialty === "Singer") {
-        matchesRegionSpecialty = groupCode === "__other__" || entry.nationality?.toLowerCase() === "singer";
-      } else {
-        matchesRegionSpecialty = groupCode === selectedRegionSpecialty;
-      }
-    }
- 
-    return matchesSearch && matchesType && matchesRegionSpecialty;
-  });
- 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.03 }
-    }
-  };
- 
+  const handleDeleteHof = useCallback(
+    (id: string, name: string) => {
+      confirm({
+        title: "Delete Entry",
+        message: `Are you sure you want to delete "${name}" from the Master Directory?`,
+        variant: "danger",
+        onConfirm: async () => {
+          await deleteHof(id);
+        },
+      });
+    },
+    [confirm, deleteHof]
+  );
+
   return (
     <AppShell>
-      {/* Premium Luxury Banner */}
-      <motion.div
-        className="relative rounded-2xl overflow-hidden mb-8 p-8 md:p-10 border backdrop-blur-md"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 140, damping: 22 }}
-        style={{
-          background: isCyber
-            ? "linear-gradient(135deg, #090d22 0%, #161233 50%, #050816 100%)"
-            : "linear-gradient(135deg, #ffffff 0%, #f4f7ff 60%, #eef2ff 100%)",
-          borderColor: isCyber ? "rgba(255, 20, 147, 0.25)" : "rgba(0, 0, 0, 0.08)",
-          boxShadow: isCyber 
-            ? "0 20px 50px rgba(0, 0, 0, 0.4)" 
-            : "0 20px 40px rgba(0, 0, 0, 0.02)",
-        }}
-      >
-        {isCyber && <div className="absolute top-0 right-0 w-80 h-80 bg-pink-500/5 rounded-full blur-[100px] pointer-events-none" />}
- 
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-6 relative z-10">
-          <div>
-            <div className="flex gap-1.5 mb-3 items-center">
-              {["📖", "✨", "👥"].map((e, i) => (
-                <motion.span
-                  key={i}
-                  className="text-lg"
-                  animate={{ y: [0, -4, 0] }}
-                  transition={{ duration: 2, delay: i * 0.15, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  {e}
-                </motion.span>
-              ))}
-            </div>
-            <h1
-              className="font-black text-4xl md:text-5xl tracking-tight mb-2"
-              style={{
-                color: isCyber ? "#FFF" : "#0f172a",
-                fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              {isCyber ? (
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-pink-500 via-purple-400 to-cyan-400">
-                  CHARACTERS_DIR
+      <div className="space-y-6 max-w-7xl mx-auto pb-12">
+        {/* Master Hero Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="p-6 sm:p-8 rounded-3xl border relative overflow-hidden shadow-2xl"
+          style={{
+            backgroundColor: isCyber ? "rgba(10,15,30,0.85)" : "#FFFFFF",
+            borderColor: isCyber ? "#00F5FF50" : "#000000",
+            borderWidth: isCyber ? "1.5px" : "3px",
+            boxShadow: isCyber ? "0 0 35px rgba(0,245,255,0.15)" : "6px 6px 0 #000000",
+          }}
+        >
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-3 py-1 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-400 border border-cyan-500/40">
+                  ⚔️ Master Collectible Directory v2
                 </span>
-              ) : (
-                "Characters Directory"
-              )}
-            </h1>
-            <p className="text-slate-400 dark:text-slate-500 text-xs font-medium tracking-wide max-w-xl">
-              Discover, filter, and seamlessly curate exceptional profiles across premium entries.
-            </p>
+                <span className="px-2.5 py-1 rounded-xl text-xs font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                  {stats.totalEntries} Total Roster Entries
+                </span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-black theme-text-primary tracking-tight">
+                Character & Collectible Database
+              </h1>
+              <p className="text-sm theme-text-muted max-w-2xl font-mono leading-relaxed">
+                Centralized database for actresses, actors, anime heroes, game roster agents, Tokusatsu legends, and singers.
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                setSelectedHofEntry(null);
+                setEditorOpen(true);
+              }}
+              className="px-5 py-3 text-xs font-black rounded-xl bg-amber-500 text-black border-2 border-black shadow-[3px_3px_0_#000] hover:translate-y-[-2px] transition-all cursor-pointer shrink-0"
+            >
+              ┼ Add New Entry
+            </button>
           </div>
- 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setSelectedEntry(null);
-              setEditorOpen(true);
-            }}
-            className="px-5 py-3 text-xs font-bold rounded-xl transition-all border shrink-0 flex items-center gap-2 shadow-lg tracking-wide uppercase cursor-pointer"
-            style={{
-              backgroundColor: isCyber ? "#FF1493" : "#0f172a",
-              borderColor: isCyber ? "transparent" : "rgba(255,255,255,0.1)",
-              color: "#FFF",
-              boxShadow: isCyber ? "0 0 25px rgba(255, 20, 147, 0.4)" : "0 10px 20px rgba(15, 23, 42, 0.15)"
-            }}
-          >
-            <span>┼ Add New Entry</span>
-          </motion.button>
-        </div>
-      </motion.div>
- 
-      {/* Premium Glass Filter Toolbar */}
-      <div 
-        className="flex flex-col gap-5 mb-8 p-5 rounded-2xl border backdrop-blur-md"
-        style={{
-          backgroundColor: isCyber ? "rgba(10, 15, 36, 0.6)" : "rgba(255, 255, 255, 0.7)",
-          borderColor: isCyber ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)",
-        }}
-      >
-        <div className="relative w-full">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by name, note, or famous masterpieces..."
-            className="w-full px-5 py-3 text-xs font-medium rounded-xl outline-none border transition-all duration-300 focus:ring-1 focus:ring-pink-500/30"
-            style={{
-              backgroundColor: isCyber ? "rgba(5, 8, 22, 0.4)" : "#ffffff",
-              borderColor: isCyber ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
-              color: isCyber ? "#E2E8F0" : "#0f172a",
-            }}
-          />
+        </motion.div>
+
+        {/* Dynamic Quick Statistics Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2.5">
+          <div className="p-3 rounded-2xl border text-center font-mono" style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.03)" : "#F8FAFC", borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#000", borderWidth: isCyber ? "1px" : "2px" }}>
+            <span className="text-[9px] theme-text-muted block">TOTAL ENTRIES</span>
+            <strong className="text-base font-black theme-text-primary">{stats.totalEntries}</strong>
+          </div>
+          <div className="p-3 rounded-2xl border text-center font-mono" style={{ backgroundColor: isCyber ? "rgba(236,72,153,0.05)" : "#FDF2F8", borderColor: isCyber ? "rgba(236,72,153,0.2)" : "#000", borderWidth: isCyber ? "1px" : "2px" }}>
+            <span className="text-[9px] text-pink-400 block">ACTRESSES</span>
+            <strong className="text-base font-black text-pink-500">{stats.actresses}</strong>
+          </div>
+          <div className="p-3 rounded-2xl border text-center font-mono" style={{ backgroundColor: isCyber ? "rgba(59,130,246,0.05)" : "#EFF6FF", borderColor: isCyber ? "rgba(59,130,246,0.2)" : "#000", borderWidth: isCyber ? "1px" : "2px" }}>
+            <span className="text-[9px] text-blue-400 block">ACTORS</span>
+            <strong className="text-base font-black text-blue-500">{stats.actors}</strong>
+          </div>
+          <div className="p-3 rounded-2xl border text-center font-mono" style={{ backgroundColor: isCyber ? "rgba(168,85,247,0.05)" : "#F3E8FF", borderColor: isCyber ? "rgba(168,85,247,0.2)" : "#000", borderWidth: isCyber ? "1px" : "2px" }}>
+            <span className="text-[9px] text-purple-400 block">ANIME</span>
+            <strong className="text-base font-black text-purple-500">{stats.anime}</strong>
+          </div>
+          <div className="p-3 rounded-2xl border text-center font-mono" style={{ backgroundColor: isCyber ? "rgba(16,185,129,0.05)" : "#ECFDF5", borderColor: isCyber ? "rgba(16,185,129,0.2)" : "#000", borderWidth: isCyber ? "1px" : "2px" }}>
+            <span className="text-[9px] text-emerald-400 block">GAME ROSTER</span>
+            <strong className="text-base font-black text-emerald-500">{stats.games}</strong>
+          </div>
+          <div className="p-3 rounded-2xl border text-center font-mono" style={{ backgroundColor: isCyber ? "rgba(239,68,68,0.05)" : "#FEF2F2", borderColor: isCyber ? "rgba(239,68,68,0.2)" : "#000", borderWidth: isCyber ? "1px" : "2px" }}>
+            <span className="text-[9px] text-red-400 block">TOKUSATSU</span>
+            <strong className="text-base font-black text-red-500">{stats.tokusatsu}</strong>
+          </div>
+          <div className="p-3 rounded-2xl border text-center font-mono" style={{ backgroundColor: isCyber ? "rgba(245,158,11,0.05)" : "#FFFBEB", borderColor: isCyber ? "rgba(245,158,11,0.2)" : "#000", borderWidth: isCyber ? "1px" : "2px" }}>
+            <span className="text-[9px] text-amber-400 block">GOAT MEMBERS</span>
+            <strong className="text-base font-black text-amber-500">{stats.goatMembers}</strong>
+          </div>
+          <div className="p-3 rounded-2xl border text-center font-mono" style={{ backgroundColor: isCyber ? "rgba(0,245,255,0.05)" : "#E0F2FE", borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000", borderWidth: isCyber ? "1px" : "2px" }}>
+            <span className="text-[9px] text-cyan-400 block">FAVORITES</span>
+            <strong className="text-base font-black text-cyan-500">{stats.favorites}</strong>
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-4 items-center">
-          <FilterDropdown
-            label="Content Type"
-            icon="🎭"
-            value={selectedType}
-            onChange={(val) => setSelectedType(val)}
-            options={TYPE_FILTERS.map(t => ({ id: t.id, label: t.label }))}
-          />
-          <FilterDropdown
-            label="Origin / Specialty"
-            icon="🌐"
-            value={selectedRegionSpecialty}
-            onChange={(val) => setSelectedRegionSpecialty(val)}
-            options={REGION_SPECIALTY_FILTERS.map(t => ({ id: t.id, label: t.label }))}
-          />
-        </div>
-      </div>
- 
-      {filteredDirectoryList.length === 0 ? (
-        <div className="py-24 text-center border border-dashed rounded-2xl border-slate-700/20 max-w-md mx-auto">
-          <div className="text-4xl mb-3 grayscale opacity-30">👻</div>
-          <h4 className="font-bold text-slate-800 dark:text-slate-200 text-base">No Profiles Match Your Query</h4>
-        </div>
-      ) : (
-        <motion.div 
-          variants={containerVariants}
-          initial="hidden"
-          animate="show"
-          className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5 md:gap-6 justify-items-center"
-        >
-          {filteredDirectoryList.map((entry, idx) => {
-            const groupCode = getGroupForEntry(entry);
-            const groupDetails = getGroupDetails(groupCode);
-            return (
-              <HofEntryCard
-                key={entry?.id || idx}
-                entry={entry}
-                idx={idx}
-                isCyber={isCyber}
-                group={groupDetails}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                showType={selectedType === "all"}
-                onDoubleTap={handleDoubleTap}
+        {/* Category Pills & Advanced Toolbar */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {CATEGORY_PILLS.map((pill) => {
+              const isActive = selectedCategory === pill.id;
+              return (
+                <button
+                  key={pill.id}
+                  onClick={() => setSelectedCategory(pill.id)}
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold font-mono whitespace-nowrap flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shrink-0"
+                  style={{
+                    backgroundColor: isActive
+                      ? isCyber ? "#00F5FF" : "#FEF08A"
+                      : isCyber ? "rgba(255,255,255,0.05)" : "#F1F5F9",
+                    color: isActive
+                      ? isCyber ? "#0A0F1E" : "#854D0E"
+                      : isCyber ? "#94A3B8" : "#475569",
+                    border: isActive
+                      ? isCyber ? "1px solid #00F5FF" : "2px solid #000000"
+                      : isCyber ? "1px solid rgba(255,255,255,0.1)" : "1.5px solid #CBD5E1",
+                    boxShadow: !isCyber && isActive ? "2px 2px 0 #000" : "none",
+                  }}
+                >
+                  <span>{pill.icon}</span>
+                  <span>{pill.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex-1 min-w-[240px]">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search character name, works, aliases, notes..."
+                className="w-full px-3.5 py-2.5 rounded-xl border text-xs font-mono focus:outline-none"
+                style={{
+                  backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#FFFFFF",
+                  color: isCyber ? "#F8FAFC" : "#0F172A",
+                  borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000000",
+                  borderWidth: isCyber ? "1px" : "2px",
+                }}
               />
-            );
-          })}
-        </motion.div>
-      )}
- 
-      <AnimatePresence>
-        {editorOpen && (
-          <HofEditorModal
-            isOpen={editorOpen}
-            onClose={() => setEditorOpen(false)}
-            entryToEdit={selectedEntry}
-          />
-        )}
-      </AnimatePresence>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <FilterDropdown
+                label="Origin"
+                icon="🌍"
+                value={selectedNationality}
+                onChange={(val) => setSelectedNationality(val)}
+                options={NATIONALITY_OPTIONS}
+              />
+
+              <FilterDropdown
+                label="Sort By"
+                icon="📊"
+                value={selectedSort}
+                onChange={(val) => setSelectedSort(val)}
+                options={SORT_OPTIONS}
+              />
+
+              <button
+                onClick={() => setFavoriteOnly(!favoriteOnly)}
+                className="px-3 py-2 rounded-xl text-xs font-bold font-mono cursor-pointer border transition-all"
+                style={{
+                  backgroundColor: favoriteOnly
+                    ? isCyber ? "rgba(250,204,21,0.2)" : "#FEF08A"
+                    : isCyber ? "rgba(255,255,255,0.05)" : "#F1F5F9",
+                  color: favoriteOnly ? "#FACC15" : isCyber ? "#94A3B8" : "#475569",
+                  borderColor: favoriteOnly ? "#FACC15" : isCyber ? "rgba(255,255,255,0.1)" : "#000",
+                  borderWidth: isCyber ? "1px" : "2px",
+                }}
+              >
+                ⭐ Favorites
+              </button>
+
+              <button
+                onClick={() => setGoatOnly(!goatOnly)}
+                className="px-3 py-2 rounded-xl text-xs font-bold font-mono cursor-pointer border transition-all"
+                style={{
+                  backgroundColor: goatOnly
+                    ? isCyber ? "rgba(168,85,247,0.2)" : "#F3E8FF"
+                    : isCyber ? "rgba(255,255,255,0.05)" : "#F1F5F9",
+                  color: goatOnly ? "#A855F7" : isCyber ? "#94A3B8" : "#475569",
+                  borderColor: goatOnly ? "#A855F7" : isCyber ? "rgba(255,255,255,0.1)" : "#000",
+                  borderWidth: isCyber ? "1px" : "2px",
+                }}
+              >
+                👑 GOAT Only
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Master Directory Grid */}
+        <BentoCard>
+          {filteredHofList.length === 0 ? (
+            <div className="text-center py-16 space-y-3">
+              <div className="text-4xl">🔍</div>
+              <h3 className="font-black text-base theme-text-primary">No character entries match your query.</h3>
+              <p className="text-xs theme-text-muted max-w-md mx-auto">
+                Try selecting another Category Pill or reset your active filters.
+              </p>
+              <button
+                onClick={() => {
+                  setSelectedCategory("all");
+                  setSelectedNationality("all");
+                  setSearchQuery("");
+                  setFavoriteOnly(false);
+                  setGoatOnly(false);
+                }}
+                className="px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-black border-2 border-black shadow-[2px_2px_0_#000] cursor-pointer"
+              >
+                Reset All Filters ↺
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <AnimatePresence mode="popLayout">
+                {filteredHofList.map((entry, idx) => {
+                  const groupCode = getGroupForEntry(entry);
+                  const groupDetails = getGroupDetails(groupCode);
+                  return (
+                    <HofEntryCard
+                      key={entry.id || idx}
+                      entry={entry}
+                      idx={idx}
+                      isCyber={isCyber}
+                      group={groupDetails}
+                      onEdit={handleEditHof}
+                      onDelete={(id, name) => handleDeleteHof(id, name)}
+                      showType={selectedCategory === "all"}
+                    />
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+          )}
+        </BentoCard>
+
+        {/* Modals */}
+        <HofEditorModal
+          isOpen={editorOpen}
+          onClose={() => setEditorOpen(false)}
+          entryToEdit={selectedHofEntry}
+        />
+
+        <CharacterPreviewModal
+          isOpen={!!previewCharacter}
+          onClose={() => setPreviewCharacter(null)}
+          character={previewCharacter}
+        />
+      </div>
     </AppShell>
   );
 }
- 
-const SkeletonHofCard = () => (
-  <div className="rounded-2xl border p-4 h-[350px] animate-pulse flex flex-col bg-slate-900/5 dark:bg-white/5 border-black/10 dark:border-white/10">
-    <div className="w-full h-[230px] rounded-xl bg-black/10 dark:bg-white/10 mb-4" />
-    <div className="h-4 bg-black/15 dark:bg-white/15 rounded w-2/3 mb-2" />
-    <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-1/2" />
-  </div>
-);
- 
-const HofSkeletonGrid = () => (
-  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
-    {[...Array(8)].map((_, i) => (
-      <SkeletonHofCard key={i} />
-    ))}
-  </div>
-);
- 
+
 export default function CharactersPage() {
   return (
-    <Suspense fallback={<HofSkeletonGrid />}>
+    <Suspense fallback={<div className="p-8 text-center font-mono theme-text-muted">Loading Directory...</div>}>
       <CharactersContent />
     </Suspense>
   );

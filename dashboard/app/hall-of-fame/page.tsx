@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
@@ -26,6 +26,16 @@ export default function HallOfFamePage() {
   const [subTab, setSubTab] = useState<RankingTab>("overall");
   const [editorOpen, setEditorOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<HallOfFameEntry | null>(null);
+
+  // Listen for Page Context Menu Actions
+  useEffect(() => {
+    const handleRecalc = () => {
+      // Trigger ranking animation
+      setSubTab("overall");
+    };
+    window.addEventListener("recalculate-goat-rankings", handleRecalc);
+    return () => window.removeEventListener("recalculate-goat-rankings", handleRecalc);
+  }, []);
   
   // Ref tracking system for precise double tap detection on mobile
   const lastTapRef = useRef<{ [key: string]: number }>({});

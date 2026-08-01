@@ -288,6 +288,90 @@ export function buildBookmarkMenu({
   return items;
 }
 
+export interface CharacterCardMenuParams {
+  character: any;
+  onPreview?: () => void;
+  onToggleFavorite?: () => void;
+  onToggleHof?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onCopyLink?: () => void;
+}
+
+export function buildCharacterCardMenu({
+  character,
+  onPreview,
+  onToggleFavorite,
+  onToggleHof,
+  onEdit,
+  onDelete,
+  onCopyLink,
+}: CharacterCardMenuParams): ContextMenuItem[] {
+  const items: ContextMenuItem[] = [];
+
+  if (onPreview) {
+    items.push({
+      id: "preview",
+      label: `Preview ${character.name}`,
+      icon: "👁️",
+      onClick: onPreview,
+    });
+  }
+
+  if (onToggleFavorite) {
+    items.push({
+      id: "favorite",
+      label: character.isFavorite ? "Unstar Favorite" : "Star Favorite",
+      icon: "⭐",
+      checked: character.isFavorite,
+      onClick: onToggleFavorite,
+    });
+  }
+
+  if (onToggleHof) {
+    items.push({
+      id: "hof",
+      label: character.isHof ? "Remove from Hall of Fame" : "Add to Hall of Fame",
+      icon: "👑",
+      checked: character.isHof,
+      onClick: onToggleHof,
+    });
+  }
+
+  if (onEdit) {
+    items.push({
+      id: "edit",
+      label: "Edit Character",
+      icon: "✏️",
+      shortcut: "⌘E",
+      onClick: onEdit,
+    });
+  }
+
+  if (onCopyLink) {
+    items.push({
+      id: "copy-link",
+      label: "Copy Character Link",
+      icon: "📋",
+      onClick: onCopyLink,
+    });
+  }
+
+  if (onDelete) {
+    items.push({
+      id: "delete",
+      label: `Delete ${character.name}`,
+      icon: "🗑️",
+      danger: true,
+      divider: true,
+      shortcut: "Del",
+      onClick: onDelete,
+    });
+  }
+
+  return items;
+}
+
 export interface GlobalNavigationMenuParams {
   pathname: string;
   theme: string;
@@ -308,16 +392,159 @@ export function buildGlobalNavigationMenu({
   const isCyber = theme === "cyber";
   const normPath = (pathname || "/").replace(/\/$/, "") || "/";
 
+  const items: ContextMenuItem[] = [];
+
+  // ── 0. Route-Specific Page Actions Section (Highest Priority) ───────────
+  if (normPath.startsWith("/characters") || normPath.startsWith("/heroes")) {
+    items.push({
+      id: "hdr-page-action",
+      label: "Character Directory Actions",
+      isHeader: true,
+      onClick: () => {},
+    });
+    items.push({
+      id: "pa-add-char",
+      label: "Add New Character Entry",
+      icon: "✨",
+      onClick: () => router.push("/characters?action=new"),
+    });
+    items.push({
+      id: "pa-random-char",
+      label: "View Random Character",
+      icon: "🎲",
+      onClick: () => {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("trigger-random-character"));
+        }
+      },
+    });
+    items.push({
+      id: "pa-open-hof",
+      label: "Open Hall of Fame",
+      icon: "🏆",
+      onClick: () => router.push("/hall-of-fame"),
+    });
+    items.push({
+      id: "pa-open-toku",
+      label: "Open Tokusatsu Roster",
+      icon: "🎬",
+      onClick: () => router.push("/tokusatsu"),
+    });
+  } else if (normPath.startsWith("/hall-of-fame")) {
+    items.push({
+      id: "hdr-page-action",
+      label: "Hall of Fame Actions",
+      isHeader: true,
+      onClick: () => {},
+    });
+    items.push({
+      id: "pa-add-hof",
+      label: "Add Legend to Hall of Fame",
+      icon: "👑",
+      onClick: () => router.push("/hall-of-fame?action=new"),
+    });
+    items.push({
+      id: "pa-recalc-goat",
+      label: "Recalculate GOAT Rankings",
+      icon: "⚡",
+      onClick: () => {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("recalculate-goat-rankings"));
+        }
+      },
+    });
+    items.push({
+      id: "pa-open-chars",
+      label: "Master Character Directory",
+      icon: "⚔️",
+      onClick: () => router.push("/characters"),
+    });
+  } else if (normPath.startsWith("/tokusatsu")) {
+    items.push({
+      id: "hdr-page-action",
+      label: "Tokusatsu Roster Actions",
+      isHeader: true,
+      onClick: () => {},
+    });
+    items.push({
+      id: "pa-add-toku",
+      label: "Add Tokusatsu Hero Entry",
+      icon: "🦸",
+      onClick: () => router.push("/tokusatsu?action=new"),
+    });
+    items.push({
+      id: "pa-filter-kamen",
+      label: "Filter Kamen Rider",
+      icon: "🏍️",
+      onClick: () => router.push("/tokusatsu?sub=kamen-rider"),
+    });
+    items.push({
+      id: "pa-filter-ultra",
+      label: "Filter Ultraman",
+      icon: "⚡",
+      onClick: () => router.push("/tokusatsu?sub=ultraman"),
+    });
+    items.push({
+      id: "pa-open-chars",
+      label: "Open All Characters",
+      icon: "📚",
+      onClick: () => router.push("/characters"),
+    });
+  } else if (normPath.startsWith("/games")) {
+    items.push({
+      id: "hdr-page-action",
+      label: "Games Library Actions",
+      isHeader: true,
+      onClick: () => {},
+    });
+    items.push({
+      id: "pa-add-game",
+      label: "Add Game Entry",
+      icon: "🎮",
+      onClick: () => router.push("/games?action=new"),
+    });
+    items.push({
+      id: "pa-manage-roster",
+      label: "Manage Game Rosters",
+      icon: "👥",
+      onClick: () => router.push("/heroes"),
+    });
+  } else if (normPath.startsWith("/anime") || normPath.startsWith("/drama") || normPath.startsWith("/music")) {
+    items.push({
+      id: "hdr-page-action",
+      label: "Media Library Actions",
+      isHeader: true,
+      onClick: () => {},
+    });
+    items.push({
+      id: "pa-add-media",
+      label: `Add ${normPath.includes("anime") ? "Anime" : normPath.includes("drama") ? "Drama" : "Track"} Entry`,
+      icon: "➕",
+      onClick: () => router.push(`${normPath}?action=new`),
+    });
+  }
+
+  // 1. Search Integration
+  items.push({
+    id: "search-global",
+    label: "Search Everything...",
+    icon: "🔍",
+    shortcut: "⌘K",
+    divider: items.length > 0,
+    onClick: openCommandPalette,
+  });
+
+  // 2. Navigation Section
   const allNavItems = [
     { id: "nav-dash", label: "Dashboard", icon: "🏠", path: "/" },
-    { id: "nav-games", label: "Games", icon: "🎮", path: "/games" },
+    { id: "nav-chars", label: "Character Directory", icon: "⚔️", path: "/characters" },
+    { id: "nav-hof", label: "Hall of Fame", icon: "🏆", path: "/hall-of-fame" },
+    { id: "nav-toku", label: "Tokusatsu", icon: "🎬", path: "/tokusatsu" },
+    { id: "nav-games", label: "Games Library", icon: "🎮", path: "/games" },
     { id: "nav-gamedb", label: "Game Database", icon: "📚", path: "/heroes" },
     { id: "nav-anime", label: "Anime", icon: "📺", path: "/anime" },
     { id: "nav-drama", label: "Drama", icon: "🎭", path: "/drama" },
     { id: "nav-music", label: "Music", icon: "🎵", path: "/music" },
-    { id: "nav-hof", label: "Hall of Fame", icon: "🏆", path: "/hall-of-fame" },
-    { id: "nav-chars", label: "Characters", icon: "⚔️", path: "/characters" },
-    { id: "nav-toku", label: "Tokusatsu", icon: "🎬", path: "/tokusatsu" },
     { id: "nav-gallery", label: "Gallery", icon: "🖼️", path: "/gallery" },
     { id: "nav-ai", label: "AI Library", icon: "🤖", path: "/ai-library" },
     { id: "nav-notepad", label: "Notepad", icon: "📝", path: "/notepad" },
@@ -325,7 +552,6 @@ export function buildGlobalNavigationMenu({
     { id: "nav-prompts", label: "Prompt Vault", icon: "💬", path: "/prompt-vault" },
   ];
 
-  // Dynamic Navigation: Hide current active page!
   const availableNavItems = allNavItems.filter((item) => {
     if (item.path === "/") {
       return normPath !== "/";
@@ -333,18 +559,6 @@ export function buildGlobalNavigationMenu({
     return !normPath.startsWith(item.path);
   });
 
-  const items: ContextMenuItem[] = [];
-
-  // 1. Search Integration (Top)
-  items.push({
-    id: "search-global",
-    label: "Search Everything...",
-    icon: "🔍",
-    shortcut: "⌘K",
-    onClick: openCommandPalette,
-  });
-
-  // 2. Navigation Section
   if (availableNavItems.length > 0) {
     items.push({
       id: "hdr-nav",
@@ -364,50 +578,10 @@ export function buildGlobalNavigationMenu({
     });
   }
 
-  // 3. Quick Actions Section
+  // 3. Theme & Profile Section
   items.push({
-    id: "hdr-actions",
-    label: "Quick Actions",
-    isHeader: true,
-    divider: true,
-    onClick: () => {},
-  });
-
-  items.push({
-    id: "qa-add-game",
-    label: "Add Game",
-    icon: "➕",
-    onClick: () => router.push("/games?action=new"),
-  });
-  items.push({
-    id: "qa-add-anime",
-    label: "Add Anime",
-    icon: "➕",
-    onClick: () => router.push("/anime?action=new"),
-  });
-  items.push({
-    id: "qa-add-drama",
-    label: "Add Drama",
-    icon: "➕",
-    onClick: () => router.push("/drama?action=new"),
-  });
-  items.push({
-    id: "qa-new-note",
-    label: "New Note",
-    icon: "➕",
-    onClick: () => router.push("/notepad?action=new"),
-  });
-  items.push({
-    id: "qa-upload-img",
-    label: "Upload Image",
-    icon: "➕",
-    onClick: () => router.push("/gallery?action=upload"),
-  });
-
-  // 4. Theme Section
-  items.push({
-    id: "hdr-theme",
-    label: "Theme",
+    id: "hdr-system",
+    label: "System & Theme",
     isHeader: true,
     divider: true,
     onClick: () => {},
@@ -420,27 +594,13 @@ export function buildGlobalNavigationMenu({
     onClick: () => setTheme(isCyber ? "brutal" : "cyber"),
   });
 
-  // 5. Profile Section
-  items.push({
-    id: "hdr-profile",
-    label: "Profile",
-    isHeader: true,
-    divider: true,
-    onClick: () => {},
-  });
-
   items.push({
     id: "prof-view",
-    label: "Profile",
-    icon: "👤",
+    label: "Profile Settings",
+    icon: "⚙️",
     onClick: () => router.push("/profile"),
   });
-  items.push({
-    id: "prof-settings",
-    label: "Settings",
-    icon: "⚙️",
-    onClick: () => router.push("/profile?tab=settings"),
-  });
+
   items.push({
     id: "prof-logout",
     label: "Logout",

@@ -13,6 +13,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v5.0.0",
+    date: "2026-08-01",
+    title: "Character Directory v2 + Living Hall of Fame v2 + Tokusatsu View + Universal Context Menu Engine",
+    badge: "MAJOR SYSTEM RELEASE",
+    type: "major",
+    summary: "Upgraded Character Directory into a master searchable database, introduced zero-duplication Tokusatsu filtered view architecture, expanded Hall of Fame into a living ranking engine, and enforced permanent universal page-level & entity context menu architecture with mobile touch long-press parity.",
+    categories: [
+      {
+        name: "Core Architecture & Universal Context Menu",
+        items: [
+          "🎯 Universal Page Context Menus: Right-clicking whitespace on any route triggers page-level quick actions, navigation, search, and system controls.",
+          "📱 Mobile Touch Long-Press Parity: 500ms touch long-press listener dispatches contextmenu events across cards and whitespace with 100% desktop feature parity.",
+          "⚔️ Master Character Directory v2: Transform /characters into searchable master database with Hero Banner, Dynamic Quick Statistics, Category Pills, and Advanced Toolbar.",
+          "🎬 Tokusatsu Filtered View: Zero-duplication /tokusatsu view for Ultraman, Kamen Rider, Super Sentai, Power Rangers, and Metal Heroes.",
+          "🏆 Living Hall of Fame v2: Champions Podium, GOAT score matrix, Top 10 leaderboards, and category groups.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v4.9.0",
     date: "2026-08-01",
     title: "Global Dropdown & Modal Stacking Context Fix",

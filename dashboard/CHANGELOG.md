@@ -2,6 +2,25 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [5.0.0] - 2026-08-01
+
+### 👑 Character Directory v2 + Living Hall of Fame v2 + Tokusatsu Architecture + Universal Context Menu Engine
+
+**Universal Page-Level Context Menu Rule**
+- **Permanent Project Architecture Rule**: Added mandatory page context menu support across every route (`/`, `/characters`, `/hall-of-fame`, `/tokusatsu`, `/games`, `/anime`, `/drama`, `/music`, `/ai-library`, `/gallery`, `/notepad`, `/links`, `/profile`).
+- **Touch Long-Press Parity Engine**: Enhanced `ContextMenuProvider.tsx` with a ~500ms touch long-press listener. Desktop right-click and mobile long-press provide 100% equivalent functionality across whitespace and entity cards.
+
+**Master Character Directory v2**
+- **Master Database Experience**: Transformed `/characters` into a searchable, filterable master database across Actresses, Actors, Anime, Games, Tokusatsu, Singers, and VTubers.
+- **Hero Banner & Dynamic Quick Statistics**: Displays total entries, actresses, actors, anime, game roster, Tokusatsu heroes, singers, and favorite counters calculated dynamically.
+- **Advanced Category Pills & Toolbar**: Instant filtering via Category Pills, Nationality dropdown, GOAT toggle, Favorites filter, and A-Z/Popularity sorting.
+
+**Tokusatsu Architecture**
+- **Filtered View Engine**: Created `/tokusatsu` as a zero-duplication filtered view over the master database supporting subcategories for *Ultraman*, *Kamen Rider*, *Super Sentai*, *Power Rangers*, and *Metal Heroes*.
+
+**Living Hall of Fame v2**
+- **Living Ranking System**: Upgraded `/hall-of-fame` with Champions Podium, GOAT score matrix, Top 10 leaderboards, category groups, and page-level context action support.
+
 ## [4.9.0] - 2026-08-01
 
 ### 🛠️ Global Dropdown & Modal Stacking Context Audit & Fix

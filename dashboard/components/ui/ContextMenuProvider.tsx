@@ -173,13 +173,23 @@ export function ContextMenuProvider({ children }: { children: React.ReactNode })
           'a, button, [role="button"], [data-context-menu], input, textarea, select, [data-card="true"]'
         ) !== null;
 
-      // Only start 500ms long-press timer if touching empty page background / whitespace
-      if (!isInteractiveObject) {
-        cancelTouch();
-        touchTimer = setTimeout(() => {
+      // Start 500ms touch long-press timer for mobile & tablet context menus
+      cancelTouch();
+      touchTimer = setTimeout(() => {
+        if (isInteractiveObject) {
+          // Dispatch contextmenu event on the target element for card/entity context menu!
+          const contextEvent = new MouseEvent("contextmenu", {
+            bubbles: true,
+            cancelable: true,
+            clientX: startX,
+            clientY: startY,
+          });
+          target.dispatchEvent(contextEvent);
+        } else {
+          // Trigger Page-Level Context Menu on whitespace
           triggerGlobalNavMenu({ clientX: startX, clientY: startY });
-        }, 500); // 500ms long-press duration
-      }
+        }
+      }, 500); // 500ms long-press duration
     };
 
     const handleTouchMove = (e: TouchEvent) => {
