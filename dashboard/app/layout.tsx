@@ -88,6 +88,17 @@ export default function RootLayout({
       `}
     >
       <head>
+        <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Nexus Xenon" />
+        <meta name="application-name" content="Nexus Xenon" />
+        <meta name="msapplication-TileColor" content="#FF6B35" />
+        <meta name="msapplication-TileImage" content="/icons/icon-192.png" />
+      </head>
+      <body className="font-[family-name:var(--font-space-grotesk)] antialiased" suppressHydrationWarning>
         {/*
           ⚡ CRITICAL: Synchronous theme injection — must run before first paint.
           Reads the stored theme from localStorage and sets data-theme + CSS class
@@ -108,17 +119,6 @@ export default function RootLayout({
             __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(function(e){console.warn('SW registration failed:',e);});});}`,
           }}
         />
-        <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
-        <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Nexus Xenon" />
-        <meta name="application-name" content="Nexus Xenon" />
-        <meta name="msapplication-TileColor" content="#FF6B35" />
-        <meta name="msapplication-TileImage" content="/icons/icon-192.png" />
-      </head>
-      <body className="font-[family-name:var(--font-space-grotesk)] antialiased" suppressHydrationWarning>
         <RootProviders>{children}</RootProviders>
       </body>
     </html>

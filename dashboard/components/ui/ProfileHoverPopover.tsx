@@ -53,3 +53,5 @@ export function ProfileHoverPopover({
     </ProfilePopoutTrigger>
   );
 }
+
+export default ProfileHoverPopover;
