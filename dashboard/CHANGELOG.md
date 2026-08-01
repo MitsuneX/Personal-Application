@@ -2,6 +2,23 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [4.0.0] - 2026-08-01
+
+### 🎬 Flagship Upgrade — Premium Personal Cinematic Dossier (`/drama/[id]`)
+- **Dedicated Route & Navigation**: Replaced popups with full-page dedicated route `/drama/[id]` featuring breadcrumb navigation (`Dashboard > Drama > Title (Year)`), shared element poster transitions, and full browser history support.
+- **Cinematic Hero Banner (`DossierHero.tsx`)**: High-res backdrop with progressive blur gradient fade, poster, title, original title, release year, country, studio, runtime, status badges, favorite button, and parallax scroll effect.
+- **Dynamic Cultural & Genre Theme Accents (`DossierThemeAccent.tsx`)**: Contextual color palettes & ambient particles for *Korean Romance* (soft pink), *Korean Thriller* (crimson rain), *Korean Historical* (imperial gold), *Chinese Xianxia* (jade clouds), *Chinese Wuxia* (ink bamboo), *Japanese Anime* (sakura purple), *Hollywood* (silver sci-fi), *Fantasy* (magical glow), and *Horror* (dark fog) while strictly preserving **Neo-Brutalism** & **Cyberpunk** global themes.
+- **Animated Quick Stats (`DossierStatsBar.tsx`)**: Statistic cards with animated count-up numbers (Watched, Total, Completion %, Days Taken, Personal Score, Rewatch Count).
+- **Official Synopsis (`DossierSynopsis.tsx`)**: Expandable plot synopsis with smooth height transition.
+- **My Personal Watch Journey (`DossierMyJourney.tsx`)**: Personal tracking for watch dates, favorite episode/character, emotional episode, mood, personal score, would-rewatch flag, and inline journey editor modal.
+- **Character Spotlight & Cast (`DossierCharacterSpotlight.tsx`)**: Character grid cards with portraits, roles, favorite badges, and character drawer popover modal.
+- **Episode Navigator & Analytics (`DossierEpisodeNavigator.tsx`)**: Interactive episode grid (`✓ Completed`, `▶ Current`) and Recharts watching analytics (episodes/day, longest session, completion %, time remaining).
+- **Multi-Category Rating Breakdown (`DossierRatingRadar.tsx`)**: 9-category rating breakdown (Story, Characters, Ending, OST, Romance, Comedy, Action, Visuals, Rewatch Value) with Recharts Radar Chart and star bars.
+- **Memory Gallery (`DossierMemoryGallery.tsx`)**: Screenshot attachments with captions, episode tags, character tags, and Lightbox previewer.
+- **Emotional Journey Timeline (`DossierEmotionalTimeline.tsx`)**: Interactive milestone timeline with emoji reactions (`😊 Ep 1`, `😲 Ep 5`, `😭 Ep 10`, `🔥 Ep 16`, `❤️ Finale`), notes, and date tags.
+- **Markdown Review Editor (`DossierReviewEditor.tsx`)**: Rich Markdown personal review editor with spoiler toggle support.
+- **External Resources & Soundtracks (`DossierExternalLinks.tsx`)**: OST tracks list, awards honors, and external links buttons (IMDb, MyDramaList, Wikipedia, Netflix, Disney+, YouTube Trailer).
+
 ## [3.9.0] - 2026-07-31
 
 ### 🚀 Application-Wide Floating UI Overlay System & Viewport Collision Engine

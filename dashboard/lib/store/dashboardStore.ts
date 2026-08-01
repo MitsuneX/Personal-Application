@@ -185,7 +185,98 @@ export interface MediaEntry {
   actresses: ActorEntry[];
 }
 
-export interface AnimeEntry {
+export interface DossierCharacter {
+  id: string;
+  name: string;
+  actor: string;
+  role: string;
+  portraitUrl?: string;
+  isFavorite?: boolean;
+  notes?: string;
+}
+
+export interface DossierCastMember {
+  id: string;
+  name: string;
+  role: string;
+  photoUrl?: string;
+  nationality?: string;
+}
+
+export interface DossierEpisode {
+  number: number;
+  title: string;
+  runtime: string;
+  airDate?: string;
+  isWatched: boolean;
+  rating?: number;
+}
+
+export interface DossierEmotionMilestone {
+  episode: string;
+  emotion: string;
+  note: string;
+  date?: string;
+  image?: string;
+}
+
+export interface DossierOstTrack {
+  title: string;
+  artist: string;
+  type: "OP" | "ED" | "OST";
+  url?: string;
+}
+
+export interface CategoryRatings {
+  story: number;
+  characters: number;
+  ending: number;
+  ost: number;
+  romance: number;
+  comedy: number;
+  action: number;
+  visuals: number;
+  rewatchValue: number;
+}
+
+export interface ExternalLinks {
+  imdb?: string;
+  mydramalist?: string;
+  wikipedia?: string;
+  netflix?: string;
+  disney?: string;
+  viki?: string;
+  trailerUrl?: string;
+}
+
+export interface CinematicDossierFields {
+  originalTitle?: string;
+  studio?: string;
+  runtime?: string;
+  backdropUrl?: string;
+  posterUrl?: string;
+  synopsis?: string;
+  isFavorite?: boolean;
+  startDate?: string;
+  finishDate?: string;
+  rewatchCount?: number;
+  favoriteEpisode?: string;
+  favoriteCharacter?: string;
+  emotionalEpisode?: string;
+  mood?: string;
+  wouldRewatch?: boolean;
+  categoryRatings?: CategoryRatings;
+  characters?: DossierCharacter[];
+  castGrid?: DossierCastMember[];
+  episodeLog?: DossierEpisode[];
+  emotionalTimeline?: DossierEmotionMilestone[];
+  ostTracks?: DossierOstTrack[];
+  externalLinks?: ExternalLinks;
+  reviewMarkdown?: string;
+  awards?: string[];
+}
+
+export interface AnimeEntry extends CinematicDossierFields {
   id: string;
   title: string;
   episodesWatched: number;
@@ -207,7 +298,7 @@ export interface FavoriteCharacter {
   isFavorite: boolean;
 }
 
-export interface DramaEntry {
+export interface DramaEntry extends CinematicDossierFields {
   id: string;
   title: string;
   country: DramaCountry;

@@ -1,0 +1,190 @@
+"use client";
+
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "@/lib/theme";
+import { ThemeAccentConfig } from "./DossierThemeAccent";
+import { DossierEmotionMilestone } from "@/lib/store/dashboardStore";
+import { Heart, Plus, Calendar, Image as ImageIcon, Trash2 } from "lucide-react";
+
+export interface DossierEmotionalTimelineProps {
+  timeline?: DossierEmotionMilestone[];
+  themeConfig: ThemeAccentConfig;
+  onAddMilestone?: (milestone: DossierEmotionMilestone) => void;
+}
+
+export function DossierEmotionalTimeline({
+  timeline = [],
+  themeConfig,
+  onAddMilestone,
+}: DossierEmotionalTimelineProps) {
+  const { theme } = useTheme();
+  const isCyber = theme === "cyber";
+
+  const defaultTimeline: DossierEmotionMilestone[] = timeline.length > 0 ? timeline : [
+    { episode: "Episode 1", emotion: "😊 Intrigued", note: "Bong-seok floating in class was both hilarious & adorable!", date: "2023-08-09" },
+    { episode: "Episode 7", emotion: "😲 Shocked", note: "Frank's brutal assassin fight sequences were unreal cinema quality!", date: "2023-08-16" },
+    { episode: "Episode 12", emotion: "😭 Cried", note: "Ju-won's backstory with his wife in Namsan... purest love story ever.", date: "2023-08-23" },
+    { episode: "Episode 18", emotion: "🔥 Hyped", note: "School battle climax with parents fighting alongside kids!", date: "2023-09-13" },
+    { episode: "Finale (Ep 20)", emotion: "❤️ Masterpiece", note: "Flawless conclusion. Absolute GOAT status series!", date: "2023-09-20" },
+  ];
+
+  const [milestones, setMilestones] = useState<DossierEmotionMilestone[]>(defaultTimeline);
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  // Form State
+  const [formEp, setFormEp] = useState("");
+  const [formEmotion, setFormEmotion] = useState("😊 Intrigued");
+  const [formNote, setFormNote] = useState("");
+
+  const handleAdd = () => {
+    if (!formEp.trim()) return;
+    const newEntry: DossierEmotionMilestone = {
+      episode: formEp,
+      emotion: formEmotion,
+      note: formNote,
+      date: new Date().toISOString().split("T")[0],
+    };
+    const updated = [...milestones, newEntry];
+    setMilestones(updated);
+    onAddMilestone?.(newEntry);
+    setFormEp("");
+    setFormNote("");
+    setShowAddModal(false);
+  };
+
+  return (
+    <div
+      className="p-6 rounded-2xl mb-8 relative border overflow-hidden"
+      style={{
+        backgroundColor: isCyber ? "rgba(10,15,44,0.75)" : "#FFFFFF",
+        borderColor: isCyber ? `${themeConfig.primaryAccent}30` : "#000000",
+        boxShadow: isCyber
+          ? `0 0 25px ${themeConfig.glowColor}, inset 0 0 20px rgba(0,245,255,0.02)`
+          : "4px 4px 0px #000000",
+      }}
+    >
+      {/* Section Header */}
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <Heart size={20} style={{ color: themeConfig.primaryAccent }} />
+          <h2
+            className="text-lg font-black tracking-wide"
+            style={{
+              color: isCyber ? "#E0E8FF" : "#1A1A1A",
+              fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
+            }}
+          >
+            {isCyber ? "// EMOTIONAL MILESTONE TIMELINE" : "Emotional Journey Timeline"}
+          </h2>
+        </div>
+
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-mono font-bold uppercase tracking-wider cursor-pointer border"
+          style={{
+            backgroundColor: isCyber ? "rgba(0,245,255,0.08)" : "#FFF",
+            borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000",
+            color: isCyber ? "#00F5FF" : "#000",
+          }}
+        >
+          <Plus size={14} />
+          <span>Add Reaction</span>
+        </button>
+      </div>
+
+      {/* Timeline Visual Flow */}
+      <div className="relative pl-6 border-l-2 border-dashed space-y-6" style={{ borderColor: themeConfig.primaryAccent }}>
+        {milestones.map((m, idx) => (
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, x: -15 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: idx * 0.08 }}
+            className="relative p-4 rounded-xl border group backdrop-blur-md"
+            style={{
+              backgroundColor: isCyber ? "rgba(5,8,22,0.8)" : "#FFF5E4",
+              borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#000000",
+            }}
+          >
+            {/* Timeline Dot */}
+            <div
+              className="absolute -left-[31px] top-4 w-4 h-4 rounded-full border-2 border-white shadow-lg"
+              style={{ backgroundColor: themeConfig.primaryAccent }}
+            />
+
+            <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+              <div className="flex items-center gap-2">
+                <span className="font-mono font-black text-xs px-2 py-0.5 rounded border" style={{ borderColor: themeConfig.primaryAccent, color: themeConfig.primaryAccent }}>
+                  {m.episode}
+                </span>
+                <span className="font-bold text-sm">{m.emotion}</span>
+              </div>
+              {m.date && (
+                <span className="text-[10px] font-mono opacity-50 flex items-center gap-1">
+                  <Calendar size={11} />
+                  <span>{m.date}</span>
+                </span>
+              )}
+            </div>
+
+            <p className="text-xs leading-relaxed opacity-85 mt-1" style={{ color: isCyber ? "#94A3B8" : "#374151" }}>
+              {m.note}
+            </p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Add Milestone Modal */}
+      <AnimatePresence>
+        {showAddModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+            <div className="p-6 rounded-2xl max-w-md w-full border bg-slate-900 text-white relative">
+              <h3 className="font-black text-lg mb-4">Add Emotional Reaction Milestone</h3>
+              <div className="flex flex-col gap-3">
+                <div>
+                  <label className="text-xs font-mono opacity-70">Episode Number / Milestone</label>
+                  <input
+                    type="text"
+                    value={formEp}
+                    onChange={(e) => setFormEp(e.target.value)}
+                    placeholder="e.g. Episode 10 or Climax"
+                    className="w-full p-2 rounded-lg text-xs font-mono border bg-transparent mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-mono opacity-70">Emotion Tag</label>
+                  <select
+                    value={formEmotion}
+                    onChange={(e) => setFormEmotion(e.target.value)}
+                    className="w-full p-2 rounded-lg text-xs font-mono border bg-slate-800 mt-1"
+                  >
+                    <option value="😊 Intrigued">😊 Intrigued</option>
+                    <option value="😲 Shocked">😲 Shocked</option>
+                    <option value="😭 Cried">😭 Cried</option>
+                    <option value="🔥 Hyped">🔥 Hyped</option>
+                    <option value="❤️ Masterpiece">❤️ Masterpiece</option>
+                    <option value="💔 Heartbroken">💔 Heartbroken</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-mono opacity-70">Personal Note</label>
+                  <textarea
+                    value={formNote}
+                    onChange={(e) => setFormNote(e.target.value)}
+                    placeholder="What happened in this scene that moved you?"
+                    className="w-full p-2 rounded-lg text-xs font-mono border bg-transparent mt-1 h-20"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-4">
+                <button onClick={() => setShowAddModal(false)} className="px-3 py-1.5 text-xs font-mono border rounded-lg">Cancel</button>
+                <button onClick={handleAdd} className="px-4 py-1.5 text-xs font-mono font-bold rounded-lg bg-pink-600 text-white">Save Reaction</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

@@ -385,21 +385,8 @@ export function MediaCard({
   const router = useRouter();
 
   const handleViewDetails = useCallback(() => {
-    const targetUrl = category === "anime" ? `/anime?id=${id}` : `/drama/${category}?id=${id}`;
-    if (pathname === (category === "anime" ? "/anime" : `/drama/${category}`)) {
-      const el = document.getElementById(`media-card-${id}`);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-        el.style.outline = isCyber ? `3px solid ${accent}` : `3px solid ${accent2}`;
-        el.style.outlineOffset = "4px";
-        setTimeout(() => {
-          el.style.outline = "none";
-        }, 3000);
-      }
-    } else {
-      router.push(targetUrl);
-    }
-  }, [id, category, pathname, router, accent, accent2, isCyber]);
+    router.push(`/drama/${id}`);
+  }, [id, router]);
 
   useEffect(() => { setLocalStatus(status); }, [status]);
   useEffect(() => { setLocalEps(episodesWatched); }, [episodesWatched]);
