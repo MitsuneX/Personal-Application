@@ -21,7 +21,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
     summary: "Upgraded Character Directory into a master searchable database, introduced zero-duplication Tokusatsu filtered view architecture, expanded Hall of Fame into a living ranking engine, and enforced permanent universal page-level & entity context menu architecture with mobile touch long-press parity.",
     categories: [
       {
-        name: "Core Architecture & Universal Context Menu",
+        name: "New Features",
         items: [
           "🎯 Universal Page Context Menus: Right-clicking whitespace on any route triggers page-level quick actions, navigation, search, and system controls.",
           "📱 Mobile Touch Long-Press Parity: 500ms touch long-press listener dispatches contextmenu events across cards and whitespace with 100% desktop feature parity.",
