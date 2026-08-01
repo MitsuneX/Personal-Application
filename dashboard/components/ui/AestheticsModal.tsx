@@ -506,6 +506,56 @@ export function AestheticsModal({ isOpen, onClose }: AestheticsModalProps) {
               </div>
             </div>
 
+            {/* Live Banner Preview */}
+            <AnimatePresence>
+              {banner && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 100 }}
+                  exit={{ opacity: 0, height: 0 }}
+                  style={{
+                    borderRadius: isCyber ? 8 : 6,
+                    overflow: "hidden",
+                    border: isCyber ? "1px solid rgba(0,245,255,0.3)" : "2px solid #000",
+                    marginBottom: 8,
+                    position: "relative",
+                  }}
+                >
+                  {isVideo(banner) ? (
+                    <video
+                      src={banner}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      style={{ width: "100%", height: 100, objectFit: "cover" }}
+                    />
+                  ) : (
+                    <img
+                      src={banner}
+                      alt="banner preview"
+                      style={{ width: "100%", height: 100, objectFit: "cover", display: "block" }}
+                    />
+                  )}
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: 4,
+                      right: 6,
+                      fontSize: 9,
+                      fontWeight: 900,
+                      background: "rgba(0,0,0,0.7)",
+                      color: "#FFF",
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                    }}
+                  >
+                    LIVE PREVIEW
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* ── GIF Search Panel ──────────────────────────────────────── */}
             <AnimatePresence>
               {showGifSearch && (

@@ -172,23 +172,21 @@ export function ProfilePopoutCard({
         {/* Banner */}
         <div className="relative w-full overflow-hidden" style={{ height: 128 }}>
           {profile?.banner ? (
-            isAnimatedMedia(profile.banner) ? (
-              // Native <img> for animated GIF/WebP/AVIF — preserves animation frames
+            /\.(mp4|webm|ogg)(\?.*)?$/i.test(profile.banner) ? (
+              <video
+                src={profile.banner}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover object-center"
+              />
+            ) : (
               <img
                 src={profile.banner}
                 alt="Profile Banner"
                 className="w-full h-full object-cover object-center"
                 loading="eager"
-              />
-            ) : (
-              // Next.js <Image> for static JPG/PNG — benefits from optimization + lazy load
-              <Image
-                src={profile.banner}
-                alt="Profile Banner"
-                fill
-                className="object-cover object-center"
-                priority
-                sizes="368px"
               />
             )
           ) : (

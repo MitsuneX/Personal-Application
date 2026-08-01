@@ -479,7 +479,11 @@ export function ProfileCard() {
           {/* ── Bio ──────────────────────────────────────────────────────── */}
           <motion.p
             className="theme-text-secondary text-sm leading-relaxed mb-4 pb-4"
-            style={{ borderBottom: isCyber ? "1px solid rgba(0,245,255,0.15)" : "2px solid rgba(0,0,0,0.1)" }}
+            style={{
+              borderBottomWidth: isCyber ? "1px" : "2px",
+              borderBottomStyle: "solid",
+              borderBottomColor: isCyber ? "rgba(0,245,255,0.15)" : "rgba(0,0,0,0.1)",
+            }}
             animate={{ borderBottomColor: isCyber ? "rgba(0,245,255,0.15)" : "rgba(0,0,0,0.1)" }}
             transition={{ duration: 0.4 }}
           >

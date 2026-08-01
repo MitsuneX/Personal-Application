@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   useFloating,
   useClick,
+  useHover,
   useDismiss,
   useInteractions,
   FloatingPortal,
@@ -48,9 +49,13 @@ export function ProfilePopoutTrigger({
     whileElementsMounted: autoUpdate,
   });
 
+  const hover = useHover(context, {
+    move: false,
+    delay: { open: 120, close: 250 },
+  });
   const click = useClick(context, { toggle: true });
   const dismiss = useDismiss(context, { escapeKey: true, outsidePress: true });
-  const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss]);
+  const { getReferenceProps, getFloatingProps } = useInteractions([hover, click, dismiss]);
 
   // Determine if mobile (< 640px) for bottom-sheet layout
   const [isMobile, setIsMobile] = useState(false);
