@@ -9,6 +9,7 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants";
 import { GameEditorModal } from "@/components/ui/GameEditorModal";
 import { ImageLightboxModal } from "@/components/ui/ImageLightboxModal";
+import { GameUidBadge } from "@/components/ui/GameUidBadge";
 import { resolveGameIcon } from "@/lib/data/gameIcons";
 import type { GameEntry } from "@/lib/store/dashboardStore";
 import { useConfirm } from "@/lib/context/ConfirmContext";
@@ -272,55 +273,13 @@ function GameCard({
 
           {game?.handle && (
             <div className="relative z-10 shrink-0">
-              {game.profileLink ? (
-                <a
-                  href={game.profileLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:scale-[1.03] active:scale-95 block transition-all"
-                >
-                  {isCyber ? (
-                    <div
-                      className="px-2.5 py-1 text-[10px] font-mono font-bold rounded-md flex items-center gap-1.5 select-none"
-                      style={{
-                        border: `1px solid ${accent}90`,
-                        boxShadow: `0 0 12px ${accent}40`,
-                        color: "#00F5FF",
-                        background: `${accent}20`,
-                      }}
-                    >
-                      {game.handle} ↗
-                    </div>
-                  ) : (
-                    <div className="relative inline-block">
-                      <div className="absolute inset-0 translate-x-[2px] translate-y-[2px] rounded" style={{ backgroundColor: accent, border: "1.5px solid #000" }} />
-                      <div className="relative px-2.5 py-1 text-[10px] font-mono font-bold bg-white rounded flex items-center gap-1" style={{ border: "1.5px solid #000", color: "#000" }}>
-                        {game.handle} ↗
-                      </div>
-                    </div>
-                  )}
-                </a>
-              ) : (
-                isCyber ? (
-                  <div
-                    className="px-2.5 py-1 text-[10px] font-mono font-bold rounded-md select-none"
-                    style={{
-                      border: `1px solid ${accent}50`,
-                      color: "#94A3B8",
-                      background: "rgba(255,255,255,0.05)",
-                    }}
-                  >
-                    {game.handle}
-                  </div>
-                ) : (
-                  <div className="relative inline-block">
-                    <div className="absolute inset-0 translate-x-[2px] translate-y-[2px] rounded" style={{ backgroundColor: accent, border: "1.5px solid #000" }} />
-                    <div className="relative px-2.5 py-1 text-[10px] font-mono font-bold bg-white rounded select-none" style={{ border: "1.5px solid #000", color: "#000" }}>
-                      {game.handle}
-                    </div>
-                  </div>
-                )
-              )}
+              <GameUidBadge
+                handle={game.handle}
+                profileLink={game.profileLink}
+                isCyber={isCyber}
+                accentColor={accent}
+                size="sm"
+              />
             </div>
           )}
         </div>

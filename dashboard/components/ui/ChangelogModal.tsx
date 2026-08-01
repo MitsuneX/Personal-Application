@@ -41,6 +41,20 @@ export function ChangelogModal({ isOpen, onClose }: ChangelogModalProps) {
     };
   }, [isOpen, onClose]);
 
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const handleCopyText = (key: string, text: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (typeof window !== "undefined") {
+      navigator.clipboard.writeText(text).catch(() => {});
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 2000);
+    }
+  };
+
   if (!isOpen || !mounted) return null;
 
   const modalContent = (
@@ -197,7 +211,7 @@ export function ChangelogModal({ isOpen, onClose }: ChangelogModalProps) {
                       className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-dashed"
                       style={{ borderColor: isCyber ? "rgba(0,245,255,0.2)" : "rgba(0,0,0,0.15)" }}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span
                           className="px-2.5 py-0.5 rounded-md font-mono text-xs font-black tracking-wider uppercase border"
                           style={{
@@ -219,13 +233,51 @@ export function ChangelogModal({ isOpen, onClose }: ChangelogModalProps) {
                         </span>
                       </div>
 
-                      <span
-                        className="text-xs font-mono font-semibold opacity-70 flex items-center gap-1"
-                        style={{ color: isCyber ? "#94A3B8" : "#444444" }}
-                      >
-                        <span>📅</span>
-                        <span>{entry.date}</span>
-                      </span>
+                      <div className="flex items-center gap-3">
+                        {/* Copy Full Version Release Notes Button */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            const fullText = `${entry.version} — ${entry.title} (${entry.date})\n${entry.summary}\n\n` +
+                              filteredCategories.map((c) => `${c.name}:\n` + c.items.map((i) => `• ${i}`).join("\n")).join("\n\n");
+                            handleCopyText(`ver-${entry.version}`, fullText, e);
+                          }}
+                          className="px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold border transition-all flex items-center gap-1 cursor-pointer active:scale-95 select-none"
+                          style={{
+                            backgroundColor: copiedKey === `ver-${entry.version}`
+                              ? (isCyber ? "rgba(16,185,129,0.2)" : "#D1FAE5")
+                              : (isCyber ? "rgba(0,245,255,0.1)" : "#FFFFFF"),
+                            borderColor: copiedKey === `ver-${entry.version}`
+                              ? "#10B981"
+                              : (isCyber ? "rgba(0,245,255,0.3)" : "#000000"),
+                            color: copiedKey === `ver-${entry.version}`
+                              ? (isCyber ? "#34D399" : "#065F46")
+                              : (isCyber ? "#00F5FF" : "#1A1A1A"),
+                            boxShadow: isCyber ? "none" : "1.5px 1.5px 0 #000000",
+                          }}
+                          title="Copy release notes"
+                        >
+                          {copiedKey === `ver-${entry.version}` ? (
+                            <>
+                              <span>✓</span>
+                              <span>Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>📋</span>
+                              <span>Copy Notes</span>
+                            </>
+                          )}
+                        </button>
+
+                        <span
+                          className="text-xs font-mono font-semibold opacity-70 flex items-center gap-1"
+                          style={{ color: isCyber ? "#94A3B8" : "#444444" }}
+                        >
+                          <span>📅</span>
+                          <span>{entry.date}</span>
+                        </span>
+                      </div>
                     </div>
 
                     {/* Entry Title & Summary */}
@@ -250,21 +302,48 @@ export function ChangelogModal({ isOpen, onClose }: ChangelogModalProps) {
                             {cat.name}
                           </span>
                           <ul className="space-y-1 pl-1">
-                            {cat.items.map((item, itemIdx) => (
-                              <li
-                                key={itemIdx}
-                                className="text-xs font-medium flex items-start gap-2 leading-snug opacity-90"
-                                style={{ color: isCyber ? "#E2E8F0" : "#1F2937" }}
-                              >
-                                <span
-                                  className="shrink-0 mt-0.5 font-bold"
-                                  style={{ color: isCyber ? "#00F5FF" : "#FF6B35" }}
+                            {cat.items.map((item, itemIdx) => {
+                              const itemKey = `${entry.version}-${catIdx}-${itemIdx}`;
+                              const isItemCopied = copiedKey === itemKey;
+
+                              return (
+                                <li
+                                  key={itemIdx}
+                                  className="text-xs font-medium flex items-start justify-between gap-2 leading-snug opacity-90 group/item hover:opacity-100 transition-opacity"
+                                  style={{ color: isCyber ? "#E2E8F0" : "#1F2937" }}
                                 >
-                                  ▸
-                                </span>
-                                <span>{item}</span>
-                              </li>
-                            ))}
+                                  <div className="flex items-start gap-2 min-w-0">
+                                    <span
+                                      className="shrink-0 mt-0.5 font-bold"
+                                      style={{ color: isCyber ? "#00F5FF" : "#FF6B35" }}
+                                    >
+                                      ▸
+                                    </span>
+                                    <span className="leading-relaxed">{item}</span>
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleCopyText(itemKey, item, e)}
+                                    className="shrink-0 px-1.5 py-0.5 text-[9px] font-mono font-bold rounded opacity-60 md:opacity-0 group-hover/item:opacity-100 transition-all cursor-pointer border"
+                                    style={{
+                                      backgroundColor: isItemCopied
+                                        ? (isCyber ? "rgba(16,185,129,0.2)" : "#D1FAE5")
+                                        : (isCyber ? "rgba(255,255,255,0.05)" : "#F3F4F6"),
+                                      borderColor: isItemCopied
+                                        ? "#10B981"
+                                        : (isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB"),
+                                      color: isItemCopied
+                                        ? (isCyber ? "#34D399" : "#065F46")
+                                        : (isCyber ? "#94A3B8" : "#4B5563"),
+                                    }}
+                                    title="Copy bullet item text"
+                                  >
+                                    {isItemCopied ? "✓ Copied" : "📋 Copy"}
+                                  </button>
+                                </li>
+                              );
+                            })}
                           </ul>
                         </div>
                       ))}

@@ -17,6 +17,7 @@ import { GameScannerModal } from "@/components/ui/GameScannerModal";
 import { ShowcaseEditorModal } from "@/components/ui/ShowcaseEditorModal";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 import { FilterDropdown } from "@/components/ui/FilterDropdown";
+import { GameUidBadge } from "@/components/ui/GameUidBadge";
 
 const RESOURCE_CATEGORIES = [
   "Meta", "Tier List", "Heroes", "Characters", "Builds",
@@ -503,7 +504,18 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
 
                   <div className="flex items-center gap-4 mt-2 text-xs font-mono theme-text-muted flex-wrap">
                     <span>Platform: <strong className="theme-text-primary">{currentGame.platform}</strong></span>
-                    {currentGame.handle && <span>IGN/UID: <strong className="text-amber-500">{currentGame.handle}</strong></span>}
+                    {currentGame.handle && (
+                      <div className="flex items-center gap-1.5">
+                        <span>IGN/UID:</span>
+                        <GameUidBadge
+                          handle={currentGame.handle}
+                          profileLink={currentGame.profileLink}
+                          isCyber={isCyber}
+                          accentColor={accent}
+                          size="sm"
+                        />
+                      </div>
+                    )}
                     {currentGame.mainCharacter && (
                       <span>Primary Main: <strong style={{ color: accent }}>{currentGame.mainCharacter}</strong></span>
                     )}

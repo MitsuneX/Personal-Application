@@ -12,6 +12,7 @@ import { resolveGameIcon } from "@/lib/data/gameIcons";
 import { getGameDossierConfig } from "@/lib/data/gameDossierConfig";
 import { DossierCharacterEditorModal } from "@/components/ui/DossierCharacterEditorModal";
 import { GameScannerModal } from "@/components/ui/GameScannerModal";
+import { GameUidBadge } from "@/components/ui/GameUidBadge";
 
 export default function GameDatabaseOverviewPage() {
   const { theme } = useTheme();
@@ -168,9 +169,21 @@ export default function GameDatabaseOverviewPage() {
                     </div>
 
                     {game.mainCharacter && (
-                      <p className="text-xs font-mono theme-text-muted truncate mb-3">
+                      <p className="text-xs font-mono theme-text-muted truncate mb-2">
                         Main: <strong className="theme-text-primary">{game.mainCharacter}</strong>
                       </p>
+                    )}
+
+                    {game.handle && (
+                      <div className="mb-3">
+                        <GameUidBadge
+                          handle={game.handle}
+                          profileLink={game.profileLink}
+                          isCyber={isCyber}
+                          accentColor={game.accentColor || "#00F5FF"}
+                          size="sm"
+                        />
+                      </div>
                     )}
                   </div>
 

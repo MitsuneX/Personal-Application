@@ -13,6 +13,32 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v4.4.0",
+    date: "2026-08-01",
+    title: "Unified FloatingPopover System & Interactive UID Management",
+    badge: "GLOBAL POPOVER & UID",
+    type: "major",
+    summary: "Rebuilt the floating overlay system into FloatingPopover.tsx with autoUpdate layoutShift and animationFrame tracking, safePolygon hover bridges, and fixed-strategy coordinate calculation. Added interactive UID copy and profile link options across Games and Game Database, and copyable Changelog entries.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🎯 Unified FloatingPopover Architecture: Single production-grade component powering Profile Popouts, Settings Dropdown, and menus.",
+          "📋 Copyable Changelog Release Notes: Copy full release entries or individual updates with 1-click.",
+          "🕹️ Interactive Game UID Options: Games with profile links feature dual options (Visit Profile ↗ + Copy UID 📋). Games without profile links allow direct 1-click UID copying.",
+          "📊 Game Database UID Copying: Game dossiers in the Game Database Hub (/heroes) now include copyable UIDs.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "⚡ Fixed Transform Collision: Separated Floating UI position div from Framer Motion animation div to eliminate corner-stuck and scroll-frozen popovers.",
+          "🛡️ Viewport Containment: Popovers dynamically shift, flip, and clamp to visible window bounds without clipping.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v4.3.0",
     date: "2026-08-01",
     title: "Profile Popout System — Production Rebuild (Root Cause Fix)",
