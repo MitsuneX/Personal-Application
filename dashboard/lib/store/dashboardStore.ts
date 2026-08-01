@@ -608,14 +608,6 @@ const initialDossierCharacters: DossierCharacterEntry[] = [
   { id: "dossier-gi-1", gameId: "game-4", name: "Xiao", category: "Main DPS", role: "Anemo / Yaksha Plunge", levelRank: "Lvl 90 - C6", winRate: 92.0, matches: 310, notes: "Bane of All Evil continuous plunge attack loop.", accentColor: "#10B981", isFavorite: true },
   { id: "dossier-gi-2", gameId: "game-4", name: "Yelan", category: "Sub DPS", role: "Hydro / Exquisite Dice", levelRank: "Lvl 90 - C2S1", winRate: 95.0, matches: 450, notes: "High speed mobility & off-field hydro enabler.", accentColor: "#3B82F6", isFavorite: true },
   { id: "dossier-gi-3", gameId: "game-4", name: "Zhongli", category: "Healer / Shielder", role: "Geo / Jade Shield", levelRank: "Lvl 90 - C0", winRate: 98.0, matches: 520, notes: "Unbreakable Jade Shield & universal resistance shred.", accentColor: "#F59E0B", isFavorite: true },
-
-  // Punishing: Gray Raven (game-pgr)
-  { id: "dossier-pgr-1", gameId: "game-pgr", name: "Lucia: Crimson Weave", category: "Omniframe", role: "Attacker / Lightning", levelRank: "Rank SS - Level 80", winRate: 94.0, matches: 380, notes: "Odachi slashes with rapid thunder blades & lightning domain.", accentColor: "#FACC15", isFavorite: true },
-  { id: "dossier-pgr-2", gameId: "game-pgr", name: "Selena: Capriccio", category: "Omniframe", role: "Amplifier / Dark", levelRank: "Rank SSS - Level 80", winRate: 91.5, matches: 290, notes: "Harmonic dark symphony & team element boost.", accentColor: "#A855F7", isFavorite: true },
-  { id: "dossier-pgr-3", gameId: "game-pgr", name: "Bianca: Stigmata", category: "Omniframe", role: "Attacker / Physical", levelRank: "Rank SS - Level 80", winRate: 92.8, matches: 310, notes: "Greatsword & sword-formation physical armor shatter.", accentColor: "#E2E8F0", isFavorite: true },
-  { id: "dossier-pgr-4", gameId: "game-pgr", name: "Alpha: Crimson Abyss", category: "Omniframe", role: "Attacker / Physical", levelRank: "Rank SSS - Level 80", winRate: 89.0, matches: 420, notes: "Sword wave bursts & classic Iaijutsu slash combo.", accentColor: "#EF4444", isFavorite: false },
-  { id: "dossier-pgr-5", gameId: "game-pgr", name: "Vera: Garnet", category: "Omniframe", role: "Tank / Lightning", levelRank: "Rank SS - Level 80", winRate: 88.5, matches: 240, notes: "Flagblade lightning pierce & resistance shred.", accentColor: "#FACC15", isFavorite: false },
-  { id: "dossier-pgr-6", gameId: "game-pgr", name: "Liv: Empyrea", category: "Omniframe", role: "Amplifier / Fire", levelRank: "Rank SS - Level 80", winRate: 93.2, matches: 330, notes: "Angelic fire domain, high healing & fire buffer.", accentColor: "#EF4444", isFavorite: true },
 ];
 
 const initialGameResources: GameResourceEntry[] = [
@@ -631,11 +623,6 @@ const initialGameResources: GameResourceEntry[] = [
 
   // Genshin Impact (game-4)
   { id: "res-gi-1", gameId: "game-4", name: "Game8 Builds & Tier List", url: "https://game8.co/games/Genshin-Impact", icon: "🏆", category: "Builds", description: "Best Artifact Sets & Team Compositions", enabled: true, sortOrder: 1 },
-
-  // Punishing: Gray Raven (game-pgr)
-  { id: "res-pgr-1", gameId: "game-pgr", name: "Prydwen PGR Tier List", url: "https://www.prydwen.gg/pgr/tier-list", icon: "🏆", category: "Tier List", description: "PGR Meta Constructs & Weapon Tier Ratings", enabled: true, sortOrder: 1 },
-  { id: "res-pgr-2", gameId: "game-pgr", name: "Gray Ravens Wiki & Guides", url: "https://grayravens.com", icon: "📖", category: "Wiki", description: "Comprehensive Character Builds, Memories & Patch Info", enabled: true, sortOrder: 2 },
-  { id: "res-pgr-3", gameId: "game-pgr", name: "PGR Official Global Site", url: "https://pgr.kurogame.net", icon: "🌐", category: "Official", description: "Official Kuro Games Announcements & News", enabled: true, sortOrder: 3 },
 ];
 
 const initialProjects: ProjectItemEntry[] = [

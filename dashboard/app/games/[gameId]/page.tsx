@@ -233,7 +233,7 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
   const gameResources = useDashboardStore((s) => s.gameResources) || [];
   const gameShowcaseItems = useDashboardStore((s) => s.gameShowcaseItems) || [];
   const { removeGameResource, removeDossierCharacter, removeGameShowcaseItem } = useDashboardStore();
-  const currentGame = games.find((g) => g.id === gameId);
+  const currentGame = games.find((g) => g.id === gameId) || games.find((g) => g.game.toLowerCase().replace(/[^a-z0-9]/g, "") === gameId.toLowerCase().replace(/[^a-z0-9]/g, ""));
 
   const handleDeleteDossierChar = (char: DossierCharacterEntry) => {
     confirm({

@@ -132,18 +132,4 @@ export const DEFAULT_GAMES: GameEntry[] = [
     profileLink: "https://umamusume.jp",
     icon: "/game-icons/umamusume.svg",
   },
-  {
-    id: "game-pgr",
-    game: "Punishing: Gray Raven",
-    handle: "",
-    platform: "Multi",
-    rank: "Commandant",
-    mainCharacter: "Lucia: Crimson Weave",
-    mainRole: "Attacker / Lightning",
-    category: "Gacha Action",
-    isActive: true,
-    accentColor: "#00F5FF",
-    profileLink: "https://pgr.kurogame.net",
-    icon: "/game-icons/pgr.svg",
-  },
 ];
