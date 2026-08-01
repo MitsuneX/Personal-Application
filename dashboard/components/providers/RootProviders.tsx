@@ -11,6 +11,7 @@ import { ConfirmProvider } from "@/lib/context/ConfirmContext";
 import { GlobalConfirmModal } from "@/components/ui/GlobalConfirmModal";
 
 import { OverlayProvider } from "@/components/ui/OverlayProvider";
+import { ContextMenuProvider } from "@/components/ui/ContextMenuProvider";
 
 // Public routes that don't need the splash auth guard
 const PUBLIC_PATHS = ["/login", "/signup", "/auth"];
@@ -57,23 +58,25 @@ function AuthGateInner({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ─── Root provider: composes overlay + toast + confirm + auth + theme + splash ────────────────────
+// ─── Root provider: composes context menu + overlay + toast + confirm + auth + theme + splash ────────────────────
 
 export function RootProviders({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <OverlayProvider>
-        <ToastProvider>
-          <ConfirmProvider>
-            <AuthProvider>
-              <AuthGateInner>
-                {children}
-                <GlobalConfirmModal />
-              </AuthGateInner>
-            </AuthProvider>
-          </ConfirmProvider>
-        </ToastProvider>
-      </OverlayProvider>
+      <ContextMenuProvider>
+        <OverlayProvider>
+          <ToastProvider>
+            <ConfirmProvider>
+              <AuthProvider>
+                <AuthGateInner>
+                  {children}
+                  <GlobalConfirmModal />
+                </AuthGateInner>
+              </AuthProvider>
+            </ConfirmProvider>
+          </ToastProvider>
+        </OverlayProvider>
+      </ContextMenuProvider>
     </ThemeProvider>
   );
 }

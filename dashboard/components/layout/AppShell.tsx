@@ -12,7 +12,6 @@ import { TopLoader } from "@/components/ui/TopLoader";
 import { FloatingHeartEngine } from "@/components/ui/FloatingHeartEngine";
 import { GlobalMusicPlayer } from "@/components/ui/GlobalMusicPlayer";
 import { GuestBanner } from "@/components/ui/GuestBanner";
-import { ContextMenuProvider } from "@/components/ui/ContextMenuProvider";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -62,7 +61,7 @@ export function AppShell({ children }: AppShellProps) {
   }, [isHydrated, user?.id, fetchDashboard]);
 
   return (
-    <ContextMenuProvider>
+    <>
       <FloatingHeartEngine />
       <TopLoader />
       <GlobalMusicPlayer />
@@ -140,7 +139,7 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         </main>
       </motion.div>
-    </ContextMenuProvider>
+    </>
   );
 }
 
