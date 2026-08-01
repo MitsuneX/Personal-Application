@@ -543,6 +543,32 @@ const GENERIC_CATEGORY_CONFIGS: Record<string, GameCapabilityConfig> = {
       { id: "sustain", name: "Sustain / Healer", icon: "💚", description: "Shields & healing", visualTokens: createVisualTokens("#10B981") },
     ],
   },
+  // ── Punishing: Gray Raven (PGR) ──────────────────────────────────────────
+  punishinggrayraven: {
+    gameType: "Gacha Action",
+    categoryLabel: "Classifications & Frame Types",
+    characterLabel: "Construct / Frame",
+    resourcePresetsEnabled: true,
+    categories: [
+      { id: "omniframe",  name: "Omniframe",   icon: "⚙️",  description: "Standard combat frames for planetary operations", visualTokens: createVisualTokens("#00F5FF") },
+      { id: "uniframe",   name: "Uniframe",    icon: "🌌",  description: "Specialized high-power frames for heavy corruption zones", visualTokens: createVisualTokens("#BF5FFF") },
+      { id: "transcendant", name: "Transcendant", icon: "✨", description: "Ascendant-compatible high-yield combat constructs", visualTokens: createVisualTokens("#EC4899") },
+      { id: "attacker",   name: "Attacker",    icon: "⚔️",  description: "Primary frontline damage dealer & burst combo executioner", visualTokens: createVisualTokens("#EF4444") },
+      { id: "tank",       name: "Tank",        icon: "🛡️",  description: "Frontline shield breaker, resistance shredder & armor tank", visualTokens: createVisualTokens("#F59E0B") },
+      { id: "support",    name: "Support",     icon: "💚",  description: "Field healer, squad buffer & HP restoration specialist", visualTokens: createVisualTokens("#10B981") },
+      { id: "amplifier",  name: "Amplifier",   icon: "⚡",  description: "Advanced element buffer, domain controller & sub-DPS scaling", visualTokens: createVisualTokens("#8B5CF6") },
+    ],
+    elementSystem: {
+      sectionLabel: "Elements & Attributes",
+      elements: [
+        { id: "physical",  name: "Physical",  icon: "⚔️", color: "#E2E8F0", description: "Standard physical kinetic impact & critical strikes", visualTokens: createVisualTokens("#E2E8F0") },
+        { id: "fire",      name: "Fire",      icon: "🔥", color: "#EF4444", description: "Thermal incineration & continuous heat burn", visualTokens: createVisualTokens("#EF4444") },
+        { id: "ice",       name: "Ice",       icon: "❄️", color: "#06B6D4", description: "Cryo freezing & glacial frost burst", visualTokens: createVisualTokens("#06B6D4") },
+        { id: "lightning", name: "Lightning", icon: "⚡", color: "#FACC15", description: "High-frequency electrical discharge & shock", visualTokens: createVisualTokens("#FACC15") },
+        { id: "dark",      name: "Dark",      icon: "🟣", color: "#A855F7", description: "Void erosion & dark matter dissolution", visualTokens: createVisualTokens("#A855F7") },
+      ],
+    },
+  },
   fighting: {
     gameType: "Fighting",
     categoryLabel: "Fighter Roster",
@@ -607,6 +633,9 @@ const TITLE_ALIASES: Record<string, string> = {
   hi3: "honkaiimpact3rd",
   honkaiimpact3: "honkaiimpact3rd",
   honkaiimpact: "honkaiimpact3rd",
+  pgr: "punishinggrayraven",
+  punishinggrayraven: "punishinggrayraven",
+  grayraven: "punishinggrayraven",
 };
 
 // ─── Resolver ─────────────────────────────────────────────────────────────────

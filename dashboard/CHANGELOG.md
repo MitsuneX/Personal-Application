@@ -2,6 +2,16 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [4.1.0] - 2026-08-01
+
+### ⚙️ Punishing: Gray Raven (PGR) Integration — Game HUD & Dedicated Database
+- **Full PGR Integration**: Added Punishing: Gray Raven (PGR) game card, logo (`/game-icons/pgr.svg`), artwork banner, personal progress, and quick actions to Games HUD and Game Database (`/heroes` & `/games/pgr`).
+- **Character Classifications & Roles**: Configured Omniframe, Uniframe, Transcendant, Attacker, Tank, Support, and Amplifier frame classifications in `lib/data/gameDossierConfig.ts`.
+- **Element Attribute System**: Visual tokens for Physical (Silver `#E2E8F0`), Fire (Red `#EF4444`), Ice (Cyan `#06B6D4`), Lightning (Yellow `#FACC15`), and Dark (Purple `#A855F7`) elements.
+- **Roster & Data Persistence**: Added initial PGR roster (`Lucia: Crimson Weave`, `Selena: Capriccio`, `Bianca: Stigmata`, `Alpha: Crimson Abyss`, `Vera: Garnet`, `Liv: Empyrea`) for account `nelvin.claudius06@gmail.com` and database seed script.
+- **Global Search Indexing**: Updated `Header.tsx` and `CommandPalette.tsx` to search PGR, elements, roles, and frame classifications.
+- **Web Log Updates Sync**: Synchronized release notes with `lib/data/changelog.ts` for the web Settings Log Updates modal.
+
 ## [4.0.0] - 2026-08-01
 
 ### 🎬 Flagship Upgrade — Premium Personal Cinematic Dossier (`/drama/[id]`)

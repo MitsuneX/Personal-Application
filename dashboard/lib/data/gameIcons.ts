@@ -111,6 +111,12 @@ export const GAME_ICON_REGISTRY: GameIconEntry[] = [
     icon: "/game-icons/nikke.svg",
   },
   {
+    id: "pgr",
+    name: "Punishing: Gray Raven",
+    aliases: ["punishing gray raven", "pgr", "punishinggrayraven", "gray raven", "punishing: gray raven"],
+    icon: "/game-icons/pgr.svg",
+  },
+  {
     id: "endfield",
     name: "Arknights: Endfield",
     aliases: ["arknights endfield", "endfield", "arknightsendfield", "ak endfield"],

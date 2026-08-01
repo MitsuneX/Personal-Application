@@ -1,4 +1,4 @@
-﻿import prisma from "../lib/prisma";
+import prisma from "../lib/prisma";
 import { createClient } from "@supabase/supabase-js";
 import { normalizeGameTitle } from "../lib/data/gameIcons";
 import { DEFAULT_GAMES } from "../lib/data/initialGames";
@@ -72,6 +72,17 @@ async function restoreAndSeedGames() {
       accentColor: "#FF7675",
       profileLink: "https://umamusume.jp",
       icon: "/game-icons/umamusume.svg",
+    },
+    {
+      game: "Punishing: Gray Raven",
+      platform: "Multi",
+      rank: "Commandant",
+      mainCharacter: "Lucia: Crimson Weave",
+      mainRole: "Attacker / Lightning",
+      category: "Gacha Action",
+      accentColor: "#00F5FF",
+      profileLink: "https://pgr.kurogame.net",
+      icon: "/game-icons/pgr.svg",
     },
   ];
 

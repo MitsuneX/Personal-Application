@@ -266,6 +266,7 @@ export function CommandPalette() {
                     {[
                       { title: "🌐 Visit Project Hub", subtitle: "Personal project portfolio & showcase hub", url: "/visit" },
                       { title: "📊 Game Database & Dossiers", subtitle: "Game Roster, Statistics Scanner & Showcase Gallery", url: "/heroes" },
+                      { title: "⚙️ Punishing: Gray Raven (PGR)", subtitle: "Omniframe, Uniframe & Element Combat Dossier", url: "/games/game-pgr" },
                       { title: "🔗 Bookmarks Directory & Links", subtitle: "Browse saved websites, tools & external resources", url: "/links" },
                       { title: "📜 Log Updates (Changelog)", subtitle: "View system release notes, v3.1.0 features & fixes", url: "/changelog" },
                       { title: "🎵 Music Vault & Synced Lyrics", subtitle: "Open music workspace & audio playback", url: "/music" },

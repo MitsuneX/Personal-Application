@@ -13,6 +13,105 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v4.1.0",
+    date: "2026-08-01",
+    title: "Punishing: Gray Raven (PGR) Full Game & Database Addition",
+    badge: "PGR GAME DOSSIER 4.1",
+    type: "minor",
+    summary: "Added full support for Punishing: Gray Raven (PGR) to the Games page, Game Database (/heroes & /games/pgr), character classifications (Omniframe, Uniframe, Transcendant, Attacker, Tank, Support, Amplifier), element system (Physical, Fire, Ice, Lightning, Dark), statistics scanner, collection vault, editable resources, and global search indexing.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "⚙️ Punishing: Gray Raven (PGR) Integration: Added PGR game card, official logo (pgr.svg), artwork banner, status, personal progress, and quick actions to Games HUD and Game Database.",
+          "🛡️ Character Classifications & Roles: Configured support for Omniframe, Uniframe, Transcendant, Attacker, Tank, Support, and Amplifier frame categories in gameDossierConfig.ts.",
+          "⚡ Element Attribute System: Configured Physical (Silver #E2E8F0), Fire (Red #EF4444), Ice (Cyan #06B6D4), Lightning (Yellow #FACC15), and Dark (Purple #A855F7) element attributes with dynamic visual tokens.",
+          "🤖 Character Rosters & Data Persistence: Added initial PGR roster (Lucia: Crimson Weave, Selena: Capriccio, Bianca: Stigmata, Alpha: Crimson Abyss, Vera: Garnet, Liv: Empyrea) to owner account nelvin.claudius06@gmail.com and DB seed script.",
+          "🔍 Global Search Indexing: Updated Header.tsx and CommandPalette.tsx to index PGR, elements, roles, and frame classifications.",
+          "📖 Editable Resources: Configured PGR Wiki, Prydwen Tier List, and Official site resource links.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "✨ Sci-Fi Cyber Aesthetics: Added futuristic neon lines, scan-line effects, and metallic element accents for PGR pages.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v4.0.0",
+    date: "2026-08-01",
+    title: "Flagship Upgrade — Premium Personal Cinematic Dossier (/drama/[id])",
+    badge: "CINEMATIC DOSSIER 4.0",
+    type: "major",
+    summary: "Redesigned the View Details experience for every Drama, Anime, Movie, and TV Series into a flagship full-page Cinematic Dossier (/drama/[id]) combining official metadata, dynamic cultural/genre theme accents, animated stats, character spotlight, episode navigator with watching analytics, category rating radar, memory screenshot gallery, emotional reaction timeline, markdown review editor, OST tracks, awards, and external links.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🎬 Dedicated Full-Page Route (/drama/[id]): Replaced popups with a dedicated route featuring breadcrumbs (Dashboard > Drama > Title), browser history support, and shared poster transitions.",
+          "🖼️ Parallax Hero Banner (DossierHero.tsx): Large backdrop image with progressive blur gradient fade, poster, title, original title, release year, country flag, studio, runtime, status badges, rating, and favorite toggle.",
+          "🎨 Dynamic Cultural & Genre Accents (DossierThemeAccent.tsx): Contextual color schemes & ambient particles for Korean Romance, Korean Thriller, Korean Historical, Chinese Xianxia, Chinese Wuxia, Japanese Anime, Hollywood, Fantasy, and Horror while strictly preserving Neo-Brutalism and Cyberpunk global themes.",
+          "📊 Animated Quick Stats (DossierStatsBar.tsx): Animated count-up stat cards for Episodes Watched, Total, Completion %, Days Taken, Personal Score, and Rewatch Count.",
+          "📝 Official Synopsis & Plot (DossierSynopsis.tsx): Expandable synopsis drawer with smooth height transition.",
+          "🧭 My Personal Watch Journey (DossierMyJourney.tsx): Owner tracking hub for watch dates, favorite episode/character, emotional episode, mood, personal score, would-rewatch flag, and inline journey editor modal.",
+          "👥 Character Spotlight & Cast (DossierCharacterSpotlight.tsx): Character cards with portraits, roles, favorite badges, and character drawer popover modal.",
+          "📺 Episode Navigator & Analytics (DossierEpisodeNavigator.tsx): Interactive episode grid (✓ Completed, ▶ Current) and Recharts watching analytics (episodes/day, longest session, completion %, time remaining).",
+          "🎯 Multi-Category Rating Breakdown (DossierRatingRadar.tsx): 9-category rating breakdown (Story, Characters, Ending, OST, Romance, Comedy, Action, Visuals, Rewatch Value) with Recharts Radar Chart and star bars.",
+          "📸 Memory Gallery (DossierMemoryGallery.tsx): Screenshot attachments with captions, episode tags, character tags, and Lightbox previewer.",
+          "❤️ Emotional Journey Timeline (DossierEmotionalTimeline.tsx): Milestone timeline with emoji reactions (😊 Ep 1, 😲 Ep 5, 😭 Ep 10, 🔥 Ep 16, ❤️ Finale), notes, and date tags.",
+          "✍️ Markdown Review Editor (DossierReviewEditor.tsx): Markdown personal review editor with spoiler toggle support.",
+          "🎵 External Resources & Soundtracks (DossierExternalLinks.tsx): OST tracks list, awards honors, and external links buttons (IMDb, MyDramaList, Wikipedia, Netflix, Disney+, YouTube Trailer).",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "✨ Cinematic Parallax & Ambient Particles: Floating particles and backdrop blur effects customized for each drama genre.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v3.9.0",
+    date: "2026-07-31",
+    title: "Application-Wide Floating UI Overlay System & Viewport Collision Engine",
+    badge: "GLOBAL OVERLAY ENGINE 3.9",
+    type: "major",
+    summary: "Built a shared mathematical positioning solver for trigger-attached popovers, dropdowns, tooltips, and context menus with real-time edge collision detection and automatic direction flipping, rendering into React Portal root document.body to eliminate container clipping.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🌐 React Portal Root (OverlayPortal.tsx): All floating UI elements, modals, dropdowns, and overlays now render directly into document.body / #overlay-root, completely eliminating clipping caused by parent overflow: hidden, overflow: auto, or transform stacking contexts.",
+          "📐 Viewport Collision Engine (CollisionDetector.ts): Math engine computing raw coords, checking edge collision, flipping placements (bottom <-> top, right <-> left), and clamping bounds.",
+          "🛡️ Centralized Z-Index Hierarchy (ViewportBoundary.ts): Standardized arbitrary z-index values into centralized constants (BASE, SIDEBAR, HEADER, DROPDOWN, POPOVER, DRAWER, MODAL, TOAST, TOOLTIP).",
+          "📱 Mobile Adaptive Sheets (FloatingLayer.tsx): Modals, dropdowns, and context menus automatically adapt into touch-friendly bottom sheets on mobile viewports (<640px).",
+          "🔄 Component Refactor: Migrated Modal.tsx, FilterDropdown.tsx, CustomSelect.tsx, ContextMenu.tsx, SettingsDropdown.tsx, CommandPalette.tsx, ProfileHoverPopover.tsx, HobbyHoverPopup.tsx, BulkActionBar.tsx, TopbarMiniPlayer.tsx, and GlobalConfirmModal.tsx to the global positioning engine.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v3.8.0",
+    date: "2026-07-31",
+    title: "Gallery Masonry/Grid/Timeline Views & Links Favicon Bookmark Cards",
+    badge: "GALLERY & LINKS 3.8",
+    type: "minor",
+    summary: "Added 3 view modes (Masonry, Grid, Timeline) to Media Gallery with right-click ContextMenu support, and redesigned Links bookmark cards with automatic Google Favicon integration, category badges, and hover lift effects.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🖼️ Gallery 3 View Modes: Added toggle between Masonry (Pinterest-style variable height), Grid (fixed video aspect), and Timeline (chronological date sections).",
+          "🔗 Favicon Bookmark Cards: Links bookmark cards auto-fetch site favicons via Google favicon service displayed in styled avatar pills.",
+          "ContextMenu Integration: Right-clicking gallery cards opens full preview and delete actions with theme-adaptive styling.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v3.7.0",
     date: "2026-07-31",
     title: "Game Database Expansion, Dual-Themed FilterDropdown & Global Card Delete Engine",

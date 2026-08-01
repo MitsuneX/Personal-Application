@@ -64,8 +64,31 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
 
     // Search Games
     games.forEach((g) => {
-      if (g.game.toLowerCase().includes(query) || g.mainCharacter.toLowerCase().includes(query) || g.category.toLowerCase().includes(query)) {
+      if (
+        g.game.toLowerCase().includes(query) ||
+        (query === "pgr" && g.game.toLowerCase().includes("punishing")) ||
+        g.mainCharacter.toLowerCase().includes(query) ||
+        g.category.toLowerCase().includes(query)
+      ) {
         searchResults.push({ id: g.id, name: g.game, type: "Game", url: "/games", detail: `${g.rank || ""} · ${g.mainCharacter}` });
+      }
+    });
+
+    // Search Game Dossier Characters
+    useDashboardStore.getState().dossierCharacters.forEach((c) => {
+      if (
+        c.name.toLowerCase().includes(query) ||
+        c.category.toLowerCase().includes(query) ||
+        (c.role && c.role.toLowerCase().includes(query)) ||
+        (c.notes && c.notes.toLowerCase().includes(query))
+      ) {
+        searchResults.push({
+          id: c.id,
+          name: c.name,
+          type: "Game Hero",
+          url: `/games/${c.gameId}`,
+          detail: `${c.category} · ${c.role || c.levelRank || ""}`,
+        });
       }
     });
 
