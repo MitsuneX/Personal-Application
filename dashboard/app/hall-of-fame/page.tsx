@@ -1,42 +1,68 @@
 "use client";
-import React, { useState, useCallback, useEffect, useRef } from "react";
+
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
-import { useDashboardStore } from "@/lib/store/dashboardStore";
+import { useDashboardStore, HallOfFameEntry } from "@/lib/store/dashboardStore";
 import { HofEditorModal } from "@/components/ui/HofEditorModal";
-import { HofEntryCard, getGroupForEntry, getGroupDetails, getTrend } from "@/components/cards/HofEntryCard";
-import type { HallOfFameEntry } from "@/lib/store/dashboardStore";
+import { HofProfileModal } from "@/components/ui/HofProfileModal";
+import { HofCompareModal } from "@/components/ui/HofCompareModal";
+import {
+  HofEntryCard,
+  getGroupForEntry,
+  getGroupDetails,
+  getTrend,
+} from "@/components/cards/HofEntryCard";
 import { useRouter } from "next/navigation";
 import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
 import { useConfirm } from "@/lib/context/ConfirmContext";
+import { useContextMenu } from "@/hooks/useContextMenu";
+import {
+  getBadgesForEntry,
+  computeHallRecords,
+  computeHallAnalytics,
+  generateActivityFeed,
+} from "@/lib/utils/hofEngine";
 
-type RankingTab = 
-  | "overall" | "korean" | "japanese" | "chinese" | "indonesia" | "hollywood" // Group 1: Dramas
-  | "singer" | "actor_only" | "actress_only" | "anime_ranked" // Group 2: Singers, Actors, Actresses & Anime
-  | "toku_overall" | "ultraman" | "kamen_rider" | "power_rangers"; // Group 3: Tokusatsu
+type RankingTab =
+  | "overall"
+  | "korean"
+  | "japanese"
+  | "chinese"
+  | "indonesia"
+  | "hollywood"
+  | "singer"
+  | "actor_only"
+  | "actress_only"
+  | "anime_ranked"
+  | "toku_overall"
+  | "ultraman"
+  | "kamen_rider"
+  | "power_rangers";
+
+type SeasonTab = "overall" | "s2026" | "s2025" | "monthly" | "weekly" | "community";
 
 export default function HallOfFamePage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { hallOfFame, deleteHof, likeHof } = useDashboardStore();
+  const { hallOfFame = [], deleteHof, likeHof } = useDashboardStore();
   const router = useRouter();
   const { confirm } = useConfirm();
-  
+  const { openContextMenu } = useContextMenu();
+
   const [subTab, setSubTab] = useState<RankingTab>("overall");
+  const [seasonTab, setSeasonTab] = useState<SeasonTab>("overall");
   const [editorOpen, setEditorOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<HallOfFameEntry | null>(null);
 
-  // Listen for Page Context Menu Actions
-  useEffect(() => {
-    const handleRecalc = () => {
-      // Trigger ranking animation
-      setSubTab("overall");
-    };
-    window.addEventListener("recalculate-goat-rankings", handleRecalc);
-    return () => window.removeEventListener("recalculate-goat-rankings", handleRecalc);
-  }, []);
-  
+  // Modals & Comparison State
+  const [profileModalEntry, setProfileModalEntry] = useState<HallOfFameEntry | null>(null);
+  const [isCompareOpen, setIsCompareOpen] = useState(false);
+  const [comparedEntries, setComparedEntries] = useState<HallOfFameEntry[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeViewSection, setActiveViewSection] = useState<"podium" | "analytics" | "records" | "feed">("podium");
+
   // Ref tracking system for precise double tap detection on mobile
   const lastTapRef = useRef<{ [key: string]: number }>({});
 
@@ -46,84 +72,87 @@ export default function HallOfFamePage() {
     setEditorOpen(true);
   }, []);
 
-  const handleDelete = useCallback((id: string, name: string) => {
-    const entry = hallOfFame.find((h) => h.id === id);
-    confirm({
-      title: "Remove Hall of Fame Entry",
-      message: `Are you sure you want to remove "${name}" from Hall of Fame?`,
-      confirmText: "Remove Entry",
-      variant: "danger",
-      itemPreview: {
-        title: name,
-        subtitle: `${entry?.type || "Media"} · ${entry?.nationality || "Global"}`,
-        description: Array.isArray(entry?.knownFor) ? entry.knownFor.join(", ") : entry?.knownFor,
-        imageUrl: entry?.imageUrl,
-        icon: "👑",
-        category: entry?.type,
-      },
-      successToast: `✓ "${name}" removed from Hall of Fame.`,
-      onConfirm: async () => {
-        await deleteHof(id);
-      },
-    });
-  }, [confirm, deleteHof, hallOfFame]);
+  const handleDelete = useCallback(
+    (id: string, name: string) => {
+      const entry = hallOfFame.find((h) => h.id === id);
+      confirm({
+        title: "Remove Hall of Fame Entry",
+        message: `Are you sure you want to remove "${name}" from Hall of Fame?`,
+        confirmText: "Remove Entry",
+        variant: "danger",
+        itemPreview: {
+          title: name,
+          subtitle: `${entry?.type || "Media"} · ${entry?.nationality || "Global"}`,
+          description: Array.isArray(entry?.knownFor) ? entry.knownFor.join(", ") : entry?.knownFor,
+          imageUrl: entry?.imageUrl,
+          icon: "👑",
+          category: entry?.type,
+        },
+        successToast: `✓ "${name}" removed from Hall of Fame.`,
+        onConfirm: async () => {
+          await deleteHof(id);
+        },
+      });
+    },
+    [confirm, deleteHof, hallOfFame]
+  );
 
-  const handleInteractionTap = useCallback((e: React.MouseEvent | React.TouchEvent, id: string) => {
-    const now = Date.now();
-    const DOUBLE_TAP_DELAY = 300;
-    const lastTap = lastTapRef.current[id] || 0;
+  const handleInteractionTap = useCallback(
+    (e: React.MouseEvent | React.TouchEvent, id: string) => {
+      const now = Date.now();
+      const DOUBLE_TAP_DELAY = 300;
+      const lastTap = lastTapRef.current[id] || 0;
 
-    // Detect double tap
-    if (now - lastTap < DOUBLE_TAP_DELAY) {
-      let clientX = 0, clientY = 0;
-      if ('touches' in e && e.touches.length > 0) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-      } else if ('clientX' in e) {
-        clientX = (e as React.MouseEvent).clientX;
-        clientY = (e as React.MouseEvent).clientY;
+      if (now - lastTap < DOUBLE_TAP_DELAY) {
+        let clientX = 0,
+          clientY = 0;
+        if ("touches" in e && e.touches.length > 0) {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+        } else if ("clientX" in e) {
+          clientX = (e as React.MouseEvent).clientX;
+          clientY = (e as React.MouseEvent).clientY;
+        }
+
+        triggerHeartEffect(clientX, clientY);
+        likeHof(id);
+        delete lastTapRef.current[id];
+      } else {
+        lastTapRef.current[id] = now;
       }
-      
-      triggerHeartEffect(clientX, clientY);
-      likeHof(id); // Directly triggers mutation inside the global dashboard state
-      delete lastTapRef.current[id];
-    } else {
-      lastTapRef.current[id] = now;
-    }
-  }, [likeHof]);
+    },
+    [likeHof]
+  );
 
   const handleLeaderboardClick = (id: string) => {
     router.push(`/characters?id=${id}`);
   };
 
-  // ── Helper functions to identify and isolate HOF entries ──
+  const handleAddToCompare = (entry: HallOfFameEntry) => {
+    if (!comparedEntries.some((c) => c.id === entry.id)) {
+      if (comparedEntries.length >= 4) {
+        setComparedEntries([...comparedEntries.slice(1), entry]);
+      } else {
+        setComparedEntries([...comparedEntries, entry]);
+      }
+    }
+    setIsCompareOpen(true);
+  };
+
+  // Helper functions to identify HOF entries
   const isSingerEntry = (entry: HallOfFameEntry) => {
     const group = getGroupForEntry(entry);
     return group === "__other__" || entry.nationality?.toLowerCase() === "singer";
   };
 
-  const isAnimeEntry = (entry: HallOfFameEntry) => {
-    return entry.type === "anime";
-  };
+  const isAnimeEntry = (entry: HallOfFameEntry) => entry.type === "anime";
+  const isTokusatsuEntry = (entry: HallOfFameEntry) => !!entry.tokusatsuFranchise;
 
-  const isTokusatsuEntry = (entry: HallOfFameEntry) => {
-    return !!entry.tokusatsuFranchise;
-  };
-
-  // Sorting helper
-  const sortHofEntries = (entriesList: HallOfFameEntry[]) => {
-    return [...entriesList].sort((a, b) => {
-      const aLikes = a.likes || 0;
-      const bLikes = b.likes || 0;
-      if (aLikes !== bLikes) return bLikes - aLikes;
-      return a.name.localeCompare(b.name);
-    });
-  };
-
-  // Filter based on selected subTab (purely isolated)
   const filterBySubTab = (itemsList: HallOfFameEntry[]) => {
     if (["overall", "korean", "japanese", "chinese", "indonesia", "hollywood"].includes(subTab)) {
-      const dramaBase = itemsList.filter((e) => !isSingerEntry(e) && !isTokusatsuEntry(e) && !isAnimeEntry(e));
+      const dramaBase = itemsList.filter(
+        (e) => !isSingerEntry(e) && !isTokusatsuEntry(e) && !isAnimeEntry(e)
+      );
       if (subTab === "overall") return dramaBase;
       if (subTab === "korean") return dramaBase.filter((e) => getGroupForEntry(e) === "Korea");
       if (subTab === "japanese") return dramaBase.filter((e) => getGroupForEntry(e) === "Japan");
@@ -131,555 +160,595 @@ export default function HallOfFamePage() {
       if (subTab === "indonesia") return dramaBase.filter((e) => getGroupForEntry(e) === "Indonesia");
       if (subTab === "hollywood") return dramaBase.filter((e) => getGroupForEntry(e) === "Hollywood");
     }
-    if (subTab === "singer") {
-      return itemsList.filter((e) => isSingerEntry(e) && !isAnimeEntry(e));
+
+    if (subTab === "singer") return itemsList.filter((e) => isSingerEntry(e));
+    if (subTab === "actor_only") return itemsList.filter((e) => e.type === "actor");
+    if (subTab === "actress_only") return itemsList.filter((e) => e.type === "actress");
+    if (subTab === "anime_ranked") return itemsList.filter((e) => isAnimeEntry(e));
+
+    if (["toku_overall", "ultraman", "kamen_rider", "power_rangers"].includes(subTab)) {
+      const tokuBase = itemsList.filter((e) => isTokusatsuEntry(e));
+      if (subTab === "toku_overall") return tokuBase;
+      if (subTab === "ultraman") return tokuBase.filter((e) => e.tokusatsuFranchise === "Ultraman");
+      if (subTab === "kamen_rider") return tokuBase.filter((e) => e.tokusatsuFranchise === "Kamen Rider");
+      if (subTab === "power_rangers") return tokuBase.filter((e) => e.tokusatsuFranchise === "Power Rangers");
     }
-    if (subTab === "actor_only") {
-      return itemsList.filter((e) => e.type === "actor");
-    }
-    if (subTab === "actress_only") {
-      return itemsList.filter((e) => e.type === "actress");
-    }
-    if (subTab === "anime_ranked") {
-      return itemsList.filter((e) => isAnimeEntry(e) && !isTokusatsuEntry(e));
-    }
-    if (subTab === "toku_overall") {
-      return itemsList.filter((e) => isTokusatsuEntry(e));
-    }
-    if (subTab === "ultraman") {
-      return itemsList.filter((e) => e.tokusatsuFranchise?.toLowerCase() === "ultraman");
-    }
-    if (subTab === "kamen_rider") {
-      return itemsList.filter((e) => e.tokusatsuFranchise?.toLowerCase() === "kamen rider");
-    }
-    if (subTab === "power_rangers") {
-      return itemsList.filter((e) => e.tokusatsuFranchise?.toLowerCase() === "power rangers");
-    }
+
     return itemsList;
   };
 
-  // Derived Sorted lists
-  const currentFilteredList = sortHofEntries(filterBySubTab(hallOfFame));
-  const [rank1, rank2, rank3] = currentFilteredList;
-  const restOfList = currentFilteredList.slice(3);
+  const sortedList = useMemo(() => {
+    let list = filterBySubTab(hallOfFame);
 
-  const getTabTheme = (tabId: RankingTab) => {
-    if (["overall", "korean", "japanese", "chinese", "indonesia", "hollywood"].includes(tabId)) {
-      return {
-        activeBgCyber: "rgba(255, 105, 180, 0.15)",
-        activeTextCyber: "#FF69B4",
-        activeBgBrutal: "#FFB7C5",
-        labelColorCyber: "rgba(255, 209, 232, 0.6)"
-      };
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter((item) => {
+        const matchName = item.name.toLowerCase().includes(q);
+        const matchKnown = (Array.isArray(item.knownFor) ? item.knownFor.join(" ") : item.knownFor || "")
+          .toLowerCase()
+          .includes(q);
+        return matchName || matchKnown;
+      });
     }
-    if (tabId === "singer") {
-      return {
-        activeBgCyber: "rgba(0, 245, 255, 0.15)",
-        activeTextCyber: "#00F5FF",
-        activeBgBrutal: "#A5F3FC",
-        labelColorCyber: "rgba(224, 232, 255, 0.6)"
-      };
-    }
-    if (subTab === "actor_only" || subTab === "actress_only") {
-      return {
-        activeBgCyber: "rgba(255, 20, 147, 0.15)",
-        activeTextCyber: "#FF1493",
-        activeBgBrutal: "#FFB7C5",
-        labelColorCyber: "rgba(255, 192, 203, 0.6)"
-      };
-    }
-    if (tabId === "anime_ranked") {
-      return {
-        activeBgCyber: "rgba(191, 95, 255, 0.15)",
-        activeTextCyber: "#BF5FFF",
-        activeBgBrutal: "#E9D5FF",
-        labelColorCyber: "rgba(233, 213, 255, 0.6)"
-      };
-    }
-    return {
-      activeBgCyber: "rgba(250, 204, 21, 0.15)",
-      activeTextCyber: "#FEF08A",
-      activeBgBrutal: "#FEF08A",
-      labelColorCyber: "rgba(254, 240, 138, 0.6)"
-    };
+
+    return list.sort((a, b) => {
+      const aLikes = a.likes || 0;
+      const bLikes = b.likes || 0;
+      if (aLikes !== bLikes) return bLikes - aLikes;
+      return a.name.localeCompare(b.name);
+    });
+  }, [hallOfFame, subTab, searchQuery]);
+
+  // Derived Statistics
+  const statsOverview = useMemo(() => {
+    const total = hallOfFame.length;
+    const goat = hallOfFame.filter((h) => h.status === "GOAT Status").length;
+    const champions = hallOfFame.filter((h) => h.isChampion || h.rank === 1).length || 1;
+    const nations = new Set(hallOfFame.map((h) => h.nationality || "Global")).size;
+    const categories = new Set(hallOfFame.map((h) => h.type)).size;
+    const totalVotes = hallOfFame.reduce((acc, h) => acc + (h.likes || 0), 0);
+
+    return { total, goat, champions, nations, categories, totalVotes };
+  }, [hallOfFame]);
+
+  const hallRecords = useMemo(() => computeHallRecords(hallOfFame), [hallOfFame]);
+  const hallAnalytics = useMemo(() => computeHallAnalytics(hallOfFame), [hallOfFame]);
+  const activityFeed = useMemo(() => generateActivityFeed(hallOfFame), [hallOfFame]);
+
+  // Top 3 Podium
+  const top1 = sortedList[0];
+  const top2 = sortedList[1];
+  const top3 = sortedList[2];
+  const restOfList = sortedList.slice(3);
+
+  // Context Menu Handlers for Sections
+  const handlePodiumContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    openContextMenu(
+      e,
+      [
+        {
+          id: "podium-top1",
+          label: `Inspect Champion: ${top1 ? top1.name : "Champion"}`,
+          icon: "👑",
+          onClick: () => top1 && setProfileModalEntry(top1),
+        },
+        {
+          id: "podium-compare",
+          label: "Compare Top 3 Legends",
+          icon: "⚔️",
+          onClick: () => {
+            setComparedEntries(sortedList.slice(0, 3));
+            setIsCompareOpen(true);
+          },
+        },
+        {
+          id: "podium-recalc",
+          label: "Recalculate Leaderboard",
+          icon: "⚡",
+          onClick: () => setSubTab("overall"),
+        },
+      ],
+      "Championship Podium"
+    );
+  };
+
+  const handleAnalyticsContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    openContextMenu(
+      e,
+      [
+        {
+          id: "an-recalc",
+          label: "Refresh Analytics Summary",
+          icon: "📊",
+          onClick: () => {},
+        },
+        {
+          id: "an-chars",
+          label: "Open Master Character Directory",
+          icon: "📚",
+          onClick: () => router.push("/characters"),
+        },
+      ],
+      "Hall Analytics"
+    );
   };
 
   return (
     <AppShell>
-      {/* ── Banner ── */}
-      <motion.div
-        className="relative rounded-2xl overflow-hidden mb-8 p-6 md:p-8"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 260, damping: 24 }}
-        style={{
-          background: isCyber
-            ? "linear-gradient(135deg, #050816, rgba(255,215,0,0.08), rgba(0,245,255,0.05))"
-            : "linear-gradient(135deg, #FFF9C4, #FFF5E4, #FFE4B5)",
-          border: isCyber ? "1px solid rgba(255,215,0,0.3)" : "3px solid #000",
-          boxShadow: isCyber ? "0 0 60px rgba(255,215,0,0.15)" : "5px 5px 0 rgba(0,0,0,1)",
-        }}
-      >
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 relative z-10">
-          <div>
-            <div className="flex gap-2 mb-2 items-center">
-              {["🏆", "👑", "⭐"].map((e, i) => (
-                <motion.span
-                  key={i}
-                  className="text-xl"
-                  animate={{ y: [0, -4, 0] }}
-                  transition={{ duration: 1.5 + i * 0.2, repeat: Infinity }}
-                >
-                  {e}
-                </motion.span>
-              ))}
-            </div>
-            <h1
-              className="font-black text-3xl md:text-5xl mb-1"
-              style={{
-                color: isCyber ? "#FFD700" : "#1A1A1A",
-                fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
-                textShadow: isCyber ? "0 0 20px rgba(255,215,0,0.5)" : "none",
-              }}
-            >
-              {isCyber ? "THE_APEX_CHARTS" : "The Apex Charts"}
-            </h1>
-            <p className="theme-text-secondary text-xs font-semibold">
-              The ultimate gamified podium ranking for the elite Hall of Fame characters.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => router.push("/characters")}
-              className="px-4 py-2 text-xs font-black rounded-lg transition-transform active:scale-95 border border-adaptive-unique shrink-0 hover:bg-black/5 dark:hover:bg-white/5"
-            >
-              📖 View Directory
-            </button>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* ── VISUALLY-DIVIDED CATEGORY FILTER TOOLBAR ── */}
-      <div 
-        className="mb-8 p-4 rounded-2xl flex flex-col md:flex-row gap-6 border border-adaptive-unique select-none relative z-20"
-        style={{
-          backgroundColor: isCyber ? "rgba(0,0,0,0.3)" : "#FFFFFF",
-          borderColor: isCyber ? "rgba(0,245,255,0.15)" : "#000000",
-          borderWidth: isCyber ? "1px" : "3px",
-          boxShadow: isCyber ? "none" : "6px 6px 0 #000"
-        }}
-      >
-        {/* dramas section */}
-        <div className="flex-1 space-y-2">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-[#FFB7C5] dark:text-[#FF69B4] flex items-center gap-1.5">
-            <span>🎭</span> Drama Rankings (Group 1)
-          </h3>
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              { id: "overall", label: "Overall", flag: "🌐" },
-              { id: "korean", label: "Korean", flag: "🇰🇷" },
-              { id: "japanese", label: "Japanese", flag: "🇯🇵" },
-              { id: "chinese", label: "Chinese", flag: "🇨🇳" },
-              { id: "indonesia", label: "Indonesia", flag: "🇮🇩" },
-              { id: "hollywood", label: "Hollywood", flag: "🎬" },
-            ].map((tab) => {
-              const isActive = subTab === tab.id;
-              const t = getTabTheme(tab.id as RankingTab);
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setSubTab(tab.id as RankingTab)}
-                  className="relative py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all text-[10px] font-black uppercase tracking-wider border border-transparent"
-                  style={{
-                    color: isActive 
-                      ? isCyber ? t.activeTextCyber : "#000"
-                      : isCyber ? t.labelColorCyber : "#444",
-                    border: isActive && !isCyber ? "2px solid #000" : "2px solid transparent",
-                    transform: isActive && !isCyber ? "translate(-1px, -1px)" : "none",
-                    boxShadow: isActive && !isCyber ? "2px 2px 0 #000" : "none",
-                  }}
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId={`activeRankingGlow-${subTab}`}
-                      className="absolute inset-0 rounded-lg -z-10"
-                      style={{ 
-                        backgroundColor: isCyber ? t.activeBgCyber : t.activeBgBrutal,
-                        border: isCyber ? "1px solid rgba(255, 105, 180, 0.3)" : "none"
-                      }}
-                      transition={{ type: "spring", stiffness: 350, damping: 25 }}
-                    />
-                  )}
-                  <span>{tab.flag}</span>
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="hidden md:block w-px bg-adaptive-unique self-stretch opacity-30" />
-
-        {/* Group 2: Singer + Anime Rankings */}
-        <div className="space-y-2">
-          <h3 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5" style={{ color: isCyber ? "#00F5FF" : "#0284C7" }}>
-            <span>🎤</span> Singer & Anime Rankings (Group 2)
-          </h3>
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              { id: "singer", label: "Singers Only", flag: "🎵" },
-              { id: "actor_only", label: "Actor Only", flag: "🎭" },
-              { id: "actress_only", label: "Actress Only", flag: "💫" },
-              { id: "anime_ranked", label: "Anime Ranked", flag: "⛩️" },
-            ].map((tab) => {
-              const isActive = subTab === tab.id;
-              const t = getTabTheme(tab.id as RankingTab);
-              const borderGlowColor = tab.id === "anime_ranked" ? "#BF5FFF" : "#00F5FF";
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setSubTab(tab.id as RankingTab)}
-                  className="relative py-1.5 px-4 rounded-lg flex items-center justify-center gap-1.5 transition-all text-[10px] font-black uppercase tracking-wider border border-transparent"
-                  style={{
-                    color: isActive 
-                      ? isCyber ? t.activeTextCyber : "#000"
-                      : isCyber ? t.labelColorCyber : "#444",
-                    border: isActive && !isCyber ? "2px solid #000" : "2px solid transparent",
-                    transform: isActive && !isCyber ? "translate(-1px, -1px)" : "none",
-                    boxShadow: isActive && !isCyber ? "2px 2px 0 #000" : "none",
-                  }}
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId={`activeRankingGlow-${subTab}`}
-                      className="absolute inset-0 rounded-lg -z-10"
-                      style={{ 
-                        backgroundColor: isCyber ? t.activeBgCyber : t.activeBgBrutal, 
-                        border: isCyber ? `1px solid ${borderGlowColor}30` : "none" 
-                      }}
-                      transition={{ type: "spring", stiffness: 350, damping: 25 }}
-                    />
-                  )}
-                  <span>{tab.flag}</span>
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="hidden md:block w-px bg-adaptive-unique self-stretch opacity-30" />
-
-        {/* tokusatsu section */}
-        <div className="flex-1 space-y-2">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-[#FEF08A] dark:text-[#FBBF24] flex items-center gap-1.5">
-            <span>🦸</span> Tokusatsu Rankings (Group 3)
-          </h3>
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              { id: "toku_overall", label: "Toku Overall", flag: "💥" },
-              { id: "ultraman", label: "Ultraman", flag: "🔴" },
-              { id: "kamen_rider", label: "Kamen Rider", flag: "🟢" },
-              { id: "power_rangers", label: "Power Rangers", flag: "⚡" },
-            ].map((tab) => {
-              const isActive = subTab === tab.id;
-              const t = getTabTheme(tab.id as RankingTab);
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setSubTab(tab.id as RankingTab)}
-                  className="relative py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all text-[10px] font-black uppercase tracking-wider border border-transparent"
-                  style={{
-                    color: isActive 
-                      ? isCyber ? t.activeTextCyber : "#000"
-                      : isCyber ? t.labelColorCyber : "#444",
-                    border: isActive && !isCyber ? "2px solid #000" : "2px solid transparent",
-                    transform: isActive && !isCyber ? "translate(-1px, -1px)" : "none",
-                    boxShadow: isActive && !isCyber ? "2px 2px 0 #000" : "none",
-                  }}
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId={`activeRankingGlow-${subTab}`}
-                      className="absolute inset-0 rounded-lg -z-10"
-                      style={{ 
-                        backgroundColor: isCyber ? t.activeBgCyber : t.activeBgBrutal,
-                        border: isCyber ? "1px solid rgba(254, 240, 138, 0.3)" : "none"
-                      }}
-                      transition={{ type: "spring", stiffness: 350, damping: 25 }}
-                    />
-                  )}
-                  <span>{tab.flag}</span>
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* ── 3-Position Podium Layout with physical pedestal blocks ── */}
-      {currentFilteredList.length === 0 ? (
-        <div className="py-20 text-center flex flex-col items-center">
-          <div className="text-4xl mb-4 grayscale opacity-50">🏆</div>
-          <h3 className="font-black text-lg theme-text-primary mb-2">No Ranked Legends</h3>
-          <p className="text-sm theme-text-muted">Use the directory page to enshrine your first entry in this category!</p>
-        </div>
-      ) : (
-        <div className="mb-16">
-          <h2 
-            className="text-center font-black text-lg md:text-2xl uppercase tracking-widest mb-10"
-            style={{
-              color: isCyber ? "#00F5FF" : "#000",
-              fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
-            }}
-          >
-            {isCyber ? "👑 APEX_PODIUM_SLOTS" : "👑 The Championship Podium"}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-4 items-end justify-items-center max-w-5xl mx-auto px-4">
-            
-            {/* Rank 2 (Left, Mid height Pedestal) */}
-            <div className="order-2 md:order-1 flex flex-col items-center w-full max-w-[280px]">
-              <div className="mb-2 text-center text-[10px] font-black uppercase tracking-widest text-[#94A3B8] flex items-center gap-1">
-                🥈 2nd Place
-              </div>
-              {rank2 ? (
-                <div className="w-full" onClick={(e) => handleInteractionTap(e, rank2.id)} onTouchEnd={(e) => handleInteractionTap(e, rank2.id)}>
-                  <HofEntryCard
-                    entry={rank2}
-                    idx={1}
-                    isCyber={isCyber}
-                    group={getGroupDetails(getGroupForEntry(rank2))}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    podiumRank={2}
-                    onDoubleTap={handleInteractionTap}
-                  />
-                </div>
-              ) : (
-                <div 
-                  className="h-48 border-2 border-dashed border-adaptive-unique rounded-xl w-full flex flex-col items-center justify-center text-xs opacity-40 font-black tracking-widest uppercase"
-                  style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#FAFAFA" }}
-                >
-                  <span>🚫 Vacant Slot</span>
-                </div>
-              )}
-              <motion.div
-                initial={{ scaleY: 0 }}
-                animate={{ scaleY: 1 }}
-                transition={{ type: "spring", stiffness: 100, delay: 0.1 }}
-                className="w-full h-24 mt-4 rounded-xl flex flex-col items-center justify-center relative overflow-hidden shrink-0 origin-bottom"
-                style={{
-                  backgroundColor: isCyber ? "rgba(148, 163, 184, 0.15)" : "#E2E8F0",
-                  border: isCyber ? "2px solid rgba(148, 163, 184, 0.4)" : "4px solid #000",
-                  boxShadow: isCyber ? "0 0 20px rgba(148, 163, 184, 0.15)" : "6px 6px 0px #000",
-                  backgroundImage: isCyber ? "radial-gradient(rgba(148, 163, 184, 0.25) 1px, transparent 1px)" : "none",
-                  backgroundSize: isCyber ? "10px 10px" : "none",
-                }}
-              >
-                <span className="text-4xl font-black text-[#94A3B8] tracking-tighter">2</span>
-                <span className="text-[9px] uppercase tracking-wider font-bold opacity-60">Contender</span>
-              </motion.div>
-            </div>
-
-            {/* Rank 1 (Center, Elevated/Tallest Pedestal) */}
-            <div className="order-1 md:order-2 flex flex-col items-center w-full max-w-[280px] md:-translate-y-6 relative">
-              <div className="mb-2 text-center text-xs font-black uppercase tracking-widest text-[#EAB308] flex items-center gap-1.5 animate-pulse">
-                🏆 Apex Champion 👑
-              </div>
-              {rank1 ? (
-                <>
-                  <motion.div
-                    animate={{ y: [0, -8, 0], rotate: [0, 3, -3, 0] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                    className="text-4xl absolute -top-10 z-20 pointer-events-none filter drop-shadow-[0_0_8px_rgba(250,204,21,0.9)]"
-                  >
-                    👑
-                  </motion.div>
-                  <div 
-                    className="w-full flex justify-center relative"
-                    style={{ filter: isCyber ? "drop-shadow(0 0 25px rgba(250, 204, 21, 0.35))" : "none" }}
-                    onClick={(e) => handleInteractionTap(e, rank1.id)}
-                    onTouchEnd={(e) => handleInteractionTap(e, rank1.id)}
-                  >
-                    <HofEntryCard
-                      entry={rank1}
-                      idx={0}
-                      isCyber={isCyber}
-                      group={getGroupDetails(getGroupForEntry(rank1))}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      podiumRank={1}
-                      onDoubleTap={handleInteractionTap}
-                    />
-                  </div>
-                </>
-              ) : (
-                <div 
-                  className="h-48 border-2 border-dashed border-adaptive-unique rounded-xl w-full flex flex-col items-center justify-center text-xs opacity-40 font-black tracking-widest uppercase"
-                  style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#FAFAFA" }}
-                >
-                  <span>🚫 Vacant Slot</span>
-                </div>
-              )}
-              <motion.div
-                initial={{ scaleY: 0 }}
-                animate={{ scaleY: 1 }}
-                transition={{ type: "spring", stiffness: 100 }}
-                className="w-full h-36 mt-4 rounded-xl flex flex-col items-center justify-center relative overflow-hidden shrink-0 origin-bottom"
-                style={{
-                  backgroundColor: isCyber ? "rgba(255, 215, 0, 0.15)" : "#FEF08A",
-                  border: isCyber ? "3px solid #EAB308" : "4px solid #000",
-                  boxShadow: isCyber ? "0 0 35px rgba(250, 204, 21, 0.4)" : "8px 8px 0px #000",
-                  backgroundImage: isCyber 
-                    ? "radial-gradient(rgba(250, 204, 21, 0.3) 1px, transparent 1px)"
-                    : "repeating-linear-gradient(45deg, #FEF9C3, #FEF9C3 12px, #FEF08A 12px, #FEF08A 24px)",
-                  backgroundSize: isCyber ? "12px 12px" : "auto",
-                }}
-              >
-                {!isCyber && (
-                  <div className="absolute top-2 left-2 right-2 flex justify-between pointer-events-none opacity-40 font-black text-xs select-none">
-                    <span>★</span>
-                    <span>CHAMPION</span>
-                    <span>★</span>
-                  </div>
-                )}
-                <span className="text-6xl font-black text-[#EAB308] dark:text-[#FBBF24] tracking-tighter">1</span>
-                <span className="text-[9px] uppercase tracking-widest font-black opacity-80 text-amber-700 dark:text-amber-400">THE APEX</span>
-              </motion.div>
-            </div>
-
-            {/* Rank 3 (Right, Shortest Pedestal) */}
-            <div className="order-3 md:order-3 flex flex-col items-center w-full max-w-[280px]">
-              <div className="mb-2 text-center text-[10px] font-black uppercase tracking-widest text-[#B45309] flex items-center gap-1">
-                🥉 3rd Place
-              </div>
-              {rank3 ? (
-                <div className="w-full" onClick={(e) => handleInteractionTap(e, rank3.id)} onTouchEnd={(e) => handleInteractionTap(e, rank3.id)}>
-                  <HofEntryCard
-                    entry={rank3}
-                    idx={2}
-                    isCyber={isCyber}
-                    group={getGroupDetails(getGroupForEntry(rank3))}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    podiumRank={3}
-                    onDoubleTap={handleInteractionTap}
-                  />
-                </div>
-              ) : (
-                <div 
-                  className="h-48 border-2 border-dashed border-adaptive-unique rounded-xl w-full flex flex-col items-center justify-center text-xs opacity-40 font-black tracking-widest uppercase"
-                  style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#FAFAFA" }}
-                >
-                  <span>🚫 Vacant Slot</span>
-                </div>
-              )}
-              <motion.div
-                initial={{ scaleY: 0 }}
-                animate={{ scaleY: 1 }}
-                transition={{ type: "spring", stiffness: 100, delay: 0.2 }}
-                className="w-full h-16 mt-4 rounded-xl flex flex-col items-center justify-center relative overflow-hidden shrink-0 origin-bottom"
-                style={{
-                  backgroundColor: isCyber ? "rgba(180, 83, 9, 0.15)" : "#FFEDD5",
-                  border: isCyber ? "2px solid rgba(180, 83, 9, 0.4)" : "4px solid #000",
-                  boxShadow: isCyber ? "0 0 20px rgba(180, 83, 9, 0.15)" : "6px 6px 0px #000",
-                  backgroundImage: isCyber ? "radial-gradient(rgba(180, 83, 9, 0.25) 1px, transparent 1px)" : "none",
-                  backgroundSize: isCyber ? "10px 10px" : "none",
-                }}
-              >
-                <span className="text-3xl font-black text-[#B45309] tracking-tighter">3</span>
-                <span className="text-[9px] uppercase tracking-wider font-bold opacity-60">Finalist</span>
-              </motion.div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Ranks 4+ Contenders Section ── */}
-      {restOfList.length > 0 && (
+      <div className="space-y-8 max-w-7xl mx-auto pb-16">
+        {/* ── Title & Statistics Overview Dashboard ── */}
         <motion.div
-          className="p-6 rounded-2xl relative overflow-hidden mb-16"
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: -15 }}
           animate={{ opacity: 1, y: 0 }}
+          className="p-6 sm:p-8 rounded-3xl border relative overflow-hidden shadow-2xl"
           style={{
-            background: isCyber
-              ? "linear-gradient(135deg, rgba(10,15,30,0.8), rgba(0,0,0,0.9))"
-              : "#FFF",
-            border: isCyber ? "1px solid rgba(0,245,255,0.25)" : "3px solid #000",
-            boxShadow: isCyber ? "0 0 35px rgba(0,245,255,0.12)" : "6px 6px 0 #000",
+            backgroundColor: isCyber ? "rgba(10,15,30,0.85)" : "#FFFFFF",
+            borderColor: isCyber ? "#FFD70050" : "#000000",
+            borderWidth: isCyber ? "1.5px" : "3px",
+            boxShadow: isCyber ? "0 0 45px rgba(255,215,0,0.15)" : "6px 6px 0 #000000",
           }}
         >
-          <h2 className="text-sm font-black uppercase tracking-widest mb-6 border-b border-dashed border-adaptive-unique pb-2 theme-text-primary">
-            Top Contenders (Ranks 4+)
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {restOfList.map((entry, idx) => {
-              const trend = getTrend(entry.id);
-              const groupDetails = getGroupDetails(getGroupForEntry(entry));
-              return (
-                <div 
-                  key={entry.id} 
-                  onClick={() => handleLeaderboardClick(entry.id)}
-                  onClickCapture={(e) => handleInteractionTap(e, entry.id)}
-                  onTouchEndCapture={(e) => handleInteractionTap(e, entry.id)}
-                  className="flex items-center justify-between p-3 rounded-xl border border-adaptive-unique bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-all cursor-pointer group hover:scale-[1.02] shrink-0"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span 
-                      className="w-7 h-7 rounded-full flex items-center justify-center font-mono font-black text-xs shrink-0"
-                      style={{
-                        backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#F0F0F0",
-                        color: isCyber ? "#94A3B8" : "#555",
-                        border: `1px solid ${isCyber ? "rgba(255,255,255,0.1)" : "#CCC"}`
-                      }}
-                    >
-                      #{idx + 4}
-                    </span>
-                    
-                    <div className="w-10 h-10 rounded-full overflow-hidden border border-adaptive-unique shrink-0 flex items-center justify-center bg-black/10 text-xs font-black relative">
-                      <div className="absolute inset-0 rounded-full border-2" style={{ borderColor: isCyber ? groupDetails.accentBorder : groupDetails.brutalBorder }} />
-                      {entry.imageUrl ? (
-                        <img src={entry.imageUrl} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <span>{entry.name.charAt(0)}</span>
-                      )}
-                    </div>
-                    
-                    <div className="min-w-0">
-                      <h4 className="text-xs font-black theme-text-primary leading-none truncate max-w-[100px]">{entry.name}</h4>
-                      <p className="text-[9px] theme-text-muted mt-1 uppercase font-mono truncate">
-                        {entry.nationality || "Other"} · {entry.type}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 text-right shrink-0">
-                    <div className="flex flex-col items-end">
-                      <span className={`text-[10px] font-black flex items-center gap-0.5 ${trend.text}`}>
-                        {trend.icon} {trend.label}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-end bg-black/5 dark:bg-white/5 border border-adaptive-unique px-2 py-0.5 rounded">
-                      <span className="text-xs font-black theme-text-primary font-mono">{entry.likes || 0} ❤️</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-3 py-1 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/40">
+                  🏆 Flagship Digital Museum v5
+                </span>
+                <span className="px-2.5 py-1 rounded-xl text-xs font-mono font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                  Living Ranking Engine
+                </span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-black theme-text-primary tracking-tight">
+                Hall of Fame & Museum
+              </h1>
+              <p className="text-sm theme-text-muted max-w-2xl font-mono leading-relaxed">
+                Celebrating the greatest icons across drama, music, anime, tokusatsu, and digital media.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => {
+                  setSelectedEntry(null);
+                  setEditorOpen(true);
+                }}
+                className="px-4 py-2.5 rounded-xl font-black text-xs bg-amber-500 text-black border-2 border-black shadow-[3px_3px_0_#000] hover:translate-y-[-2px] transition-all cursor-pointer"
+              >
+                ┼ Add New Legend
+              </button>
+              <button
+                onClick={() => router.push("/characters")}
+                className="px-4 py-2.5 rounded-xl font-black text-xs border"
+                style={{
+                  backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#E0F2FE",
+                  color: isCyber ? "#00F5FF" : "#0369A1",
+                  borderColor: isCyber ? "rgba(0,245,255,0.4)" : "#000000",
+                  borderWidth: isCyber ? "1px" : "2px",
+                }}
+              >
+                📚 Open Directory
+              </button>
+            </div>
+          </div>
+
+          {/* Dynamic Statistics Bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5 mt-6 pt-6 border-t" style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0" }}>
+            <div className="p-3 rounded-2xl border text-center font-mono" style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.03)" : "#F8FAFC", borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#000", borderWidth: isCyber ? "1px" : "2px" }}>
+              <span className="text-[9px] theme-text-muted block">TOTAL LEGENDS</span>
+              <strong className="text-base font-black theme-text-primary">{statsOverview.total}</strong>
+            </div>
+            <div className="p-3 rounded-2xl border text-center font-mono" style={{ backgroundColor: isCyber ? "rgba(255,215,0,0.05)" : "#FEFCE8", borderColor: isCyber ? "rgba(255,215,0,0.2)" : "#000", borderWidth: isCyber ? "1px" : "2px" }}>
+              <span className="text-[9px] text-amber-400 block">GOAT STATUS</span>
+              <strong className="text-base font-black text-amber-500">{statsOverview.goat}</strong>
+            </div>
+            <div className="p-3 rounded-2xl border text-center font-mono" style={{ backgroundColor: isCyber ? "rgba(245,158,11,0.05)" : "#FEF3C7", borderColor: isCyber ? "rgba(245,158,11,0.2)" : "#000", borderWidth: isCyber ? "1px" : "2px" }}>
+              <span className="text-[9px] text-amber-500 block">CHAMPIONS</span>
+              <strong className="text-base font-black text-amber-600">{statsOverview.champions}</strong>
+            </div>
+            <div className="p-3 rounded-2xl border text-center font-mono" style={{ backgroundColor: isCyber ? "rgba(59,130,246,0.05)" : "#EFF6FF", borderColor: isCyber ? "rgba(59,130,246,0.2)" : "#000", borderWidth: isCyber ? "1px" : "2px" }}>
+              <span className="text-[9px] text-blue-400 block">NATIONS</span>
+              <strong className="text-base font-black text-blue-500">{statsOverview.nations}</strong>
+            </div>
+            <div className="p-3 rounded-2xl border text-center font-mono" style={{ backgroundColor: isCyber ? "rgba(168,85,247,0.05)" : "#F3E8FF", borderColor: isCyber ? "rgba(168,85,247,0.2)" : "#000", borderWidth: isCyber ? "1px" : "2px" }}>
+              <span className="text-[9px] text-purple-400 block">CATEGORIES</span>
+              <strong className="text-base font-black text-purple-500">{statsOverview.categories}</strong>
+            </div>
+            <div className="p-3 rounded-2xl border text-center font-mono" style={{ backgroundColor: isCyber ? "rgba(236,72,153,0.05)" : "#FDF2F8", borderColor: isCyber ? "rgba(236,72,153,0.2)" : "#000", borderWidth: isCyber ? "1px" : "2px" }}>
+              <span className="text-[9px] text-pink-400 block">TOTAL VOTES</span>
+              <strong className="text-base font-black text-pink-500">{statsOverview.totalVotes} ❤️</strong>
+            </div>
+            <div className="p-3 rounded-2xl border text-center font-mono" style={{ backgroundColor: isCyber ? "rgba(16,185,129,0.05)" : "#ECFDF5", borderColor: isCyber ? "rgba(16,185,129,0.2)" : "#000", borderWidth: isCyber ? "1px" : "2px" }}>
+              <span className="text-[9px] text-emerald-400 block">LAST UPDATED</span>
+              <strong className="text-base font-black text-emerald-500">2026 Season</strong>
+            </div>
           </div>
         </motion.div>
-      )}
 
-      {/* ── Editor Modal ── */}
-      <AnimatePresence>
-        {editorOpen && (
-          <HofEditorModal
-            isOpen={editorOpen}
-            onClose={() => setEditorOpen(false)}
-            entryToEdit={selectedEntry}
-          />
+        {/* ── Sub-Tab Navigation & Seasonal Engine ── */}
+        <div className="space-y-4">
+          {/* Seasonal Tabs */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {[
+              { id: "overall", label: "Overall Legacy", icon: "🌐" },
+              { id: "s2026", label: "2026 Season", icon: "⚡" },
+              { id: "s2025", label: "2025 Season", icon: "🏛️" },
+              { id: "monthly", label: "Monthly Top", icon: "📅" },
+              { id: "community", label: "Community Choice", icon: "💖" },
+            ].map((st) => (
+              <button
+                key={st.id}
+                onClick={() => setSeasonTab(st.id as SeasonTab)}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold font-mono whitespace-nowrap flex items-center gap-1.5 cursor-pointer transition-all ${
+                  seasonTab === st.id
+                    ? isCyber
+                      ? "bg-amber-500 text-black border border-amber-400"
+                      : "bg-[#FEF08A] text-black border-2 border-black shadow-[2px_2px_0_#000]"
+                    : "theme-text-muted opacity-70 hover:opacity-100"
+                }`}
+              >
+                <span>{st.icon}</span>
+                <span>{st.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Sub-Category Pills */}
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: "overall", label: "Drama All", group: "Dramas" },
+              { id: "korean", label: "🇰🇷 Korean", group: "Dramas" },
+              { id: "japanese", label: "🇯🇵 Japanese", group: "Dramas" },
+              { id: "chinese", label: "🇨🇳 Chinese", group: "Dramas" },
+              { id: "singer", label: "🎤 Singers", group: "Music" },
+              { id: "actor_only", label: "🎭 Actors", group: "Talent" },
+              { id: "actress_only", label: "💫 Actresses", group: "Talent" },
+              { id: "anime_ranked", label: "⛩️ Anime", group: "Anime" },
+              { id: "toku_overall", label: "🦸 Tokusatsu", group: "Tokusatsu" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setSubTab(tab.id as RankingTab)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+                  subTab === tab.id
+                    ? isCyber
+                      ? "bg-[#00F5FF]/20 text-[#00F5FF] border border-[#00F5FF]"
+                      : "bg-black text-white border-2 border-black shadow-[2px_2px_0_#000]"
+                    : "bg-black/5 dark:bg-white/5 theme-text-muted hover:bg-black/10"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Section Selector ── */}
+        <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0" }}>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveViewSection("podium")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold cursor-pointer ${
+                activeViewSection === "podium" ? "bg-amber-500 text-black" : "theme-text-muted"
+              }`}
+            >
+              👑 Champions Podium
+            </button>
+            <button
+              onClick={() => setActiveViewSection("records")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold cursor-pointer ${
+                activeViewSection === "records" ? "bg-amber-500 text-black" : "theme-text-muted"
+              }`}
+            >
+              🏆 Hall Records
+            </button>
+            <button
+              onClick={() => setActiveViewSection("analytics")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold cursor-pointer ${
+                activeViewSection === "analytics" ? "bg-amber-500 text-black" : "theme-text-muted"
+              }`}
+            >
+              📊 Analytics
+            </button>
+            <button
+              onClick={() => setActiveViewSection("feed")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold cursor-pointer ${
+                activeViewSection === "feed" ? "bg-amber-500 text-black" : "theme-text-muted"
+              }`}
+            >
+              ⚡ Activity Feed
+            </button>
+          </div>
+
+          <div className="w-64">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search legend..."
+              className="w-full px-3 py-1.5 rounded-xl border text-xs font-mono focus:outline-none"
+              style={{
+                backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#FFFFFF",
+                color: isCyber ? "#FFF" : "#000",
+                borderColor: isCyber ? "rgba(255,215,0,0.3)" : "#000",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* ── 1. CHAMPIONS PODIUM SECTION ── */}
+        {(activeViewSection === "podium" || activeViewSection === "records") && (
+          <div onContextMenu={handlePodiumContextMenu} className="space-y-6">
+            <div className="flex flex-col md:flex-row items-end justify-center gap-6 pt-8 pb-4">
+              {/* 🥈 Rank #2 Silver Podium */}
+              {top2 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="w-full md:w-72 order-2 md:order-1 flex flex-col items-center"
+                >
+                  <div className="relative mb-3">
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[10px] font-black font-mono bg-slate-300 text-black border border-slate-400 z-10 shadow">
+                      🥈 RANK #2
+                    </span>
+                    <HofEntryCard
+                      entry={top2}
+                      idx={1}
+                      isCyber={isCyber}
+                      group={getGroupDetails(getGroupForEntry(top2))}
+                      podiumRank={2}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onOpenProfile={(e) => setProfileModalEntry(e)}
+                      onCompare={(e) => handleAddToCompare(e)}
+                    />
+                  </div>
+                </motion.div>
+              )}
+
+              {/* 👑 Rank #1 Gold Champion Podium */}
+              {top1 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  className="w-full md:w-80 order-1 md:order-2 flex flex-col items-center z-20"
+                >
+                  <div className="relative mb-3 w-full flex flex-col items-center">
+                    {/* Champion Crown Ribbon */}
+                    <div className="mb-2 px-4 py-1 rounded-full text-xs font-black font-mono bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-black border-2 border-black shadow-[0_0_25px_rgba(245,158,11,0.6)] animate-pulse flex items-center gap-1.5">
+                      <span>👑</span>
+                      <span>REIGNING CHAMPION</span>
+                      <span>👑</span>
+                    </div>
+
+                    <HofEntryCard
+                      entry={top1}
+                      idx={0}
+                      isCyber={isCyber}
+                      group={getGroupDetails(getGroupForEntry(top1))}
+                      podiumRank={1}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onOpenProfile={(e) => setProfileModalEntry(e)}
+                      onCompare={(e) => handleAddToCompare(e)}
+                    />
+                  </div>
+                </motion.div>
+              )}
+
+              {/* 🥉 Rank #3 Bronze Podium */}
+              {top3 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="w-full md:w-72 order-3 flex flex-col items-center"
+                >
+                  <div className="relative mb-3">
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[10px] font-black font-mono bg-amber-700 text-white border border-amber-800 z-10 shadow">
+                      🥉 RANK #3
+                    </span>
+                    <HofEntryCard
+                      entry={top3}
+                      idx={2}
+                      isCyber={isCyber}
+                      group={getGroupDetails(getGroupForEntry(top3))}
+                      podiumRank={3}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onOpenProfile={(e) => setProfileModalEntry(e)}
+                      onCompare={(e) => handleAddToCompare(e)}
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </div>
         )}
-      </AnimatePresence>
+
+        {/* ── 2. HALL RECORDS SECTION ── */}
+        {activeViewSection === "records" && (
+          <div className="space-y-4">
+            <h3 className="text-base font-black theme-text-primary tracking-tight font-mono">
+              🏆 Hall Records & Milestones
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+              {hallRecords.map((rec, idx) => (
+                <div
+                  key={idx}
+                  className="p-4 rounded-2xl border font-mono space-y-1 text-center"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(255,215,0,0.03)" : "#FEFCE8",
+                    borderColor: isCyber ? "rgba(255,215,0,0.2)" : "#000",
+                    borderWidth: isCyber ? "1px" : "2px",
+                  }}
+                >
+                  <span className="text-2xl block">{rec.icon}</span>
+                  <span className="text-[10px] theme-text-muted uppercase block">{rec.title}</span>
+                  <strong className="text-sm font-black theme-text-primary block">{rec.holderName}</strong>
+                  <span className="text-xs text-amber-500 font-bold block">{rec.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── 3. HALL ANALYTICS SECTION ── */}
+        {activeViewSection === "analytics" && (
+          <div onContextMenu={handleAnalyticsContextMenu} className="space-y-4">
+            <h3 className="text-base font-black theme-text-primary tracking-tight font-mono">
+              📊 Hall Analytics & Roster Distribution
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Country Distribution */}
+              <div
+                className="p-5 rounded-3xl border font-mono space-y-3"
+                style={{
+                  backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#FFFFFF",
+                  borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000",
+                  borderWidth: isCyber ? "1px" : "2px",
+                }}
+              >
+                <h4 className="text-xs font-black uppercase tracking-wider theme-text-muted">
+                  🌍 Country Distribution
+                </h4>
+                <div className="space-y-2">
+                  {hallAnalytics.countryDistribution.map((item) => (
+                    <div key={item.country} className="space-y-1">
+                      <div className="flex justify-between text-xs font-bold">
+                        <span>{item.country}</span>
+                        <span>
+                          {item.count} ({item.percentage}%)
+                        </span>
+                      </div>
+                      <div className="w-full h-2 rounded-full bg-black/10 overflow-hidden">
+                        <div
+                          className="h-full bg-cyan-400"
+                          style={{ width: `${item.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Category Distribution */}
+              <div
+                className="p-5 rounded-3xl border font-mono space-y-3"
+                style={{
+                  backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#FFFFFF",
+                  borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000",
+                  borderWidth: isCyber ? "1px" : "2px",
+                }}
+              >
+                <h4 className="text-xs font-black uppercase tracking-wider theme-text-muted">
+                  🎬 Category Breakdown
+                </h4>
+                <div className="space-y-2">
+                  {hallAnalytics.categoryDistribution.map((item) => (
+                    <div key={item.category} className="space-y-1">
+                      <div className="flex justify-between text-xs font-bold">
+                        <span className="uppercase">{item.category}</span>
+                        <span>
+                          {item.count} ({item.percentage}%)
+                        </span>
+                      </div>
+                      <div className="w-full h-2 rounded-full bg-black/10 overflow-hidden">
+                        <div
+                          className="h-full bg-pink-500"
+                          style={{ width: `${item.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── 4. ACTIVITY FEED SECTION ── */}
+        {activeViewSection === "feed" && (
+          <div className="space-y-4">
+            <h3 className="text-base font-black theme-text-primary tracking-tight font-mono">
+              ⚡ Recent Hall Activity Feed
+            </h3>
+            <div className="space-y-2">
+              {activityFeed.map((item) => (
+                <div
+                  key={item.id}
+                  className="p-3.5 rounded-2xl border font-mono text-xs flex items-center justify-between gap-4"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#F8FAFC",
+                    borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#000",
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">⚡</span>
+                    <div>
+                      <strong className="theme-text-primary block font-bold">{item.title}</strong>
+                      <span className="theme-text-muted block text-[11px]">{item.description}</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] theme-text-muted shrink-0">{item.timestamp}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── LEADERBOARD GRID (Ranks 4+) ── */}
+        <div className="space-y-4 pt-4">
+          <h3 className="text-sm font-black uppercase tracking-widest font-mono theme-text-muted border-b pb-2">
+            Top Contenders & Hall Roster
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <AnimatePresence mode="popLayout">
+              {restOfList.map((entry, idx) => {
+                const groupDetails = getGroupDetails(getGroupForEntry(entry));
+                return (
+                  <HofEntryCard
+                    key={entry.id}
+                    entry={entry}
+                    idx={idx + 3}
+                    isCyber={isCyber}
+                    group={groupDetails}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onOpenProfile={(e) => setProfileModalEntry(e)}
+                    onCompare={(e) => handleAddToCompare(e)}
+                  />
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* ── Modals ── */}
+        <HofEditorModal
+          isOpen={editorOpen}
+          onClose={() => setEditorOpen(false)}
+          entryToEdit={selectedEntry}
+        />
+
+        <HofProfileModal
+          isOpen={!!profileModalEntry}
+          onClose={() => setProfileModalEntry(null)}
+          entry={profileModalEntry}
+          onEdit={handleEdit}
+          onLike={(id) => likeHof(id)}
+        />
+
+        <HofCompareModal
+          isOpen={isCompareOpen}
+          onClose={() => setIsCompareOpen(false)}
+          legends={comparedEntries}
+        />
+      </div>
     </AppShell>
   );
 }

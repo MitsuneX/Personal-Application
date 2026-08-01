@@ -142,6 +142,8 @@ export const getTrend = (id: string) => {
 
 // ─── Entry Card Component ────────────────────────────────────────────────────────
 
+import { getBadgesForEntry } from "@/lib/utils/hofEngine";
+
 interface CardProps {
   entry: HallOfFameEntry;
   idx: number;
@@ -152,12 +154,26 @@ interface CardProps {
   showType?: boolean;
   podiumRank?: number | null;
   onDoubleTap?: (e: React.MouseEvent | React.TouchEvent, id: string) => void;
+  onOpenProfile?: (entry: HallOfFameEntry) => void;
+  onCompare?: (entry: HallOfFameEntry) => void;
 }
 
-export function HofEntryCard({ entry, idx, isCyber, group, onEdit, onDelete, showType = false, podiumRank = null, onDoubleTap }: CardProps) {
+export function HofEntryCard({
+  entry,
+  idx,
+  isCyber,
+  group,
+  onEdit,
+  onDelete,
+  showType = false,
+  podiumRank = null,
+  onDoubleTap,
+  onOpenProfile,
+  onCompare,
+}: CardProps) {
   const [imgError, setImgError] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
-  const { likeHof, dramas, dramaLog, animeList } = useDashboardStore();
+  const { likeHof, dramas = [], dramaLog = [], animeList = [] } = useDashboardStore();
   const { openContextMenu } = useContextMenu();
   const router = useRouter();
 
@@ -183,8 +199,59 @@ export function HofEntryCard({ entry, idx, isCyber, group, onEdit, onDelete, sho
     }
   };
 
-  const cyberStyle  = STATUS_STYLE[entry.status]  || STATUS_STYLE["GOAT Status"];
-  const brutalStyle = BRUTAL_STATUS_STYLE[entry.status] || BRUTAL_STATUS_STYLE["GOAT Status"];
+  const badges = getBadgesForEntry(entry, podiumRank !== null ? podiumRank - 1 : idx);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    openContextMenu(
+      e,
+      [
+        {
+          id: "profile",
+          label: `Open ${entry.name} Profile`,
+          icon: "👑",
+          onClick: () => {
+            if (onOpenProfile) onOpenProfile(entry);
+          },
+        },
+        {
+          id: "compare",
+          label: "Compare Legend",
+          icon: "⚔️",
+          onClick: () => {
+            if (onCompare) onCompare(entry);
+          },
+        },
+        {
+          id: "like",
+          label: `Heart ${entry.name}`,
+          icon: "❤️",
+          onClick: () => likeHof(entry.id),
+        },
+        {
+          id: "edit",
+          label: "Edit Entry Details",
+          icon: "✏️",
+          onClick: () => onEdit(entry),
+        },
+        {
+          id: "chars",
+          label: "Open Character Directory",
+          icon: "📚",
+          onClick: () => router.push(`/characters?id=${entry.id}`),
+        },
+        {
+          id: "delete",
+          label: "Remove from Hall of Fame",
+          icon: "🗑️",
+          danger: true,
+          divider: true,
+          onClick: () => onDelete(entry.id, entry.name),
+        },
+      ],
+      entry.name
+    );
+  };
 
   const initials = entry.name
     .split(" ")
@@ -205,37 +272,8 @@ export function HofEntryCard({ entry, idx, isCyber, group, onEdit, onDelete, sho
   if (podiumRank === 1) nameBorderStyle = "#EAB308";
   else if (podiumRank === 2) nameBorderStyle = "#94A3B8";
   else if (podiumRank === 3) nameBorderStyle = "#B45309";
-  else nameBorderStyle = isCyber ? group.accentBorder : group.brutalBorder;
-
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    openContextMenu(
-      e,
-      [
-        {
-          id: "like",
-          label: `Heart ${entry.name}`,
-          icon: "❤️",
-          onClick: () => likeHof(entry.id),
-        },
-        {
-          id: "edit",
-          label: "Edit Entry Details",
-          icon: "⚙️",
-          onClick: () => onEdit(entry),
-        },
-        {
-          id: "delete",
-          label: "Remove from Hall of Fame",
-          icon: "🗑️",
-          danger: true,
-          divider: true,
-          onClick: () => onDelete(entry.id, entry.name),
-        },
-      ],
-      entry.name
-    );
-  };
+  const cyberStyle = STATUS_STYLE[entry.status] || STATUS_STYLE["GOAT Status"];
+  const brutalStyle = BRUTAL_STATUS_STYLE[entry.status] || BRUTAL_STATUS_STYLE["GOAT Status"];
 
   return (
     <motion.div

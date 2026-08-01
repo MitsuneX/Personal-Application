@@ -399,6 +399,7 @@ export interface HallOfFameEntry {
   likes: number;
   isChampion: boolean;
   isFavorite?: boolean;
+  badges?: string[];
   tokusatsuFranchise?: string | null;
   tokusatsuShow?: string | null;
   associatedDramas?: string[];
