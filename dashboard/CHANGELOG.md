@@ -2,6 +2,15 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [4.2.0] - 2026-08-01
+
+### 👤 Profile Popout System Architectural Rebuild (`ProfilePopoutCard.tsx`)
+- **Single Source of Truth (`ProfilePopoutCard.tsx`)**: Unified all profile popovers across Sidebar, Header, Friend cards, Mentions, and Chat into a single data-driven component.
+- **Unoptimized Animated Banner GIF Support**: Configured native unoptimized media rendering for banner URLs so animated `.gif` banners loop smoothly without freezing.
+- **Live Store Synchronization**: Connected avatar, banner, display name, tagline, bio, location, MBTI, Zodiac, contact info, skills, and socials directly to live `useDashboardStore().profile`.
+- **Mini Personal Dashboard Statistics**: Integrated live derived stat cards for Games count, Anime count, Drama count, Favorites count, and Profile Completion %.
+- **Dual-Theme Parity**: Complete visual parity for both **Neo-Brutalism** (thick 3px black borders, offset shadow, high contrast) and **Cyberpunk** (neon cyan/purple glow, dark glassmorphism `rgba(5,8,22,0.98)`, Orbitron font headings).
+
 ## [4.1.0] - 2026-08-01
 
 ### ⚙️ Punishing: Gray Raven (PGR) Integration — Game HUD & Dedicated Database

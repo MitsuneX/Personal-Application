@@ -10,6 +10,7 @@ export interface SocialHandle {
 }
 
 export interface ProfileData {
+  id?: string;
   name: string;
   tagline: string;
   bio: string;

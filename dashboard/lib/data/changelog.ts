@@ -13,6 +13,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v4.2.0",
+    date: "2026-08-01",
+    title: "Profile Popout System Architectural Rebuild (ProfilePopoutCard.tsx)",
+    badge: "PROFILE SYSTEM 4.2",
+    type: "major",
+    summary: "Rebuilt the entire application profile popout system into a single source of truth component (ProfilePopoutCard.tsx) featuring unoptimized animated banner GIF rendering, live store data synchronization, mini-dashboard statistics, brand-matched social links, technology stack pills, and full Neo-Brutalism & Cyberpunk theme parity.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "👤 Single Source of Truth Component (ProfilePopoutCard.tsx): Unified all profile popover previews into a single data-driven component, eliminating hardcoded fallback names and hardcoded avatars.",
+          "🎞️ Animated GIF Banner Support: Implemented unoptimized image rendering for banner URLs so animated .gif files loop smoothly at native frame rates.",
+          "🔄 Live Store Synchronization: Directly bound display name, tagline, bio, avatar, banner, MBTI, Zodiac, skills, and socials to live Zustand store state.",
+          "📊 Mini Personal Dashboard Stats: Integrated live derived stat cards for Games Logged, Anime Tracked, Dramas Logged, Favorites, and Profile Completion %.",
+          "🎨 Dual-Theme Parity: Complete theme-adaptive styling matching Cyberpunk neon glow and Neo-Brutalist 3px black offset shadow aesthetics.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v4.1.0",
     date: "2026-08-01",
     title: "Punishing: Gray Raven (PGR) Full Game & Database Addition",
