@@ -20,6 +20,7 @@ import { FilterDropdown } from "@/components/ui/FilterDropdown";
 import { GameUidBadge } from "@/components/ui/GameUidBadge";
 import { DossierCharacterCard } from "@/components/cards/DossierCharacterCard";
 import { InteractiveCategoryFilter } from "@/components/ui/InteractiveCategoryFilter";
+import { CharacterPreviewModal } from "@/components/ui/CharacterPreviewModal";
 
 const RESOURCE_CATEGORIES = [
   "Meta", "Tier List", "Heroes", "Characters", "Builds",
@@ -292,6 +293,7 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
   // Modal States
   const [isCharModalOpen, setIsCharModalOpen] = useState(false);
   const [editingCharacter, setEditingCharacter] = useState<DossierCharacterEntry | null>(null);
+  const [previewCharacter, setPreviewCharacter] = useState<DossierCharacterEntry | null>(null);
   const [isGameModalOpen, setIsGameModalOpen] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
@@ -305,6 +307,37 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [showcaseCategoryFilter, setShowcaseCategoryFilter] = useState<string>("ALL");
   const [showcaseTagFilter, setShowcaseTagFilter] = useState<string>("ALL");
+
+  // Filter dossier characters for this specific game with combined dual category filters (Unconditional Hook Execution)
+  const rawGameCharacters = useMemo(
+    () => (currentGame ? dossierCharacters.filter((c) => c.gameId === currentGame.id) : []),
+    [dossierCharacters, currentGame?.id]
+  );
+
+  const filteredCharacters = useMemo(() => {
+    if (!currentGame) return [];
+    return rawGameCharacters.filter((char) => {
+      // 1. Element / Role filter
+      if (selectedElement !== "ALL") {
+        const charRole = (char.role || "").toLowerCase();
+        const selEl = selectedElement.toLowerCase();
+        if (charRole !== selEl && !charRole.includes(selEl)) {
+          return false;
+        }
+      }
+
+      // 2. Category / Path filter
+      if (selectedCategory !== "ALL") {
+        const charCat = (char.category || "").toLowerCase();
+        const selCat = selectedCategory.toLowerCase();
+        if (charCat !== selCat && !charCat.includes(selCat)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [rawGameCharacters, selectedElement, selectedCategory, currentGame]);
 
   if (!currentGame) {
     return (
@@ -331,36 +364,6 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
   const iconRes = resolveGameIcon(gameTitle, currentGame.icon);
   const dossierConfig = getGameDossierConfig(gameTitle, currentGame.category);
   const elementSystem = dossierConfig.elementSystem;
-
-  // Filter dossier characters for this specific game with combined dual category filters
-  const rawGameCharacters = useMemo(
-    () => dossierCharacters.filter((c) => c.gameId === currentGame.id),
-    [dossierCharacters, currentGame.id]
-  );
-
-  const filteredCharacters = useMemo(() => {
-    return rawGameCharacters.filter((char) => {
-      // 1. Element / Role filter
-      if (selectedElement !== "ALL") {
-        const charRole = (char.role || "").toLowerCase();
-        const selEl = selectedElement.toLowerCase();
-        if (charRole !== selEl && !charRole.includes(selEl)) {
-          return false;
-        }
-      }
-
-      // 2. Category / Path filter
-      if (selectedCategory !== "ALL") {
-        const charCat = (char.category || "").toLowerCase();
-        const selCat = selectedCategory.toLowerCase();
-        if (charCat !== selCat && !charCat.includes(selCat)) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }, [rawGameCharacters, selectedElement, selectedCategory]);
 
   // Filter showcase gallery items for this specific game
   const rawShowcaseItems = gameShowcaseItems.filter((i) => i.gameId === currentGame.id);
@@ -832,6 +835,7 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
                       character={char}
                       gameTitle={gameTitle}
                       gameCategory={currentGame.category}
+                      onSelect={(c) => setPreviewCharacter(c)}
                       onEdit={(c) => {
                         setEditingCharacter(c);
                         setIsCharModalOpen(true);
@@ -1126,6 +1130,14 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
           onClose={() => { setIsResourceModalOpen(false); setEditingResource(null); }}
           gameId={currentGame.id}
           resourceToEdit={editingResource}
+        />
+
+        <CharacterPreviewModal
+          isOpen={!!previewCharacter}
+          onClose={() => setPreviewCharacter(null)}
+          character={previewCharacter}
+          onEdit={(c) => { setEditingCharacter(c); setIsCharModalOpen(true); }}
+          onDelete={(c) => handleDeleteDossierChar(c)}
         />
       </motion.div>
     </AppShell>

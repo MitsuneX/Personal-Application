@@ -16,6 +16,7 @@ import { GameUidBadge } from "@/components/ui/GameUidBadge";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { DossierCharacterCard } from "@/components/cards/DossierCharacterCard";
 import { InteractiveCategoryFilter } from "@/components/ui/InteractiveCategoryFilter";
+import { CharacterPreviewModal } from "@/components/ui/CharacterPreviewModal";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 
 function GameDatabaseOverviewPageContent() {
@@ -36,6 +37,7 @@ function GameDatabaseOverviewPageContent() {
   const [isCharModalOpen, setIsCharModalOpen] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [editingCharacter, setEditingCharacter] = useState<DossierCharacterEntry | null>(null);
+  const [previewCharacter, setPreviewCharacter] = useState<DossierCharacterEntry | null>(null);
   const [targetGameId, setTargetGameId] = useState<string>(games[0]?.id || "");
 
   const activeGameObj = games.find((g) => g.id === selectedGameFilter);
@@ -73,14 +75,22 @@ function GameDatabaseOverviewPageContent() {
         }
       }
 
-      // 4. Search query
+      // 4. Universal Search Query across all metadata
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchName = c.name.toLowerCase().includes(q);
+        const matchAlias = (c.aliases || []).some((a) => a.toLowerCase().includes(q));
         const matchCat = (c.category || "").toLowerCase().includes(q);
         const matchRole = (c.role || "").toLowerCase().includes(q);
+        const matchFaction = (c.faction || "").toLowerCase().includes(q);
+        const matchNation = (c.nation || "").toLowerCase().includes(q);
+        const matchWeapon = (c.weapon || "").toLowerCase().includes(q);
+        const matchVer = (c.releaseVersion || "").toLowerCase().includes(q);
         const matchRank = (c.levelRank || "").toLowerCase().includes(q);
-        if (!matchName && !matchCat && !matchRole && !matchRank) {
+        const matchTags = (c.tags || []).some((t) => t.toLowerCase().includes(q));
+        const matchKw = (c.searchKeywords || []).some((k) => k.toLowerCase().includes(q));
+
+        if (!matchName && !matchAlias && !matchCat && !matchRole && !matchFaction && !matchNation && !matchWeapon && !matchVer && !matchRank && !matchTags && !matchKw) {
           return false;
         }
       }
@@ -445,6 +455,7 @@ function GameDatabaseOverviewPageContent() {
                     <DossierCharacterCard
                       key={char.id}
                       character={char}
+                      onSelect={(c) => setPreviewCharacter(c)}
                       onEdit={(c) => {
                         setEditingCharacter(c);
                         setTargetGameId(c.gameId);
@@ -458,6 +469,19 @@ function GameDatabaseOverviewPageContent() {
             )}
           </BentoCard>
         </motion.div>
+
+        {/* Character Preview Overlay Modal */}
+        <CharacterPreviewModal
+          isOpen={!!previewCharacter}
+          onClose={() => setPreviewCharacter(null)}
+          character={previewCharacter}
+          onEdit={(c) => {
+            setEditingCharacter(c);
+            setTargetGameId(c.gameId);
+            setIsCharModalOpen(true);
+          }}
+          onDelete={handleDeleteCharacter}
+        />
 
         {/* Character Editor Modal */}
         {targetGameId && (

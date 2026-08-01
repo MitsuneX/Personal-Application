@@ -11,6 +11,7 @@ interface DossierCharacterCardProps {
   character: DossierCharacterEntry;
   gameTitle?: string;
   gameCategory?: string;
+  onSelect?: (character: DossierCharacterEntry) => void;
   onEdit?: (character: DossierCharacterEntry) => void;
   onDelete?: (character: DossierCharacterEntry) => void;
 }
@@ -19,6 +20,7 @@ export function DossierCharacterCard({
   character,
   gameTitle,
   gameCategory,
+  onSelect,
   onEdit,
   onDelete,
 }: DossierCharacterCardProps) {
@@ -106,8 +108,9 @@ export function DossierCharacterCard({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.22 }}
+      onClick={() => onSelect?.(character)}
       onContextMenu={handleContextMenu}
-      className="p-4 rounded-2xl border relative overflow-hidden group transition-all cursor-context-menu"
+      className="p-4 rounded-2xl border relative overflow-hidden group transition-all cursor-pointer hover:scale-[1.02]"
       style={{
         backgroundColor: isCyber ? "rgba(10,15,30,0.85)" : "#FFFFFF",
         borderColor: isCyber ? `${accent}40` : "#000000",

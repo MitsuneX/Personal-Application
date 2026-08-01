@@ -13,6 +13,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v4.7.0",
+    date: "2026-08-01",
+    title: "Universal Character Database System (Production Architecture)",
+    badge: "UNIVERSAL CHARACTER ENGINE",
+    type: "major",
+    summary: "Built a production-grade Universal Character Database System powering all 20+ supported games. Features extensible schema, automated Universal Link System (Wiki, Build, Official, Guide), Universal Entity Mode for non-hero games like PUBG, CharacterPreviewModal overlay, universal metadata search, and React hook order resolution.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "👑 Universal Character Model: Schema extended with aliases, splashArt, rarity, weapon, classType, faction, nation, race, releaseVersion, tags, stats, and links.",
+          "🌐 Universal Link System: Automated external link engine for Wiki (Fandom, LoL Wiki, Prydwen), Build (Prydwen, KeqingMains, U.GG, MLBB Ninja), Official (HoYoLab, Riot), and Guide (Tracker.gg).",
+          "🎒 Universal Entity Mode: Non-hero games (PUBG) automatically switch entityType to equipment, adapting UI terminology to firearms, armor, ammo calibers, and tactical gear.",
+          "🖼️ CharacterPreviewModal Overlay: Rich preview overlay displaying portrait/splash art, glowing element aura, attribute matrix, and external resource buttons.",
+          "🔍 Universal Search Engine: Multi-field search across name, aliases, tags, faction, nation, weapon, release version, and search keywords.",
+          "⚡ React Hook Order Fix: Moved all useMemo hooks above early return guards in GameDossierPage, enforcing strict hook ordering across all renders.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v4.6.0",
     date: "2026-08-01",
     title: "Interactive Category Filtering for Game Database",

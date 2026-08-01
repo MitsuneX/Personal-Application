@@ -56,19 +56,66 @@ export interface GameEntry {
   screenshot?: string;
 }
 
+export interface CharacterLinks {
+  wiki?: string;
+  official?: string;
+  build?: string;
+  guide?: string;
+  video?: string;
+  voice?: string;
+  gallery?: string;
+  reddit?: string;
+  community?: string;
+  tracker?: string;
+}
+
+export interface CharacterStats {
+  hp?: number;
+  atk?: number;
+  def?: number;
+  spd?: number;
+  critRate?: string | number;
+  critDmg?: string | number;
+  winRate?: number;
+  matches?: number;
+  damage?: number;
+  mobility?: number;
+  range?: number;
+  difficulty?: number;
+  [key: string]: string | number | undefined;
+}
+
 export interface DossierCharacterEntry {
   id: string;
   gameId: string;
   name: string;
+  aliases?: string[];
   category: string;
   role?: string;
+  element?: string;
+  rarity?: string;
+  weapon?: string;
+  classType?: string;
+  faction?: string;
+  nation?: string;
+  race?: string;
+  releaseVersion?: string;
+  releaseDate?: string;
+  description?: string;
+  notes?: string;
+  tags?: string[];
   levelRank?: string;
   winRate?: number;
   matches?: number;
-  notes?: string;
   avatarUrl?: string;
+  splashArt?: string;
   accentColor?: string;
   isFavorite?: boolean;
+  isHidden?: boolean;
+  searchKeywords?: string[];
+  stats?: CharacterStats;
+  links?: CharacterLinks;
+  entityType?: "character" | "equipment" | "weapon" | "map";
 }
 
 export interface GameResourceEntry {

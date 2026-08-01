@@ -2,6 +2,20 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [4.7.0] - 2026-08-01
+
+### 👑 Universal Character Database System (Production Architecture)
+
+**Core Architecture & Extensible Schema**
+- **Universal Character Model**: Extended `DossierCharacterEntry` schema with `aliases`, `splashArt`, `rarity`, `weapon`, `classType`, `faction`, `nation`, `race`, `releaseVersion`, `description`, `tags`, `stats`, `links`, and `entityType`.
+- **Universal Link System**: Implemented automated external link generators mapping Wiki (Fandom, LoL Wiki, Prydwen), Build (Prydwen, KeqingMains, U.GG, MLBB Ninja), Official (HoYoLab, Riot), and Guide (Tracker.gg, YouTube) links.
+- **Universal Entity Mode**: Non-hero games (such as PUBG) automatically switch `entityType` to `"equipment"`, adapting UI headers ("Tactical Arsenal & Equipment Breakdown"), entity labels ("Equipment / Item"), and ammo caliber filters.
+
+**UI Components & Hook Ordering Fix**
+- **`CharacterPreviewModal`**: Built a rich preview overlay with high-res portrait/splash art, ambient glowing element aura, detailed attribute matrix, winrate/matches stats, and external link buttons.
+- **Universal Search Engine**: Extended search to match character name, aliases, tags, faction, nation, weapon, release version, and search keywords.
+- **React Hook Order Fix**: Resolved hook count mismatch error (`35 vs 36 hooks`) in `GameDossierPage` by moving all `useMemo` hooks above early return guards.
+
 ## [4.6.0] - 2026-08-01
 
 ### 🎯 Interactive Category Filtering for Game Database (Production Architecture)

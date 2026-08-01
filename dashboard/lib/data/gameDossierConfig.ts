@@ -47,6 +47,21 @@ export interface DossierCategoryItem {
 
 // ─── Full Game Capability Config ──────────────────────────────────────────────
 
+export interface FilterFieldConfig {
+  id: string;
+  label: string;
+  field: string;
+  options?: Array<{ id: string; name: string; icon?: string }>;
+}
+
+export interface DefaultLinkPresets {
+  wiki?: string;
+  build?: string;
+  official?: string;
+  guide?: string;
+  tracker?: string;
+}
+
 export interface GameCapabilityConfig {
   gameType: string;
   categoryLabel: string;
@@ -54,6 +69,9 @@ export interface GameCapabilityConfig {
   categories: DossierCategoryItem[];
   elementSystem?: ElementSystem;   // undefined = no elements section
   resourcePresetsEnabled?: boolean; // whether presets exist for this game
+  entityType?: "character" | "equipment";
+  filterFields?: FilterFieldConfig[];
+  linkPresets?: DefaultLinkPresets;
 }
 
 // Keep backwards compat alias
@@ -501,6 +519,87 @@ const SPECIFIC_GAME_CONFIGS: Record<string, GameCapabilityConfig> = {
         { id: "fire",     name: "FIRE",     icon: "🔥", color: "#EF4444", description: "Fire element — Ignite", visualTokens: createVisualTokens("#EF4444") },
         { id: "ice",      name: "ICE",      icon: "❄️", color: "#60A5FA", description: "Frost element — Freeze", visualTokens: createVisualTokens("#60A5FA") },
         { id: "lightning",name: "LIGHTNING",icon: "⚡", color: "#FACC15", description: "Lightning element — Bleed", visualTokens: createVisualTokens("#FACC15") },
+      ],
+    },
+  },
+
+  // ── PUBG: BATTLEGROUNDS & PUBG Mobile ────────────────────────────────────
+  pubg: {
+    gameType: "Battle Royale / Tactical Shooter",
+    categoryLabel: "Tactical Arsenal & Equipment Breakdown",
+    characterLabel: "Equipment / Item",
+    entityType: "equipment",
+    resourcePresetsEnabled: true,
+    categories: [
+      { id: "weapons",     name: "Firearms & Weapons",   icon: "🔫", description: "Assault rifles, DMRs, snipers, SMGs & LMGs", visualTokens: createVisualTokens("#EF4444") },
+      { id: "armor",       name: "Armor & Vests",        icon: "🎽", description: "Helmets & Police/Military Vests (L1 - L3)", visualTokens: createVisualTokens("#F59E0B") },
+      { id: "attachments", name: "Optics & Attachments", icon: "🔭", description: "Scopes, suppressors, extended mags & stocks", visualTokens: createVisualTokens("#3B82F6") },
+      { id: "vehicles",    name: "Vehicles & Transport", icon: "🏎️", description: "Buggy, Dacia, UAZ, Mirado & Gliders", visualTokens: createVisualTokens("#10B981") },
+      { id: "throwables",  name: "Throwables & Medical", icon: "💣", description: "Frag grenades, smokes, molotovs & Med Kits", visualTokens: createVisualTokens("#A78BFA") },
+      { id: "maps",        name: "Maps & Drop Zones",    icon: "🗺️", description: "Erangel, Miramar, Sanhok, Vikendi, Taego", visualTokens: createVisualTokens("#EC4899") },
+    ],
+    elementSystem: {
+      sectionLabel: "Ammo Calibers",
+      elements: [
+        { id: "762",  name: "7.62mm",  icon: "🔴", color: "#EF4444", description: "Heavy caliber (AKM, Beryl M762, Kar98k, M24)", visualTokens: createVisualTokens("#EF4444") },
+        { id: "556",  name: "5.56mm",  icon: "🟢", color: "#22C55E", description: "High velocity (M416, SCAR-L, AUG, Mini14)", visualTokens: createVisualTokens("#22C55E") },
+        { id: "9mm",  name: "9mm",     icon: "🟡", color: "#FACC15", description: "Pistols & SMGs (Vector, UMP45, Micro UZI)", visualTokens: createVisualTokens("#FACC15") },
+        { id: "45acp",name: ".45 ACP", icon: "🔵", color: "#3B82F6", description: "Submachine guns & Tommy Gun", visualTokens: createVisualTokens("#3B82F6") },
+        { id: "300",  name: ".300 Magnum", icon: "🟣", color: "#A855F7", description: "AWM sniper special ammunition", visualTokens: createVisualTokens("#A855F7") },
+        { id: "12gauge", name: "12 Gauge", icon: "🟠", color: "#F97316", description: "Shotguns (S12K, S1897, DBS)", visualTokens: createVisualTokens("#F97316") },
+      ],
+    },
+  },
+
+  // ── Fate/Grand Order (FGO) ────────────────────────────────────────────────
+  fategrandorder: {
+    gameType: "Turn-Based Tactical RPG",
+    categoryLabel: "Servant Classes",
+    characterLabel: "Servant",
+    resourcePresetsEnabled: true,
+    categories: [
+      { id: "saber",     name: "Saber",     icon: "⚔️", description: "Frontline sword masters & single-target/AoE DPS", visualTokens: createVisualTokens("#3B82F6") },
+      { id: "archer",    name: "Archer",    icon: "🏹", description: "Ranged physical & Noble Phantasm burst", visualTokens: createVisualTokens("#EF4444") },
+      { id: "lancer",    name: "Lancer",    icon: "🔱", description: "Polearm warriors & critical damage specialists", visualTokens: createVisualTokens("#22C55E") },
+      { id: "rider",     name: "Rider",     icon: "🏇", description: "High mobility, star generator & AoE farmers", visualTokens: createVisualTokens("#FACC15") },
+      { id: "caster",    name: "Caster",    icon: "🔮", description: "NP charge buffers, arts support & healers", visualTokens: createVisualTokens("#A855F7") },
+      { id: "assassin",  name: "Assassin",  icon: "🗡️", description: "Critical star generators & instant kill", visualTokens: createVisualTokens("#06B6D4") },
+      { id: "berserker", name: "Berserker", icon: "💥", description: "Universal damage dealers taking 1.5x damage", visualTokens: createVisualTokens("#EC4899") },
+      { id: "extra",     name: "Extra Class", icon: "🌟", description: "Ruler, Avenger, Alter Ego, Foreigner & Pretender", visualTokens: createVisualTokens("#F59E0B") },
+    ],
+    elementSystem: {
+      sectionLabel: "Card Types & Attributes",
+      elements: [
+        { id: "buster",  name: "Buster",  icon: "🔴", color: "#EF4444", description: "High damage red cards", visualTokens: createVisualTokens("#EF4444") },
+        { id: "arts",    name: "Arts",    icon: "🔵", color: "#3B82F6", description: "NP generation blue cards", visualTokens: createVisualTokens("#3B82F6") },
+        { id: "quick",   name: "Quick",   icon: "🟢", color: "#22C55E", description: "Critical star green cards", visualTokens: createVisualTokens("#22C55E") },
+        { id: "sky",     name: "Sky",     icon: "☁️", color: "#60A5FA", description: "Celestial attribute", visualTokens: createVisualTokens("#60A5FA") },
+        { id: "earth",   name: "Earth",   icon: "🪨", color: "#D97706", description: "Terran attribute", visualTokens: createVisualTokens("#D97706") },
+        { id: "man",     name: "Humanity",icon: "👤", color: "#A78BFA", description: "Human attribute", visualTokens: createVisualTokens("#A78BFA") },
+      ],
+    },
+  },
+
+  // ── League of Legends ─────────────────────────────────────────────────────
+  leagueoflegends: {
+    gameType: "MOBA",
+    categoryLabel: "Summoner Rift Roles",
+    characterLabel: "Champion",
+    resourcePresetsEnabled: true,
+    categories: [
+      { id: "top",    name: "Top Lane", icon: "🛡️", description: "Fighters, tanks & solo split-pushers", visualTokens: createVisualTokens("#22C55E") },
+      { id: "jungle", name: "Jungle",   icon: "🌲", description: "Gank initiation & Neutral objective takers", visualTokens: createVisualTokens("#EF4444") },
+      { id: "mid",    name: "Mid Lane", icon: "🎯", description: "Control mages & burst assassins", visualTokens: createVisualTokens("#A855F7") },
+      { id: "bot",    name: "Bot (ADC)",icon: "🏹", description: "Ranged physical hyper-carries", visualTokens: createVisualTokens("#FACC15") },
+      { id: "support",name: "Support",  icon: "💚", description: "Engage tanks, enchanters & vision controllers", visualTokens: createVisualTokens("#3B82F6") },
+    ],
+    elementSystem: {
+      sectionLabel: "Primary Damage Types",
+      elements: [
+        { id: "ad",      name: "Physical (AD)", icon: "⚔️", color: "#EF4444", description: "Attack damage scaling", visualTokens: createVisualTokens("#EF4444") },
+        { id: "ap",      name: "Magic (AP)",    icon: "✨", color: "#3B82F6", description: "Ability power scaling", visualTokens: createVisualTokens("#3B82F6") },
+        { id: "true",    name: "True Damage",   icon: "💥", color: "#FACC15", description: "Armor & MR bypassing damage", visualTokens: createVisualTokens("#FACC15") },
+        { id: "tank",    name: "Tank/Defense",  icon: "🛡️", color: "#10B981", description: "Health & resistance scaling", visualTokens: createVisualTokens("#10B981") },
       ],
     },
   },
