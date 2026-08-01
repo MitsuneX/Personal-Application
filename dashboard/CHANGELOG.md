@@ -2,6 +2,12 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [3.9.1] - 2026-08-01
+
+### 📐 Dashboard Layout Optimization — Balanced Bento Grid
+- **Zero-Gap Bento Layout**: Reorganized the main Dashboard top grid into a balanced 3-column Bento structure (`ProfileCard` in col 1, `Genre Activity` + `GameDBCard` in col 2, `Episode Progress` + `MediaLogCard` in col 3). This aligns all column heights to ~640px and eliminates the empty gap/whitespace previously left under the chart cards.
+- **Quick Stats Bar Polish**: Responsive 5-column grid (`xl:grid-cols-5`) with uppercase category badges (`HUD`, `SERIES`, `WATCHED`, `LIBRARY`, `LEGENDS`) for all stat cards.
+
 ## [3.9.0] - 2026-07-31
 
 ### 🚀 Application-Wide Floating UI Overlay System & Viewport Collision Engine
