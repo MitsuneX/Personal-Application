@@ -171,7 +171,10 @@ export function FloatingPopover({
                 />
               )}
 
-              <motion.div
+              {/* Outer plain div: owned by Floating UI.
+                  Receives position:fixed + left:0 + top:0 + transform:translate(x,y).
+                  Must NOT be a motion.div — Framer Motion would overwrite the transform. */}
+              <div
                 key="popover-content"
                 ref={refs.setFloating}
                 style={
@@ -189,27 +192,33 @@ export function FloatingPopover({
                         zIndex,
                       }
                 }
-                initial={
-                  isSheet
-                    ? { y: "100%", opacity: 0 }
-                    : { opacity: 0, scale: 0.95, y: -6 }
-                }
-                animate={
-                  isSheet
-                    ? { y: 0, opacity: 1 }
-                    : { opacity: 1, scale: 1, y: 0 }
-                }
-                exit={
-                  isSheet
-                    ? { y: "100%", opacity: 0 }
-                    : { opacity: 0, scale: 0.95, y: -6 }
-                }
-                transition={springTransition}
-                className={isSheet ? "rounded-t-3xl overflow-hidden" : ""}
                 {...getFloatingProps()}
               >
-                {typeof content === "function" ? content({ close: () => setIsOpen(false) }) : content}
-              </motion.div>
+                {/* Inner motion.div: only handles enter/exit animation.
+                    Animates opacity and scale — no x/y/transform, so Floating UI's
+                    transform:translate(x,y) on the outer div is never overwritten. */}
+                <motion.div
+                  initial={
+                    isSheet
+                      ? { y: "100%", opacity: 0 }
+                      : { opacity: 0, scale: 0.95 }
+                  }
+                  animate={
+                    isSheet
+                      ? { y: 0, opacity: 1 }
+                      : { opacity: 1, scale: 1 }
+                  }
+                  exit={
+                    isSheet
+                      ? { y: "100%", opacity: 0 }
+                      : { opacity: 0, scale: 0.95 }
+                  }
+                  transition={springTransition}
+                  className={isSheet ? "rounded-t-3xl overflow-hidden" : ""}
+                >
+                  {typeof content === "function" ? content({ close: () => setIsOpen(false) }) : content}
+                </motion.div>
+              </div>
             </>
           )}
         </AnimatePresence>
