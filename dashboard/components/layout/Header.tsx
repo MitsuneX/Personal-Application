@@ -8,6 +8,8 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { ProfileEditorModal } from "@/components/ui/ProfileEditorModal";
 import { ThemeSwitcherToggle } from "@/components/ui/ThemeSwitcherToggle";
 import { ProfileHoverPopover } from "@/components/ui/ProfileHoverPopover";
+import { FloatingPopover } from "@/components/ui/FloatingPopover";
+import { ProfilePopoutCard } from "@/components/profile/ProfilePopoutCard";
 import { AestheticsModal } from "@/components/ui/AestheticsModal";
 import { CommandPalette } from "@/components/ui/CommandPalette";
 import { TopbarMiniPlayer } from "@/components/ui/TopbarMiniPlayer";
@@ -249,44 +251,49 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
           {/* Settings gear dropdown menu */}
           <SettingsDropdown onOpenAesthetics={() => setAestheticsOpen(true)} />
 
-          {/* Customizable Profile Header Item */}
-          <ProfileHoverPopover
-            onOpenAesthetics={() => setAestheticsOpen(true)}
-            placement="down-left"
+          {/* Customizable Profile Header Item — FloatingPopover anchored to avatar button */}
+          <FloatingPopover
+            placement="bottom-end"
+            triggerMode="hover-or-click"
+            offsetDistance={12}
+            content={({ close }) => (
+              <ProfilePopoutCard
+                onOpenAesthetics={() => setAestheticsOpen(true)}
+                onClose={close}
+              />
+            )}
           >
-            <Link href="/profile">
-              <motion.div
-                className="flex items-center gap-2 cursor-pointer p-1 rounded-lg border border-transparent transition-all"
-                whileHover={{
-                  borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#000000",
-                  backgroundColor: isCyber ? "rgba(0,245,255,0.05)" : "rgba(0,0,0,0.05)",
+            <motion.div
+              className="flex items-center gap-2 cursor-pointer p-1 rounded-lg border border-transparent transition-all"
+              whileHover={{
+                borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#000000",
+                backgroundColor: isCyber ? "rgba(0,245,255,0.05)" : "rgba(0,0,0,0.05)",
+              }}
+            >
+              {/* Customizable Profile Picture */}
+              <div className="relative w-8 h-8 rounded-full overflow-hidden border-2"
+                style={{
+                  borderColor: isCyber ? "#00F5FF" : "#FF6B35",
+                  boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.5)" : "none",
                 }}
               >
-                {/* Customizable Profile Picture */}
-                <div className="relative w-8 h-8 rounded-full overflow-hidden border-2"
-                  style={{
-                    borderColor: isCyber ? "#00F5FF" : "#FF6B35",
-                    boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.5)" : "none",
-                  }}
-                >
-                  <Image
-                    src={avatar}
-                    alt="Profile"
-                    width={32}
-                    height={32}
-                    className="w-full h-full object-cover"
-                    priority
-                    sizes="32px"
-                  />
-                </div>
+                <Image
+                  src={avatar}
+                  alt="Profile"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover"
+                  priority
+                  sizes="32px"
+                />
+              </div>
 
-                {/* Custom Name */}
-                <span className="text-xs font-black hidden lg:inline-block" style={{ color: isCyber ? "#E0E8FF" : "#1A1A1A" }}>
-                  {profile.name}
-                </span>
-              </motion.div>
-            </Link>
-          </ProfileHoverPopover>
+              {/* Custom Name */}
+              <span className="text-xs font-black hidden lg:inline-block" style={{ color: isCyber ? "#E0E8FF" : "#1A1A1A" }}>
+                {profile.name}
+              </span>
+            </motion.div>
+          </FloatingPopover>
 
           {/* Status dot */}
           <Link href="/profile">

@@ -1,25 +1,14 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import {
-  useFloating,
-  useClick,
-  useHover,
-  useDismiss,
-  useInteractions,
-  FloatingPortal,
-  offset,
-  flip,
-  shift,
-  autoUpdate,
-  Placement,
-} from "@floating-ui/react";
-import { AnimatePresence, motion } from "framer-motion";
+import React from "react";
+import { Placement } from "@floating-ui/react";
+import { FloatingPopover, PopoverTriggerMode } from "@/components/ui/FloatingPopover";
 import { ProfilePopoutCard } from "@/components/profile/ProfilePopoutCard";
 
 export interface ProfilePopoutTriggerProps {
   children: React.ReactNode;
   placement?: Placement;
+  triggerMode?: PopoverTriggerMode;
   onOpenAesthetics?: () => void;
   className?: string;
   style?: React.CSSProperties;
@@ -28,131 +17,26 @@ export interface ProfilePopoutTriggerProps {
 export function ProfilePopoutTrigger({
   children,
   placement = "bottom-end",
+  triggerMode = "hover-or-click",
   onOpenAesthetics,
   className = "",
   style = {},
 }: ProfilePopoutTriggerProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const { refs, floatingStyles, context } = useFloating({
-    open: isOpen,
-    onOpenChange: setIsOpen,
-    placement,
-    strategy: "fixed",
-    middleware: [
-      offset(14),
-      flip({
-        fallbackPlacements: ["bottom-end", "bottom-start", "top-end", "top-start", "right-start", "left-start"],
-        padding: 20,
-      }),
-      shift({ padding: 20 }),
-    ],
-    whileElementsMounted: autoUpdate,
-  });
-
-  const hover = useHover(context, {
-    move: false,
-    delay: { open: 120, close: 250 },
-  });
-  const click = useClick(context, { toggle: true });
-  const dismiss = useDismiss(context, { escapeKey: true, outsidePress: true });
-  const { getReferenceProps, getFloatingProps } = useInteractions([hover, click, dismiss]);
-
-  // Determine if mobile (< 640px) for bottom-sheet layout
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 640);
-    check();
-    window.addEventListener("resize", check, { passive: true });
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
-  const springTransition = {
-    type: "spring" as const,
-    stiffness: 420,
-    damping: 30,
-    mass: 0.8,
-  };
-
   return (
-    <>
-      {/* Trigger element */}
-      <div
-        ref={refs.setReference}
-        className={`inline-block ${className}`}
-        style={{ cursor: "pointer", ...style }}
-        {...getReferenceProps()}
-      >
-        {children}
-      </div>
-
-      {/* Floating popout rendered into portal */}
-      <FloatingPortal>
-        <AnimatePresence>
-          {isOpen && (
-            <>
-              {/* Mobile backdrop */}
-              {isMobile && (
-                <motion.div
-                  key="backdrop"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.18 }}
-                  className="fixed inset-0 bg-black/60 backdrop-blur-sm sm:hidden"
-                  style={{ zIndex: 1098 }}
-                  onClick={() => setIsOpen(false)}
-                />
-              )}
-
-              <motion.div
-                key="popout"
-                ref={refs.setFloating}
-                style={
-                  isMobile
-                    ? {
-                        position: "fixed",
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        zIndex: 1099,
-                        maxHeight: "90vh",
-                      }
-                    : {
-                        ...floatingStyles,
-                        zIndex: 1099,
-                        maxHeight: "calc(100vh - 32px)",
-                      }
-                }
-                initial={
-                  isMobile
-                    ? { y: "100%", opacity: 0 }
-                    : { opacity: 0, scale: 0.95, y: -6 }
-                }
-                animate={
-                  isMobile
-                    ? { y: 0, opacity: 1 }
-                    : { opacity: 1, scale: 1, y: 0 }
-                }
-                exit={
-                  isMobile
-                    ? { y: "100%", opacity: 0 }
-                    : { opacity: 0, scale: 0.95, y: -6 }
-                }
-                transition={springTransition}
-                className={isMobile ? "rounded-t-3xl overflow-hidden" : ""}
-                {...getFloatingProps()}
-              >
-                <ProfilePopoutCard
-                  onOpenAesthetics={onOpenAesthetics}
-                  onClose={() => setIsOpen(false)}
-                  isMobile={isMobile}
-                />
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
-      </FloatingPortal>
-    </>
+    <FloatingPopover
+      placement={placement}
+      triggerMode={triggerMode}
+      offsetDistance={14}
+      className={className}
+      style={style}
+      content={({ close }) => (
+        <ProfilePopoutCard
+          onOpenAesthetics={onOpenAesthetics}
+          onClose={close}
+        />
+      )}
+    >
+      {children}
+    </FloatingPopover>
   );
 }

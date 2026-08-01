@@ -7,7 +7,8 @@ import { NavLink } from "@/components/ui/NavLink";
 import { usePathname, useRouter } from "next/navigation";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { ProfileEditorModal } from "@/components/ui/ProfileEditorModal";
-import { ProfileHoverPopover } from "@/components/ui/ProfileHoverPopover";
+import { FloatingPopover } from "@/components/ui/FloatingPopover";
+import { ProfilePopoutCard } from "@/components/profile/ProfilePopoutCard";
 import { AestheticsModal } from "@/components/ui/AestheticsModal";
 
 interface SidebarProps {
@@ -370,10 +371,17 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
 
             {/* Sidebar Bottom Bar Container */}
             <div className="relative z-10 flex flex-col justify-between p-3.5 min-w-0 gap-1.5">
-              <ProfileHoverPopover
-                onOpenAesthetics={() => setAestheticsOpen(true)}
-                placement="up"
-                className="min-w-0 w-full relative"
+              {/* FloatingPopover wraps ONLY the avatar+name row so the reference rect is tight */}
+              <FloatingPopover
+                placement="top-end"
+                triggerMode="hover-or-click"
+                offsetDistance={12}
+                content={({ close }) => (
+                  <ProfilePopoutCard
+                    onOpenAesthetics={() => setAestheticsOpen(true)}
+                    onClose={close}
+                  />
+                )}
               >
                 <div className="flex flex-col gap-1.5 cursor-pointer min-w-0">
                   {/* Top Row: Avatar & Name */}
@@ -415,13 +423,20 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
                     </p>
                   )}
                 </div>
-              </ProfileHoverPopover>
+              </FloatingPopover>
             </div>
           </div>
         ) : (
-          <ProfileHoverPopover
-            onOpenAesthetics={() => setAestheticsOpen(true)}
-            placement="right"
+          <FloatingPopover
+            placement="right-start"
+            triggerMode="hover-or-click"
+            offsetDistance={12}
+            content={({ close }) => (
+              <ProfilePopoutCard
+                onOpenAesthetics={() => setAestheticsOpen(true)}
+                onClose={close}
+              />
+            )}
           >
             <div
               onClick={() => router.push("/profile")}
@@ -441,7 +456,7 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
                 />
               </div>
             </div>
-          </ProfileHoverPopover>
+          </FloatingPopover>
         )}
       </motion.aside>
 

@@ -2,7 +2,6 @@
 
 import React, { useMemo } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
@@ -226,11 +225,7 @@ export function ProfilePopoutCard({
               }}
             >
               {profile?.avatar ? (
-                isAnimatedMedia(profile.avatar) ? (
-                  <img src={profile.avatar} alt={profile.name || "Avatar"} className="w-full h-full object-cover" />
-                ) : (
-                  <Image src={profile.avatar} alt={profile.name || "Avatar"} fill className="object-cover" sizes="72px" />
-                )
+                <img src={profile.avatar} alt={profile.name || "Avatar"} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <User className="w-8 h-8 opacity-40" />
