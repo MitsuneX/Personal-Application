@@ -13,6 +13,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v4.9.0",
+    date: "2026-08-01",
+    title: "Global Dropdown & Modal Stacking Context Fix",
+    badge: "UI INTERACTION REPAIR",
+    type: "major",
+    summary: "Audited and resolved global dropdown interaction bug where custom select menus (Type, Status Tier, Nationality, Category) rendered underneath modal dialog cards. Realigned Z-Index Stacking Hierarchy across ViewportBoundary, CustomSelect, FilterDropdown, and ContextMenu.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🎯 Stacking Context Alignment: Raised Z_INDEX.DROPDOWN from 1000 to 1500, POPOVER to 1600, and CONTEXT_MENU to 1700 in ViewportBoundary.ts, placing all portaled options panels cleanly above Z_INDEX.MODAL (1300).",
+          "🔍 Modal Select Menu Interaction: Fixed pointer blockage across HofEditorModal, DossierCharacterEditorModal, GameEditorModal, GameScannerModal, AiToolEditorModal, ShowcaseEditorModal, ProjectEditorModal, and ProfileEditorModal.",
+          "🖱️ Context Menu Stacking: Standardized ContextMenu.tsx zIndex to Z_INDEX.CONTEXT_MENU (1700), eliminating backdrop clipping inside open modals.",
+          "⌨️ Keyboard Accessibility: Added Enter, Space, and ArrowDown keyboard trigger controls for CustomSelect.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v4.8.0",
     date: "2026-08-01",
     title: "Phase 2 — Universal Character Database Expansion",

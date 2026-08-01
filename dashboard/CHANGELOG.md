@@ -2,6 +2,16 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [4.9.0] - 2026-08-01
+
+### 🛠️ Global Dropdown & Modal Stacking Context Audit & Fix
+
+**Z-Index Stacking Hierarchy Architecture**
+- **Layering Hierarchy Alignment**: Raised `Z_INDEX.DROPDOWN` from `1000` to `1500`, `POPOVER` to `1600`, and `CONTEXT_MENU` to `1700` in `ViewportBoundary.ts`, ensuring portaled dropdowns, custom select menus, and context menus cleanly float **ABOVE** `Z_INDEX.MODAL` (`1300`).
+- **Modal Dropdown Pointer Interaction**: Resolved interaction blockage where `<CustomSelect>` and `<FilterDropdown>` options panels inside modals (`HofEditorModal`, `DossierCharacterEditorModal`, `GameEditorModal`, `AiToolEditorModal`, `ProfileEditorModal`, etc.) were rendered underneath the modal card and backdrop.
+- **Context Menu Stacking**: Standardized `ContextMenu.tsx` to use `Z_INDEX.CONTEXT_MENU` (`1700`) and backdrop at `1699`, preventing hidden context menus during active modal sessions.
+- **Keyboard Navigation & Diagnostics**: Added `Enter`, `Space`, and `ArrowDown` keyboard trigger listeners for `<CustomSelect>` with development diagnostic logs.
+
 ## [4.8.0] - 2026-08-01
 
 ### 🚀 Phase 2 — Universal Character Database Expansion (Production)

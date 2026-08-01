@@ -139,7 +139,8 @@ export function ContextMenu({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.18 }}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99990] sm:hidden"
+                style={{ zIndex: Z_INDEX.CONTEXT_MENU - 1 }}
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm sm:hidden"
                 onClick={onClose}
               />
             )}
@@ -172,7 +173,7 @@ export function ContextMenu({
                       bottom: 0,
                       left: 0,
                       right: 0,
-                      zIndex: Z_INDEX.DROPDOWN + 10,
+                      zIndex: Z_INDEX.CONTEXT_MENU,
                       maxHeight: "80vh",
                       backgroundColor: isCyber ? "rgba(5, 8, 22, 0.98)" : "#FFFFFF",
                       borderColor: isCyber ? "rgba(0, 245, 255, 0.4)" : "#000000",
@@ -183,7 +184,7 @@ export function ContextMenu({
                       position: "fixed",
                       left: `${pos.left}px`,
                       top: `${pos.top}px`,
-                      zIndex: Z_INDEX.DROPDOWN + 10,
+                      zIndex: Z_INDEX.CONTEXT_MENU,
                       minWidth: "210px",
                       maxWidth: "280px",
                       backgroundColor: isCyber ? "rgba(8, 12, 28, 0.96)" : "#FFFFFF",
