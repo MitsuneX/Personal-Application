@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { DEFAULT_AI_TOOLS } from "@/lib/data/initialAiTools";
+import { INITIAL_DOSSIER_CHARACTERS } from "@/lib/data/initialDossierCharacters";
 
 // ─── Shared Types ─────────────────────────────────────────────────────────────
 
@@ -56,17 +57,28 @@ export interface GameEntry {
   screenshot?: string;
 }
 
+export interface EditableLinkItem {
+  defaultUrl: string;
+  customUrl?: string;
+  isDisabled?: boolean;
+  lastEdited?: string;
+}
+
+export type CharacterLinkValue = string | EditableLinkItem;
+
 export interface CharacterLinks {
-  wiki?: string;
-  official?: string;
-  build?: string;
-  guide?: string;
-  video?: string;
-  voice?: string;
-  gallery?: string;
-  reddit?: string;
-  community?: string;
-  tracker?: string;
+  wiki?: CharacterLinkValue;
+  official?: CharacterLinkValue;
+  build?: CharacterLinkValue;
+  guide?: CharacterLinkValue;
+  video?: CharacterLinkValue;
+  voice?: CharacterLinkValue;
+  gallery?: CharacterLinkValue;
+  reddit?: CharacterLinkValue;
+  community?: CharacterLinkValue;
+  tracker?: CharacterLinkValue;
+  youtube?: CharacterLinkValue;
+  [key: string]: CharacterLinkValue | undefined;
 }
 
 export interface CharacterStats {
@@ -116,6 +128,19 @@ export interface DossierCharacterEntry {
   stats?: CharacterStats;
   links?: CharacterLinks;
   entityType?: "character" | "equipment" | "weapon" | "map";
+
+  // Phase 2 Metadata Expansion
+  voiceActor?: string;
+  illustrator?: string;
+  birthday?: string;
+  height?: string;
+  affiliation?: string;
+  region?: string;
+  constellation?: string;
+  profession?: string;
+  organization?: string;
+  releasePatch?: string;
+  loreTags?: string[];
 }
 
 export interface GameResourceEntry {
@@ -633,30 +658,7 @@ const initialMedia: MediaEntry = {
   ],
 };
 
-const initialDossierCharacters: DossierCharacterEntry[] = [
-  // Mobile Legends (game-2)
-  { id: "dossier-ml-1", gameId: "game-2", name: "Chou", category: "EXP Lane", role: "Fighter / Heavy Kick", levelRank: "Mastery 7", winRate: 64.2, matches: 280, notes: "Best for blink kick initiation on gold lane carries.", accentColor: "#F59E0B", isFavorite: true },
-  { id: "dossier-ml-2", gameId: "game-2", name: "Ling", category: "Jungle", role: "Assassin / Wall Walk", levelRank: "Mastery 7", winRate: 68.5, matches: 340, notes: "Fast purple buff rotation and high mobility execution.", accentColor: "#3B82F6", isFavorite: true },
-  { id: "dossier-ml-3", gameId: "game-2", name: "Kagura", category: "Mid Lane", role: "Mage / Umbrella Burst", levelRank: "Mastery 6", winRate: 61.0, matches: 195, notes: "Seimei umbrella combo for mid lane wave control.", accentColor: "#EC4899", isFavorite: false },
-  { id: "dossier-ml-4", gameId: "game-2", name: "Beatrix", category: "Gold Lane", role: "Marksman / Weapon Swap", levelRank: "Mastery 7", winRate: 65.8, matches: 260, notes: "Renner sniper for long range burst & Nibiru for teamfights.", accentColor: "#EF4444", isFavorite: true },
-  { id: "dossier-ml-5", gameId: "game-2", name: "Kufra", category: "Roam", role: "Tank / Bouncing Ball", levelRank: "Mastery 6", winRate: 59.4, matches: 150, notes: "Bouncing ball anti-dash counter for assassins.", accentColor: "#10B981", isFavorite: false },
-
-  // Honkai: Star Rail (game-1)
-  { id: "dossier-hsr-1", gameId: "game-1", name: "Acheron", category: "Nihility", role: "Lightning / Ultimate Burst", levelRank: "E2S1 - Lvl 80", winRate: 88.0, matches: 140, notes: "Zero energy ultimate relying on debuff stacks.", accentColor: "#8B5CF6", isFavorite: true },
-  { id: "dossier-hsr-2", gameId: "game-1", name: "Jingliu", category: "Destruction", role: "Ice / Transmigration", levelRank: "E1S1 - Lvl 80", winRate: 84.5, matches: 120, notes: "Spectral Transmute stance for high ice blast damage.", accentColor: "#06B6D4", isFavorite: true },
-  { id: "dossier-hsr-3", gameId: "game-1", name: "Firefly", category: "Destruction", role: "Fire / Super Break", levelRank: "E2S1 - Lvl 80", winRate: 91.2, matches: 160, notes: "SAM armor complete domain break execution.", accentColor: "#10B981", isFavorite: true },
-  { id: "dossier-hsr-4", gameId: "game-1", name: "Sparkle", category: "Harmony", role: "Quantum / Skill Point Buffer", levelRank: "E0S1 - Lvl 80", winRate: 86.0, matches: 130, notes: "Skill point recovery + action advance for hypercarries.", accentColor: "#EC4899", isFavorite: false },
-
-  // Valorant (game-3)
-  { id: "dossier-val-1", gameId: "game-3", name: "Jett", category: "Duelist", role: "Wind / Entry Fragger", levelRank: "Ascendant 3", winRate: 62.4, matches: 210, notes: "Updraft & Blade Storm eco round impact.", accentColor: "#EF4444", isFavorite: true },
-  { id: "dossier-val-2", gameId: "game-3", name: "Omen", category: "Controller", role: "Shadow / Smoke Executor", levelRank: "Ascendant 2", winRate: 58.1, matches: 175, notes: "Paranoia blind for B-site split pushes.", accentColor: "#6366F1", isFavorite: false },
-  { id: "dossier-val-3", gameId: "game-3", name: "Sova", category: "Initiator", role: "Recon / Intel Dart", levelRank: "Ascendant 3", winRate: 60.5, matches: 190, notes: "Recon dart lineups for A-Main control.", accentColor: "#3B82F6", isFavorite: true },
-
-  // Genshin Impact (game-4)
-  { id: "dossier-gi-1", gameId: "game-4", name: "Xiao", category: "Main DPS", role: "Anemo / Yaksha Plunge", levelRank: "Lvl 90 - C6", winRate: 92.0, matches: 310, notes: "Bane of All Evil continuous plunge attack loop.", accentColor: "#10B981", isFavorite: true },
-  { id: "dossier-gi-2", gameId: "game-4", name: "Yelan", category: "Sub DPS", role: "Hydro / Exquisite Dice", levelRank: "Lvl 90 - C2S1", winRate: 95.0, matches: 450, notes: "High speed mobility & off-field hydro enabler.", accentColor: "#3B82F6", isFavorite: true },
-  { id: "dossier-gi-3", gameId: "game-4", name: "Zhongli", category: "Healer / Shielder", role: "Geo / Jade Shield", levelRank: "Lvl 90 - C0", winRate: 98.0, matches: 520, notes: "Unbreakable Jade Shield & universal resistance shred.", accentColor: "#F59E0B", isFavorite: true },
-];
+const initialDossierCharacters: DossierCharacterEntry[] = INITIAL_DOSSIER_CHARACTERS;
 
 const initialGameResources: GameResourceEntry[] = [
   // Mobile Legends (game-2)

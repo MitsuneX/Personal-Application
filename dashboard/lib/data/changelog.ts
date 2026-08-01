@@ -13,6 +13,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v4.8.0",
+    date: "2026-08-01",
+    title: "Phase 2 — Universal Character Database Expansion",
+    badge: "ROSTER & LINK SYSTEM",
+    type: "major",
+    summary: "Expanded playable rosters across all 20+ supported games, added an Editable External Navigation Link system with URL validation and reset capability, built a dedicated right-click/long-press context menu for link buttons, and extended character metadata inspection.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🎮 Complete 20+ Game Rosters: Added playable roster entries & metadata for HSR, Genshin, HI3, ZZZ, WuWa, Arknights, Endfield, GFL2, ToF, NIKKE, PGR, Reverse: 1999, FGO, Umamusume, LoL, Valorant, MLBB, DB Legends, Outerplane, Stella Sora, and PUBG Tactical Equipment.",
+          "🔗 Editable Link System: User-defined URL overrides with protocol validation (http/https), reset to default, and disable/enable controls.",
+          "🎯 Dedicated Navigation Button Context Menu: Right-click, long-press (~500ms on touch), or Shift+F10 on link buttons triggers dedicated URL actions without interfering with card context menus.",
+          "📜 Expanded Metadata Inspection: Displays Voice Actor, Illustrator, Birthday, Height, Affiliation, Region, Constellation, and Lore Tags with graceful fallback.",
+          "🔍 Enhanced Universal Search: Search across name, alias, voice actor, affiliation, region, constellation, description, tags, and keywords.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v4.7.0",
     date: "2026-08-01",
     title: "Universal Character Database System (Production Architecture)",

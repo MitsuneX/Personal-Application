@@ -87,10 +87,15 @@ function GameDatabaseOverviewPageContent() {
         const matchWeapon = (c.weapon || "").toLowerCase().includes(q);
         const matchVer = (c.releaseVersion || "").toLowerCase().includes(q);
         const matchRank = (c.levelRank || "").toLowerCase().includes(q);
-        const matchTags = (c.tags || []).some((t) => t.toLowerCase().includes(q));
+        const matchVA = (c.voiceActor || "").toLowerCase().includes(q);
+        const matchAff = (c.affiliation || "").toLowerCase().includes(q);
+        const matchRegion = (c.region || "").toLowerCase().includes(q);
+        const matchConst = (c.constellation || "").toLowerCase().includes(q);
+        const matchDesc = (c.description || "").toLowerCase().includes(q) || (c.notes || "").toLowerCase().includes(q);
+        const matchTags = (c.tags || []).some((t) => t.toLowerCase().includes(q)) || (c.loreTags || []).some((t) => t.toLowerCase().includes(q));
         const matchKw = (c.searchKeywords || []).some((k) => k.toLowerCase().includes(q));
 
-        if (!matchName && !matchAlias && !matchCat && !matchRole && !matchFaction && !matchNation && !matchWeapon && !matchVer && !matchRank && !matchTags && !matchKw) {
+        if (!matchName && !matchAlias && !matchCat && !matchRole && !matchFaction && !matchNation && !matchWeapon && !matchVer && !matchRank && !matchVA && !matchAff && !matchRegion && !matchConst && !matchDesc && !matchTags && !matchKw) {
           return false;
         }
       }

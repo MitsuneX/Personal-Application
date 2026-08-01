@@ -2,6 +2,19 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [4.8.0] - 2026-08-01
+
+### 🚀 Phase 2 — Universal Character Database Expansion (Production)
+
+**Extensible Playable Rosters Across 20+ Games**
+- **Comprehensive Roster Population**: Added authentic playable character rosters and metadata across all 20+ supported games (*Honkai: Star Rail, Genshin Impact, Honkai Impact 3rd, ZZZ, Wuthering Waves, Arknights, Endfield, GFL2, Tower of Fantasy, NIKKE, PGR, Reverse: 1999, FGO, Umamusume, LoL, Valorant, MLBB, DB Legends, Outerplane, Stella Sora, and PUBG Equipment*).
+- **Expanded Metadata Inspection**: Preview modal now displays Voice Actor, Illustrator, Birthday, Height, Affiliation, Region, Constellation, Profession, and Lore Tags with automatic graceful hiding when metadata is omitted.
+
+**Editable External Navigation System**
+- **`EditableLinkItem` Engine**: Supports default URLs, user custom URL overrides (`customUrl`), link disable toggling (`isDisabled`), and timestamping without mutating original defaults.
+- **URL Validation Engine**: Validates `http://` or `https://` protocol compliance, rejecting malformed links with user-friendly feedback.
+- **Dedicated Link Button Context Menu**: Right-click, long-press, or Shift+F10 on any navigation button opens a dedicated context menu (`Open`, `Open in New Tab`, `Copy URL`, `Edit URL`, `Reset to Default`, `Disable/Enable Link`).
+
 ## [4.7.0] - 2026-08-01
 
 ### 👑 Universal Character Database System (Production Architecture)
