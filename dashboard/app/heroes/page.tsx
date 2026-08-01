@@ -178,7 +178,7 @@ export default function GameDatabaseOverviewPage() {
                       <div className="mb-3">
                         <GameUidBadge
                           handle={game.handle}
-                          profileLink={game.profileLink}
+                          profileLink={null}
                           isCyber={isCyber}
                           accentColor={game.accentColor || "#00F5FF"}
                           size="sm"
