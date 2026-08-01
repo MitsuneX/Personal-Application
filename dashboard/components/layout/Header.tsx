@@ -7,7 +7,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { ProfileEditorModal } from "@/components/ui/ProfileEditorModal";
 import { ThemeSwitcherToggle } from "@/components/ui/ThemeSwitcherToggle";
-import { ProfileHoverPopover } from "@/components/ui/ProfileHoverPopover";
 import { FloatingPopover } from "@/components/ui/FloatingPopover";
 import { ProfilePopoutCard } from "@/components/profile/ProfilePopoutCard";
 import { AestheticsModal } from "@/components/ui/AestheticsModal";
