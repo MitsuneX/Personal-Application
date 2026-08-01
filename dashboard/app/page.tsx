@@ -39,55 +39,8 @@ function DashboardContent() {
     { label: "Hall of Fame",    value: hallOfFame.length, icon: "🏆", href: "/hall-of-fame", color: isCyber ? "#FFD700" : "#FF6B35" },
   ];
 
-  const handleBackgroundContextMenu = (e: React.MouseEvent) => {
-    // Only open context menu if right clicking container background
-    openContextMenu(
-      e,
-      [
-        {
-          id: "nav-games",
-          label: "Go to Games Vault",
-          icon: "🎮",
-          onClick: () => router.push("/games"),
-        },
-        {
-          id: "nav-anime",
-          label: "Go to Anime Library",
-          icon: "⛩️",
-          onClick: () => router.push("/anime"),
-        },
-        {
-          id: "nav-drama",
-          label: "Go to Drama Hub",
-          icon: "🎬",
-          onClick: () => router.push("/drama"),
-        },
-        {
-          id: "nav-hof",
-          label: "Go to Hall of Fame",
-          icon: "🏆",
-          onClick: () => router.push("/hall-of-fame"),
-        },
-        {
-          id: "nav-gallery",
-          label: "Go to Media Gallery",
-          icon: "🖼️",
-          onClick: () => router.push("/gallery"),
-        },
-        {
-          id: "theme-toggle",
-          label: `Switch Theme to ${isCyber ? "Neo-Brutalism" : "Cyberpunk"}`,
-          icon: isCyber ? "☀️" : "🌙",
-          divider: true,
-          onClick: () => setTheme(isCyber ? "brutal" : "cyber"),
-        },
-      ],
-      "Dashboard Quick Menu"
-    );
-  };
-
   return (
-    <div onContextMenu={handleBackgroundContextMenu}>
+    <>
       {/* ── Page header ── */}
       <motion.div
         className="mb-6"
@@ -217,7 +170,7 @@ function DashboardContent() {
           {isCyber ? "NEXUS v2.0.0 // NEXT.JS + FRAMER MOTION + RECHARTS" : "Dashboard v2.0.0 · Next.js + Framer Motion + Recharts"}
         </span>
       </motion.footer>
-  </div>
+    </>
   );
 }
 

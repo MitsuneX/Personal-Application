@@ -10,6 +10,7 @@ export interface ContextMenuItem {
   disabled?: boolean;
   divider?: boolean;
   checked?: boolean;
+  isHeader?: boolean;
 }
 
 export interface ContextMenuSection {

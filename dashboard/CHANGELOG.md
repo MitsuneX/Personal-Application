@@ -2,6 +2,21 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [4.5.0] - 2026-08-01
+
+### 🖥️ Universal Desktop-Class Navigation Context Menu Expansion
+
+**Multi-Layered Priority System**
+- **Layer 1 (Object-Specific Menus)**: Preserved 100% of existing object context menus (Game Cards, Character Dossiers, Anime, Dramas, Music, Gallery Items, Notes, Bookmarks, Prompt Vault).
+- **Layer 2 (Global Navigation Fallback)**: Automatically activates when right-clicking layout whitespace, container background, page background, or empty grid areas.
+
+**System Capabilities**
+- **Search Integration**: Added `🔍 Search Everything...` top item mapped to global Command Palette (`⌘K`).
+- **Dynamic Navigation Filtering**: Automatically suppresses the current active page route from the Navigation section.
+- **Quick Action Triggers**: Instant shortcut items for `Add Game`, `Add Anime`, `Add Drama`, `New Note`, and `Upload Image`.
+- **Editable Protection**: Automatically preserves native browser context menus on `input`, `textarea`, `select`, `[contenteditable="true"]`, and code editors.
+- **Theme & Keyboard Parity**: Full Arrow key navigation, Enter execution, ESC dismissal, section header dividers, and dual Cyberpunk / Neo-Brutalism visual styling.
+
 ## [4.4.0] - 2026-08-01
 
 ### 🖱️ Universal Context Menu System (Desktop-Grade Right-Click Engine)

@@ -13,6 +13,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v4.5.0",
+    date: "2026-08-01",
+    title: "Universal Desktop-Class Navigation Context Menu Expansion",
+    badge: "GLOBAL NAVIGATION ENGINE",
+    type: "major",
+    summary: "Expanded context menu architecture into a 2-layer desktop-style navigation system. Preserves 100% of object-specific card menus while introducing a global fallback navigation menu on empty whitespace with search integration, dynamic route filtering, quick actions, theme toggle, and editable target protection.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🖥️ Multi-Layered Context Menu Priority: Layer 1 for object cards, Layer 2 for empty space / background layout fallback.",
+          "🔍 Command Palette Search Integration: Mapped top search item directly to global Command Palette (Ctrl+K).",
+          "🗺️ Dynamic Navigation Filtering: Automatically omits the current active page route from navigation destinations.",
+          "⚡ Quick Action Shortcuts: Instant action items for creating Games, Anime, Dramas, Notes, and Uploading Images.",
+          "🛡️ Editable Target Protection: Preserves native browser context menus on input, textarea, select, contenteditable, and code editors.",
+          "⌨️ Desktop Accessibility & Parity: Keyboard navigation with section header isolation, ESC dismissal, collision detection, and mobile bottom sheet conversion.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v4.4.1",
     date: "2026-08-01",
     title: "Universal Desktop-Grade Context Menu System",

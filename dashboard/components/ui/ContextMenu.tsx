@@ -72,7 +72,7 @@ export function ContextMenu({
     if (!isOpen) return;
 
     const validIndices = items
-      .map((item, idx) => (!item.disabled ? idx : -1))
+      .map((item, idx) => (!item.disabled && !item.isHeader ? idx : -1))
       .filter((idx) => idx !== -1);
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -216,6 +216,25 @@ export function ContextMenu({
               <div className="py-1 space-y-0.5 max-h-[60vh] overflow-y-auto">
                 {items.map((item, idx) => {
                   const isHighlighted = activeIndex === idx;
+
+                  if (item.isHeader) {
+                    return (
+                      <React.Fragment key={item.id}>
+                        {item.divider && (
+                          <div
+                            className="my-1.5 border-t"
+                            style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0" }}
+                          />
+                        )}
+                        <div
+                          className="px-3.5 pt-2 pb-0.5 text-[10px] font-mono font-black uppercase tracking-wider select-none pointer-events-none"
+                          style={{ color: isCyber ? "rgba(0,245,255,0.6)" : "#64748B" }}
+                        >
+                          {item.label}
+                        </div>
+                      </React.Fragment>
+                    );
+                  }
 
                   return (
                     <React.Fragment key={item.id}>

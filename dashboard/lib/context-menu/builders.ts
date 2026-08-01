@@ -287,3 +287,168 @@ export function buildBookmarkMenu({
 
   return items;
 }
+
+export interface GlobalNavigationMenuParams {
+  pathname: string;
+  theme: string;
+  setTheme: (theme: "cyber" | "brutal") => void;
+  router: { push: (path: string) => void };
+  logout: () => void;
+  openCommandPalette: () => void;
+}
+
+export function buildGlobalNavigationMenu({
+  pathname,
+  theme,
+  setTheme,
+  router,
+  logout,
+  openCommandPalette,
+}: GlobalNavigationMenuParams): ContextMenuItem[] {
+  const isCyber = theme === "cyber";
+  const normPath = (pathname || "/").replace(/\/$/, "") || "/";
+
+  const allNavItems = [
+    { id: "nav-dash", label: "Dashboard", icon: "🏠", path: "/" },
+    { id: "nav-games", label: "Games", icon: "🎮", path: "/games" },
+    { id: "nav-gamedb", label: "Game Database", icon: "📚", path: "/heroes" },
+    { id: "nav-anime", label: "Anime", icon: "📺", path: "/anime" },
+    { id: "nav-drama", label: "Drama", icon: "🎭", path: "/drama" },
+    { id: "nav-music", label: "Music", icon: "🎵", path: "/music" },
+    { id: "nav-hof", label: "Hall of Fame", icon: "🏆", path: "/hall-of-fame" },
+    { id: "nav-chars", label: "Characters", icon: "⚔️", path: "/characters" },
+    { id: "nav-toku", label: "Tokusatsu", icon: "🎬", path: "/tokusatsu" },
+    { id: "nav-gallery", label: "Gallery", icon: "🖼️", path: "/gallery" },
+    { id: "nav-ai", label: "AI Library", icon: "🤖", path: "/ai-library" },
+    { id: "nav-notepad", label: "Notepad", icon: "📝", path: "/notepad" },
+    { id: "nav-links", label: "Links", icon: "🔗", path: "/links" },
+    { id: "nav-prompts", label: "Prompt Vault", icon: "💬", path: "/prompt-vault" },
+  ];
+
+  // Dynamic Navigation: Hide current active page!
+  const availableNavItems = allNavItems.filter((item) => {
+    if (item.path === "/") {
+      return normPath !== "/";
+    }
+    return !normPath.startsWith(item.path);
+  });
+
+  const items: ContextMenuItem[] = [];
+
+  // 1. Search Integration (Top)
+  items.push({
+    id: "search-global",
+    label: "Search Everything...",
+    icon: "🔍",
+    shortcut: "⌘K",
+    onClick: openCommandPalette,
+  });
+
+  // 2. Navigation Section
+  if (availableNavItems.length > 0) {
+    items.push({
+      id: "hdr-nav",
+      label: "Navigation",
+      isHeader: true,
+      divider: true,
+      onClick: () => {},
+    });
+
+    availableNavItems.forEach((nav) => {
+      items.push({
+        id: nav.id,
+        label: nav.label,
+        icon: nav.icon,
+        onClick: () => router.push(nav.path),
+      });
+    });
+  }
+
+  // 3. Quick Actions Section
+  items.push({
+    id: "hdr-actions",
+    label: "Quick Actions",
+    isHeader: true,
+    divider: true,
+    onClick: () => {},
+  });
+
+  items.push({
+    id: "qa-add-game",
+    label: "Add Game",
+    icon: "➕",
+    onClick: () => router.push("/games?action=new"),
+  });
+  items.push({
+    id: "qa-add-anime",
+    label: "Add Anime",
+    icon: "➕",
+    onClick: () => router.push("/anime?action=new"),
+  });
+  items.push({
+    id: "qa-add-drama",
+    label: "Add Drama",
+    icon: "➕",
+    onClick: () => router.push("/drama?action=new"),
+  });
+  items.push({
+    id: "qa-new-note",
+    label: "New Note",
+    icon: "➕",
+    onClick: () => router.push("/notepad?action=new"),
+  });
+  items.push({
+    id: "qa-upload-img",
+    label: "Upload Image",
+    icon: "➕",
+    onClick: () => router.push("/gallery?action=upload"),
+  });
+
+  // 4. Theme Section
+  items.push({
+    id: "hdr-theme",
+    label: "Theme",
+    isHeader: true,
+    divider: true,
+    onClick: () => {},
+  });
+
+  items.push({
+    id: "theme-toggle",
+    label: isCyber ? "Switch to Neo-Brutalism" : "Switch to Cyberpunk",
+    icon: isCyber ? "☀️" : "🌙",
+    onClick: () => setTheme(isCyber ? "brutal" : "cyber"),
+  });
+
+  // 5. Profile Section
+  items.push({
+    id: "hdr-profile",
+    label: "Profile",
+    isHeader: true,
+    divider: true,
+    onClick: () => {},
+  });
+
+  items.push({
+    id: "prof-view",
+    label: "Profile",
+    icon: "👤",
+    onClick: () => router.push("/profile"),
+  });
+  items.push({
+    id: "prof-settings",
+    label: "Settings",
+    icon: "⚙️",
+    onClick: () => router.push("/profile?tab=settings"),
+  });
+  items.push({
+    id: "prof-logout",
+    label: "Logout",
+    icon: "🚪",
+    danger: true,
+    onClick: logout,
+  });
+
+  return items;
+}
+
