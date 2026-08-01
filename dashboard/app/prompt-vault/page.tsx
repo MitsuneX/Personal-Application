@@ -32,7 +32,7 @@ const AI_COLORS: Record<string, { cyber: string; brutal: string }> = {
   Other: { cyber: "#94a3b8", brutal: "#F1F5F9" },
 };
 
-export default function PromptVaultPage() {
+function PromptVaultPageContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { savedPrompts, addSavedPrompt, deleteSavedPrompt } = useDashboardStore();
@@ -95,7 +95,7 @@ export default function PromptVaultPage() {
   };
 
   return (
-    <AppShell>
+    <>
       {/* Page Header */}
       <motion.div
         className="mb-8 p-6 rounded-2xl relative overflow-hidden"
@@ -516,6 +516,14 @@ export default function PromptVaultPage() {
           </form>
         </div>
       </Modal>
+    </>
+  );
+}
+
+export default function PromptVaultPage() {
+  return (
+    <AppShell>
+      <PromptVaultPageContent />
     </AppShell>
   );
 }

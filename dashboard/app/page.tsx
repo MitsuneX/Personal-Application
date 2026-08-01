@@ -19,7 +19,7 @@ import { useContextMenu } from "@/hooks/useContextMenu";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { theme, setTheme } = useTheme();
   const isCyber = theme === "cyber";
   const { games, animeList, dramas, dramaLog, hallOfFame } = useDashboardStore();
@@ -88,7 +88,6 @@ export default function DashboardPage() {
 
   return (
     <div onContextMenu={handleBackgroundContextMenu}>
-      <AppShell>
       {/* ── Page header ── */}
       <motion.div
         className="mb-6"
@@ -218,7 +217,14 @@ export default function DashboardPage() {
           {isCyber ? "NEXUS v2.0.0 // NEXT.JS + FRAMER MOTION + RECHARTS" : "Dashboard v2.0.0 · Next.js + Framer Motion + Recharts"}
         </span>
       </motion.footer>
-    </AppShell>
   </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <AppShell>
+      <DashboardContent />
+    </AppShell>
   );
 }

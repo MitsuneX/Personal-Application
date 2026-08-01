@@ -77,7 +77,7 @@ export function FloatingPopover({
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  const { refs, floatingStyles, context } = useFloating({
+  const { refs, floatingStyles, context, x, y, middlewareData, isPositioned } = useFloating({
     open: isOpen,
     onOpenChange: setIsOpen,
     placement,
@@ -99,15 +99,64 @@ export function FloatingPopover({
         },
       }),
     ],
-    whileElementsMounted: (reference, floating, update) =>
-      autoUpdate(reference, floating, update, {
+    whileElementsMounted: (reference, floating, update) => {
+      // DIAGNOSTIC 1: track autoUpdate lifecycle
+      console.log("[DIAG-1] autoUpdate STARTED", {
+        referenceTagName: (reference as HTMLElement).tagName,
+        floatingTagName: (floating as HTMLElement).tagName,
+      });
+      const cleanup = autoUpdate(reference, floating, update, {
         ancestorScroll: true,
         ancestorResize: true,
         elementResize: true,
         layoutShift: true,
-        animationFrame: true, // Tracks Framer Motion width/layout animations on every frame
-      }),
+        animationFrame: true,
+      });
+      return () => {
+        console.log("[DIAG-1] autoUpdate STOPPED");
+        cleanup();
+      };
+    },
   });
+
+  // DIAGNOSTIC: log isPositioned / x / y whenever they change.
+  // Safe: depends only on primitive values — no unstable object refs in deps.
+  useEffect(() => {
+    console.log("[DIAG-4] isPositioned / x / y changed", {
+      isOpen,
+      isPositioned,
+      x,
+      y,
+      placement,
+      middlewareData,
+    });
+  }, [isOpen, isPositioned, x, y, placement, middlewareData]);
+
+  // DIAGNOSTIC: on open, snapshot bounding rects once the DOM has settled.
+  // Safe: isOpen is a boolean dep, refs.reference/floating are stable callback refs.
+  useEffect(() => {
+    if (!isOpen) return;
+    // Defer one tick so the floating element has been inserted by the portal
+    const id = requestAnimationFrame(() => {
+      const refRect = refs.reference.current?.getBoundingClientRect();
+      const floatRect = refs.floating.current?.getBoundingClientRect();
+      console.log("[DIAG-2] referenceRef.getBoundingClientRect()", {
+        node: refs.reference.current,
+        rect: refRect
+          ? { top: refRect.top, left: refRect.left, width: refRect.width, height: refRect.height }
+          : null,
+        isValid: refRect ? refRect.width > 0 && refRect.height > 0 : false,
+      });
+      console.log("[DIAG-3] floatingRef.getBoundingClientRect()", {
+        node: refs.floating.current,
+        rect: floatRect
+          ? { top: floatRect.top, left: floatRect.left, width: floatRect.width, height: floatRect.height }
+          : null,
+      });
+    });
+    return () => cancelAnimationFrame(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   const isHoverEnabled = triggerMode === "hover" || triggerMode === "hover-or-click";
   const isClickEnabled = triggerMode === "click" || triggerMode === "hover-or-click";
@@ -140,6 +189,7 @@ export function FloatingPopover({
 
   const isSheet = isMobile && mobileAsSheet;
 
+  // ── TEST A: AnimatePresence ENABLED ──────────────────────────────────────────
   return (
     <>
       {/* Trigger reference element */}
@@ -172,7 +222,6 @@ export function FloatingPopover({
               )}
 
               {/* Outer plain div: owned by Floating UI.
-                  Receives position:fixed + left:0 + top:0 + transform:translate(x,y).
                   Must NOT be a motion.div — Framer Motion would overwrite the transform. */}
               <div
                 key="popover-content"
@@ -194,9 +243,7 @@ export function FloatingPopover({
                 }
                 {...getFloatingProps()}
               >
-                {/* Inner motion.div: only handles enter/exit animation.
-                    Animates opacity and scale — no x/y/transform, so Floating UI's
-                    transform:translate(x,y) on the outer div is never overwritten. */}
+                {/* Inner motion.div: only handles opacity/scale animation — no x/y/transform */}
                 <motion.div
                   initial={
                     isSheet

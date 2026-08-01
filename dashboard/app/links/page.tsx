@@ -11,7 +11,7 @@ import { useConfirm } from "@/lib/context/ConfirmContext";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { buildBookmarkMenu } from "@/lib/context-menu/builders";
 
-export default function LinksPage() {
+function LinksPageContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { links, saveLink, deleteLink } = useDashboardStore();
@@ -72,7 +72,7 @@ export default function LinksPage() {
   });
 
   return (
-    <AppShell>
+    <>
       {/* Page Header */}
       <motion.div
         className="mb-8 p-6 rounded-2xl relative overflow-hidden"
@@ -454,6 +454,14 @@ export default function LinksPage() {
           </form>
         </div>
       </Modal>
+    </>
+  );
+}
+
+export default function LinksPage() {
+  return (
+    <AppShell>
+      <LinksPageContent />
     </AppShell>
   );
 }

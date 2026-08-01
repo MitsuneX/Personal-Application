@@ -316,7 +316,7 @@ function GameCard({
   );
 }
 
-export default function GamesPage() {
+function GamesPageContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { confirm } = useConfirm();
@@ -383,7 +383,7 @@ export default function GamesPage() {
   };
 
   return (
-    <AppShell>
+    <>
       {/* HUD Hero Banner Grid */}
       <motion.div
         className="relative rounded-2xl overflow-hidden mb-8 p-8 md:p-10"
@@ -630,6 +630,14 @@ export default function GamesPage() {
         imageUrl={lightboxState?.url || ""}
         title={lightboxState?.title || "Game Screenshot"}
       />
+    </>
+  );
+}
+
+export default function GamesPage() {
+  return (
+    <AppShell>
+      <GamesPageContent />
     </AppShell>
   );
 }

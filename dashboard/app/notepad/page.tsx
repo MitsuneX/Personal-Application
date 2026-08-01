@@ -10,7 +10,7 @@ import { useContextMenu } from "@/hooks/useContextMenu";
 
 type SidebarTab = "all" | "curiosity";
 
-export default function NotepadPage() {
+function NotepadPageContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { notes, saveNote, deleteNote, hobbySkills, logHobbyXP } = useDashboardStore();
@@ -110,7 +110,7 @@ export default function NotepadPage() {
   };
 
   return (
-    <AppShell>
+    <>
       {/* Page Header */}
       <motion.div
         className="mb-6 p-6 rounded-2xl relative overflow-hidden"
@@ -420,6 +420,14 @@ export default function NotepadPage() {
           )}
         </div>
       </div>
+    </>
+  );
+}
+
+export default function NotepadPage() {
+  return (
+    <AppShell>
+      <NotepadPageContent />
     </AppShell>
   );
 }

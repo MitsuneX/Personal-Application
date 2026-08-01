@@ -16,7 +16,7 @@ import { GameUidBadge } from "@/components/ui/GameUidBadge";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { buildGameCardMenu } from "@/lib/context-menu/builders";
 
-export default function GameDatabaseOverviewPage() {
+function GameDatabaseOverviewPageContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
 
@@ -46,7 +46,7 @@ export default function GameDatabaseOverviewPage() {
   });
 
   return (
-    <AppShell>
+    <>
       <motion.div
         variants={gridContainerVariants}
         initial="hidden"
@@ -386,6 +386,14 @@ export default function GameDatabaseOverviewPage() {
           </>
         )}
       </motion.div>
+    </>
+  );
+}
+
+export default function GameDatabaseOverviewPage() {
+  return (
+    <AppShell>
+      <GameDatabaseOverviewPageContent />
     </AppShell>
   );
 }

@@ -17,7 +17,7 @@ interface FolderTreeNode {
   itemCount: number;
 }
 
-export default function GalleryPage() {
+function GalleryPageContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { gallery, addGalleryItem, deleteGalleryItem } = useDashboardStore();
@@ -433,7 +433,7 @@ export default function GalleryPage() {
   };
 
   return (
-    <AppShell>
+    <>
       {/* ── Page Header ── */}
       <motion.div
         className="mb-8 p-8 rounded-2xl relative overflow-hidden flex flex-col sm:flex-row justify-between sm:items-center gap-6"
@@ -1333,8 +1333,14 @@ export default function GalleryPage() {
         }}
         onCropComplete={handleCropComplete}
       />
+    </>
+  );
+}
 
-
+export default function GalleryPage() {
+  return (
+    <AppShell>
+      <GalleryPageContent />
     </AppShell>
   );
 }
