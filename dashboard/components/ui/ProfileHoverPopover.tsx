@@ -1,17 +1,37 @@
 "use client";
 
-import React, { useRef, useState } from "react";
-import { FloatingLayer } from "./FloatingLayer";
-import { Z_INDEX } from "./ViewportBoundary";
-import { ProfilePopoutCard } from "@/components/profile/ProfilePopoutCard";
+/**
+ * ProfileHoverPopover — Backward-compatible adapter.
+ *
+ * Previously powered by a custom FloatingLayer + mouse-hover system.
+ * Now delegates to ProfilePopoutTrigger (Floating UI, click-only).
+ *
+ * Kept so existing import paths in Sidebar and Header don't need changing.
+ */
+
+import React from "react";
+import { Placement } from "@floating-ui/react";
+import { ProfilePopoutTrigger } from "@/components/profile/ProfilePopoutTrigger";
 
 export interface ProfileHoverPopoverProps {
   children: React.ReactNode;
+  /**
+   * Legacy placement tokens → Floating UI placement mapping.
+   * "up"        → "top-start"   (Sidebar expanded)
+   * "right"     → "right-start" (Sidebar collapsed)
+   * "down-left" → "bottom-end"  (Header)
+   */
   placement?: "up" | "right" | "down-left";
   onOpenAesthetics?: () => void;
   className?: string;
   style?: React.CSSProperties;
 }
+
+const PLACEMENT_MAP: Record<string, Placement> = {
+  up: "top-start",
+  right: "right-start",
+  "down-left": "bottom-end",
+};
 
 export function ProfileHoverPopover({
   children,
@@ -20,47 +40,16 @@ export function ProfileHoverPopover({
   className = "",
   style = {},
 }: ProfileHoverPopoverProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const closeTimer = useRef<NodeJS.Timeout | null>(null);
-
-  const handleMouseEnter = () => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    setIsOpen(true);
-  };
-
-  const handleMouseLeave = () => {
-    closeTimer.current = setTimeout(() => setIsOpen(false), 200);
-  };
-
-  const targetPlacement =
-    placement === "up" ? "top-start" : placement === "down-left" ? "bottom-end" : "right-start";
+  const floatingPlacement = PLACEMENT_MAP[placement] ?? "bottom-end";
 
   return (
-    <div
-      ref={triggerRef}
-      className={`inline-block ${className}`}
+    <ProfilePopoutTrigger
+      placement={floatingPlacement}
+      onOpenAesthetics={onOpenAesthetics}
+      className={className}
       style={style}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
       {children}
-
-      <FloatingLayer
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        triggerRef={triggerRef}
-        placement={targetPlacement}
-        zIndex={Z_INDEX.POPOVER}
-      >
-        <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-          <ProfilePopoutCard
-            isPopover={true}
-            onOpenAesthetics={onOpenAesthetics}
-            onClose={() => setIsOpen(false)}
-          />
-        </div>
-      </FloatingLayer>
-    </div>
+    </ProfilePopoutTrigger>
   );
 }

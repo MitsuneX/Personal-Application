@@ -541,11 +541,11 @@ interface DashboardState {
   profileHistory: ProfileHistoryEntry[];
   updateAesthetics: (data: {
     name?: string;
-    customTag?: string;
+    customTag?: string | null;
     bio?: string;
-    avatar?: string;
-    banner?: string;
-    nameplate?: string;
+    avatar?: string | null;
+    banner?: string | null;
+    nameplate?: string | null;
     borderStyle?: string;
   }) => Promise<void>;
 }
@@ -1807,8 +1807,20 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   // ─── Profile Aesthetics Actions ──────────────────────────────────────────────
 
   updateAesthetics: async (data) => {
-    // Optimistic update
-    set((s) => ({ profile: { ...s.profile, ...data } }));
+    // Optimistic update: null means "cleared" — store as undefined so ProfileData
+    // optional fields stay valid (ProfileData doesn't accept null).
+    set((s) => ({
+      profile: {
+        ...s.profile,
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.bio !== undefined && { bio: data.bio }),
+        ...(data.borderStyle !== undefined && { borderStyle: data.borderStyle }),
+        customTag: data.customTag === null ? undefined : data.customTag !== undefined ? data.customTag : s.profile.customTag,
+        avatar:    data.avatar    === null ? undefined : data.avatar    !== undefined ? data.avatar    : s.profile.avatar,
+        banner:    data.banner    === null ? undefined : data.banner    !== undefined ? data.banner    : s.profile.banner,
+        nameplate: data.nameplate === null ? undefined : data.nameplate !== undefined ? data.nameplate : s.profile.nameplate,
+      },
+    }));
     try {
       const res = await fetch("/api/action", {
         method: "POST",
@@ -1816,10 +1828,20 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         body: JSON.stringify({ action: "SAVE_AESTHETIC", payload: data }),
       });
       const result = await res.json();
-      if (result.success) {
-        // Sync server profile (covers updatedAt etc.)
+      if (result.success && result.data) {
+        // Merge server response — convert null DB values back to undefined for ProfileData
+        const srv = result.data;
         set((s) => ({
-          profile: { ...s.profile, ...result.data },
+          profile: {
+            ...s.profile,
+            ...(srv.name     !== undefined && { name:       srv.name }),
+            ...(srv.bio      !== undefined && { bio:        srv.bio }),
+            ...(srv.borderStyle !== undefined && { borderStyle: srv.borderStyle }),
+            customTag: srv.customTag  ?? undefined,
+            avatar:    srv.avatar     ?? undefined,
+            banner:    srv.banner     ?? undefined,
+            nameplate: srv.nameplate  ?? undefined,
+          },
           profileHistory: (result.history || []).map((h: any) => ({
             ...h,
             createdAt: h.createdAt ?? new Date().toISOString(),

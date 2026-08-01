@@ -811,11 +811,12 @@ export async function POST(req: Request) {
           data: {
             userId,
             ...(payload.name !== undefined && { name: payload.name }),
-            ...(payload.customTag !== undefined && { customTag: payload.customTag }),
-            ...(payload.bio !== undefined && { bio: payload.bio }),
-            ...(payload.avatar !== undefined && { avatar: payload.avatar }),
-            ...(payload.banner !== undefined && { banner: payload.banner }),
-            ...(payload.nameplate !== undefined && { nameplate: payload.nameplate }),
+            // null explicitly clears the column; undefined skips the update
+            ...(payload.customTag  !== undefined && { customTag:  payload.customTag  ?? null }),
+            ...(payload.bio        !== undefined && { bio:        payload.bio }),
+            ...(payload.avatar     !== undefined && { avatar:     payload.avatar     ?? null }),
+            ...(payload.banner     !== undefined && { banner:     payload.banner     ?? null }),
+            ...(payload.nameplate  !== undefined && { nameplate:  payload.nameplate  ?? null }),
             ...(payload.borderStyle !== undefined && { borderStyle: payload.borderStyle }),
           },
         });

@@ -2,6 +2,37 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [4.3.0] - 2026-08-01
+
+### 👤 Profile Popout System — Production Rebuild (Root Cause Fix)
+
+**Trigger System**
+- **Click-only trigger**: Replaced hover-based `ProfileHoverPopover` with click-to-open/click-outside-to-close behavior for both Sidebar and Header. No more accidental popout openings.
+- **Floating UI integration**: Replaced broken custom `CollisionDetector.ts` with `@floating-ui/react` — eliminates scroll-offset vs fixed-positioning coordinate system mismatch. Provides automatic viewport collision, flipping, shifting, and scroll tracking.
+- **New `ProfilePopoutTrigger.tsx`**: Dedicated click-only trigger component using `@floating-ui/react` `useClick`, `useDismiss`, and `autoUpdate`.
+- **ESC to close**: Full keyboard dismissal via Floating UI's `useDismiss` hook.
+
+**Card Architecture**
+- **Internal scroll zone**: `ProfilePopoutCard.tsx` rebuilt with sticky Banner+Avatar header (never scrolls away) and `overflow-y-auto overscroll-contain` body — the page no longer scrolls when the popout is open.
+- **`max-h-[calc(100vh-32px)]`**: Popout is fully constrained inside the visible viewport.
+
+**Banner Rendering**
+- **Smart `isAnimatedMedia()` helper**: GIF, animated WebP, and AVIF use native `<img>` (preserves animation frames). Static JPG/PNG use Next.js `<Image>` (keeps optimization + lazy loading).
+
+**Banner Corruption Fix (Root Cause)**
+- **`useEffect` sync fix**: `AestheticsModal.tsx` now syncs local form state only when the modal *opens* (`isOpen: false → true`), not on every store change — prevents server response from overwriting locally-cleared fields.
+- **Null semantics**: Cleared fields now send `null` (not `undefined`/`""`) through the entire chain — `AestheticsModal → updateAesthetics → /api/action → Prisma`. `null` explicitly clears the DB column.
+- **API fix**: `SAVE_AESTHETIC` handler in `action/route.ts` now accepts `null` to set DB columns to `NULL`.
+- **Store fix**: `updateAesthetics` in `dashboardStore.ts` handles `null` correctly in both optimistic update and server response sync (null DB values map to `undefined` in `ProfileData`).
+
+**Single Source of Truth**
+- `ProfilePopoutCard` reads exclusively from `useDashboardStore(s => s.profile)` — no local profile copy.
+- Live statistics (Games, Anime, Drama, Favorites, Profile Completion %) computed from live Zustand store — zero hardcoded mock counts.
+
+**Cache Audit**
+- Confirmed: No Zustand `persist` middleware on profile fields. Store is pure in-memory.
+- Confirmed: Dashboard API always serves the DB `profile` row. `user_metadata` is only used as a creation fallback for new users.
+
 ## [4.2.0] - 2026-08-01
 
 ### 👤 Profile Popout System Architectural Rebuild (`ProfilePopoutCard.tsx`)

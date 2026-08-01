@@ -13,6 +13,39 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v4.3.0",
+    date: "2026-08-01",
+    title: "Profile Popout System — Production Rebuild (Root Cause Fix)",
+    badge: "PROFILE 4.3 REBUILD",
+    type: "major",
+    summary: "Complete architectural rebuild of the profile popout system. Replaced hover-based triggering with click-only Floating UI positioning, rebuilt ProfilePopoutCard with sticky header + internal scroll zone, fixed the GIF banner corruption root cause (useEffect re-sync bug + null vs undefined chain), and enforced single source of truth across all profile consumers.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🖱️ Click-only trigger: Both Sidebar and Header now use click-to-open, click-outside-to-close. No more accidental hover openings.",
+          "🎯 Floating UI (@floating-ui/react): Replaced broken custom CollisionDetector — proper viewport collision, auto-flip, shift, and scroll tracking.",
+          "⌨️ ESC to close: Full keyboard dismissal via Floating UI useDismiss hook.",
+          "📌 Sticky Banner+Avatar header: Never scrolls away when popout body is scrolled.",
+          "📜 Internal scroll zone: overflow-y-auto overscroll-contain on body — page no longer scrolls behind the popout.",
+          "📐 max-h-[calc(100vh-32px)]: Popout always fully contained within the visible viewport.",
+          "🔒 ProfilePopoutCard reads exclusively from useDashboardStore(s => s.profile) — no local profile copy.",
+          "📊 Live statistics (Games, Anime, Drama, Favorites) computed from live Zustand state — no hardcoded mock counts.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🔧 useEffect sync fix: AestheticsModal now syncs local state only on modal open, preventing server responses from overwriting cleared fields.",
+          "🗑️ Null semantics: Clearing banner/avatar/nameplate sends null through the full chain (Modal → Store → API → Prisma → DB NULL).",
+          "🌐 API fix: SAVE_AESTHETIC accepts null to clear DB columns to NULL.",
+          "📦 Store fix: updateAesthetics handles null in optimistic update and server sync correctly.",
+          "🏠 Cache audit confirmed: No persist middleware on profile, DB row always wins.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v4.2.0",
     date: "2026-08-01",
     title: "Profile Popout System Architectural Rebuild (ProfilePopoutCard.tsx)",

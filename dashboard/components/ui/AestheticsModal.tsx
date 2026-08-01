@@ -148,16 +148,20 @@ export function AestheticsModal({ isOpen, onClose }: AestheticsModalProps) {
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const nameplateInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync when profile changes externally (e.g. fetch)
+  // Sync local form state only when the modal OPENS (isOpen: false → true).
+  // Do NOT re-sync on every profile change — that causes the server's stale
+  // response to overwrite locally-cleared fields (banner corruption bug).
   useEffect(() => {
-    setName(profile.name);
-    setCustomTag(profile.customTag ?? "");
-    setBio(profile.bio);
-    setAvatar(profile.avatar ?? "");
-    setBanner(profile.banner ?? "");
-    setNameplate(profile.nameplate ?? "");
-    setBorderStyle(profile.borderStyle ?? "default");
-  }, [profile]);
+    if (isOpen) {
+      setName(profile.name);
+      setCustomTag(profile.customTag ?? "");
+      setBio(profile.bio);
+      setAvatar(profile.avatar ?? "");
+      setBanner(profile.banner ?? "");
+      setNameplate(profile.nameplate ?? "");
+      setBorderStyle(profile.borderStyle ?? "default");
+    }
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, target: "avatar" | "banner" | "nameplate") => {
@@ -232,13 +236,17 @@ export function AestheticsModal({ isOpen, onClose }: AestheticsModalProps) {
     e.preventDefault();
     setIsSaving(true);
     try {
+      // Send null (not undefined / empty string) for cleared optional media fields.
+      // null explicitly tells the API to set the DB column to NULL.
+      // undefined would be skipped by the API handler (no update).
+      // empty string "" would be stored as an empty string (not cleared).
       await updateAesthetics({
         name: name.trim(),
-        customTag: customTag.trim() || undefined,
+        customTag: customTag.trim() || null,
         bio: bio.trim(),
-        avatar: avatar.trim() || undefined,
-        banner: banner.trim() || undefined,
-        nameplate: nameplate.trim() || undefined,
+        avatar: avatar.trim() || null,
+        banner: banner.trim() || null,
+        nameplate: nameplate.trim() || null,
         borderStyle,
       });
       onClose();
