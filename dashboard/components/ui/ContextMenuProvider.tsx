@@ -69,10 +69,40 @@ export function ContextMenuProvider({ children }: { children: React.ReactNode })
     closeContextMenu();
   }, [pathname, closeContextMenu]);
 
-  // Layer 2: Global Navigation Context Menu Fallback
+  // Helper to open Global Navigation Context Menu
+  const triggerGlobalNavMenu = useCallback(
+    (coords: { clientX: number; clientY: number }) => {
+      const globalMenuItems = buildGlobalNavigationMenu({
+        pathname: pathname || "/",
+        theme,
+        setTheme,
+        router,
+        logout: () => {
+          try {
+            useDashboardStore.getState().resetUserStore();
+            document.cookie = "is_guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+            localStorage.removeItem("is_guest");
+          } catch (err) {}
+          window.location.href = "/login";
+        },
+        openCommandPalette: () => {
+          window.dispatchEvent(new CustomEvent("open-command-palette"));
+        },
+      });
+
+      openContextMenu(
+        { clientX: coords.clientX, clientY: coords.clientY, preventDefault: () => {} },
+        globalMenuItems,
+        "Global Navigation"
+      );
+    },
+    [pathname, theme, setTheme, router, openContextMenu]
+  );
+
+  // Desktop Layer 2: Right-Click Fallback Listener
   useEffect(() => {
     const handleGlobalContextMenu = (e: MouseEvent) => {
-      // 1. If an object-specific context menu already handled the event (Layer 1 claimed it), skip!
+      // 1. Layer 1 check: If an object card context menu already handled the event, skip!
       if (e.defaultPrevented) {
         return;
       }
@@ -92,33 +122,100 @@ export function ContextMenuProvider({ children }: { children: React.ReactNode })
 
       // 3. Trigger Global Navigation Context Menu on empty background / whitespace
       e.preventDefault();
-
-      const globalMenuItems = buildGlobalNavigationMenu({
-        pathname: pathname || "/",
-        theme,
-        setTheme,
-        router,
-        logout: () => {
-          try {
-            useDashboardStore.getState().resetUserStore();
-            document.cookie = "is_guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-            localStorage.removeItem("is_guest");
-          } catch (err) {}
-          window.location.href = "/login";
-        },
-        openCommandPalette: () => {
-          window.dispatchEvent(new CustomEvent("open-command-palette"));
-        },
-      });
-
-      openContextMenu(e, globalMenuItems, "Global Navigation");
+      triggerGlobalNavMenu({ clientX: e.clientX, clientY: e.clientY });
     };
 
     window.addEventListener("contextmenu", handleGlobalContextMenu);
     return () => {
       window.removeEventListener("contextmenu", handleGlobalContextMenu);
     };
-  }, [pathname, theme, setTheme, router, openContextMenu]);
+  }, [triggerGlobalNavMenu]);
+
+  // Touch Long-Press Engine for Mobile & Tablet (450ms - 600ms)
+  useEffect(() => {
+    let touchTimer: NodeJS.Timeout | null = null;
+    let startX = 0;
+    let startY = 0;
+
+    const cancelTouch = () => {
+      if (touchTimer) {
+        clearTimeout(touchTimer);
+        touchTimer = null;
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) {
+        cancelTouch();
+        return;
+      }
+
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      // Check if target is editable -> preserve native text selection
+      const isEditable =
+        target.closest(
+          'input, textarea, select, [contenteditable="true"], .monaco-editor, .CodeMirror, .cm-editor, .rich-text-editor'
+        ) !== null || target.isContentEditable;
+
+      if (isEditable) {
+        return;
+      }
+
+      // Check if target is inside an interactive card or action element
+      const isInteractiveObject =
+        target.closest(
+          'a, button, [role="button"], [data-context-menu], input, textarea, select, [data-card="true"]'
+        ) !== null;
+
+      // Only start 500ms long-press timer if touching empty page background / whitespace
+      if (!isInteractiveObject) {
+        cancelTouch();
+        touchTimer = setTimeout(() => {
+          triggerGlobalNavMenu({ clientX: startX, clientY: startY });
+        }, 500); // 500ms long-press duration
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!touchTimer || e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      const dist = Math.hypot(touch.clientX - startX, touch.clientY - startY);
+
+      // Cancel if finger moves more than ~10px or user starts scrolling/swiping
+      if (dist > 10) {
+        cancelTouch();
+      }
+    };
+
+    const handleTouchEnd = () => {
+      cancelTouch();
+    };
+
+    const handleScroll = () => {
+      cancelTouch();
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", handleTouchEnd, { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      cancelTouch();
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("touchcancel", handleTouchEnd);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [triggerGlobalNavMenu]);
 
   return (
     <ContextMenuContext.Provider value={{ openContextMenu, closeContextMenu, isOpen: state.isOpen }}>
