@@ -13,6 +13,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v4.6.0",
+    date: "2026-08-01",
+    title: "Interactive Category Filtering for Game Database",
+    badge: "GAME DOSSIER ENGINE",
+    type: "major",
+    summary: "Implemented scalable, database-driven dual category filtering (Element & Path/Class) for all games in the Game Database. Features configuration adapters per game, memoized AND filtering logic, unified DossierCharacterCard component, Framer Motion layout animations, and polished empty states.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🎯 Interactive Dual-Category Filtering: Integrated element cards and path cards as real-time interactive filter controls.",
+          "🔄 Dynamic Game Configuration Adapters: Automatically adapts categories, elements, labels, and icons per game from gameDossierConfig.ts.",
+          "🃏 DossierCharacterCard Component: Created a unified character card with portrait, element badge, path badge, level rank, winrate %, favorite starring, and context menu.",
+          "✨ Framer Motion Layout Animations: Smooth roster layout transitions with AnimatePresence when filtering or mutating character data.",
+          "🛡️ Polished Empty States: Displays interactive empty state cards with 1-click filter reset when zero characters match active filters.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v4.5.0",
     date: "2026-08-01",
     title: "Universal Desktop-Class Navigation Context Menu Expansion",

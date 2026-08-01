@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { BentoCard } from "@/components/cards/BentoCard";
 import { useTheme } from "@/lib/theme";
@@ -14,7 +14,9 @@ import { DossierCharacterEditorModal } from "@/components/ui/DossierCharacterEdi
 import { GameScannerModal } from "@/components/ui/GameScannerModal";
 import { GameUidBadge } from "@/components/ui/GameUidBadge";
 import { useContextMenu } from "@/hooks/useContextMenu";
-import { buildGameCardMenu } from "@/lib/context-menu/builders";
+import { DossierCharacterCard } from "@/components/cards/DossierCharacterCard";
+import { InteractiveCategoryFilter } from "@/components/ui/InteractiveCategoryFilter";
+import { useConfirm } from "@/lib/context/ConfirmContext";
 
 function GameDatabaseOverviewPageContent() {
   const { theme } = useTheme();
@@ -22,28 +24,88 @@ function GameDatabaseOverviewPageContent() {
 
   const games = useDashboardStore((s) => s.games) || [];
   const dossierCharacters = useDashboardStore((s) => s.dossierCharacters) || [];
+  const { removeDossierCharacter } = useDashboardStore();
   const { openContextMenu } = useContextMenu();
+  const { confirm } = useConfirm();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGameFilter, setSelectedGameFilter] = useState<string>("ALL");
+  const [selectedElement, setSelectedElement] = useState<string>("ALL");
+  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
 
   const [isCharModalOpen, setIsCharModalOpen] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [editingCharacter, setEditingCharacter] = useState<DossierCharacterEntry | null>(null);
   const [targetGameId, setTargetGameId] = useState<string>(games[0]?.id || "");
 
-  // Filtered Characters List
-  const filteredCharacters = (dossierCharacters || []).filter((c) => {
-    if (selectedGameFilter !== "ALL" && c.gameId !== selectedGameFilter) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchName = c.name.toLowerCase().includes(q);
-      const matchCat = c.category.toLowerCase().includes(q);
-      const matchRole = c.role?.toLowerCase().includes(q) || false;
-      return matchName || matchCat || matchRole;
-    }
-    return true;
-  });
+  const activeGameObj = games.find((g) => g.id === selectedGameFilter);
+
+  // Reset category and element filters when game selection changes
+  const handleGameFilterChange = (newGameId: string) => {
+    setSelectedGameFilter(newGameId);
+    setSelectedElement("ALL");
+    setSelectedCategory("ALL");
+  };
+
+  // Combined Memoized Filtering Logic
+  const filteredCharacters = useMemo(() => {
+    return (dossierCharacters || []).filter((c) => {
+      // 1. Game filter
+      if (selectedGameFilter !== "ALL" && c.gameId !== selectedGameFilter) {
+        return false;
+      }
+
+      // 2. Element filter (Primary)
+      if (selectedElement !== "ALL") {
+        const charRole = (c.role || "").toLowerCase();
+        const selEl = selectedElement.toLowerCase();
+        if (charRole !== selEl && !charRole.includes(selEl)) {
+          return false;
+        }
+      }
+
+      // 3. Category / Path filter (Secondary)
+      if (selectedCategory !== "ALL") {
+        const charCat = (c.category || "").toLowerCase();
+        const selCat = selectedCategory.toLowerCase();
+        if (charCat !== selCat && !charCat.includes(selCat)) {
+          return false;
+        }
+      }
+
+      // 4. Search query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchName = c.name.toLowerCase().includes(q);
+        const matchCat = (c.category || "").toLowerCase().includes(q);
+        const matchRole = (c.role || "").toLowerCase().includes(q);
+        const matchRank = (c.levelRank || "").toLowerCase().includes(q);
+        if (!matchName && !matchCat && !matchRole && !matchRank) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [dossierCharacters, selectedGameFilter, selectedElement, selectedCategory, searchQuery]);
+
+  const handleDeleteCharacter = (char: DossierCharacterEntry) => {
+    confirm({
+      title: "Delete Character Dossier",
+      message: `Are you sure you want to delete ${char.name}? This action cannot be undone.`,
+      confirmText: "Delete Character",
+      variant: "danger",
+      itemPreview: {
+        title: char.name,
+        subtitle: `${char.category || "Character"} • ${char.role || "Roster"}`,
+        icon: "🗑️",
+      },
+      successToast: `✓ Character "${char.name}" deleted.`,
+      onConfirm: async () => {
+        await removeDossierCharacter(char.id);
+      },
+    });
+  };
 
   return (
     <>
@@ -60,7 +122,7 @@ function GameDatabaseOverviewPageContent() {
               <span>📊</span> {isCyber ? "GAME_DOSSIER_DATABASE" : "Game Database Hub"}
             </h1>
             <p className="text-xs theme-text-muted font-mono mt-1">
-              Select any game to inspect its intelligence dossier, hero rosters, and tactical performance.
+              Inspect intelligence dossiers, filter character rosters by element and path, and track tactical performance.
             </p>
           </div>
 
@@ -106,15 +168,24 @@ function GameDatabaseOverviewPageContent() {
               const iconRes = resolveGameIcon(game.game, game.icon);
               const config = getGameDossierConfig(game.game, game.category);
               const gameChars = dossierCharacters.filter((c) => c.gameId === game.id);
-              const avgWin = gameChars.length > 0
-                ? Math.round(gameChars.reduce((acc, c) => acc + (c.winRate || 0), 0) / gameChars.length)
-                : 0;
+              const avgWin =
+                gameChars.length > 0
+                  ? Math.round(gameChars.reduce((acc, c) => acc + (c.winRate || 0), 0) / gameChars.length)
+                  : 0;
+
+              const isSelectedGame = selectedGameFilter === game.id;
 
               const handleDossierContextMenu = (e: React.MouseEvent) => {
                 e.preventDefault();
                 openContextMenu(
                   e,
                   [
+                    {
+                      id: "filter",
+                      label: `Filter by ${game.game}`,
+                      icon: "🎯",
+                      onClick: () => handleGameFilterChange(game.id),
+                    },
                     {
                       id: "view",
                       label: `View ${game.game} Dossier`,
@@ -153,13 +224,30 @@ function GameDatabaseOverviewPageContent() {
                   variants={cardVariants}
                   custom={idx}
                   layout
+                  onClick={() => handleGameFilterChange(isSelectedGame ? "ALL" : game.id)}
                   onContextMenu={handleDossierContextMenu}
-                  className="rounded-2xl p-5 border flex flex-col justify-between relative overflow-hidden group transition-all cursor-context-menu"
+                  className="rounded-2xl p-5 border flex flex-col justify-between relative overflow-hidden group transition-all cursor-pointer select-none hover:scale-[1.02]"
                   style={{
-                    backgroundColor: isCyber ? "rgba(10,15,30,0.85)" : "#FFFFFF",
-                    borderColor: isCyber ? `${game.accentColor || "#00F5FF"}40` : "#000",
-                    borderWidth: isCyber ? "1px" : "2.5px",
-                    boxShadow: isCyber ? `0 0 15px ${game.accentColor || "#00F5FF"}20` : "4px 4px 0 #000",
+                    backgroundColor: isCyber
+                      ? isSelectedGame
+                        ? `rgba(0,245,255,0.15)`
+                        : "rgba(10,15,30,0.85)"
+                      : isSelectedGame
+                      ? "#FEF08A"
+                      : "#FFFFFF",
+                    borderColor: isCyber
+                      ? isSelectedGame
+                        ? game.accentColor || "#00F5FF"
+                        : `${game.accentColor || "#00F5FF"}40`
+                      : "#000000",
+                    borderWidth: isCyber ? (isSelectedGame ? "2px" : "1px") : "2.5px",
+                    boxShadow: isCyber
+                      ? isSelectedGame
+                        ? `0 0 25px ${game.accentColor || "#00F5FF"}50`
+                        : `0 0 15px ${game.accentColor || "#00F5FF"}20`
+                      : isSelectedGame
+                      ? "5px 5px 0 #000000"
+                      : "4px 4px 0 #000000",
                   }}
                 >
                   <div>
@@ -201,7 +289,9 @@ function GameDatabaseOverviewPageContent() {
                     <div className="grid grid-cols-2 gap-2 my-2 py-2 border-y border-white/10 text-xs font-mono">
                       <div>
                         <span className="theme-text-muted block text-[10px]">ROSTER</span>
-                        <strong className="theme-text-primary">{gameChars.length} {config.characterLabel}s</strong>
+                        <strong className="theme-text-primary">
+                          {gameChars.length} {config.characterLabel}s
+                        </strong>
                       </div>
                       <div>
                         <span className="theme-text-muted block text-[10px]">AVG WINRATE</span>
@@ -231,6 +321,7 @@ function GameDatabaseOverviewPageContent() {
                   {/* Open Game Database Link */}
                   <Link
                     href={`/games/${game.id}`}
+                    onClick={(e) => e.stopPropagation()}
                     className="w-full py-2.5 px-3 rounded-xl font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer text-center"
                     style={{
                       backgroundColor: isCyber ? "rgba(0,245,255,0.14)" : "#FEF08A",
@@ -247,42 +338,65 @@ function GameDatabaseOverviewPageContent() {
           </div>
         </motion.div>
 
-        {/* ── Global Character Search & Master Roster ── */}
+        {/* ── Dynamic Category & Element Filtering Section ── */}
+        {activeGameObj && (
+          <motion.div variants={cardVariants} className="pt-2">
+            <BentoCard id="game-category-filter-panel" className="p-5 md:p-6">
+              <InteractiveCategoryFilter
+                gameTitle={activeGameObj.game}
+                gameCategory={activeGameObj.category}
+                characters={dossierCharacters.filter((c) => c.gameId === activeGameObj.id)}
+                selectedElement={selectedElement}
+                onSelectElement={setSelectedElement}
+                selectedCategory={selectedCategory}
+                onSelectCategory={setSelectedCategory}
+                onResetFilters={() => {
+                  setSelectedElement("ALL");
+                  setSelectedCategory("ALL");
+                }}
+              />
+            </BentoCard>
+          </motion.div>
+        )}
+
+        {/* ── Character Collection Section (Master Roster Index) ── */}
         <motion.div variants={cardVariants} className="space-y-4 pt-2">
           <BentoCard id="master-dossier-roster" className="p-5 md:p-6 space-y-4">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-black theme-text-primary flex items-center gap-2">
-                  <span>🗂️</span> Master Roster Index ({filteredCharacters.length})
+                  <span>🗂️</span> Character Collection ({filteredCharacters.length})
                 </h2>
                 <p className="text-xs theme-text-muted font-mono mt-0.5">
-                  Browse and filter all tracked character dossiers across your entire game collection
+                  Browse, filter, and manage characters across your game collection with live element & path combination filters.
                 </p>
               </div>
 
-              {/* Filter Controls */}
+              {/* Filter Controls Header */}
               <div className="flex items-center gap-2 w-full md:w-auto flex-wrap">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search characters or roles..."
+                  placeholder="Search character name or rank..."
                   className="px-3.5 py-2 rounded-xl border text-xs font-bold focus:outline-none flex-1 md:w-64"
                   style={{
                     backgroundColor: isCyber ? "rgba(10,15,30,0.75)" : "#F8FAFC",
                     color: isCyber ? "#F8FAFC" : "#0F172A",
                     borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#000000",
+                    borderWidth: isCyber ? "1px" : "2px",
                   }}
                 />
 
                 <select
                   value={selectedGameFilter}
-                  onChange={(e) => setSelectedGameFilter(e.target.value)}
+                  onChange={(e) => handleGameFilterChange(e.target.value)}
                   className="px-3.5 py-2 rounded-xl border text-xs font-bold focus:outline-none cursor-pointer"
                   style={{
                     backgroundColor: isCyber ? "rgba(10,15,30,0.75)" : "#F8FAFC",
                     color: isCyber ? "#F8FAFC" : "#0F172A",
                     borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#000000",
+                    borderWidth: isCyber ? "1px" : "2px",
                   }}
                 >
                   <option value="ALL">All Games</option>
@@ -296,75 +410,56 @@ function GameDatabaseOverviewPageContent() {
             </div>
 
             {/* Characters Master Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-2">
-              {filteredCharacters.map((char) => {
-                const parentGame = games.find((g) => g.id === char.gameId);
-                const charAccent = char.accentColor || parentGame?.accentColor || "#3B82F6";
-
-                return (
-                  <div
-                    key={char.id}
-                    className="p-4 rounded-xl border relative overflow-hidden group transition-all"
-                    style={{
-                      backgroundColor: isCyber ? "rgba(0,245,255,0.03)" : "rgba(0,0,0,0.02)",
-                      borderColor: isCyber ? `${charAccent}30` : "#000",
-                      borderWidth: isCyber ? "1px" : "2px",
-                      boxShadow: !isCyber ? "2px 2px 0 #000" : "none",
-                    }}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div
-                          className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0 border overflow-hidden font-bold"
-                          style={{
-                            backgroundColor: `${charAccent}20`,
-                            color: charAccent,
-                            borderColor: isCyber ? charAccent : "#000",
-                          }}
-                        >
-                          {char.avatarUrl ? (
-                            char.avatarUrl.startsWith("http") || char.avatarUrl.startsWith("data:") || char.avatarUrl.startsWith("/") ? (
-                              <img src={char.avatarUrl} alt={char.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <span>{char.avatarUrl}</span>
-                            )
-                          ) : (
-                            <span>{char.name.charAt(0)}</span>
-                          )}
-                        </div>
-
-                        <div className="min-w-0">
-                          <h4 className="font-black text-sm theme-text-primary truncate leading-tight">
-                            {char.name}
-                          </h4>
-                          <p className="text-[10px] font-mono text-amber-500 font-bold truncate">
-                            {parentGame?.game || "Unknown Game"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        <Link
-                          href={`/games/${char.gameId}`}
-                          className="text-[10px] px-2 py-1 rounded font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30"
-                        >
-                          View Dossier ↗
-                        </Link>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-xs font-mono">
-                      <span className="theme-text-muted">{char.category} {char.role ? `• ${char.role}` : ""}</span>
-                      <span className="font-bold text-emerald-400">{char.winRate}% WR</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            {filteredCharacters.length === 0 ? (
+              <div
+                className="p-8 rounded-2xl border text-center space-y-3"
+                style={{
+                  backgroundColor: isCyber ? "rgba(10,15,30,0.6)" : "#FFFFFF",
+                  borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000000",
+                  borderWidth: isCyber ? "1px" : "2.5px",
+                  boxShadow: isCyber ? "none" : "4px 4px 0 #000000",
+                }}
+              >
+                <div className="text-4xl">🔍</div>
+                <h3 className="font-black text-base theme-text-primary">
+                  No characters match the selected filters.
+                </h3>
+                <p className="text-xs theme-text-muted max-w-md mx-auto">
+                  Try selecting another Element or Class, or clear active search parameters to view your character roster.
+                </p>
+                <button
+                  onClick={() => {
+                    setSelectedElement("ALL");
+                    setSelectedCategory("ALL");
+                    setSearchQuery("");
+                  }}
+                  className="px-4 py-2 rounded-xl font-extrabold text-xs bg-amber-500 text-black border-2 border-black shadow-[2px_2px_0_#000] cursor-pointer"
+                >
+                  Reset All Filters ↺
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                <AnimatePresence mode="popLayout">
+                  {filteredCharacters.map((char) => (
+                    <DossierCharacterCard
+                      key={char.id}
+                      character={char}
+                      onEdit={(c) => {
+                        setEditingCharacter(c);
+                        setTargetGameId(c.gameId);
+                        setIsCharModalOpen(true);
+                      }}
+                      onDelete={handleDeleteCharacter}
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
           </BentoCard>
         </motion.div>
 
-        {/* Character Modal */}
+        {/* Character Editor Modal */}
         {targetGameId && (
           <>
             <DossierCharacterEditorModal

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { useState, useMemo, use } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
@@ -18,6 +18,8 @@ import { ShowcaseEditorModal } from "@/components/ui/ShowcaseEditorModal";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 import { FilterDropdown } from "@/components/ui/FilterDropdown";
 import { GameUidBadge } from "@/components/ui/GameUidBadge";
+import { DossierCharacterCard } from "@/components/cards/DossierCharacterCard";
+import { InteractiveCategoryFilter } from "@/components/ui/InteractiveCategoryFilter";
 
 const RESOURCE_CATEGORIES = [
   "Meta", "Tier List", "Heroes", "Characters", "Builds",
@@ -299,7 +301,8 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
   const [editingShowcaseItem, setEditingShowcaseItem] = useState<GameShowcaseEntry | null>(null);
 
   // Active Filters
-  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>("ALL");
+  const [selectedElement, setSelectedElement] = useState<string>("ALL");
+  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [showcaseCategoryFilter, setShowcaseCategoryFilter] = useState<string>("ALL");
   const [showcaseTagFilter, setShowcaseTagFilter] = useState<string>("ALL");
 
@@ -329,11 +332,35 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
   const dossierConfig = getGameDossierConfig(gameTitle, currentGame.category);
   const elementSystem = dossierConfig.elementSystem;
 
-  // Filter dossier characters for this specific game
-  const rawGameCharacters = dossierCharacters.filter((c) => c.gameId === currentGame.id);
-  const filteredCharacters = activeCategoryFilter === "ALL"
-    ? rawGameCharacters
-    : rawGameCharacters.filter((c) => c.category === activeCategoryFilter);
+  // Filter dossier characters for this specific game with combined dual category filters
+  const rawGameCharacters = useMemo(
+    () => dossierCharacters.filter((c) => c.gameId === currentGame.id),
+    [dossierCharacters, currentGame.id]
+  );
+
+  const filteredCharacters = useMemo(() => {
+    return rawGameCharacters.filter((char) => {
+      // 1. Element / Role filter
+      if (selectedElement !== "ALL") {
+        const charRole = (char.role || "").toLowerCase();
+        const selEl = selectedElement.toLowerCase();
+        if (charRole !== selEl && !charRole.includes(selEl)) {
+          return false;
+        }
+      }
+
+      // 2. Category / Path filter
+      if (selectedCategory !== "ALL") {
+        const charCat = (char.category || "").toLowerCase();
+        const selCat = selectedCategory.toLowerCase();
+        if (charCat !== selCat && !charCat.includes(selCat)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [rawGameCharacters, selectedElement, selectedCategory]);
 
   // Filter showcase gallery items for this specific game
   const rawShowcaseItems = gameShowcaseItems.filter((i) => i.gameId === currentGame.id);
@@ -699,371 +726,123 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
           )}
         </motion.div>
 
-        {/* ── Element / Attribute System Section (Config-Driven Category Themes) ── */}
-        {elementSystem && (
-          <motion.div variants={cardVariants} className="space-y-3">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-black theme-text-primary">
-                ✦ {elementSystem.sectionLabel}
-              </h2>
-              <span className="text-xs font-mono theme-text-muted">
-                — {elementSystem.elements.length} types
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
-              {elementSystem.elements.map((el) => {
-                const charCount = elementCharCounts[el.id] || 0;
-                const tokens = getCategoryVisualTokens(el, isCyber);
-
-                return (
-                  <div
-                    key={el.id}
-                    className="rounded-2xl p-4 border text-center relative overflow-hidden transition-all hover:scale-[1.02]"
-                    style={{
-                      backgroundColor: isCyber ? tokens.gradient : "#FFFFFF",
-                      borderColor: isCyber ? tokens.border : "#000000",
-                      borderWidth: isCyber ? "1px" : "2.5px",
-                      boxShadow: isCyber ? tokens.glow : "3px 3px 0 #000000",
-                    }}
-                  >
-                    {/* Cyber glow background accent */}
-                    {isCyber && (
-                      <div
-                        className="absolute inset-0 rounded-2xl pointer-events-none opacity-40"
-                        style={{ background: `radial-gradient(circle at 50% 0%, ${tokens.accentColor}33, transparent 70%)` }}
-                      />
-                    )}
-                    <div className="relative z-10">
-                      <div className="text-2xl mb-1.5">{el.icon}</div>
-                      <p
-                        className="font-black text-xs leading-tight"
-                        style={{ color: isCyber ? tokens.accentColor : "#1A1A1A" }}
-                      >
-                        {el.name}
-                      </p>
-                      <span
-                        className="inline-block mt-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-bold"
-                        style={{
-                          backgroundColor: tokens.badgeBg,
-                          color: tokens.badgeText,
-                          border: isCyber ? `1px solid ${tokens.accentColor}40` : "1px solid #000",
-                        }}
-                      >
-                        {charCount} {dossierConfig.characterLabel}{charCount !== 1 ? "s" : ""}
-                      </span>
-                      {el.description && (
-                        <p className="text-[10px] theme-text-muted mt-1.5 leading-tight line-clamp-2 hidden sm:block opacity-90">
-                          {el.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-
-        {/* ── Game-Aware Category Panels (Config-Driven Category Themes) ── */}
-        <motion.div variants={cardVariants} className="space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div>
-              <h2 className="text-xl font-black theme-text-primary flex items-center gap-2">
-                <span>📁 {dossierConfig.categoryLabel} Breakdown</span>
-              </h2>
-              <p className="text-xs theme-text-muted font-mono mt-0.5">
-                Game-specific category structure for {gameTitle}
-              </p>
-            </div>
-
-            {/* Category Filter Tabs */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
-              <button
-                onClick={() => setActiveCategoryFilter("ALL")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                  activeCategoryFilter === "ALL"
-                    ? "bg-amber-500 text-black border-2 border-black font-extrabold"
-                    : "theme-text-muted hover:theme-text-primary bg-black/10 dark:bg-white/5"
-                }`}
-              >
-                All ({rawGameCharacters.length})
-              </button>
-              {dossierConfig.categories.map((cat) => {
-                const count = rawGameCharacters.filter((c) => c.category === cat.name).length;
-                const tokens = getCategoryVisualTokens(cat, isCyber);
-
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => setActiveCategoryFilter(cat.name)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
-                      activeCategoryFilter === cat.name
-                        ? "border-2 font-extrabold shadow-sm"
-                        : "theme-text-muted hover:theme-text-primary bg-black/10 dark:bg-white/5"
-                    }`}
-                    style={
-                      activeCategoryFilter === cat.name
-                        ? {
-                            backgroundColor: isCyber ? tokens.badgeBg : tokens.accentColor,
-                            color: isCyber ? tokens.accentColor : "#FFFFFF",
-                            borderColor: isCyber ? tokens.accentColor : "#000000",
-                          }
-                        : {}
-                    }
-                  >
-                    <span>{cat.icon}</span> {cat.name} ({count})
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Category Cards Overview Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
-            {dossierConfig.categories.map((cat) => {
-              const catChars = rawGameCharacters.filter((c) => c.category === cat.name);
-              const isActiveCat = activeCategoryFilter === cat.name;
-              const tokens = getCategoryVisualTokens(cat, isCyber);
-
-              return (
-                <div
-                  key={cat.id}
-                  onClick={() => setActiveCategoryFilter(isActiveCat ? "ALL" : cat.name)}
-                  className="rounded-2xl p-4 border transition-all cursor-pointer relative overflow-hidden group hover:scale-[1.02]"
-                  style={{
-                    backgroundColor: isCyber
-                      ? (isActiveCat ? tokens.gradient : "rgba(10,15,30,0.6)")
-                      : (isActiveCat ? "#FEF08A" : "#FFFFFF"),
-                    borderColor: isCyber
-                      ? (isActiveCat ? tokens.accentColor : tokens.border)
-                      : "#000",
-                    borderWidth: isCyber ? "1px" : "2.5px",
-                    boxShadow: !isCyber
-                      ? (isActiveCat ? "4px 4px 0 #000" : "3px 3px 0 #000")
-                      : (isActiveCat ? tokens.glow : "none"),
-                  }}
-                >
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="text-xl">{cat.icon}</span>
-                    <span
-                      className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold"
-                      style={{
-                        backgroundColor: tokens.badgeBg,
-                        color: tokens.badgeText,
-                        border: isCyber ? `1.5px solid ${tokens.accentColor}40` : "1.5px solid #000",
-                      }}
-                    >
-                      {catChars.length} {catChars.length === 1 ? dossierConfig.characterLabel : `${dossierConfig.characterLabel}s`}
-                    </span>
-                  </div>
-
-                  <h3 className="font-black text-sm leading-tight truncate" style={{ color: isCyber ? tokens.accentColor : "#1A1A1A" }}>
-                    {cat.name}
-                  </h3>
-                  <p className="text-[11px] theme-text-muted mt-1 line-clamp-2 leading-relaxed">{cat.description}</p>
-
-                  {catChars.length > 0 && (
-                    <div className="mt-3 pt-2.5 border-t border-white/10 space-y-1">
-                      {catChars.slice(0, 3).map((char) => (
-                        <div key={char.id} className="flex items-center justify-between text-[11px] font-mono">
-                          <span className="font-bold theme-text-primary truncate">{char.name}</span>
-                          <span className="font-bold" style={{ color: tokens.accentColor }}>{char.winRate}%</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+        {/* ── Dynamic Category & Element Filtering Section ── */}
+        <motion.div variants={cardVariants} className="pt-2">
+          <BentoCard id="game-category-filter-panel" className="p-5 md:p-6">
+            <InteractiveCategoryFilter
+              gameTitle={gameTitle}
+              gameCategory={currentGame.category}
+              characters={rawGameCharacters}
+              selectedElement={selectedElement}
+              onSelectElement={setSelectedElement}
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+              onResetFilters={() => {
+                setSelectedElement("ALL");
+                setSelectedCategory("ALL");
+              }}
+            />
+          </BentoCard>
         </motion.div>
 
-        {/* ── 1. RENAME "CHARACTER INTELLIGENCE ROSTER" -> 📊 Statistics Scanner ── */}
-        <motion.div variants={cardVariants} className="space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div>
-              <h2 className="text-xl font-black theme-text-primary flex items-center gap-2">
-                <span>📊 Statistics Scanner</span>
-              </h2>
-              <p className="text-xs theme-text-muted font-mono mt-0.5">
-                AI & OCR screenshot extraction, stats detection, and character data management
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsScannerOpen(true)}
-                className="px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
-                style={{
-                  backgroundColor: isCyber ? "rgba(0,245,255,0.12)" : "#FEF08A",
-                  color: isCyber ? "#00F5FF" : "#854D0E",
-                  border: isCyber ? "1px solid rgba(0,245,255,0.3)" : "2px solid #000",
-                  boxShadow: isCyber ? "none" : "2px 2px 0 #000",
-                }}
-              >
-                <span>📷</span> Scan Screenshot
-              </button>
-              <span className="text-xs font-mono theme-text-muted">
-                Showing {filteredCharacters.length} of {rawGameCharacters.length} entries
-              </span>
-            </div>
-          </div>
+        {/* ── Character Collection Section (Statistics Scanner Roster) ── */}
+        <motion.div variants={cardVariants} className="space-y-4 pt-2">
+          <BentoCard id="character-collection-roster" className="p-5 md:p-6 space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <h2 className="text-xl font-black theme-text-primary flex items-center gap-2">
+                  <span>🗂️</span> Character Collection ({filteredCharacters.length})
+                </h2>
+                <p className="text-xs theme-text-muted font-mono mt-0.5">
+                  Interactive character roster for {gameTitle} with real-time element and category filtering
+                </p>
+              </div>
 
-          {filteredCharacters.length === 0 ? (
-            <div
-              className="p-8 rounded-2xl border text-center space-y-3"
-              style={{
-                backgroundColor: isCyber ? "rgba(10,15,30,0.6)" : "#FFFFFF",
-                borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000",
-                borderWidth: isCyber ? "1px" : "2.5px",
-                boxShadow: isCyber ? "none" : "4px 4px 0 #000",
-              }}
-            >
-              <div className="text-4xl">📸</div>
-              <h3 className="font-black text-base theme-text-primary">Your Statistics Scanner is Empty</h3>
-              <p className="text-xs theme-text-muted max-w-sm mx-auto">
-                Upload a game statistics screenshot and let the AI scanner automatically extract and build your profile.
-              </p>
-              <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsScannerOpen(true)}
-                  className="px-4 py-2 rounded-xl font-extrabold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-md"
+                  className="px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
                   style={{
-                    backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#FEF08A",
+                    backgroundColor: isCyber ? "rgba(0,245,255,0.12)" : "#FEF08A",
                     color: isCyber ? "#00F5FF" : "#854D0E",
-                    border: isCyber ? "1px solid rgba(0,245,255,0.4)" : "2px solid #000",
+                    border: isCyber ? "1px solid rgba(0,245,255,0.3)" : "2px solid #000",
                     boxShadow: isCyber ? "none" : "2px 2px 0 #000",
                   }}
                 >
-                  <span>📷</span> Scan Screenshot & Auto-Import
+                  <span>📷</span> Scan Screenshot
                 </button>
                 <button
-                  onClick={() => { setEditingCharacter(null); setIsCharModalOpen(true); }}
-                  className="px-4 py-2 rounded-xl font-bold text-xs bg-amber-500 text-black border-2 border-black shadow-[2px_2px_0_#000] cursor-pointer"
+                  onClick={() => {
+                    setEditingCharacter(null);
+                    setIsCharModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl font-bold text-xs bg-amber-500 text-black border-2 border-black shadow-[2px_2px_0_#000] cursor-pointer"
                 >
-                  + Add Manually
+                  + Add {dossierConfig.characterLabel}
                 </button>
               </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredCharacters.map((char, index) => {
-                const charAccent = char.accentColor || accent;
-                return (
-                  <motion.div
-                    key={char.id}
-                    variants={cardVariants}
-                    custom={index}
-                    layout
-                    className="rounded-2xl p-5 border relative overflow-hidden group transition-all"
+
+            {filteredCharacters.length === 0 ? (
+              <div
+                className="p-8 rounded-2xl border text-center space-y-3"
+                style={{
+                  backgroundColor: isCyber ? "rgba(10,15,30,0.6)" : "#FFFFFF",
+                  borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000000",
+                  borderWidth: isCyber ? "1px" : "2.5px",
+                  boxShadow: isCyber ? "none" : "4px 4px 0 #000000",
+                }}
+              >
+                <div className="text-4xl">🔍</div>
+                <h3 className="font-black text-base theme-text-primary">
+                  No characters match the selected filters.
+                </h3>
+                <p className="text-xs theme-text-muted max-w-sm mx-auto">
+                  Try selecting another Element or Class, or reset your active filters to view your roster.
+                </p>
+                <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
+                  <button
+                    onClick={() => {
+                      setSelectedElement("ALL");
+                      setSelectedCategory("ALL");
+                    }}
+                    className="px-4 py-2 rounded-xl font-extrabold text-xs bg-amber-500 text-black border-2 border-black shadow-[2px_2px_0_#000] cursor-pointer"
+                  >
+                    Reset All Filters ↺
+                  </button>
+                  <button
+                    onClick={() => setIsScannerOpen(true)}
+                    className="px-4 py-2 rounded-xl font-bold text-xs"
                     style={{
-                      backgroundColor: isCyber ? "rgba(10,15,30,0.8)" : "#FFFFFF",
-                      borderColor: isCyber ? `${charAccent}40` : "#000",
-                      borderWidth: isCyber ? "1px" : "2.5px",
-                      boxShadow: isCyber ? `0 0 15px ${charAccent}20` : "4px 4px 0 #000",
+                      backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#E0F2FE",
+                      color: isCyber ? "#00F5FF" : "#0369A1",
+                      border: isCyber ? "1px solid rgba(0,245,255,0.4)" : "2px solid #000",
                     }}
                   >
-                    <div className="absolute top-3.5 right-3.5 flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all z-20">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingCharacter(char);
-                          setIsCharModalOpen(true);
-                        }}
-                        className="p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer text-xs"
-                        title="Edit Entry"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteDossierChar(char);
-                        }}
-                        className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-500 cursor-pointer text-xs"
-                        title="Delete Entry"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-
-                    <div className="flex items-start gap-4">
-                      <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 font-bold overflow-hidden border shadow-sm"
-                        style={{
-                          backgroundColor: `${charAccent}20`,
-                          color: charAccent,
-                          borderColor: isCyber ? charAccent : "#000",
-                          borderWidth: isCyber ? "1px" : "2px",
-                        }}
-                      >
-                        {char.avatarUrl ? (
-                          char.avatarUrl.startsWith("http") || char.avatarUrl.startsWith("data:") || char.avatarUrl.startsWith("/") ? (
-                            <img src={char.avatarUrl} alt={char.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <span>{char.avatarUrl}</span>
-                          )
-                        ) : (
-                          <span>{char.name.charAt(0)}</span>
-                        )}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-black text-base theme-text-primary truncate leading-tight">{char.name}</h3>
-                          {char.isFavorite && <span className="text-amber-400 text-xs">⭐</span>}
-                        </div>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap text-xs font-mono">
-                          <span
-                            className="px-2 py-0.5 rounded text-[10px] font-bold"
-                            style={{
-                              backgroundColor: `${charAccent}20`,
-                              color: isCyber ? charAccent : "#1A1A1A",
-                              border: `1px solid ${charAccent}`,
-                            }}
-                          >
-                            {char.category}
-                          </span>
-                          {char.role && <span className="theme-text-muted">{char.role}</span>}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 pt-3 border-t border-white/10 space-y-2">
-                      <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="theme-text-muted">Winrate:</span>
-                        <span className="font-extrabold text-emerald-400">{char.winRate ?? 0}%</span>
-                      </div>
-                      <div className="w-full h-2 rounded-full overflow-hidden bg-black/20 dark:bg-white/10 border border-white/10">
-                        <motion.div
-                          className="h-full rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${Math.min(100, char.winRate || 0)}%` }}
-                          transition={{ duration: 0.8, ease: "easeOut" }}
-                          style={{ backgroundColor: charAccent }}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between text-[11px] font-mono theme-text-muted pt-1">
-                        {char.levelRank && <span>Level/Rank: <strong className="theme-text-primary">{char.levelRank}</strong></span>}
-                        {char.matches !== undefined && <span>Matches: <strong className="theme-text-primary">{char.matches}</strong></span>}
-                      </div>
-                      {char.notes && (
-                        <div
-                          className="mt-2.5 p-2.5 rounded-xl text-xs theme-text-secondary font-sans leading-relaxed border"
-                          style={{
-                            backgroundColor: isCyber ? "rgba(0,245,255,0.04)" : "#F8FAFC",
-                            borderColor: isCyber ? "rgba(0,245,255,0.15)" : "#E2E8F0",
-                          }}
-                        >
-                          💬 {char.notes}
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
+                    📷 Scan Screenshot
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                <AnimatePresence mode="popLayout">
+                  {filteredCharacters.map((char) => (
+                    <DossierCharacterCard
+                      key={char.id}
+                      character={char}
+                      gameTitle={gameTitle}
+                      gameCategory={currentGame.category}
+                      onEdit={(c) => {
+                        setEditingCharacter(c);
+                        setIsCharModalOpen(true);
+                      }}
+                      onDelete={(c) => handleDeleteDossierChar(c)}
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+          </BentoCard>
         </motion.div>
 
         {/* ── 2. NEW SECTION: 🖼 Showcase Gallery (Directly below Statistics Scanner) ── */}

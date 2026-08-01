@@ -2,6 +2,19 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [4.6.0] - 2026-08-01
+
+### 🎯 Interactive Category Filtering for Game Database (Production Architecture)
+
+**Configuration-Driven Architecture**
+- **Dynamic Game Adapters**: Built `InteractiveCategoryFilter.tsx` that reads game configurations from `gameDossierConfig.ts` to automatically render game-specific primary categories (Elements / Resonance Attributes / Battle Attributes / Colors) and secondary categories (Paths / Operator Classes / Lanes / Weapon Types).
+- **Dual Combined Filtering**: Implemented memoized `AND` filtering logic (`character.element === selectedElement AND character.category === selectedCategory`) with instant toggle & reset capabilities.
+
+**Components & User Experience**
+- **`DossierCharacterCard`**: Designed a unified character card with portrait rendering, element badges, path badges, level rank, winrate %, favorite starring (⭐), and context menu support.
+- **Framer Motion Layout Animations**: Smooth character roster transitions with `<AnimatePresence>` during filtering, adding, or deleting characters.
+- **Polished Empty State**: Added interactive empty state cards with 1-click filter reset when zero characters match current filter combinations.
+
 ## [4.5.0] - 2026-08-01
 
 ### 🖥️ Universal Desktop-Class Navigation Context Menu Expansion
