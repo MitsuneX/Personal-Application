@@ -38,13 +38,14 @@ export function ProfilePopoutTrigger({
     open: isOpen,
     onOpenChange: setIsOpen,
     placement,
+    strategy: "fixed",
     middleware: [
-      offset(10),
+      offset(14),
       flip({
-        fallbackPlacements: ["top-end", "bottom-start", "top-start"],
-        padding: 12,
+        fallbackPlacements: ["bottom-end", "bottom-start", "top-end", "top-start", "right-start", "left-start"],
+        padding: 20,
       }),
-      shift({ padding: 12 }),
+      shift({ padding: 20 }),
     ],
     whileElementsMounted: autoUpdate,
   });
