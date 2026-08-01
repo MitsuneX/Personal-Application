@@ -290,8 +290,9 @@ Next.js 16 App Router renders client pages backed by a Zustand global store (`da
 ### What are its major systems?
 1. **Zustand Application Store (`dashboardStore.ts`):** Single source of truth for app state, persistence, and optimistic updates.
 2. **Dual Theme Engine (`ThemeContext.tsx`):** Seamlessly toggles between Neo-Brutalism and Cyberpunk visual designs.
-3. **Layout & Viewport Shell (`AppShell.tsx`):** Manages responsive sidebar state, mobile drawers, and exports the `--sidebar-width` layout variable.
-4. **Prisma & Supabase Backend (`/api/*`, `prisma/schema.prisma`):** Serverless persistence layer handling data queries and file uploads.
+3. **Layout & Viewport Shell (`AppShell.tsx`):** Manages responsive sidebar state, mobile drawers, global overlay providers, and exports the `--sidebar-width` layout variable.
+4. **Universal Desktop-Grade Context Menu System (`ContextMenuProvider.tsx`, `ContextMenu.tsx`):** Global overlay-portal right-click context menu engine supporting keyboard navigation, auto-flipping, and mobile bottom sheet conversion.
+5. **Prisma & Supabase Backend (`/api/*`, `prisma/schema.prisma`):** Serverless persistence layer handling data queries and file uploads.
 
 ### How does the main data flow?
 `User Interaction` ──► `Zustand Store Mutation (Optimistic UI Update)` ──► `HTTP POST to /api/action` ──► `Prisma ORM` ──► `PostgreSQL Database`.
