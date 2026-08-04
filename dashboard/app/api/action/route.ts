@@ -68,6 +68,7 @@ export async function POST(req: Request) {
         const item = await prisma.gameDossierCharacter.upsert({
           where: { id: payload.id },
           update: {
+            userId,
             gameId: payload.gameId,
             name: payload.name,
             category: payload.category,
@@ -82,6 +83,7 @@ export async function POST(req: Request) {
           },
           create: {
             id: payload.id,
+            userId,
             gameId: payload.gameId,
             name: payload.name,
             category: payload.category,
@@ -107,6 +109,7 @@ export async function POST(req: Request) {
         const item = await prisma.gameExternalResource.upsert({
           where: { id: payload.id },
           update: {
+            userId,
             gameId: payload.gameId,
             name: payload.name,
             url: payload.url,
@@ -118,6 +121,7 @@ export async function POST(req: Request) {
           },
           create: {
             id: payload.id,
+            userId,
             gameId: payload.gameId,
             name: payload.name,
             url: payload.url,
@@ -140,6 +144,7 @@ export async function POST(req: Request) {
         const item = await prisma.gameShowcaseItem.upsert({
           where: { id: payload.id },
           update: {
+            userId,
             gameId: payload.gameId,
             title: payload.title,
             description: payload.description ?? null,
@@ -150,6 +155,7 @@ export async function POST(req: Request) {
           },
           create: {
             id: payload.id,
+            userId,
             gameId: payload.gameId,
             title: payload.title,
             description: payload.description || null,
@@ -171,6 +177,7 @@ export async function POST(req: Request) {
         const project = await prisma.projectItem.upsert({
           where: { id: payload.id },
           update: {
+            userId,
             name: payload.name,
             logo: payload.logo ?? null,
             heroBanner: payload.heroBanner ?? null,
@@ -196,6 +203,7 @@ export async function POST(req: Request) {
           },
           create: {
             id: payload.id,
+            userId,
             name: payload.name,
             logo: payload.logo || null,
             heroBanner: payload.heroBanner || null,
@@ -236,6 +244,7 @@ export async function POST(req: Request) {
         const item = await prisma.aiToolItem.upsert({
           where: { id: payload.id },
           update: {
+            userId,
             name: payload.name,
             company: payload.company ?? null,
             description: payload.description,
@@ -270,6 +279,7 @@ export async function POST(req: Request) {
           },
           create: {
             id: payload.id,
+            userId,
             name: payload.name,
             company: payload.company || null,
             description: payload.description,
@@ -326,6 +336,7 @@ export async function POST(req: Request) {
         const anime = await prisma.anime.upsert({
           where: { id: payload.id },
           update: {
+            userId,
             title: payload.title,
             episodesWatched: payload.episodesWatched,
             totalEpisodes: payload.totalEpisodes,
@@ -340,6 +351,7 @@ export async function POST(req: Request) {
           },
           create: {
             id: payload.id,
+            userId,
             title: payload.title,
             episodesWatched: payload.episodesWatched,
             totalEpisodes: payload.totalEpisodes,
@@ -360,6 +372,7 @@ export async function POST(req: Request) {
         const drama = await prisma.drama.upsert({
           where: { id: payload.id },
           update: {
+            userId,
             title: payload.title,
             country: payload.country,
             episodes: payload.episodes,
@@ -373,6 +386,7 @@ export async function POST(req: Request) {
           },
           create: {
             id: payload.id,
+            userId,
             title: payload.title,
             country: payload.country,
             episodes: payload.episodes,
@@ -400,12 +414,14 @@ export async function POST(req: Request) {
         const char = await prisma.favoriteCharacter.upsert({
           where: { id: payload.id },
           update: {
+            userId,
             name: payload.name,
             anime: payload.anime,
             isFavorite: payload.isFavorite ?? true,
           },
           create: {
             id: payload.id,
+            userId,
             name: payload.name,
             anime: payload.anime,
             isFavorite: payload.isFavorite ?? true,
@@ -438,6 +454,7 @@ export async function POST(req: Request) {
         const hof = await prisma.hallOfFame.upsert({
           where: { id: payload.id },
           update: {
+            userId,
             name: payload.name,
             type: payload.type,
             status: payload.status,
@@ -454,6 +471,7 @@ export async function POST(req: Request) {
           },
           create: {
             id: payload.id,
+            userId,
             name: payload.name,
             type: payload.type,
             status: payload.status,
@@ -498,6 +516,7 @@ export async function POST(req: Request) {
         const note = await prisma.note.upsert({
           where: { id: payload.id },
           update: {
+            userId,
             title: payload.title,
             content: payload.content,
             hobbyId: payload.hobbyId ?? null,
@@ -505,6 +524,7 @@ export async function POST(req: Request) {
           },
           create: {
             id: payload.id,
+            userId,
             title: payload.title,
             content: payload.content,
             hobbyId: payload.hobbyId ?? null,
@@ -524,12 +544,14 @@ export async function POST(req: Request) {
         const link = await prisma.link.upsert({
           where: { id: payload.id },
           update: {
+            userId,
             title: payload.title,
             url: payload.url,
             category: payload.category,
           },
           create: {
             id: payload.id,
+            userId,
             title: payload.title,
             url: payload.url,
             category: payload.category,
@@ -548,6 +570,7 @@ export async function POST(req: Request) {
         const item = await prisma.galleryItem.create({
           data: {
             id: payload.id,
+            userId,
             title: payload.title,
             url: payload.url,
             caption: payload.caption ?? null,
@@ -569,6 +592,7 @@ export async function POST(req: Request) {
         const song = await prisma.song.upsert({
           where: { id: payload.id },
           update: {
+            userId,
             title: payload.title,
             artist: payload.artist,
             album: payload.album ?? null,
@@ -583,6 +607,7 @@ export async function POST(req: Request) {
           },
           create: {
             id: payload.id,
+            userId,
             title: payload.title,
             artist: payload.artist,
             album: payload.album || null,
@@ -608,6 +633,7 @@ export async function POST(req: Request) {
         const playlist = await prisma.playlist.upsert({
           where: { id: payload.id },
           update: {
+            userId,
             name: payload.name,
             description: payload.description ?? null,
             coverUrl: payload.coverUrl ?? null,
@@ -615,6 +641,7 @@ export async function POST(req: Request) {
           },
           create: {
             id: payload.id,
+            userId,
             name: payload.name,
             description: payload.description ?? null,
             coverUrl: payload.coverUrl ?? null,
@@ -633,6 +660,7 @@ export async function POST(req: Request) {
         const entry = await prisma.dramaLog.upsert({
           where: { id: payload.id ?? "___new___" },
           update: {
+            userId,
             title: payload.title,
             type: payload.type,
             releaseYear: payload.releaseYear ?? null,
@@ -648,6 +676,7 @@ export async function POST(req: Request) {
           },
           create: {
             id: payload.id,
+            userId,
             title: payload.title,
             type: payload.type,
             releaseYear: payload.releaseYear ?? null,
@@ -679,6 +708,7 @@ export async function POST(req: Request) {
         const logEntry = await prisma.dramaLog.update({
           where: { id: payload.id },
           data: {
+            userId,
             episodesWatched: payload.episodesWatched ?? 0,
             totalEpisodes: payload.totalEpisodes ?? 0,
           },
@@ -695,12 +725,14 @@ export async function POST(req: Request) {
         const entry = await prisma.savedPrompt.upsert({
           where: { id: payload.id },
           update: {
+            userId,
             title: payload.title,
             targetAI: payload.targetAI,
             promptText: payload.promptText,
           },
           create: {
             id: payload.id,
+            userId,
             title: payload.title,
             targetAI: payload.targetAI,
             promptText: payload.promptText,
@@ -716,27 +748,27 @@ export async function POST(req: Request) {
 
       // ─── Hobby Actions ─────────────────────────────────────────────────────────
       case "SEED_HOBBIES": {
-        const existing = await prisma.hobbySkill.count();
+        const existing = await prisma.hobbySkill.count({ where: { userId } });
         if (existing === 0) {
           const seeds = [
-            { name: "Chinese",          category: "Languages",   priority: "Priority" },
-            { name: "English",          category: "Languages",   priority: "Priority" },
-            { name: "Japanese",         category: "Languages",   priority: "Haven't Started" },
-            { name: "Korean",           category: "Languages",   priority: "Haven't Started" },
-            { name: "German",           category: "Languages",   priority: "Manifest" },
-            { name: "Russian",          category: "Languages",   priority: "Manifest" },
-            { name: "Spanish",          category: "Languages",   priority: "Manifest" },
-            { name: "Neuroscience",     category: "Doctors",     priority: "Priority" },
-            { name: "Patofisiologi",    category: "Doctors",     priority: "Priority" },
-            { name: "MMA",              category: "Martial Arts", priority: "Priority" },
-            { name: "Judo",             category: "Martial Arts", priority: "Manifest" },
-            { name: "Taekwondo",        category: "Martial Arts", priority: "Manifest" },
-            { name: "Karate",           category: "Martial Arts", priority: "Manifest" },
-            { name: "Silat",            category: "Martial Arts", priority: "Priority" },
+            { name: "Chinese",          category: "Languages",   priority: "Priority", userId },
+            { name: "English",          category: "Languages",   priority: "Priority", userId },
+            { name: "Japanese",         category: "Languages",   priority: "Haven't Started", userId },
+            { name: "Korean",           category: "Languages",   priority: "Haven't Started", userId },
+            { name: "German",           category: "Languages",   priority: "Manifest", userId },
+            { name: "Russian",          category: "Languages",   priority: "Manifest", userId },
+            { name: "Spanish",          category: "Languages",   priority: "Manifest", userId },
+            { name: "Neuroscience",     category: "Doctors",     priority: "Priority", userId },
+            { name: "Patofisiologi",    category: "Doctors",     priority: "Priority", userId },
+            { name: "MMA",              category: "Martial Arts", priority: "Priority", userId },
+            { name: "Judo",             category: "Martial Arts", priority: "Manifest", userId },
+            { name: "Taekwondo",        category: "Martial Arts", priority: "Manifest", userId },
+            { name: "Karate",           category: "Martial Arts", priority: "Manifest", userId },
+            { name: "Silat",            category: "Martial Arts", priority: "Priority", userId },
           ];
           await prisma.hobbySkill.createMany({ data: seeds });
         }
-        const skills = await prisma.hobbySkill.findMany({ orderBy: { createdAt: "asc" } });
+        const skills = await prisma.hobbySkill.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
         return NextResponse.json({ success: true, data: skills });
       }
 
@@ -748,6 +780,7 @@ export async function POST(req: Request) {
         // Create log entry
         await prisma.hobbyLog.create({
           data: {
+            userId,
             skillId: payload.skillId,
             delta,
             wordCount: words,

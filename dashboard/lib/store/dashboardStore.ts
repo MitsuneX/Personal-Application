@@ -830,17 +830,11 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
               }
             : currentProfile,
           games: data.games || [],
-          dossierCharacters: (data.dossierCharacters && data.dossierCharacters.length > 0)
-            ? data.dossierCharacters
-            : get().dossierCharacters,
-          gameResources: (data.gameResources && data.gameResources.length > 0)
-            ? data.gameResources
-            : get().gameResources,
+          dossierCharacters: data.dossierCharacters || [],
+          gameResources: data.gameResources || [],
           gameShowcaseItems: data.gameShowcaseItems || [],
-          projects: (data.projects && data.projects.length > 0)
-            ? data.projects
-            : get().projects,
-          aiTools: data.aiTools !== undefined ? data.aiTools : get().aiTools,
+          projects: data.projects || [],
+          aiTools: data.aiTools || [],
 
           animeList: data.animeList || [],
           favoriteCharacters: data.favoriteCharacters || [],

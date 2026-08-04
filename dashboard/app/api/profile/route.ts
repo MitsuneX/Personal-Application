@@ -10,11 +10,15 @@ export async function POST(req: Request) {
     const supabase = createClient(cookieStore);
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Prefer existing user-specific profile if it exists, otherwise update default "profile"
+    const userId = user?.id || null;
     let profileId = "profile";
     if (user?.id) {
-      const userProf = await prisma.profile.findUnique({ where: { id: user.id } });
+      const userProf = await prisma.profile.findFirst({
+        where: { OR: [{ id: user.id }, { userId: user.id }] },
+      });
       if (userProf) {
+        profileId = userProf.id;
+      } else {
         profileId = user.id;
       }
     }
@@ -23,7 +27,7 @@ export async function POST(req: Request) {
     const existing = await prisma.profile.findUnique({ where: { id: profileId } });
     if (existing && data.avatar && data.avatar !== existing.avatar && existing.avatar) {
       await prisma.profileHistory.create({
-        data: { assetType: "avatar", url: existing.avatar },
+        data: { userId: userId || undefined, assetType: "avatar", url: existing.avatar },
       });
     }
 
@@ -31,6 +35,7 @@ export async function POST(req: Request) {
     const updated = await prisma.profile.upsert({
       where: { id: profileId },
       update: {
+        ...(userId && { userId }),
         name: data.name,
         tagline: data.tagline,
         bio: data.bio,
@@ -46,6 +51,7 @@ export async function POST(req: Request) {
       },
       create: {
         id: profileId,
+        ...(userId && { userId }),
         name: data.name || user?.email?.split("@")[0] || "Default User",
         tagline: data.tagline || "",
         bio: data.bio || "",
