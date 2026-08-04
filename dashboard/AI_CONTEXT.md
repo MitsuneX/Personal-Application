@@ -22,7 +22,7 @@
 | **Games HUD & Library** | Track active games across PC, PSN, Xbox, Switch, Mobile; filter by category/rank; edit main characters/roles; upload 16:9 landscape screenshots. | Triggers `/api/action` (`UPDATE_GAME`, `DELETE_GAME`). Screenshot preview launches fullscreen `ImageLightboxModal.tsx`. (`app/games/page.tsx`) |
 | **Anime Zone & Character Vault** | Track anime episodes watched/total, status (Watching, Completed, On Hold, etc.), star ratings, genres, and favorite characters list with double-tap like counters. | Direct Zustand state mutation + Prisma sync via `/api/action` (`UPDATE_ANIME`, `TOGGLE_CHARACTER_FAVORITE`). (`app/anime/page.tsx`) |
 | **Drama Hub & Regional Logs** | Manage Asian & Western dramas categorized by region (Japanese 🇯🇵, Korean 🇰🇷, Chinese 🇨🇳, Indonesian 🇮🇩, Hollywood 🎬) and log watch progress. | Routes to `/drama/[country]` pages; syncs with global media stats and top show widgets on Dashboard (`MediaLogCard.tsx`). |
-| **Hall of Fame (HOF) Registry** | Rank actors, actresses, anime figures, singers, and tokusatsu legends into tiers (GOAT Status, All-Star, Rising, Classic); double-tap cards to increment likes. | Triggers `/api/action` (`UPDATE_HOF`, `LIKE_HOF`). Integrates associated drama links and nationality groups. (`HofEntryCard.tsx`, `HofEditorModal.tsx`) |
+| **Hall of Fame (HOF) Registry** | Rank actors, actresses, anime figures, singers, and tokusatsu legends into tiers (GOAT Status, All-Star, Rising, Classic); double-tap cards to increment likes. View live analytics: achievements, championship timeline, charts, and activity feed — all 100% derived from live data. | Triggers `/api/action` (`UPDATE_HOF`, `LIKE_HOF`). Analytics computed by `lib/utils/hofEngine.ts` engine. All sections auto-update on any CRUD action. Leaderboard portrait images use taller responsive containers (`h-48 sm:h-52 md:h-56` + `object-[center_15%]`). (`HofEntryCard.tsx`, `HofEditorModal.tsx`, `components/hof/*`) |
 | **Music Vault & Global Engine** | Stream online YouTube tracks, upload/play audio streams, build custom playlists, cycle shuffle/loop modes, save offline tracks, and view synced lyrics. | Persistent audio player (`GlobalMusicPlayer.tsx`, `TopbarMiniPlayer.tsx`) + `LyricsModal.tsx` + YouTube PostMessage API integration. (`app/music/page.tsx`) |
 | **Notepad & Curiosity Workspace** | Draft notes, store technical memos, tag curiosity ideas, and link entries to hobby skills for automatic XP logging. | Mutates Zustand `notes` state + `/api/action` (`UPDATE_NOTE`). Calculates and awards XP via `logHobbyXP`. (`app/notepad/page.tsx`) |
 | **Hobby XP & Gamification** | Create hobby skills, log practice hours/XP, track levels, view leveling progress bars, and analyze activity heatmaps. | Calculates level progression (`XP = level * 100`) + updates `hobbySkills` and `hobbyLogs` in database. (`app/hobbies/page.tsx`) |
@@ -302,3 +302,28 @@ Next.js 16 App Router renders client pages backed by a Zustand global store (`da
 * Preserve touch-friendly action button visibility (`opacity-100 md:opacity-0 md:group-hover:opacity-100`).
 * Use `--sidebar-width` for layout offsets instead of hardcoded pixel assumptions or raw `100vw`.
 * Do not remove features or replace the existing design system when making responsive adjustments.
+
+---
+
+## 14. Changelog
+
+### 2026-08-04 — Persistence Fix + HOF Analytics Refactor
+
+**Persistence Bug Fix**
+- Fixed `userId` missing from Prisma `create`/`update` in 17+ action handlers in `app/api/action/route.ts`.
+- Fixed `userId` not linked to `user.id` in `app/api/profile/route.ts` profile upsert.
+- Replaced stale-hydration length-check fallbacks in `lib/store/dashboardStore.ts` with direct DB authority (`data.x || []`).
+- Backfill script `dashboard/scripts/backfill_null_userid.ts` assigned 10 orphan rows (NULL userId) to the active user.
+
+**HOF Leaderboard Portrait Crop Fix**
+- `components/hof/HofLiveLeaderboard.tsx`: Replaced `h-36` with `h-48 sm:h-52 md:h-56` for taller portrait-friendly card images.
+- Added `object-[center_15%]` to bias image crop toward top of portrait (face/forehead visibility).
+
+**Hall of Fame Live Analytics Engine Refactor**
+- `lib/utils/hofEngine.ts`: Completely rewrote all four analytics functions — zero hardcoded data remaining.
+  - `getChampionshipTimeline()`: Dynamically generates season timeline from live `hallList` sorted by likes. Season labels use `currentYear - i` relative to real system date.
+  - `computeHallRecords()`: Computes 16+ trophy records (Highest Voted, Most Works, GOAT Count, Biggest Climber, Vote Gap, Most Decorated, per-category holders, etc.) all from live data.
+  - `computeHallAnalytics()`: Derives `votesBySeason` via 5-year decay curve anchored to real `totalLikes`; derives `monthlyGrowth` via 6-month weighted distribution — no static numbers.
+  - `generateActivityFeed()`: Generates 10 event types (champion, GOAT, podium surge, rank climb, drop, favorite, works milestone, 50+ votes, hall size) from live list state. Timestamps use rank-distance relative labels.
+- `components/hof/HofRecordsSection.tsx`: Record count in subtitle now reads `{records.length}` dynamically.
+- `components/hof/HofTimelineSection.tsx`: Year range header and "current champion" highlight now derived from timeline data — `item.year === timeline[0]?.year` instead of hardcoded `=== 2026`.

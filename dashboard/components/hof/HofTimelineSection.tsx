@@ -45,32 +45,38 @@ export function HofTimelineSection({ timeline, isCyber }: HofTimelineSectionProp
             Championship History & Season Legacy Archive
           </h3>
         </div>
-        <span className="text-xs font-mono theme-text-muted font-bold">2022 – 2026 Champions</span>
+        <span className="text-xs font-mono theme-text-muted font-bold">
+          {timeline.length > 0
+            ? `${timeline[timeline.length - 1].year} – ${timeline[0].year} Champions`
+            : "Season Archive"}
+        </span>
       </div>
 
       <div className="relative pl-6 sm:pl-8 space-y-6 border-l-2" style={{ borderColor: isCyber ? "rgba(255,215,0,0.3)" : "#000000" }}>
-        {timeline.map((item) => (
+        {timeline.map((item) => {
+          const isCurrent = item.year === timeline[0]?.year;
+          return (
           <div
             key={item.year}
             onContextMenu={(e) => handleTimelineContextMenu(e, item)}
             className="relative p-5 rounded-3xl border font-mono space-y-2 cursor-pointer transition-all hover:translate-x-1"
             style={{
               backgroundColor: isCyber ? "rgba(10,15,36,0.6)" : "#FFFFFF",
-              borderColor: item.year === 2026 ? "#FFD700" : isCyber ? "rgba(255,255,255,0.1)" : "#000000",
-              borderWidth: item.year === 2026 ? (isCyber ? "2px" : "3px") : isCyber ? "1px" : "2px",
-              boxShadow: item.year === 2026 ? (isCyber ? "0 0 25px rgba(255,215,0,0.2)" : "5px 5px 0 #000000") : "3px 3px 0 rgba(0,0,0,0.1)",
+              borderColor: isCurrent ? "#FFD700" : isCyber ? "rgba(255,255,255,0.1)" : "#000000",
+              borderWidth: isCurrent ? (isCyber ? "2px" : "3px") : isCyber ? "1px" : "2px",
+              boxShadow: isCurrent ? (isCyber ? "0 0 25px rgba(255,215,0,0.2)" : "5px 5px 0 #000000") : "3px 3px 0 rgba(0,0,0,0.1)",
             }}
           >
             {/* Timeline node marker dot */}
             <div
               className="absolute -left-[31px] sm:-left-[39px] top-6 w-5 h-5 rounded-full border-2 flex items-center justify-center text-[9px] font-black"
               style={{
-                backgroundColor: item.year === 2026 ? "#FFD700" : isCyber ? "#050816" : "#FFFFFF",
-                borderColor: item.year === 2026 ? "#FFD700" : isCyber ? "#00F5FF" : "#000000",
-                color: item.year === 2026 ? "#000" : isCyber ? "#00F5FF" : "#000",
+                backgroundColor: isCurrent ? "#FFD700" : isCyber ? "#050816" : "#FFFFFF",
+                borderColor: isCurrent ? "#FFD700" : isCyber ? "#00F5FF" : "#000000",
+                color: isCurrent ? "#000" : isCyber ? "#00F5FF" : "#000",
               }}
             >
-              {item.year === 2026 ? "👑" : "🏆"}
+              {isCurrent ? "👑" : "🏆"}
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -93,7 +99,8 @@ export function HofTimelineSection({ timeline, isCyber }: HofTimelineSectionProp
               &quot;{item.note}&quot;
             </p>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

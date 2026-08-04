@@ -45,7 +45,7 @@ export function HofRecordsSection({ records, isCyber }: HofRecordsSectionProps) 
             Hall Achievements & Historical Records
           </h3>
         </div>
-        <span className="text-xs font-mono theme-text-muted font-bold">12 Active Trophy Categories</span>
+        <span className="text-xs font-mono theme-text-muted font-bold">{records.length} Active Trophy Categories</span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
