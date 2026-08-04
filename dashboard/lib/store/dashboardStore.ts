@@ -530,9 +530,22 @@ export interface DramaLogEntry {
 export interface HobbySkillEntry {
   id: string;
   name: string;
-  category: string; // "Languages" | "Doctors" | "Martial Arts"
+  category: string; // "Languages" | "Doctors" | "Martial Arts" | Custom
   priority: string; // "Priority" | "Haven't Started" | "Manifest"
   progress: number; // 0–100
+  level: number;
+  xp: number;
+  streak: number;
+  longestStreak: number;
+  totalMinutes: number;
+  longestSessionMin: number;
+  lastLearnedAt?: string | null;
+  lastStreakDate?: string | null;
+  highestXpSingleDay?: number;
+  mostWordsWritten?: number;
+  reminderEnabled?: boolean;
+  reminderTime?: string | null;
+  reminderInterval?: string | null;
   createdAt?: string;
 }
 
@@ -542,6 +555,25 @@ export interface HobbyLogEntry {
   delta: number;
   wordCount: number;
   note?: string | null;
+  createdAt: string;
+}
+
+export interface HobbySessionEntry {
+  id: string;
+  skillId: string;
+  minutesLearned: number;
+  sessionXp: number;
+  note?: string | null;
+  createdAt: string;
+}
+
+export interface NotificationEntry {
+  id: string;
+  title: string;
+  message: string;
+  type: string; // "reminder" | "milestone" | "streak" | "info"
+  isRead: boolean;
+  isDismissed: boolean;
   createdAt: string;
 }
 
@@ -655,7 +687,16 @@ interface DashboardState {
   // Hobby Actions
   hobbySkills: HobbySkillEntry[];
   hobbyLogs: HobbyLogEntry[];
+  hobbySessions: HobbySessionEntry[];
+  notifications: NotificationEntry[];
   logHobbyXP: (skillId: string, noteText: string) => Promise<void>;
+  logLearningSession: (skillId: string, minutes: number, note?: string) => Promise<void>;
+  addCustomSkill: (name: string, category: string, priority?: string) => Promise<void>;
+  updateHobbyReminder: (skillId: string, enabled: boolean, time: string, interval: string) => Promise<void>;
+  resetHobbyStreak: (skillId: string) => Promise<void>;
+  deleteHobbySkill: (id: string) => Promise<void>;
+  dismissNotification: (id: string) => Promise<void>;
+  clearNotifications: () => Promise<void>;
 
   // Profile Aesthetics Actions
   profileHistory: ProfileHistoryEntry[];
@@ -815,6 +856,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   savedPrompts: [],
   hobbySkills: [],
   hobbyLogs: [],
+  hobbySessions: [],
+  notifications: [],
   profileHistory: [],
   requestSequenceId: 0,
   isLoading: false,
@@ -852,6 +895,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       savedPrompts: [],
       hobbySkills: [],
       hobbyLogs: [],
+      hobbySessions: [],
+      notifications: [],
       profileHistory: [],
     }));
   },
@@ -904,10 +949,26 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
             mainActors: Array.isArray(d.mainActors) ? d.mainActors : [],
           })),
           savedPrompts: data.savedPrompts || [],
-          hobbySkills: data.hobbySkills || [],
+          hobbySkills: (data.hobbySkills || []).map((s: any) => ({
+            ...s,
+            level: s.level ?? 1,
+            xp: s.xp ?? 0,
+            streak: s.streak ?? 0,
+            longestStreak: s.longestStreak ?? 0,
+            totalMinutes: s.totalMinutes ?? 0,
+            longestSessionMin: s.longestSessionMin ?? 0,
+          })),
           hobbyLogs: (data.hobbyLogs || []).map((l: any) => ({
             ...l,
             createdAt: l.createdAt ?? new Date().toISOString(),
+          })),
+          hobbySessions: (data.hobbySessions || []).map((s: any) => ({
+            ...s,
+            createdAt: s.createdAt ?? new Date().toISOString(),
+          })),
+          notifications: (data.notifications || []).map((n: any) => ({
+            ...n,
+            createdAt: n.createdAt ?? new Date().toISOString(),
           })),
           profileHistory: (data.profileHistory || []).map((h: any) => ({
             ...h,
@@ -1859,27 +1920,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
   logHobbyXP: async (skillId, noteText) => {
     const words = noteText.trim().split(/\s+/).filter(Boolean).length;
-    const delta = 0.1 + words * 0.001;
-
-    // Optimistic update on skill progress
-    set((s) => ({
-      hobbySkills: s.hobbySkills.map((sk) =>
-        sk.id === skillId
-          ? { ...sk, progress: Math.min(100, sk.progress + delta) }
-          : sk
-      ),
-      hobbyLogs: [
-        ...s.hobbyLogs,
-        {
-          id: "local-" + Date.now(),
-          skillId,
-          delta,
-          wordCount: words,
-          note: noteText.slice(0, 120),
-          createdAt: new Date().toISOString(),
-        },
-      ],
-    }));
 
     try {
       const res = await fetch("/api/action", {
@@ -1891,16 +1931,172 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         }),
       });
       const result = await res.json();
-      // Sync authoritative progress from server
       if (result.success && result.data) {
         set((s) => ({
-          hobbySkills: s.hobbySkills.map((sk) =>
-            sk.id === skillId ? { ...sk, progress: result.data.progress } : sk
-          ),
+          hobbySkills: s.hobbySkills.map((sk) => (sk.id === skillId ? { ...sk, ...result.data } : sk)),
+          hobbyLogs: [
+            ...s.hobbyLogs,
+            {
+              id: "log-" + Date.now(),
+              skillId,
+              delta: result.delta ?? 0,
+              wordCount: words,
+              note: noteText.slice(0, 120),
+              createdAt: new Date().toISOString(),
+            },
+          ],
         }));
       }
     } catch (err) {
       console.error("Failed to log hobby XP:", err);
+    }
+  },
+
+  logLearningSession: async (skillId, minutesLearned, noteText?) => {
+    try {
+      const res = await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "LOG_HOBBY_SESSION",
+          payload: { skillId, minutesLearned, note: noteText },
+        }),
+      });
+      const result = await res.json();
+      if (result.success && result.data) {
+        set((s) => ({
+          hobbySkills: s.hobbySkills.map((sk) => (sk.id === skillId ? { ...sk, ...result.data } : sk)),
+          hobbySessions: [result.session, ...s.hobbySessions],
+        }));
+        // Re-fetch dashboard silently to receive any new notifications generated
+        get().fetchDashboard();
+      }
+    } catch (err) {
+      console.error("Failed to log learning session:", err);
+    }
+  },
+
+  addCustomSkill: async (name, category, priority = "Priority") => {
+    const newId = "skill-" + Math.random().toString(36).substring(2, 9);
+    const optimistic: HobbySkillEntry = {
+      id: newId,
+      name,
+      category,
+      priority,
+      progress: 0,
+      level: 1,
+      xp: 0,
+      streak: 0,
+      longestStreak: 0,
+      totalMinutes: 0,
+      longestSessionMin: 0,
+      createdAt: new Date().toISOString(),
+    };
+
+    set((s) => ({ hobbySkills: [...s.hobbySkills, optimistic] }));
+
+    try {
+      const res = await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "ADD_HOBBY_SKILL",
+          payload: { id: newId, name, category, priority },
+        }),
+      });
+      const result = await res.json();
+      if (result.success && result.data) {
+        set((s) => ({
+          hobbySkills: s.hobbySkills.map((sk) => (sk.id === newId ? result.data : sk)),
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to add custom skill:", err);
+    }
+  },
+
+  updateHobbyReminder: async (skillId, enabled, time, interval) => {
+    set((s) => ({
+      hobbySkills: s.hobbySkills.map((sk) =>
+        sk.id === skillId
+          ? { ...sk, reminderEnabled: enabled, reminderTime: time, reminderInterval: interval }
+          : sk
+      ),
+    }));
+
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "UPDATE_HOBBY_REMINDER",
+          payload: { skillId, reminderEnabled: enabled, reminderTime: time, reminderInterval: interval },
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to update hobby reminder:", err);
+    }
+  },
+
+  resetHobbyStreak: async (skillId) => {
+    set((s) => ({
+      hobbySkills: s.hobbySkills.map((sk) =>
+        sk.id === skillId ? { ...sk, streak: 0, lastStreakDate: null } : sk
+      ),
+    }));
+
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "RESET_HOBBY_STREAK",
+          payload: { skillId },
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to reset hobby streak:", err);
+    }
+  },
+
+  deleteHobbySkill: async (id) => {
+    set((s) => ({ hobbySkills: s.hobbySkills.filter((sk) => sk.id !== id) }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_HOBBY_SKILL", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to delete hobby skill:", err);
+    }
+  },
+
+  dismissNotification: async (id) => {
+    set((s) => ({
+      notifications: s.notifications.filter((n) => n.id !== id),
+    }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DISMISS_NOTIFICATION", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to dismiss notification:", err);
+    }
+  },
+
+  clearNotifications: async () => {
+    set({ notifications: [] });
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "CLEAR_NOTIFICATIONS", payload: {} }),
+      });
+    } catch (err) {
+      console.error("Failed to clear notifications:", err);
     }
   },
 

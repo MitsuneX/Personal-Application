@@ -337,15 +337,29 @@ model SavedPrompt {
 }
 
 model HobbySkill {
-  id        String     @id @default(uuid())
-  userId    String?
-  name      String     @unique
-  category  String     // "Languages" | "Doctors" | "Martial Arts"
-  priority  String     // "Priority" | "Haven't Started" | "Manifest"
-  progress  Float      @default(0)
-  createdAt DateTime   @default(now())
-  logs      HobbyLog[]
-  notes     Note[]
+  id                 String         @id @default(uuid())
+  userId             String?
+  name               String         @unique
+  category           String         // "Languages" | "Doctors" | "Martial Arts" | Custom
+  priority           String         // "Priority" | "Haven't Started" | "Manifest"
+  progress           Float          @default(0)
+  level              Int            @default(1)
+  xp                 Float          @default(0)
+  streak             Int            @default(0)
+  longestStreak      Int            @default(0)
+  totalMinutes       Int            @default(0)
+  longestSessionMin  Int            @default(0)
+  lastLearnedAt      DateTime?
+  lastStreakDate     String?
+  highestXpSingleDay Float          @default(0)
+  mostWordsWritten   Int            @default(0)
+  reminderEnabled    Boolean        @default(false)
+  reminderTime       String?        @default("20:00")
+  reminderInterval   String?        @default("Every day")
+  createdAt          DateTime       @default(now())
+  logs               HobbyLog[]
+  sessions           HobbySession[]
+  notes              Note[]
 
   @@index([userId])
 }
@@ -354,11 +368,38 @@ model HobbyLog {
   id        String     @id @default(uuid())
   userId    String?
   skillId   String
-  skill     HobbySkill @relation(fields: [skillId], references: [id])
+  skill     HobbySkill @relation(fields: [skillId], references: [id], onDelete: Cascade)
   delta     Float
   wordCount Int        @default(0)
   note      String?
   createdAt DateTime   @default(now())
+
+  @@index([userId])
+}
+
+model HobbySession {
+  id             String     @id @default(uuid())
+  userId         String?
+  skillId        String
+  skill          HobbySkill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  minutesLearned Int        @default(0)
+  sessionXp      Float      @default(0)
+  note           String?
+  createdAt      DateTime   @default(now())
+
+  @@index([userId])
+  @@index([skillId])
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String?
+  title       String
+  message     String
+  type        String   @default("info") // "reminder" | "milestone" | "streak" | "info"
+  isRead      Boolean  @default(false)
+  isDismissed Boolean  @default(false)
+  createdAt   DateTime @default(now())
 
   @@index([userId])
 }

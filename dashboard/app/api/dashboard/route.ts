@@ -196,6 +196,8 @@ export async function GET() {
       dbHallEvents,
       dbChampionshipHistory,
       dbHallRankingSnapshots,
+      dbHobbySessions,
+      dbNotifications,
     ] = await Promise.all([
       safeQuery(() => prisma.gameDossierCharacter.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
       safeQuery(() => prisma.gameExternalResource.findMany({ where: { userId }, orderBy: { sortOrder: "asc" } }), []),
@@ -217,6 +219,8 @@ export async function GET() {
       safeQuery(() => prisma.hallEvent.findMany({ where: { userId }, orderBy: { timestamp: "desc" }, take: 50 }), []),
       safeQuery(() => prisma.championshipHistory.findMany({ where: { userId }, orderBy: { startDate: "desc" } }), []),
       safeQuery(() => prisma.hallRankingSnapshot.findMany({ where: { userId }, orderBy: { timestamp: "desc" } }), []),
+      safeQuery(() => prisma.hobbySession.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
+      safeQuery(() => prisma.notification.findMany({ where: { userId, isDismissed: false }, orderBy: { createdAt: "desc" }, take: 20 }), []),
     ]);
 
     // Ensure initial event history & baseline championship records exist for existing HOF items
@@ -248,6 +252,8 @@ export async function GET() {
       savedPrompts: dbPrompts,
       hobbySkills: dbHobbySkills,
       hobbyLogs: dbHobbyLogs,
+      hobbySessions: dbHobbySessions,
+      notifications: dbNotifications,
       profileHistory: dbProfileHistory,
     });
   } catch (error: any) {

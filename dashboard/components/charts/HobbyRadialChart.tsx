@@ -68,7 +68,10 @@ export function HobbyRadialChart({ data, isCyber, size = 220 }: HobbyRadialChart
           style={{ color: isCyber ? "#fff" : "#1A1A1A" }}
         >
           {data.length > 0
-            ? `${Math.round(data.reduce((s, d) => s + d.value, 0) / data.length)}%`
+            ? (() => {
+                const avg = data.reduce((s, d) => s + (isFinite(d.value) ? d.value : 0), 0) / data.length;
+                return `${Math.round(isFinite(avg) ? avg : 0)}%`;
+              })()
             : "0%"}
         </span>
       </div>

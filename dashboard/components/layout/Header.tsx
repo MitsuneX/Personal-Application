@@ -38,6 +38,112 @@ const PAGE_TITLES: Record<string, { title: string; icon: string }> = {
   "/gallery":           { title: "Media Gallery", icon: "🖼️" },
 };
 
+function NotificationBell() {
+  const { theme } = useTheme();
+  const isCyber = theme === "cyber";
+  const { notifications = [], dismissNotification, clearNotifications } = useDashboardStore();
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  return (
+    <FloatingPopover
+      placement="bottom-end"
+      triggerMode="hover-or-click"
+      offsetDistance={12}
+      content={() => (
+        <div
+          className="w-80 p-4 rounded-2xl flex flex-col gap-3 shadow-2xl"
+          style={{
+            background: isCyber ? "rgba(10,15,30,0.95)" : "#FFFFFF",
+            border: isCyber ? "1px solid rgba(0,245,255,0.25)" : "2.5px solid #000",
+            boxShadow: isCyber ? "0 10px 40px rgba(0,245,255,0.15)" : "5px 5px 0 #000",
+          }}
+        >
+          <div className="flex items-center justify-between pb-2" style={{ borderBottom: isCyber ? "1px solid rgba(255,255,255,0.1)" : "1.5px dashed #000" }}>
+            <div className="flex items-center gap-2">
+              <span className="text-base">🔔</span>
+              <h3 className="font-black text-xs uppercase tracking-wider" style={{ color: isCyber ? "#00F5FF" : "#1A1A1A" }}>
+                Notifications
+              </h3>
+            </div>
+            {notifications.length > 0 && (
+              <button
+                onClick={() => clearNotifications()}
+                className="text-[10px] font-bold px-2 py-0.5 rounded hover:opacity-80"
+                style={{ color: isCyber ? "#FF0055" : "#EF4444" }}
+              >
+                Clear All
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2 max-h-72 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin" }}>
+            {notifications.length === 0 ? (
+              <p className="text-[11px] font-bold text-center py-6" style={{ color: isCyber ? "rgba(255,255,255,0.4)" : "#8A8A8A" }}>
+                No notifications right now.
+              </p>
+            ) : (
+              notifications.map((n) => (
+                <div
+                  key={n.id}
+                  className="p-2.5 rounded-xl flex items-start gap-2.5"
+                  style={{
+                    background: isCyber ? "rgba(255,255,255,0.03)" : "#FFF9F0",
+                    border: isCyber ? "1px solid rgba(255,255,255,0.06)" : "1.5px solid #000",
+                  }}
+                >
+                  <span className="text-sm mt-0.5">
+                    {n.type === "streak" ? "🔥" : n.type === "milestone" ? "⚡" : n.type === "reminder" ? "⏰" : "ℹ️"}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-[11px] font-black leading-tight" style={{ color: isCyber ? "#FFF" : "#000" }}>
+                      {n.title}
+                    </h4>
+                    <p className="text-[10px] font-bold mt-0.5 leading-snug" style={{ color: isCyber ? "rgba(255,255,255,0.6)" : "#555" }}>
+                      {n.message}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => dismissNotification(n.id)}
+                    className="text-xs opacity-40 hover:opacity-100 p-0.5 shrink-0"
+                    title="Dismiss"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    >
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.92 }}
+        className="w-9 h-9 rounded-xl flex items-center justify-center relative cursor-pointer"
+        style={{
+          background: isCyber ? "rgba(0,245,255,0.05)" : "#FFF9F0",
+          border: isCyber ? "1px solid rgba(0,245,255,0.2)" : "2px solid #000",
+          boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.1)" : "2px 2px 0 #000",
+        }}
+      >
+        <span className="text-base">🔔</span>
+        {unreadCount > 0 && (
+          <span
+            className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-black flex items-center justify-center"
+            style={{
+              background: isCyber ? "#FF0055" : "#FF6B35",
+              color: "#FFF",
+              border: isCyber ? "1px solid rgba(255,255,255,0.5)" : "1px solid #000",
+            }}
+          >
+            {unreadCount}
+          </span>
+        )}
+      </motion.button>
+    </FloatingPopover>
+  );
+}
+
 export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
@@ -243,6 +349,9 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
         <div className="flex items-center gap-3 shrink-0">
           <TopbarMiniPlayer />
           {isCyber && <CyberClock />}
+
+          {/* Notification Bell */}
+          <NotificationBell />
 
           {/* Theme switcher toggle added in the Header */}
           <ThemeSwitcherToggle />

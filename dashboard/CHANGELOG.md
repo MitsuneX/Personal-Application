@@ -2,6 +2,21 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [5.1.0] - 2026-08-04
+
+### 🎯 Hobbies Progression Engine & UI Overhaul
+
+**Hobbies Progression UI**
+- **SkillCard Enhancements**: Cards now display Level badges (`Lv.X`), XP amounts, XP-within-level progress bars, "X / Y XP → Lv.N+1" labels, last-learned dates, streak 🔥 badges, and pulsing green indicators for today's learning.
+- **Learn Today Modal**: Added a `[ LEARN_TODAY ]` button on each card that opens a modal with minute presets, custom input, optional notes, XP preview, and session logging functionality.
+- **Add Custom Skill**: Added an `+ ADD_SKILL` button to the page header, opening a modal for creating new skills with custom name, category, and priority.
+- **Enhanced Stats Strip**: Upgraded the top metrics banner to display Total Skills, Total XP, Active Streaks, Minutes Studied, and Words Written.
+- **Chart Resilience**: Added `NaN%` protection to the `HobbyRadialChart` average computations and center label to elegantly handle empty progress states for new skills.
+
+**System Integrity & Core Repairs**
+- **JSX Structure Fix**: Repaired a broken JSX structure in `Header.tsx` where the `NotificationBell` component was improperly defined inside the parent's return block.
+- **Store State Syntax Fix**: Resolved major TypeScript errors in `dashboardStore.ts` caused by an orphaned `createdAt` assignment during `fetchDashboard`.
+
 ## [5.0.0] - 2026-08-01
 
 ### 👑 Hall of Fame Evolution (Flagship v5) + Character Directory v2 + Tokusatsu Architecture

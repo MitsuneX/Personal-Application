@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { logHallEvent, captureHallRankingSnapshots, updateChampionshipHistoryOnRankChange } from "@/lib/utils/hofEventEngine";
+import { calculateWritingXp, calculateSessionXp, getLevelDetailsFromXp } from "@/lib/utils/hobbyProgression";
 
 export async function POST(req: Request) {
   try {
@@ -620,6 +621,43 @@ export async function POST(req: Request) {
             isCuriosity: payload.isCuriosity ?? false,
           },
         });
+
+        // Notebook Integration: If note is linked to a hobby, automatically award writing XP
+        if (payload.hobbyId && payload.content && payload.content.trim().length > 0) {
+          const wordCount = payload.content.trim().split(/\s+/).filter(Boolean).length;
+          const writingXp = calculateWritingXp(wordCount);
+
+          if (writingXp > 0) {
+            await prisma.hobbyLog.create({
+              data: {
+                userId,
+                skillId: payload.hobbyId,
+                delta: writingXp,
+                wordCount,
+                note: `Note linked: ${payload.title || "Untitled Note"}`,
+              },
+            });
+
+            const currentSkill = await prisma.hobbySkill.findUnique({ where: { id: payload.hobbyId } });
+            if (currentSkill) {
+              const newXp = (currentSkill.xp || 0) + writingXp;
+              const { level, progressPercent } = getLevelDetailsFromXp(newXp);
+              const mostWordsWritten = Math.max(currentSkill.mostWordsWritten || 0, wordCount);
+
+              await prisma.hobbySkill.update({
+                where: { id: payload.hobbyId },
+                data: {
+                  xp: newXp,
+                  level,
+                  progress: progressPercent,
+                  mostWordsWritten,
+                  lastLearnedAt: new Date(),
+                },
+              });
+            }
+          }
+        }
+
         return NextResponse.json({ success: true, data: note });
       }
 
@@ -861,44 +899,195 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true, data: skills });
       }
 
-      case "LOG_HOBBY_XP": {
-        // XP formula: +0.1% baseline + +0.001% per word
-        const words = payload.wordCount ?? 0;
-        const delta = 0.1 + words * 0.001;
+      case "ADD_HOBBY_SKILL": {
+        const skill = await prisma.hobbySkill.create({
+          data: {
+            id: payload.id ?? undefined,
+            userId,
+            name: payload.name,
+            category: payload.category,
+            priority: payload.priority ?? "Priority",
+            progress: 0,
+            level: 1,
+            xp: 0,
+          },
+        });
+        return NextResponse.json({ success: true, data: skill });
+      }
 
-        // Create log entry
+      case "LOG_HOBBY_SESSION": {
+        const minutes = Number(payload.minutesLearned) || 0;
+        const note = payload.note ? String(payload.note).trim() : null;
+        const sessionXp = calculateSessionXp(minutes);
+
+        const currentSkill = await prisma.hobbySkill.findUnique({ where: { id: payload.skillId } });
+        if (!currentSkill) {
+          return NextResponse.json({ error: "Skill not found" }, { status: 404 });
+        }
+
+        // Create HobbySession log
+        const session = await prisma.hobbySession.create({
+          data: {
+            userId,
+            skillId: payload.skillId,
+            minutesLearned: minutes,
+            sessionXp,
+            note,
+          },
+        });
+
+        // Also record a HobbyLog for chart history
         await prisma.hobbyLog.create({
           data: {
             userId,
             skillId: payload.skillId,
-            delta,
+            delta: sessionXp,
+            wordCount: note ? note.split(/\s+/).filter(Boolean).length : 0,
+            note: note || `Learned for ${minutes} mins`,
+          },
+        });
+
+        const now = new Date();
+        const todayStr = now.toISOString().slice(0, 10);
+        const yesterdayStr = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+
+        let newStreak = currentSkill.streak || 0;
+        const lastStreakDate = currentSkill.lastStreakDate;
+
+        if (lastStreakDate === todayStr) {
+          // Already logged today — keep current streak
+        } else if (lastStreakDate === yesterdayStr) {
+          // Logged yesterday — increment streak
+          newStreak += 1;
+        } else {
+          // Missed a day or first time — start at 1
+          newStreak = 1;
+        }
+
+        const newXp = (currentSkill.xp || 0) + sessionXp;
+        const { level, progressPercent } = getLevelDetailsFromXp(newXp);
+        const totalMinutes = (currentSkill.totalMinutes || 0) + minutes;
+        const longestSessionMin = Math.max(currentSkill.longestSessionMin || 0, minutes);
+        const longestStreak = Math.max(currentSkill.longestStreak || 0, newStreak);
+        const highestXpSingleDay = Math.max(currentSkill.highestXpSingleDay || 0, sessionXp);
+
+        const updatedSkill = await prisma.hobbySkill.update({
+          where: { id: payload.skillId },
+          data: {
+            xp: newXp,
+            level,
+            progress: progressPercent,
+            totalMinutes,
+            longestSessionMin,
+            streak: newStreak,
+            longestStreak,
+            lastStreakDate: todayStr,
+            lastLearnedAt: now,
+            highestXpSingleDay,
+          },
+        });
+
+        // Create milestone notifications if streak / level milestone hit
+        if (newStreak === 7 || newStreak === 14 || newStreak === 30 || newStreak === 50 || newStreak === 100) {
+          await prisma.notification.create({
+            data: {
+              userId,
+              title: "🔥 Streak Milestone!",
+              message: `${currentSkill.name} streak reached ${newStreak} days! Keep up the momentum.`,
+              type: "streak",
+            },
+          });
+        }
+
+        if (level > (currentSkill.level || 1)) {
+          await prisma.notification.create({
+            data: {
+              userId,
+              title: "⚡ Level Up!",
+              message: `${currentSkill.name} reached Level ${level}!`,
+              type: "milestone",
+            },
+          });
+        }
+
+        return NextResponse.json({ success: true, data: updatedSkill, session });
+      }
+
+      case "LOG_HOBBY_XP": {
+        const words = payload.wordCount ?? 0;
+        const writingXp = calculateWritingXp(words);
+
+        await prisma.hobbyLog.create({
+          data: {
+            userId,
+            skillId: payload.skillId,
+            delta: writingXp,
             wordCount: words,
             note: payload.note ?? null,
           },
         });
 
-        // Sum all deltas for this skill and cap at 100
-        const aggResult = await prisma.hobbyLog.aggregate({
-          where: { skillId: payload.skillId },
-          _sum: { delta: true },
-        });
-        const totalProgress = Math.min(100, aggResult._sum.delta ?? 0);
+        const currentSkill = await prisma.hobbySkill.findUnique({ where: { id: payload.skillId } });
+        if (!currentSkill) {
+          return NextResponse.json({ error: "Skill not found" }, { status: 404 });
+        }
 
-        // Update skill progress
+        const newXp = (currentSkill.xp || 0) + writingXp;
+        const { level, progressPercent } = getLevelDetailsFromXp(newXp);
+        const mostWords = Math.max(currentSkill.mostWordsWritten || 0, words);
+
         const updated = await prisma.hobbySkill.update({
           where: { id: payload.skillId },
-          data: { progress: totalProgress },
+          data: {
+            xp: newXp,
+            level,
+            progress: progressPercent,
+            mostWordsWritten: mostWords,
+            lastLearnedAt: new Date(),
+          },
         });
-        return NextResponse.json({ success: true, data: updated, delta });
+        return NextResponse.json({ success: true, data: updated, delta: writingXp });
       }
 
-      case "FETCH_HOBBY_DATA": {
-        const skills = await prisma.hobbySkill.findMany({ orderBy: { category: "asc" } });
-        const logs = await prisma.hobbyLog.findMany({
-          orderBy: { createdAt: "asc" },
-          select: { id: true, skillId: true, delta: true, wordCount: true, note: true, createdAt: true },
+      case "UPDATE_HOBBY_REMINDER": {
+        const updated = await prisma.hobbySkill.update({
+          where: { id: payload.skillId },
+          data: {
+            reminderEnabled: payload.reminderEnabled ?? false,
+            reminderTime: payload.reminderTime ?? "20:00",
+            reminderInterval: payload.reminderInterval ?? "Every day",
+          },
         });
-        return NextResponse.json({ success: true, skills, logs });
+        return NextResponse.json({ success: true, data: updated });
+      }
+
+      case "RESET_HOBBY_STREAK": {
+        const updated = await prisma.hobbySkill.update({
+          where: { id: payload.skillId },
+          data: { streak: 0, lastStreakDate: null },
+        });
+        return NextResponse.json({ success: true, data: updated });
+      }
+
+      case "DELETE_HOBBY_SKILL": {
+        await prisma.hobbySkill.delete({ where: { id: payload.id } });
+        return NextResponse.json({ success: true });
+      }
+
+      case "DISMISS_NOTIFICATION": {
+        await prisma.notification.update({
+          where: { id: payload.id },
+          data: { isDismissed: true, isRead: true },
+        });
+        return NextResponse.json({ success: true });
+      }
+
+      case "CLEAR_NOTIFICATIONS": {
+        await prisma.notification.updateMany({
+          where: { userId },
+          data: { isDismissed: true, isRead: true },
+        });
+        return NextResponse.json({ success: true });
       }
 
 
