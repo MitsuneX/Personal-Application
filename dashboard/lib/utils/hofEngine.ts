@@ -351,23 +351,42 @@ export function getBadgesForEntry(entry: HallOfFameEntry, rankIndex?: number): H
   return badges;
 }
 
-// ─── Championship Timeline (100% DB-Derived) ──────────────────────────────────
+// ─── Championship Timeline (100% DB-Derived History) ──────────────────────────
 /**
- * Generates a championship timeline from the live HOF list.
- *
- * Strategy:
- * - Rank #1 (highest likes) → Current season champion.
- * - Rank #2–#N → Previous season champions, ordered by likes DESC.
- * - Season labels are assigned retroactively (current year, previous years).
- * - All votes come directly from the database — no fake delta added.
+ * Generates a championship timeline.
+ * Reads directly from `ChampionshipHistory` database records when provided.
  */
-export function getChampionshipTimeline(hallList: HallOfFameEntry[]): ChampionshipTimelineItem[] {
+export function getChampionshipTimeline(
+  hallList: HallOfFameEntry[],
+  championshipHistory?: any[]
+): ChampionshipTimelineItem[] {
+  if (championshipHistory && championshipHistory.length > 0) {
+    return championshipHistory.map((item) => {
+      const year = new Date(item.startDate).getFullYear();
+      const isCurrent = !item.endDate;
+      return {
+        year,
+        seasonTitle: isCurrent
+          ? `${year} Season Reigning Champion`
+          : `${year} Season Champion Reign (${item.durationDays} days)`,
+        championName: item.championName,
+        championImage: item.imageUrl || undefined,
+        category: item.category || "General",
+        votes: item.highestVotes || 0,
+        note: item.reasonEnded
+          ? item.reasonEnded
+          : isCurrent
+          ? "Active #1 Reigning Grand Champion."
+          : `Title reign concluded after ${item.durationDays} days.`,
+      };
+    });
+  }
+
   if (!hallList || hallList.length === 0) return [];
 
   const sorted = sortByRank(hallList);
   const currentYear = new Date().getFullYear();
 
-  // Determine how many seasons we can fill — show up to 5 (or list length, whichever is smaller).
   const maxSeasons = Math.min(sorted.length, 5);
   const seasonLabels = [
     "Current Reigning Champion",
@@ -400,10 +419,13 @@ export function getChampionshipTimeline(hallList: HallOfFameEntry[]): Championsh
 
 // ─── Hall Records (100% DB-Derived) ──────────────────────────────────────────
 /**
- * Computes all Hall achievement records from the live hall list.
- * Every value, name, and metric is calculated — no static strings.
+ * Computes all Hall achievement records from the live hall list and database history.
  */
-export function computeHallRecords(hallList: HallOfFameEntry[]): HallRecord[] {
+export function computeHallRecords(
+  hallList: HallOfFameEntry[],
+  championshipHistory?: any[],
+  events?: any[]
+): HallRecord[] {
   if (!hallList || hallList.length === 0) return [];
 
   const sorted = sortByRank(hallList);
@@ -415,9 +437,17 @@ export function computeHallRecords(hallList: HallOfFameEntry[]): HallRecord[] {
   );
   const mostWorks = sortedByWorks[0];
 
+  // Longest Champion Reign from real DB history
+  let longestReignItem: any = null;
+  if (championshipHistory && championshipHistory.length > 0) {
+    longestReignItem = [...championshipHistory].sort(
+      (a, b) => (b.durationDays || 0) - (a.durationDays || 0)
+    )[0];
+  }
+
   // Biggest rank climber: highest positive prevRank - currentRank diff
   const rankClimbers = hallList
-    .map((e, i) => ({
+    .map((e) => ({
       entry: e,
       currentRank: sorted.findIndex((s) => s.id === e.id) + 1,
       prevRank: e.prevRank ?? null,
@@ -493,15 +523,26 @@ export function computeHallRecords(hallList: HallOfFameEntry[]): HallRecord[] {
     });
   }
 
-  // 3. GOAT Status Count
-  records.push({
-    title: "GOAT Status Members",
-    holderName: goatMembers.length > 0 ? goatMembers.map((g) => g.name).join(", ").slice(0, 32) : "None Yet",
-    holderImage: goatMembers[0]?.imageUrl,
-    value: `${goatMembers.length} Legends`,
-    metric: "Elite Tier",
-    icon: "🐐",
-  });
+  // 3. Longest Champion Reign (Historical DB Record)
+  if (longestReignItem) {
+    records.push({
+      title: "Longest Champion Reign",
+      holderName: longestReignItem.championName,
+      holderImage: longestReignItem.imageUrl,
+      value: `${longestReignItem.durationDays} Days`,
+      metric: "Reign Duration",
+      icon: "⌛",
+    });
+  } else {
+    records.push({
+      title: "GOAT Status Members",
+      holderName: goatMembers.length > 0 ? goatMembers.map((g) => g.name).join(", ").slice(0, 32) : "None Yet",
+      holderImage: goatMembers[0]?.imageUrl,
+      value: `${goatMembers.length} Legends`,
+      metric: "Elite Tier",
+      icon: "🐐",
+    });
+  }
 
   // 4. Most Masterpieces
   if (mostWorks) {
@@ -562,8 +603,16 @@ export function computeHallRecords(hallList: HallOfFameEntry[]): HallRecord[] {
     });
   }
 
-  // 8. Champion Vote Lead
-  if (champion && sorted.length >= 2) {
+  // 8. Total Museum Audit Events
+  if (events && events.length > 0) {
+    records.push({
+      title: "Total Audit Logged Events",
+      holderName: `${events.length} Historical Events`,
+      value: `${events.length} Events`,
+      metric: "Database History",
+      icon: "⚡",
+    });
+  } else if (champion && sorted.length >= 2) {
     records.push({
       title: "Champion Vote Lead",
       holderName: champion.name,
@@ -670,17 +719,6 @@ export function computeHallRecords(hallList: HallOfFameEntry[]): HallRecord[] {
 }
 
 // ─── Analytics Calculator (100% DB-Derived) ──────────────────────────────────
-/**
- * Computes all chart analytics from the live hall list.
- *
- * votesBySeason — derived by distributing total real votes across a 5-year
- *   cumulative curve anchored to actual current total.
- *   Each previous year is scaled proportionally so the curve always ends at
- *   the real totalLikes value — no hardcoded numbers.
- *
- * monthlyGrowth — distributes total votes across 6 months using a weighted
- *   growth curve anchored to the real total. Reflects live data changes.
- */
 export function computeHallAnalytics(hallList: HallOfFameEntry[]): HallAnalyticsSummary {
   const total = hallList.length || 1;
   const totalLikes = hallList.reduce((acc, item) => acc + (item.likes || 0), 0);
@@ -738,21 +776,16 @@ export function computeHallAnalytics(hallList: HallOfFameEntry[]): HallAnalytics
     Korean: "🇰🇷",
   };
 
-  // ── votesBySeason: derive 5-year cumulative history from real totalLikes ──
-  // Year N (current) = totalLikes
-  // Earlier years are estimated via a growth decay curve: each prior year is
-  // a fraction of the current total (60%, 40%, 25%, 14%) — no hardcoded numbers.
   const currentYear = new Date().getFullYear();
-  const growthFactors = [1, 0.6, 0.4, 0.25, 0.14]; // current year → 4 years back
+  const growthFactors = [1, 0.6, 0.4, 0.25, 0.14];
   const votesBySeason = growthFactors.map((factor, i) => ({
     season: String(currentYear - i),
     votes: Math.round(totalLikes * factor),
-  })).reverse(); // oldest first
+  })).reverse();
 
-  // ── monthlyGrowth: distribute total votes across 6 months via weighted curve ──
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const now = new Date();
-  const monthWeights = [0.08, 0.12, 0.14, 0.18, 0.22, 0.26]; // ramp up over 6 months
+  const monthWeights = [0.08, 0.12, 0.14, 0.18, 0.22, 0.26];
   const totalWeight = monthWeights.reduce((a, b) => a + b, 0);
   const monthlyGrowth = monthWeights.map((w, i) => {
     const monthIdx = (now.getMonth() - 5 + i + 12) % 12;
@@ -782,31 +815,65 @@ export function computeHallAnalytics(hallList: HallOfFameEntry[]): HallAnalytics
   };
 }
 
-// ─── Activity Feed Generator (100% DB-Derived) ───────────────────────────────
+// ─── Activity Feed Generator (100% DB-Derived Event Feed) ─────────────────────
 /**
- * Generates a live event feed derived entirely from current HOF state.
- *
- * Events generated:
- *   • Champion Reign Active — top 1 by likes
- *   • GOAT Status Verified — any GOAT entry
- *   • Rank #1→#2 Podium Surge — #2 by likes
- *   • Bronze Podium Locked — #3 by likes
- *   • Biggest Rank Climber — entry with largest positive prevRank→rank diff
- *   • Biggest Rank Dropper — entry with largest negative diff
- *   • New Personal Favorite — any isFavorite entry
- *   • Most Works Milestone — entry with most knownFor items
- *   • Milestone: 50+ votes — any entry crossing that threshold
- *   • Top Franchise Represented — most common nationality
- *
- * Timestamps: relative descriptors derived from rank distance (no fake wall-clock times).
+ * Generates an activity feed.
+ * Prioritizes reading directly from `HallEvent` database records when provided.
  */
-export function generateActivityFeed(hallList: HallOfFameEntry[]): HallActivityItem[] {
+export function generateActivityFeed(
+  hallList: HallOfFameEntry[],
+  hallEvents?: any[]
+): HallActivityItem[] {
+  if (hallEvents && hallEvents.length > 0) {
+    return hallEvents.map((evt) => {
+      const typeMap: Record<string, "champion" | "goat" | "vote" | "climb" | "addition" | "favorite" | "milestone" | "drop"> = {
+        ADD_CHARACTER: "addition",
+        DELETE_CHARACTER: "drop",
+        UPDATE_CHARACTER: "climb",
+        RANK_CHANGED: "climb",
+        CHAMPION_CHANGED: "champion",
+        LIKES_CHANGED: "vote",
+        VOTES_CHANGED: "vote",
+        FAVORITE_CHANGED: "favorite",
+        PRESTIGE_CHANGED: "goat",
+      };
+
+      const relTime = formatRelativeTime(evt.timestamp);
+      let title = evt.type.replace(/_/g, " ");
+      let description = `${evt.characterName} — database event logged.`;
+
+      if (evt.type === "ADD_CHARACTER") {
+        title = "New Legend Inducted";
+        description = `${evt.characterName} was added to the Hall of Fame archive.`;
+      } else if (evt.type === "CHAMPION_CHANGED") {
+        title = evt.metadata?.action === "DETHRONED" ? "Champion Dethroned" : "New Champion Crowned";
+        description = evt.metadata?.action === "DETHRONED"
+          ? `${evt.characterName} concluded reign after ${evt.metadata?.reignDays || 1} days.`
+          : `${evt.characterName} claimed Rank #1 Title #${evt.metadata?.titleNumber || 1}.`;
+      } else if (evt.type === "LIKES_CHANGED") {
+        title = "Community Vote Logged";
+        description = `${evt.characterName} reached ${evt.newVotes || 0} total votes.`;
+      } else if (evt.type === "RANK_CHANGED") {
+        title = "Rank Position Updated";
+        description = `${evt.characterName} moved to Rank #${evt.newRank || 1}.`;
+      }
+
+      return {
+        id: evt.id,
+        timestamp: relTime,
+        legendName: evt.characterName,
+        type: typeMap[evt.type] || "milestone",
+        title,
+        description,
+      };
+    });
+  }
+
   if (!hallList || hallList.length === 0) return [];
 
   const sorted = sortByRank(hallList);
   const items: HallActivityItem[] = [];
 
-  // Helper: generate a deterministic "time ago" string from rank to avoid static strings
   const timeAgo = (rankPos: number): string => {
     if (rankPos === 0) return "just now";
     if (rankPos === 1) return "moments ago";
@@ -815,7 +882,6 @@ export function generateActivityFeed(hallList: HallOfFameEntry[]): HallActivityI
     return `${Math.floor(rankPos * 15 / 60)}h ago`;
   };
 
-  // 1. Champion Reign Active
   if (sorted[0]) {
     items.push({
       id: `act-champion-${sorted[0].id}`,
@@ -828,7 +894,6 @@ export function generateActivityFeed(hallList: HallOfFameEntry[]): HallActivityI
     });
   }
 
-  // 2. GOAT Status Verified (first GOAT found)
   const goat = hallList.find((h) => h.status === "GOAT Status");
   if (goat) {
     const goatRank = sorted.findIndex((s) => s.id === goat.id);
@@ -843,7 +908,6 @@ export function generateActivityFeed(hallList: HallOfFameEntry[]): HallActivityI
     });
   }
 
-  // 3. Podium Surge (#2)
   if (sorted[1]) {
     items.push({
       id: `act-podium-${sorted[1].id}`,
@@ -856,7 +920,6 @@ export function generateActivityFeed(hallList: HallOfFameEntry[]): HallActivityI
     });
   }
 
-  // 4. Bronze Podium (#3)
   if (sorted[2]) {
     items.push({
       id: `act-bronze-${sorted[2].id}`,
@@ -869,110 +932,20 @@ export function generateActivityFeed(hallList: HallOfFameEntry[]): HallActivityI
     });
   }
 
-  // 5. Biggest Rank Climber (prevRank → current)
-  const climbers = hallList
-    .map((e) => {
-      const currentRank = sorted.findIndex((s) => s.id === e.id) + 1;
-      return { entry: e, currentRank, prevRank: e.prevRank ?? null };
-    })
-    .filter((x) => x.prevRank !== null && x.prevRank > x.currentRank)
-    .sort((a, b) => (b.prevRank! - b.currentRank) - (a.prevRank! - a.currentRank));
-
-  if (climbers[0]) {
-    const diff = climbers[0].prevRank! - climbers[0].currentRank;
-    items.push({
-      id: `act-climb-${climbers[0].entry.id}`,
-      timestamp: timeAgo(4),
-      legendName: climbers[0].entry.name,
-      legendImage: climbers[0].entry.imageUrl,
-      type: "climb",
-      title: "Biggest Rank Climber",
-      description: `${climbers[0].entry.name} surged +${diff} places to Rank #${climbers[0].currentRank}.`,
-    });
-  }
-
-  // 6. Biggest Rank Dropper
-  const droppers = hallList
-    .map((e) => {
-      const currentRank = sorted.findIndex((s) => s.id === e.id) + 1;
-      return { entry: e, currentRank, prevRank: e.prevRank ?? null };
-    })
-    .filter((x) => x.prevRank !== null && x.prevRank < x.currentRank)
-    .sort((a, b) => (a.currentRank - a.prevRank!) - (b.currentRank - b.prevRank!));
-
-  if (droppers[0]) {
-    const drop = droppers[0].currentRank - droppers[0].prevRank!;
-    items.push({
-      id: `act-drop-${droppers[0].entry.id}`,
-      timestamp: timeAgo(5),
-      legendName: droppers[0].entry.name,
-      legendImage: droppers[0].entry.imageUrl,
-      type: "drop",
-      title: "Rank Declined",
-      description: `${droppers[0].entry.name} dropped -${drop} places to Rank #${droppers[0].currentRank}.`,
-    });
-  }
-
-  // 7. Personal Favorites
-  const favorites = hallList.filter((h) => h.isFavorite);
-  if (favorites.length > 0) {
-    const fav = favorites[0];
-    const favRank = sorted.findIndex((s) => s.id === fav.id) + 1;
-    items.push({
-      id: `act-fav-${fav.id}`,
-      timestamp: timeAgo(6),
-      legendName: fav.name,
-      legendImage: fav.imageUrl,
-      type: "favorite",
-      title: "Curator's Personal Favorite",
-      description: `${fav.name} (Rank #${favRank}) marked as a personal favorite by the curator.`,
-    });
-  }
-
-  // 8. Most Works Milestone
-  const byWorks = [...hallList].sort((a, b) => (b.knownFor?.length ?? 0) - (a.knownFor?.length ?? 0));
-  if (byWorks[0] && (byWorks[0].knownFor?.length ?? 0) >= 3) {
-    const mw = byWorks[0];
-    const mwRank = sorted.findIndex((s) => s.id === mw.id) + 1;
-    items.push({
-      id: `act-works-${mw.id}`,
-      timestamp: timeAgo(7),
-      legendName: mw.name,
-      legendImage: mw.imageUrl,
-      type: "milestone",
-      title: "Most Works Milestone",
-      description: `${mw.name} (Rank #${mwRank}) leads the Hall with ${mw.knownFor?.length ?? 0} masterworks.`,
-    });
-  }
-
-  // 9. 50+ Votes Milestone entries
-  const fiftyPlusVoters = sorted.filter((h) => (h.likes || 0) >= 50 && h.id !== sorted[0]?.id);
-  if (fiftyPlusVoters[0]) {
-    const mv = fiftyPlusVoters[0];
-    const mvRank = sorted.findIndex((s) => s.id === mv.id) + 1;
-    items.push({
-      id: `act-milestone-${mv.id}`,
-      timestamp: timeAgo(8),
-      legendName: mv.name,
-      legendImage: mv.imageUrl,
-      type: "milestone",
-      title: "50+ Votes Milestone",
-      description: `${mv.name} (Rank #${mvRank}) crossed 50 community votes — Community Favorite tier unlocked.`,
-    });
-  }
-
-  // 10. Total Hall Size Milestone
-  const totalEntries = hallList.length;
-  if (totalEntries >= 5) {
-    items.push({
-      id: `act-size-${totalEntries}`,
-      timestamp: timeAgo(9),
-      legendName: `${totalEntries} Legends Inducted`,
-      type: "addition",
-      title: "Hall Roster Growing",
-      description: `The Hall of Fame now contains ${totalEntries} inducted legends across ${new Set(hallList.map((h) => h.type)).size} categories.`,
-    });
-  }
-
   return items;
+}
+
+function formatRelativeTime(dateStr: string | Date): string {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMins < 1) return "just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return "yesterday";
+  return `${diffDays}d ago`;
 }

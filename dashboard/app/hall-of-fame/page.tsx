@@ -29,7 +29,7 @@ import {
 export default function HallOfFamePage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { hallOfFame = [], deleteHof, likeHof } = useDashboardStore();
+  const { hallOfFame = [], hallEvents = [], championshipHistory = [], deleteHof, likeHof } = useDashboardStore();
   const router = useRouter();
   const { confirm } = useConfirm();
   const { openContextMenu } = useContextMenu();
@@ -181,10 +181,19 @@ export default function HallOfFamePage() {
     return { total, goat, champions, nations, categories, totalVotes };
   }, [hallOfFame]);
 
-  const hallRecords = useMemo(() => computeHallRecords(hallOfFame), [hallOfFame]);
+  const hallRecords = useMemo(
+    () => computeHallRecords(hallOfFame, championshipHistory, hallEvents),
+    [hallOfFame, championshipHistory, hallEvents]
+  );
   const hallAnalytics = useMemo(() => computeHallAnalytics(hallOfFame), [hallOfFame]);
-  const activityFeed = useMemo(() => generateActivityFeed(hallOfFame), [hallOfFame]);
-  const championshipTimeline = useMemo(() => getChampionshipTimeline(hallOfFame), [hallOfFame]);
+  const activityFeed = useMemo(
+    () => generateActivityFeed(hallOfFame, hallEvents),
+    [hallOfFame, hallEvents]
+  );
+  const championshipTimeline = useMemo(
+    () => getChampionshipTimeline(hallOfFame, championshipHistory),
+    [hallOfFame, championshipHistory]
+  );
 
   // Top 3 Podium
   const top1 = sortedList[0];

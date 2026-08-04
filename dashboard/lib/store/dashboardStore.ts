@@ -406,6 +406,48 @@ export interface HallOfFameEntry {
   associatedDramas?: string[];
 }
 
+export interface HallEventEntry {
+  id: string;
+  userId?: string;
+  type: string;
+  characterId?: string | null;
+  characterName: string;
+  oldRank?: number | null;
+  newRank?: number | null;
+  oldVotes?: number | null;
+  newVotes?: number | null;
+  timestamp: string;
+  metadata?: any;
+}
+
+export interface ChampionshipHistoryEntry {
+  id: string;
+  userId?: string;
+  characterId: string;
+  championName: string;
+  startDate: string;
+  endDate?: string | null;
+  durationDays: number;
+  highestVotes: number;
+  timesDefended: number;
+  championshipNumber: number;
+  reasonEnded?: string | null;
+  category?: string | null;
+  nationality?: string | null;
+  imageUrl?: string | null;
+}
+
+export interface HallRankingSnapshotEntry {
+  id: string;
+  userId?: string;
+  characterId: string;
+  characterName: string;
+  rank: number;
+  votes: number;
+  prestigeScore: number;
+  timestamp: string;
+}
+
 // ─── Misc Section Types ─────────────────────────────────────────────────────────
 
 export interface NoteEntry {
@@ -518,6 +560,9 @@ interface DashboardState {
   favoriteCharacters: FavoriteCharacter[];
   dramas: DramaEntry[];
   hallOfFame: HallOfFameEntry[];
+  hallEvents: HallEventEntry[];
+  championshipHistory: ChampionshipHistoryEntry[];
+  hallRankingSnapshots: HallRankingSnapshotEntry[];
   notes: NoteEntry[];
   links: LinkEntry[];
   gallery: GalleryEntry[];
@@ -753,6 +798,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   favoriteCharacters: [],
   dramas: [],
   hallOfFame: [],
+  hallEvents: [],
+  championshipHistory: [],
+  hallRankingSnapshots: [],
   notes: [],
   links: [],
   gallery: [],
@@ -789,6 +837,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       favoriteCharacters: [],
       dramas: [],
       hallOfFame: [],
+      hallEvents: [],
+      championshipHistory: [],
+      hallRankingSnapshots: [],
       notes: [],
       links: [],
       gallery: [],
@@ -840,6 +891,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           favoriteCharacters: data.favoriteCharacters || [],
           dramas: data.dramas || [],
           hallOfFame: data.hallOfFame || [],
+          hallEvents: data.hallEvents || [],
+          championshipHistory: data.championshipHistory || [],
+          hallRankingSnapshots: data.hallRankingSnapshots || [],
           notes: data.notes || [],
           links: data.links || [],
           gallery: data.gallery || [],

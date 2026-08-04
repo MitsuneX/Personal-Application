@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
+import { logHallEvent, captureHallRankingSnapshots, updateChampionshipHistoryOnRankChange } from "@/lib/utils/hofEventEngine";
 
 export async function POST(req: Request) {
   try {
@@ -439,6 +440,9 @@ export async function POST(req: Request) {
 
       // ─── Hall Of Fame Actions ──────────────────────────────────────────────────
       case "UPDATE_HOF": {
+        // Find existing record to detect changes
+        const existing = await prisma.hallOfFame.findUnique({ where: { id: payload.id } });
+
         // If this entry is being set as champion, clear all other champions first
         if (payload.isChampion) {
           await prisma.hallOfFame.updateMany({
@@ -487,27 +491,112 @@ export async function POST(req: Request) {
             associatedDramas: payload.associatedDramas || [],
           },
         });
+
+        // Event Logging
+        if (!existing) {
+          await logHallEvent(prisma, {
+            userId,
+            type: "ADD_CHARACTER",
+            characterId: hof.id,
+            characterName: hof.name,
+            newRank: hof.rank,
+            newVotes: hof.likes,
+            metadata: { type: hof.type, status: hof.status, nationality: hof.nationality },
+          });
+        } else {
+          await logHallEvent(prisma, {
+            userId,
+            type: "UPDATE_CHARACTER",
+            characterId: hof.id,
+            characterName: hof.name,
+            oldRank: existing.rank,
+            newRank: hof.rank,
+            oldVotes: existing.likes,
+            newVotes: hof.likes,
+            metadata: { type: hof.type, status: hof.status, nationality: hof.nationality },
+          });
+        }
+
+        if (hof.isChampion || resolvedRank === 1) {
+          await updateChampionshipHistoryOnRankChange(prisma, userId, hof);
+        }
+
+        await captureHallRankingSnapshots(prisma, userId);
+
         return NextResponse.json({ success: true, data: hof });
       }
 
       case "LIKE_HOF": {
+        const existing = await prisma.hallOfFame.findUnique({ where: { id: payload.id } });
         const entry = await prisma.hallOfFame.update({
           where: { id: payload.id },
           data: { likes: { increment: 1 } },
         });
+
+        await logHallEvent(prisma, {
+          userId,
+          type: "LIKES_CHANGED",
+          characterId: entry.id,
+          characterName: entry.name,
+          oldVotes: existing?.likes ?? 0,
+          newVotes: entry.likes,
+          metadata: { increment: 1 },
+        });
+
+        // Check if top rank shifted due to votes
+        const topEntry = await prisma.hallOfFame.findFirst({
+          where: { userId },
+          orderBy: { likes: "desc" },
+        });
+
+        if (topEntry && topEntry.id === entry.id) {
+          await updateChampionshipHistoryOnRankChange(prisma, userId, topEntry);
+        }
+
+        await captureHallRankingSnapshots(prisma, userId);
+
         return NextResponse.json({ success: true, data: entry });
       }
 
       case "RANK_HOF": {
+        const existing = await prisma.hallOfFame.findUnique({ where: { id: payload.id } });
         const ranked = await prisma.hallOfFame.update({
           where: { id: payload.id },
           data: { rank: payload.rank },
         });
+
+        await logHallEvent(prisma, {
+          userId,
+          type: "RANK_CHANGED",
+          characterId: ranked.id,
+          characterName: ranked.name,
+          oldRank: existing?.rank ?? null,
+          newRank: ranked.rank,
+        });
+
+        if (ranked.rank === 1) {
+          await updateChampionshipHistoryOnRankChange(prisma, userId, ranked);
+        }
+
+        await captureHallRankingSnapshots(prisma, userId);
+
         return NextResponse.json({ success: true, data: ranked });
       }
 
       case "DELETE_HOF": {
+        const existing = await prisma.hallOfFame.findUnique({ where: { id: payload.id } });
+        if (existing) {
+          await logHallEvent(prisma, {
+            userId,
+            type: "DELETE_CHARACTER",
+            characterId: existing.id,
+            characterName: existing.name,
+            oldRank: existing.rank,
+            oldVotes: existing.likes,
+          });
+        }
         await prisma.hallOfFame.delete({ where: { id: payload.id } });
+        await captureHallRankingSnapshots(prisma, userId);
         return NextResponse.json({ success: true });
       }
 

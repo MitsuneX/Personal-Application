@@ -184,6 +184,58 @@ model HallOfFame {
   @@index([userId])
 }
 
+model HallEvent {
+  id            String   @id @default(uuid())
+  userId        String?
+  type          String   // e.g. "ADD_CHARACTER" | "DELETE_CHARACTER" | "UPDATE_CHARACTER" | "RANK_CHANGED" | "CHAMPION_CHANGED" | "VOTES_CHANGED" | "LIKES_CHANGED" | "WORK_ADDED" | "WORK_REMOVED" | "BADGE_UNLOCKED" | "RECORD_BROKEN" | "PRESTIGE_CHANGED" | "FAVORITE_CHANGED" | "CATEGORY_CHANGED" | "COUNTRY_CHANGED" | "NOTES_UPDATED"
+  characterId   String?
+  characterName String
+  oldRank       Int?
+  newRank       Int?
+  oldVotes      Int?
+  newVotes      Int?
+  timestamp     DateTime @default(now())
+  metadata      Json?
+
+  @@index([userId])
+  @@index([characterId])
+}
+
+model ChampionshipHistory {
+  id                 String    @id @default(uuid())
+  userId             String?
+  characterId        String
+  championName       String
+  startDate          DateTime  @default(now())
+  endDate            DateTime?
+  durationDays       Int       @default(0)
+  highestVotes       Int       @default(0)
+  timesDefended      Int       @default(0)
+  championshipNumber Int       @default(1)
+  reasonEnded        String?   // e.g. "Surpassed in Votes", "Manual Champion Reassignment", "Active Champion"
+  category           String?
+  nationality        String?
+  imageUrl           String?
+  createdAt          DateTime  @default(now())
+
+  @@index([userId])
+  @@index([characterId])
+}
+
+model HallRankingSnapshot {
+  id            String   @id @default(uuid())
+  userId        String?
+  characterId   String
+  characterName String
+  rank          Int
+  votes         Int
+  prestigeScore Float    @default(0)
+  timestamp     DateTime @default(now())
+
+  @@index([userId])
+  @@index([characterId])
+}
+
 model Note {
   id          String      @id @default(uuid())
   userId      String?

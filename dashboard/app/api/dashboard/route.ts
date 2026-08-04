@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { DEFAULT_AI_TOOLS } from "@/lib/data/initialAiTools";
 import { DEFAULT_GAMES } from "@/lib/data/initialGames";
+import { ensureInitialHallHistory } from "@/lib/utils/hofEventEngine";
 
 export const dynamic = "force-dynamic";
 
@@ -192,6 +193,9 @@ export async function GET() {
       dbHobbySkills,
       dbHobbyLogs,
       dbProfileHistory,
+      dbHallEvents,
+      dbChampionshipHistory,
+      dbHallRankingSnapshots,
     ] = await Promise.all([
       safeQuery(() => prisma.gameDossierCharacter.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
       safeQuery(() => prisma.gameExternalResource.findMany({ where: { userId }, orderBy: { sortOrder: "asc" } }), []),
@@ -210,7 +214,15 @@ export async function GET() {
       safeQuery(() => prisma.hobbySkill.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
       safeQuery(() => prisma.hobbyLog.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
       safeQuery(() => prisma.profileHistory.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 10 }), []),
+      safeQuery(() => prisma.hallEvent.findMany({ where: { userId }, orderBy: { timestamp: "desc" }, take: 50 }), []),
+      safeQuery(() => prisma.championshipHistory.findMany({ where: { userId }, orderBy: { startDate: "desc" } }), []),
+      safeQuery(() => prisma.hallRankingSnapshot.findMany({ where: { userId }, orderBy: { timestamp: "desc" } }), []),
     ]);
+
+    // Ensure initial event history & baseline championship records exist for existing HOF items
+    if (dbHOF.length > 0 && dbHallEvents.length === 0) {
+      await ensureInitialHallHistory(prisma, userId, dbHOF);
+    }
 
     return NextResponse.json({
       isGuest: false,
@@ -225,6 +237,9 @@ export async function GET() {
       favoriteCharacters: dbCharacters,
       dramas: dbDramas,
       hallOfFame: dbHOF,
+      hallEvents: dbHallEvents,
+      championshipHistory: dbChampionshipHistory,
+      hallRankingSnapshots: dbHallRankingSnapshots,
       notes: dbNotes,
       links: dbLinks,
       gallery: dbGallery,

@@ -327,3 +327,20 @@ Next.js 16 App Router renders client pages backed by a Zustand global store (`da
   - `generateActivityFeed()`: Generates 10 event types (champion, GOAT, podium surge, rank climb, drop, favorite, works milestone, 50+ votes, hall size) from live list state. Timestamps use rank-distance relative labels.
 - `components/hof/HofRecordsSection.tsx`: Record count in subtitle now reads `{records.length}` dynamically.
 - `components/hof/HofTimelineSection.tsx`: Year range header and "current champion" highlight now derived from timeline data — `item.year === timeline[0]?.year` instead of hardcoded `=== 2026`.
+
+### 2026-08-04 — Hall of Fame Phase 2: True Historical Archive & Event Engine
+
+**Prisma Schema Additions (`prisma/schema.prisma`)**
+- Created `model HallEvent` storing immutable audit events (`ADD_CHARACTER`, `DELETE_CHARACTER`, `UPDATE_CHARACTER`, `RANK_CHANGED`, `CHAMPION_CHANGED`, `LIKES_CHANGED`, `PRESTIGE_CHANGED`, `FAVORITE_CHANGED`, etc.).
+- Created `model ChampionshipHistory` storing title reigns (`startDate`, `endDate`, `durationDays`, `highestVotes`, `timesDefended`, `championshipNumber`, `reasonEnded`).
+- Created `model HallRankingSnapshot` storing point-in-time rank/vote/prestige state.
+
+**Action Router Event Engine (`app/api/action/route.ts` & `lib/utils/hofEventEngine.ts`)**
+- `UPDATE_HOF`, `LIKE_HOF`, `RANK_HOF`, and `DELETE_HOF` now emit `HallEvent` records to PostgreSQL on every mutation.
+- Automatic champion dethrone/crown transition: when Rank #1 shifts, concludes previous reign (`endDate = now()`, computes `durationDays`) and initializes new reign (`endDate = null`).
+- Captures `HallRankingSnapshot`s on every rank/vote shift.
+- Idempotent auto-seed (`ensureInitialHallHistory`) populates baseline event/reign/snapshot history on dashboard load if missing.
+
+**Unified Analytics Engine (`lib/utils/hofEngine.ts` & `app/hall-of-fame/page.tsx`)**
+- `getChampionshipTimeline()`, `generateActivityFeed()`, and `computeHallRecords()` now prioritize real database history records (`championshipHistory`, `hallEvents`, `snapshots`) over synthetic estimations.
+
