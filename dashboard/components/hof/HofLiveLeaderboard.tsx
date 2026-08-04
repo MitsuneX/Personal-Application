@@ -300,14 +300,14 @@ export function HofLiveLeaderboard({
 
                 <div
                   onClick={() => onOpenProfile(entry)}
-                  className="w-full h-36 rounded-2xl relative overflow-hidden bg-slate-800 flex items-center justify-center"
+                  className="w-full h-48 sm:h-52 md:h-56 rounded-2xl relative overflow-hidden bg-slate-800 flex items-center justify-center cursor-pointer hover:scale-[1.02] transition-transform duration-200"
                 >
                   {entry.imageUrl ? (
                     <Image
                       src={entry.imageUrl}
                       alt={entry.name}
                       fill
-                      className="object-cover"
+                      className="object-cover object-[center_15%]"
                       unoptimized
                     />
                   ) : (
