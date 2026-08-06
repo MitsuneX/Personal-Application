@@ -107,11 +107,68 @@ model GameDossierCharacter {
   matches     Int?     @default(0)
   notes       String?
   avatarUrl   String?
+  splashArt   String?
   accentColor String?
   isFavorite  Boolean  @default(false)
+  pickRate    Float?
+  banRate     Float?
+  health      Int?
+  damage      Int?
+  difficulty  String?
+  element     String?
+  path        String?
+  weapon      String?
+  rarity      String?
+  nation      String?
+  birthday    String?
+  faction     String?
+  specialty   String?
+  stats       Json?
+  tags        Json?
   createdAt   DateTime @default(now())
 
   @@index([userId])
+  @@index([gameId])
+}
+
+model GameCharacter {
+  id           String   @id @default(uuid())
+  userId       String?
+  characterId  String?  // Reference to GameDossierCharacter
+  gameId       String?  // Reference to Game
+  gameName     String?  // Name of game (for missing game support)
+  name         String
+  title        String?  // e.g. "Herrscher of Finality"
+  role         String?  // e.g. "Main DPS", "Jungler"
+  category     String?  // e.g. "Destruction", "Gold Lane"
+  element      String?  // e.g. "Fire", "Quantum", "Pyro"
+  path         String?  // e.g. "Destruction", "Erudition"
+  weapon       String?  // e.g. "Claymore", "Bow"
+  rarity       String?  // e.g. "5-Star", "SSR"
+  nation       String?  // e.g. "Liyue", "Belobog"
+  birthday     String?  // e.g. "March 7"
+  health       Int?
+  damage       Int?
+  difficulty   String?
+  pickRate     Float?
+  banRate      Float?
+  winRate      Float?
+  avatarUrl    String?
+  splashArt    String?  // Independent artwork from Character Collection
+  accentColor  String?
+  rank         Int?     @default(0)
+  likes        Int      @default(0)
+  isFavorite   Boolean  @default(true)
+  notes        String?
+  stats        Json?
+  tags         Json?    // string[]
+  links        Json?    // external links
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([gameId])
+  @@index([characterId])
 }
 
 model Anime {

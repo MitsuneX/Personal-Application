@@ -6,6 +6,7 @@ import { useTheme } from "@/lib/theme";
 import { DossierCharacterEntry, useDashboardStore } from "@/lib/store/dashboardStore";
 import { getGameDossierConfig } from "@/lib/data/gameDossierConfig";
 import { useContextMenu } from "@/hooks/useContextMenu";
+import { DynamicGameStats } from "@/components/game/DynamicGameStats";
 
 interface DossierCharacterCardProps {
   character: DossierCharacterEntry;
@@ -26,12 +27,21 @@ export function DossierCharacterCard({
 }: DossierCharacterCardProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { updateDossierCharacter, games } = useDashboardStore();
+  const { updateDossierCharacter, games, gameCharacters, addGameCharacter, syncGameCharacterArtwork } = useDashboardStore();
   const { openContextMenu } = useContextMenu();
 
   const parentGame = games.find((g) => g.id === character.gameId);
   const resolvedGameTitle = gameTitle || parentGame?.game || "Game";
-  const config = getGameDossierConfig(resolvedGameTitle, gameCategory || parentGame?.category);
+  const resolvedGameCategory = gameCategory || parentGame?.category || "";
+  const config = getGameDossierConfig(resolvedGameTitle, resolvedGameCategory);
+
+  // Check if character is linked in GameCharacter store
+  const linkedGameChar = gameCharacters.find(
+    (gc) =>
+      (gc.characterId && gc.characterId === character.id) ||
+      (gc.name.toLowerCase() === character.name.toLowerCase() &&
+        (gc.gameId === character.gameId || (gc.gameName && gc.gameName.toLowerCase() === resolvedGameTitle.toLowerCase())))
+  );
 
   // Find element system info if available
   const elementSystem = config.elementSystem;
@@ -47,11 +57,31 @@ export function DossierCharacterCard({
   );
 
   const accent = character.accentColor || elementItem?.color || parentGame?.accentColor || "#3B82F6";
+  const splash = character.splashArt || linkedGameChar?.splashArt;
 
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     e.stopPropagation();
     await updateDossierCharacter(character.id, {
       isFavorite: !character.isFavorite,
+    });
+  };
+
+  const handleLinkToGameChar = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (linkedGameChar) return;
+    await addGameCharacter({
+      characterId: character.id,
+      gameId: character.gameId,
+      gameName: resolvedGameTitle,
+      name: character.name,
+      role: character.role,
+      category: character.category,
+      avatarUrl: character.avatarUrl,
+      splashArt: character.splashArt,
+      accentColor: accent,
+      isFavorite: true,
+      winRate: character.winRate,
+      notes: character.notes,
     });
   };
 
@@ -66,6 +96,39 @@ export function DossierCharacterCard({
           icon: "⭐",
           onClick: () => updateDossierCharacter(character.id, { isFavorite: !character.isFavorite }),
         },
+        ...(!linkedGameChar
+          ? [
+              {
+                id: "link-game-char",
+                label: "Link to Game Character Hub",
+                icon: "✨",
+                onClick: () =>
+                  addGameCharacter({
+                    characterId: character.id,
+                    gameId: character.gameId,
+                    gameName: resolvedGameTitle,
+                    name: character.name,
+                    role: character.role,
+                    category: character.category,
+                    avatarUrl: character.avatarUrl,
+                    splashArt: character.splashArt,
+                    accentColor: accent,
+                    isFavorite: true,
+                    winRate: character.winRate,
+                    notes: character.notes,
+                  }),
+              },
+            ]
+          : linkedGameChar && (linkedGameChar.splashArt || character.splashArt)
+          ? [
+              {
+                id: "sync-art",
+                label: "Sync Artwork with Game Hub",
+                icon: "🖼️",
+                onClick: () => syncGameCharacterArtwork(linkedGameChar.id, character.id, "to_dossier_character"),
+              },
+            ]
+          : []),
         ...(onEdit
           ? [
               {
@@ -110,7 +173,9 @@ export function DossierCharacterCard({
       transition={{ duration: 0.22 }}
       onClick={() => onSelect?.(character)}
       onContextMenu={handleContextMenu}
-      className="p-4 rounded-2xl border relative overflow-hidden group transition-all cursor-pointer hover:scale-[1.02]"
+      className={`p-4 rounded-2xl border relative overflow-hidden group transition-all cursor-pointer hover:scale-[1.02] ${
+        linkedGameChar ? "ring-1 ring-cyan-400/40 shadow-cyan-500/10" : ""
+      }`}
       style={{
         backgroundColor: isCyber ? "rgba(10,15,30,0.85)" : "#FFFFFF",
         borderColor: isCyber ? `${accent}40` : "#000000",
@@ -118,10 +183,18 @@ export function DossierCharacterCard({
         boxShadow: isCyber ? `0 4px 20px ${accent}15` : "4px 4px 0 #000000",
       }}
     >
+      {/* Artwork Splash Background */}
+      {splash && (
+        <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-30 transition-opacity pointer-events-none overflow-hidden">
+          <img src={splash} alt={character.name} className="w-full h-full object-cover filter blur-[2px] scale-105" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent" />
+        </div>
+      )}
+
       {/* Cyber Ambient Glow */}
       {isCyber && (
         <div
-          className="absolute -right-8 -top-8 w-24 h-24 rounded-full blur-2xl opacity-20 pointer-events-none"
+          className="absolute -right-8 -top-8 w-24 h-24 rounded-full blur-2xl opacity-20 pointer-events-none z-0"
           style={{ backgroundColor: accent }}
         />
       )}
@@ -154,8 +227,13 @@ export function DossierCharacterCard({
 
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <h4 className="font-black text-base theme-text-primary truncate leading-tight">
-                {character.name}
+              <h4 className="font-black text-base theme-text-primary truncate leading-tight flex items-center gap-1">
+                <span>{character.name}</span>
+                {linkedGameChar && (
+                  <span className="text-[10px] text-cyan-400 font-mono" title="Linked to Game Character Hub">
+                    ✨
+                  </span>
+                )}
               </h4>
               {character.levelRank && (
                 <span
@@ -178,6 +256,15 @@ export function DossierCharacterCard({
 
         {/* Favorite & Quick Actions */}
         <div className="flex items-center gap-1 shrink-0 z-20">
+          {!linkedGameChar && (
+            <button
+              onClick={handleLinkToGameChar}
+              className="p-1 rounded-lg text-xs opacity-60 hover:opacity-100 bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 transition-all cursor-pointer"
+              title="Link to Game Character Hub"
+            >
+              +Hub
+            </button>
+          )}
           <button
             onClick={handleToggleFavorite}
             className={`p-1.5 rounded-lg text-xs transition-transform active:scale-90 cursor-pointer ${
@@ -214,46 +301,16 @@ export function DossierCharacterCard({
         </div>
       </div>
 
-      {/* Element & Category Badges Row */}
-      <div className="mt-3.5 pt-2.5 border-t border-white/10 flex items-center justify-between gap-2 flex-wrap text-xs font-mono">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Element Badge */}
-          {character.role && (
-            <span
-              className="px-2 py-0.5 rounded-md text-[10px] font-bold flex items-center gap-1"
-              style={{
-                backgroundColor: isCyber ? `${elementItem?.color || accent}20` : `${elementItem?.color || accent}1F`,
-                color: isCyber ? (elementItem?.color || accent) : "#1A1A1A",
-                border: `1px solid ${elementItem?.color || accent}`,
-              }}
-            >
-              <span>{elementItem?.icon || "✦"}</span>
-              <span>{character.role}</span>
-            </span>
-          )}
-
-          {/* Category / Path Badge */}
-          {character.category && (
-            <span
-              className="px-2 py-0.5 rounded-md text-[10px] font-bold flex items-center gap-1"
-              style={{
-                backgroundColor: isCyber ? "rgba(255,255,255,0.06)" : "#F1F5F9",
-                color: isCyber ? "#94A3B8" : "#475569",
-                border: isCyber ? "1px solid rgba(255,255,255,0.15)" : "1px solid #CBD5E1",
-              }}
-            >
-              <span>{categoryItem?.icon || "📁"}</span>
-              <span>{character.category}</span>
-            </span>
-          )}
-        </div>
-
-        {/* Winrate / Stats */}
-        {character.winRate !== undefined && (
-          <span className="font-bold text-emerald-400 text-[11px]">
-            {character.winRate}% WR
-          </span>
-        )}
+      {/* Dynamic Game Stats & Badges Row */}
+      <div className="mt-3.5 pt-2.5 border-t border-white/10 relative z-10">
+        <DynamicGameStats
+          gameCategory={resolvedGameCategory}
+          gameName={resolvedGameTitle}
+          role={character.role}
+          category={character.category}
+          winRate={character.winRate}
+          compact={true}
+        />
       </div>
     </motion.div>
   );

@@ -143,6 +143,41 @@ export interface DossierCharacterEntry {
   loreTags?: string[];
 }
 
+export interface GameCharacterEntry {
+  id: string;
+  characterId?: string;
+  gameId?: string;
+  gameName?: string;
+  name: string;
+  title?: string;
+  role?: string;
+  category?: string;
+  element?: string;
+  path?: string;
+  weapon?: string;
+  rarity?: string;
+  nation?: string;
+  birthday?: string;
+  health?: number;
+  damage?: number;
+  difficulty?: string;
+  pickRate?: number;
+  banRate?: number;
+  winRate?: number;
+  avatarUrl?: string;
+  splashArt?: string;
+  accentColor?: string;
+  rank?: number;
+  likes?: number;
+  isFavorite?: boolean;
+  notes?: string;
+  stats?: any;
+  tags?: string[];
+  links?: any;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface GameResourceEntry {
   id: string;
   gameId: string;
@@ -599,6 +634,7 @@ interface DashboardState {
   profile: ProfileData;
   games: GameEntry[];
   dossierCharacters: DossierCharacterEntry[];
+  gameCharacters: GameCharacterEntry[];
   gameResources: GameResourceEntry[];
   gameShowcaseItems: GameShowcaseEntry[];
   projects: ProjectItemEntry[];
@@ -628,6 +664,11 @@ interface DashboardState {
   addDossierCharacter: (item: DossierCharacterEntry) => Promise<void>;
   updateDossierCharacter: (id: string, data: Partial<DossierCharacterEntry>) => Promise<void>;
   removeDossierCharacter: (id: string) => Promise<void>;
+  addGameCharacter: (item: Partial<GameCharacterEntry>) => Promise<GameCharacterEntry | null>;
+  updateGameCharacter: (id: string, data: Partial<GameCharacterEntry>) => Promise<void>;
+  removeGameCharacter: (id: string) => Promise<void>;
+  syncGameCharacterArtwork: (gameCharId: string, dossierCharId: string, direction: "to_game_character" | "to_dossier_character") => Promise<void>;
+  syncOrphanedGameCharacters: (gameId?: string, gameName?: string) => Promise<void>;
   addGameResource: (item: GameResourceEntry) => Promise<void>;
   updateGameResource: (id: string, data: Partial<GameResourceEntry>) => Promise<void>;
   removeGameResource: (id: string) => Promise<void>;
@@ -853,6 +894,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   profile: initialProfile,
   games: [],
   dossierCharacters: initialDossierCharacters,
+  gameCharacters: [],
   gameResources: initialGameResources,
   gameShowcaseItems: [],
   projects: initialProjects,
@@ -896,6 +938,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       profile: initialProfile,
       games: [],
       dossierCharacters: initialDossierCharacters,
+      gameCharacters: [],
       gameResources: initialGameResources,
       gameShowcaseItems: [],
       projects: initialProjects,
@@ -954,6 +997,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
             : currentProfile,
           games: data.games || [],
           dossierCharacters: data.dossierCharacters || [],
+          gameCharacters: data.gameCharacters || [],
           gameResources: data.gameResources || [],
           gameShowcaseItems: data.gameShowcaseItems || [],
           projects: data.projects || [],
@@ -1126,6 +1170,126 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
     } catch (err) {
       console.error("Failed to sync deleted dossier character:", err);
+    }
+  },
+
+  addGameCharacter: async (itemData) => {
+    const newItem: GameCharacterEntry = {
+      id: itemData.id || `game-char-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      name: itemData.name || "Unnamed Character",
+      gameId: itemData.gameId || "",
+      gameName: itemData.gameName || "",
+      role: itemData.role,
+      category: itemData.category,
+      avatarUrl: itemData.avatarUrl,
+      splashArt: itemData.splashArt,
+      characterId: itemData.characterId,
+      accentColor: itemData.accentColor || "#3B82F6",
+      isFavorite: itemData.isFavorite ?? false,
+      winRate: itemData.winRate,
+      notes: itemData.notes,
+      createdAt: itemData.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    set((s) => ({ gameCharacters: [...s.gameCharacters, newItem] }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "UPDATE_GAME_CHARACTER", payload: newItem }),
+      });
+    } catch (err) {
+      console.error("Failed to sync added game character:", err);
+    }
+    return newItem;
+  },
+
+  updateGameCharacter: async (id, data) => {
+    const updatedAt = new Date().toISOString();
+    set((s) => ({
+      gameCharacters: s.gameCharacters.map((gc) => (gc.id === id ? { ...gc, ...data, updatedAt } : gc)),
+    }));
+    try {
+      const item = get().gameCharacters.find((gc) => gc.id === id);
+      if (item) {
+        await fetch("/api/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "UPDATE_GAME_CHARACTER", payload: item }),
+        });
+      }
+    } catch (err) {
+      console.error("Failed to sync updated game character:", err);
+    }
+  },
+
+  removeGameCharacter: async (id) => {
+    set((s) => ({ gameCharacters: s.gameCharacters.filter((gc) => gc.id !== id) }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_GAME_CHARACTER", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to sync deleted game character:", err);
+    }
+  },
+
+  syncGameCharacterArtwork: async (gameCharId, dossierCharId, direction) => {
+    const gameChar = get().gameCharacters.find((gc) => gc.id === gameCharId);
+    const dossierChar = get().dossierCharacters.find((dc) => dc.id === dossierCharId);
+    if (!gameChar || !dossierChar) return;
+
+    if (direction === "to_game_character") {
+      await get().updateGameCharacter(gameCharId, {
+        avatarUrl: dossierChar.avatarUrl || gameChar.avatarUrl,
+        splashArt: dossierChar.splashArt || gameChar.splashArt,
+        accentColor: dossierChar.accentColor || gameChar.accentColor,
+      });
+    } else {
+      await get().updateDossierCharacter(dossierCharId, {
+        avatarUrl: gameChar.avatarUrl || dossierChar.avatarUrl,
+        splashArt: gameChar.splashArt || dossierChar.splashArt,
+        accentColor: gameChar.accentColor || dossierChar.accentColor,
+      });
+    }
+  },
+
+  syncOrphanedGameCharacters: async (gameId, gameName) => {
+    const state = get();
+    const relevantDossierChars = state.dossierCharacters.filter((dc) => {
+      if (gameId && dc.gameId !== gameId) return false;
+      if (gameName && dc.gameId !== gameId) {
+        const game = state.games.find((g) => g.id === dc.gameId);
+        if (!game || game.game.toLowerCase() !== gameName.toLowerCase()) return false;
+      }
+      return true;
+    });
+
+    for (const dc of relevantDossierChars) {
+      const exists = state.gameCharacters.some(
+        (gc) =>
+          gc.characterId === dc.id ||
+          (gc.name.toLowerCase() === dc.name.toLowerCase() && gc.gameId === dc.gameId)
+      );
+      if (!exists) {
+        const game = state.games.find((g) => g.id === dc.gameId);
+        await get().addGameCharacter({
+          characterId: dc.id,
+          gameId: dc.gameId,
+          gameName: game?.game || gameName || "Game",
+          name: dc.name,
+          role: dc.role,
+          category: dc.category,
+          avatarUrl: dc.avatarUrl,
+          splashArt: dc.splashArt,
+          accentColor: dc.accentColor,
+          isFavorite: dc.isFavorite,
+          winRate: dc.winRate,
+          notes: dc.notes,
+        });
+      }
     }
   },
 

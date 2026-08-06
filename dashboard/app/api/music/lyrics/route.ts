@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { generateSearchPermutations, SearchPermutation } from "@/lib/music/lyricsNormalizer";
 
 export const dynamic = "force-dynamic";
 
@@ -60,35 +61,35 @@ function sanitizeLyricText(text: string): string {
     .join("\n");
 }
 
-function cleanTrackTitle(title: string): string {
-  return title
-    .replace(/\b(official\s+music\s+video|official\s+video|official\s+audio|lyric\s+video|lyrics|official\s+mv|mv|hd|4k|audio|visualizer)\b/gi, "")
-    .replace(/\b(ft\.|feat\.|featuring)\s+.*$/gi, "")
-    .trim() || title;
-}
-
 /**
- * ── PROVIDER 1: MUSIXMATCH API SERVICE ──────────────────────────────────────
+ * ── PROVIDER 1: MUSIXMATCH API SERVICE (MULTI-PASS) ─────────────────────────
  */
-async function fetchMusixmatchLyrics(track: string, artist: string) {
-  try {
-    const cleanT = cleanTrackTitle(track);
-    const cleanA = artist.toLowerCase() === "unknown artist" ? "" : artist.trim();
+async function fetchMusixmatchPermutations(permutations: SearchPermutation[]) {
+  const headers = {
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    Accept: "application/json",
+  };
 
-    const headers = {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "Accept": "application/json",
-    };
+  // Limit to top 5 permutations for Musixmatch to preserve quota
+  const passes = permutations.slice(0, 5);
+
+  for (let idx = 0; idx < passes.length; idx++) {
+    const { track, artist, reason } = passes[idx];
+    console.log(
+      `[Lyrics API] 🔍 [MUSIXMATCH Pass ${idx + 1}/${passes.length}] Trying "${track}" by "${artist || "(no artist)"}" (${reason})`
+    );
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    // 1. Matcher Endpoint (`matcher.lyrics.get`)
-    console.log(`[Lyrics API] 🎵 [MUSIXMATCH] Step 1: Trying Matcher Endpoint for track="${cleanT}", artist="${cleanA}"`);
-    const matcherUrl = `${MUSIXMATCH_BASE_URL}/matcher.lyrics.get?q_artist=${encodeURIComponent(cleanA)}&q_track=${encodeURIComponent(cleanT)}&apikey=${MUSIXMATCH_API_KEY}`;
-    
     try {
+      // 1. Matcher Endpoint (`matcher.lyrics.get`)
+      const matcherUrl = `${MUSIXMATCH_BASE_URL}/matcher.lyrics.get?q_artist=${encodeURIComponent(
+        artist
+      )}&q_track=${encodeURIComponent(track)}&apikey=${MUSIXMATCH_API_KEY}`;
       const matcherRes = await fetch(matcherUrl, { headers, signal: controller.signal });
+
       if (matcherRes.ok) {
         const matcherData = await matcherRes.json();
         const statusCode = matcherData.message?.header?.status_code;
@@ -96,29 +97,30 @@ async function fetchMusixmatchLyrics(track: string, artist: string) {
 
         if (statusCode === 200 && lyricsBody) {
           clearTimeout(timeoutId);
-          console.log(`[Lyrics API] 🎵 [MUSIXMATCH] ✅ Matcher Endpoint HIT!`);
+          console.log(`[Lyrics API] 🎵 [MUSIXMATCH] ✅ HIT via Matcher Endpoint on Pass ${idx + 1}!`);
           return {
-            source: "Musixmatch Matcher",
-            title: cleanT,
-            artist: cleanA || "Unknown Artist",
+            source: `Musixmatch (${reason})`,
+            title: track,
+            artist: artist || "Unknown Artist",
             rawLyrics: lyricsBody.replace(/\*+\s*This Lyrics is NOT for Commercial use\s*\*+/gi, "").trim(),
             hasSubtitles: false,
           };
         }
       }
 
-      // 2. Track Search Endpoint (`track.search`) & Subtitles / RichSync (`track.subtitle.get`)
-      console.log(`[Lyrics API] 🎵 [MUSIXMATCH] Step 2: Trying Track Search Endpoint...`);
-      const searchUrl = `${MUSIXMATCH_BASE_URL}/track.search?q_artist=${encodeURIComponent(cleanA)}&q_track=${encodeURIComponent(cleanT)}&page_size=3&s_track_rating=desc&apikey=${MUSIXMATCH_API_KEY}`;
+      // 2. Track Search Endpoint (`track.search`)
+      const searchUrl = `${MUSIXMATCH_BASE_URL}/track.search?q_artist=${encodeURIComponent(
+        artist
+      )}&q_track=${encodeURIComponent(track)}&page_size=3&s_track_rating=desc&apikey=${MUSIXMATCH_API_KEY}`;
       const searchRes = await fetch(searchUrl, { headers, signal: controller.signal });
 
       if (searchRes.ok) {
         const searchData = await searchRes.json();
         const tracks = searchData.message?.body?.track_list || [];
+
         if (tracks.length > 0) {
           const topTrack = tracks[0].track;
           const trackId = topTrack.track_id;
-          console.log(`[Lyrics API] 🎵 [MUSIXMATCH] Track Search HIT! Track ID: ${trackId} ("${topTrack.track_name}" by "${topTrack.artist_name}")`);
 
           // Check if rich-sync subtitle LRC data exists
           if (topTrack.has_subtitles === 1) {
@@ -129,11 +131,11 @@ async function fetchMusixmatchLyrics(track: string, artist: string) {
               const subtitleBody = subData.message?.body?.subtitle?.subtitle_body;
               if (subtitleBody) {
                 clearTimeout(timeoutId);
-                console.log(`[Lyrics API] 🎵 [MUSIXMATCH] ✅ Subtitle/RichSync LRC Data HIT!`);
+                console.log(`[Lyrics API] 🎵 [MUSIXMATCH] ✅ HIT Subtitle/RichSync LRC on Pass ${idx + 1}!`);
                 return {
-                  source: "Musixmatch Subtitles (RichSync)",
-                  title: topTrack.track_name || cleanT,
-                  artist: topTrack.artist_name || cleanA,
+                  source: `Musixmatch RichSync (${reason})`,
+                  title: topTrack.track_name || track,
+                  artist: topTrack.artist_name || artist,
                   rawLyrics: subtitleBody,
                   hasSubtitles: true,
                   trackId: trackId,
@@ -150,11 +152,11 @@ async function fetchMusixmatchLyrics(track: string, artist: string) {
             const lyricsBody = lyricsGetData.message?.body?.lyrics?.lyrics_body;
             if (lyricsBody) {
               clearTimeout(timeoutId);
-              console.log(`[Lyrics API] 🎵 [MUSIXMATCH] ✅ Track Lyrics Get HIT!`);
+              console.log(`[Lyrics API] 🎵 [MUSIXMATCH] ✅ HIT Track Search Lyrics on Pass ${idx + 1}!`);
               return {
-                source: "Musixmatch Track Search",
-                title: topTrack.track_name || cleanT,
-                artist: topTrack.artist_name || cleanA,
+                source: `Musixmatch Search (${reason})`,
+                title: topTrack.track_name || track,
+                artist: topTrack.artist_name || artist,
                 rawLyrics: lyricsBody.replace(/\*+\s*This Lyrics is NOT for Commercial use\s*\*+/gi, "").trim(),
                 hasSubtitles: false,
                 trackId: trackId,
@@ -163,110 +165,148 @@ async function fetchMusixmatchLyrics(track: string, artist: string) {
           }
         }
       }
+
       clearTimeout(timeoutId);
     } catch {
       clearTimeout(timeoutId);
     }
-  } catch (e) {
-    console.warn("[Lyrics API] Musixmatch Provider Exception:", e);
   }
 
   return null;
 }
 
 /**
- * ── PROVIDER 2: LRCLIB API SERVICE ─────────────────────────────────────────
+ * ── PROVIDER 2: LRCLIB API SERVICE (MULTI-PASS) ───────────────────────────
  */
-async function fetchLrcLibLyrics(track: string, artist: string) {
-  try {
-    const cleanT = cleanTrackTitle(track);
-    const cleanA = artist.toLowerCase() === "unknown artist" ? "" : artist.trim();
+async function fetchLrcLibPermutations(permutations: SearchPermutation[]) {
+  // Try up to 6 permutations for LRCLib
+  const passes = permutations.slice(0, 6);
+
+  for (let idx = 0; idx < passes.length; idx++) {
+    const { track, artist, reason } = passes[idx];
+    console.log(
+      `[Lyrics API] 🔍 [LRCLIB Pass ${idx + 1}/${passes.length}] Trying "${track}" by "${artist || "(no artist)"}" (${reason})`
+    );
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    const lrcUrl = `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanT)}&artist_name=${encodeURIComponent(cleanA)}`;
+    // 1. Direct GET endpoint
+    const lrcUrl = `https://lrclib.net/api/get?track_name=${encodeURIComponent(track)}&artist_name=${encodeURIComponent(
+      artist
+    )}`;
+
     try {
       const res = await fetch(lrcUrl, { signal: controller.signal });
-      clearTimeout(timeoutId);
       if (res.ok) {
         const data = await res.json();
         if (data.syncedLyrics) {
+          clearTimeout(timeoutId);
+          console.log(`[Lyrics API] 🎵 [LRCLIB] ✅ HIT Synced LRC on Pass ${idx + 1}!`);
           return {
-            source: "LRCLib (Synced)",
-            title: data.trackName || cleanT,
-            artist: data.artistName || cleanA,
+            source: `LRCLib Synced (${reason})`,
+            title: data.trackName || track,
+            artist: data.artistName || artist,
             rawLyrics: data.syncedLyrics,
             hasSubtitles: true,
           };
         }
         if (data.plainLyrics) {
+          clearTimeout(timeoutId);
+          console.log(`[Lyrics API] 🎵 [LRCLIB] ✅ HIT Plain Lyrics on Pass ${idx + 1}!`);
           return {
-            source: "LRCLib (Plain)",
-            title: data.trackName || cleanT,
-            artist: data.artistName || cleanA,
+            source: `LRCLib Plain (${reason})`,
+            title: data.trackName || track,
+            artist: data.artistName || artist,
             rawLyrics: data.plainLyrics,
             hasSubtitles: false,
           };
         }
       }
+
+      // 2. Search Endpoint Fallback
+      const searchUrl = `https://lrclib.net/api/search?q=${encodeURIComponent(`${track} ${artist}`.trim())}`;
+      const searchRes = await fetch(searchUrl, { signal: controller.signal });
+      if (searchRes.ok) {
+        const searchData = await searchRes.json();
+        if (Array.isArray(searchData) && searchData.length > 0) {
+          const matchItem = searchData.find((item) => item.syncedLyrics || item.plainLyrics) || searchData[0];
+
+          if (matchItem.syncedLyrics || matchItem.plainLyrics) {
+            clearTimeout(timeoutId);
+            console.log(`[Lyrics API] 🎵 [LRCLIB] ✅ HIT Search Endpoint on Pass ${idx + 1}!`);
+            return {
+              source: `LRCLib Search (${reason})`,
+              title: matchItem.trackName || track,
+              artist: matchItem.artistName || artist,
+              rawLyrics: matchItem.syncedLyrics || matchItem.plainLyrics,
+              hasSubtitles: !!matchItem.syncedLyrics,
+            };
+          }
+        }
+      }
+
+      clearTimeout(timeoutId);
     } catch {
       clearTimeout(timeoutId);
     }
-  } catch (e) {
-    console.warn("[Lyrics API] LRCLib Exception:", e);
   }
+
   return null;
 }
 
 /**
- * ── PROVIDER 3: GENIUS API SERVICE ──────────────────────────────────────────
+ * ── PROVIDER 3: GENIUS API SERVICE (MULTI-PASS) ────────────────────────────
  */
-async function fetchGeniusLyrics(track: string, artist: string) {
-  try {
-    const cleanT = cleanTrackTitle(track);
-    const cleanA = artist.toLowerCase() === "unknown artist" ? "" : artist.trim();
+async function fetchGeniusPermutations(permutations: SearchPermutation[]) {
+  const headers = {
+    "X-RapidAPI-Key": GENIUS_KEY,
+    "X-RapidAPI-Host": GENIUS_HOST,
+  };
 
-    const headers = {
-      "X-RapidAPI-Key": GENIUS_KEY,
-      "X-RapidAPI-Host": GENIUS_HOST,
-    };
+  const passes = permutations.slice(0, 5);
+
+  for (let idx = 0; idx < passes.length; idx++) {
+    const { track, artist, reason } = passes[idx];
+    const query = `${track} ${artist}`.trim();
+    console.log(
+      `[Lyrics API] 🔍 [GENIUS Pass ${idx + 1}/${passes.length}] Querying "${query}" (${reason})`
+    );
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    const searchUrl = `https://${GENIUS_HOST}/search/?q=${encodeURIComponent(`${cleanT} ${cleanA}`)}`;
+    const searchUrl = `https://${GENIUS_HOST}/search/?q=${encodeURIComponent(query)}`;
+
     try {
       const res = await fetch(searchUrl, { headers, signal: controller.signal });
       clearTimeout(timeoutId);
+
       if (res.ok) {
         const data = await res.json();
         const hits = data.hits || [];
         if (hits.length > 0) {
           const hit = hits[0].result;
           if (hit) {
+            console.log(`[Lyrics API] 🎵 [GENIUS] ✅ HIT on Pass ${idx + 1}! Song: "${hit.title}" by "${hit.primary_artist?.name}"`);
             return {
-              source: "Genius API",
-              title: hit.title || cleanT,
-              artist: hit.primary_artist?.name || cleanA,
+              source: `Genius API (${reason})`,
+              title: hit.title || track,
+              artist: hit.primary_artist?.name || artist,
               headerImage: hit.header_image_url || hit.song_art_image_url,
-              rawLyrics: `[Track: ${hit.title}]\n[Artist: ${hit.primary_artist?.name || cleanA}]\n\nLyrics available on Genius.\nVisit: ${hit.url || "https://genius.com"}`,
+              rawLyrics: `[Track: ${hit.title}]\n[Artist: ${hit.primary_artist?.name || artist}]\n\nLyrics available on Genius.\nVisit: ${hit.url || "https://genius.com"}`,
               hasSubtitles: false,
             };
           }
         }
       }
-      clearTimeout(timeoutId);
     } catch {
       clearTimeout(timeoutId);
     }
-  } catch (e) {
-    console.warn("[Lyrics API] Genius Exception:", e);
   }
+
   return null;
 }
-
-
 
 // ── MAIN ROUTE HANDLER ────────────────────────────────────────────────────────
 export async function GET(req: Request) {
@@ -283,15 +323,22 @@ export async function GET(req: Request) {
     console.log("==================================================");
     console.log("[Lyrics API] RAW REQUEST -> Track:", JSON.stringify(trackParam), "Artist:", JSON.stringify(artistParam));
 
-    // 0. DB-FIRST CACHE CHECK
-    if (songId || (trackParam && artistParam)) {
+    // Generate normalized search permutations
+    const permutations = generateSearchPermutations(trackParam, artistParam);
+    console.log(`[Lyrics API] 🧠 Normalized into ${permutations.length} Search Permutations:`);
+    permutations.forEach((p, i) => {
+      console.log(`  └─ [${i + 1}] Track: "${p.track}" | Artist: "${p.artist}" (${p.reason})`);
+    });
+
+    // 0. DB-FIRST CACHE CHECK ACROSS PERMUTATIONS
+    for (const p of permutations.slice(0, 3)) {
       try {
         const existingSong = await prisma.song.findFirst({
           where: songId
             ? { id: songId }
             : {
-                title: { equals: trackParam, mode: "insensitive" },
-                artist: { equals: artistParam, mode: "insensitive" },
+                title: { equals: p.track, mode: "insensitive" },
+                ...(p.artist ? { artist: { equals: p.artist, mode: "insensitive" } } : {}),
               },
         });
 
@@ -310,7 +357,7 @@ export async function GET(req: Request) {
               });
             }
           } catch {
-            // Raw text fallback if stored unparsed
+            // Unparsed raw fallback
           }
         }
       } catch (err) {
@@ -320,30 +367,31 @@ export async function GET(req: Request) {
 
     let lyricsPayload: any = null;
 
-    // 1. PRIMARY PROVIDER: MUSIXMATCH
-    lyricsPayload = await fetchMusixmatchLyrics(trackParam, artistParam);
+    // 1. PRIMARY PROVIDER: MUSIXMATCH MULTI-PASS
+    console.log("[Lyrics API] 🚀 [PROVIDER 1] Starting Musixmatch Multi-Pass Search...");
+    lyricsPayload = await fetchMusixmatchPermutations(permutations);
 
-    // 2. SECONDARY PROVIDER: LRCLIB (FREE SYNCED LRC REPOSITORY)
+    // 2. SECONDARY PROVIDER: LRCLIB MULTI-PASS
     if (!lyricsPayload) {
-      console.log("[Lyrics API] ℹ️ Musixmatch returned no hits. Trying LRCLib API...");
-      lyricsPayload = await fetchLrcLibLyrics(trackParam, artistParam);
+      console.log("[Lyrics API] ℹ️ Musixmatch returned no hits across permutations. Starting LRCLib Multi-Pass Search...");
+      lyricsPayload = await fetchLrcLibPermutations(permutations);
     }
 
-    // 3. TERTIARY PROVIDER: GENIUS
+    // 3. TERTIARY PROVIDER: GENIUS MULTI-PASS
     if (!lyricsPayload) {
-      console.log("[Lyrics API] ℹ️ LRCLib returned no hits. Trying Genius API...");
-      lyricsPayload = await fetchGeniusLyrics(trackParam, artistParam);
+      console.log("[Lyrics API] ℹ️ LRCLib returned no hits across permutations. Starting Genius Multi-Pass Search...");
+      lyricsPayload = await fetchGeniusPermutations(permutations);
     }
 
-    // 4. FINAL VALIDATION: ALL PROVIDERS FAILED
+    // 4. FINAL VALIDATION: ALL PROVIDERS & PERMUTATIONS EXHAUSTED
     if (!lyricsPayload || !lyricsPayload.rawLyrics) {
-      console.log(`[Lyrics API] ❌ ALL PROVIDERS FAILED for track "${trackParam}"`);
+      console.log(`[Lyrics API] ❌ ALL ${permutations.length} PERMUTATIONS EXHAUSTED ON ALL PROVIDERS for track "${trackParam}"`);
       return NextResponse.json({
         isFallback: true,
         isSynced: false,
         title: trackParam,
         artist: artistParam || "Unknown Artist",
-        message: "No lyrics found for this track. Try searching manually or check back later.",
+        message: "No lyrics found for this track after exhausting all normalized title/artist combinations.",
         lines: [],
       });
     }

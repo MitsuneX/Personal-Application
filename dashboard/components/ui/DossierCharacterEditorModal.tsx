@@ -27,7 +27,7 @@ export function DossierCharacterEditorModal({
 }: DossierCharacterEditorModalProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { addDossierCharacter, updateDossierCharacter, removeDossierCharacter } = useDashboardStore();
+  const { addDossierCharacter, updateDossierCharacter, removeDossierCharacter, addGameCharacter } = useDashboardStore();
   const { confirm } = useConfirm();
 
   const config = getGameDossierConfig(gameTitle, gameCategory);
@@ -42,8 +42,10 @@ export function DossierCharacterEditorModal({
   const [matches, setMatches] = useState<number>(50);
   const [notes, setNotes] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [splashArt, setSplashArt] = useState("");
   const [accentColor, setAccentColor] = useState("#3B82F6");
   const [isFavorite, setIsFavorite] = useState(false);
+  const [addToGameChar, setAddToGameChar] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -58,8 +60,10 @@ export function DossierCharacterEditorModal({
       setMatches(characterToEdit.matches ?? 50);
       setNotes(characterToEdit.notes || "");
       setAvatarUrl(characterToEdit.avatarUrl || "");
+      setSplashArt(characterToEdit.splashArt || "");
       setAccentColor(characterToEdit.accentColor || "#3B82F6");
       setIsFavorite(characterToEdit.isFavorite ?? false);
+      setAddToGameChar(false);
     } else {
       setName("");
       setCategory(config.categories[0]?.name || "Main Roster");
@@ -69,8 +73,10 @@ export function DossierCharacterEditorModal({
       setMatches(50);
       setNotes("");
       setAvatarUrl("");
+      setSplashArt("");
       setAccentColor("#3B82F6");
       setIsFavorite(false);
+      setAddToGameChar(false);
     }
   }, [characterToEdit, isOpen, gameTitle, gameCategory]);
 
@@ -90,6 +96,7 @@ export function DossierCharacterEditorModal({
           matches: Number(matches),
           notes: notes || undefined,
           avatarUrl: avatarUrl || undefined,
+          splashArt: splashArt || undefined,
           accentColor,
           isFavorite,
         });
@@ -105,11 +112,29 @@ export function DossierCharacterEditorModal({
           matches: Number(matches),
           notes: notes || undefined,
           avatarUrl: avatarUrl || undefined,
+          splashArt: splashArt || undefined,
           accentColor,
           isFavorite,
         };
         await addDossierCharacter(newChar);
       }
+
+      if (addToGameChar) {
+        await addGameCharacter({
+          gameId,
+          gameName: gameTitle,
+          name,
+          role,
+          category,
+          avatarUrl,
+          splashArt,
+          accentColor,
+          isFavorite: true,
+          winRate: Number(winRate),
+          notes,
+        });
+      }
+
       onClose();
     } catch (err) {
       console.error("Failed to save dossier character:", err);
@@ -247,7 +272,7 @@ export function DossierCharacterEditorModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary uppercase">
                 Accent Color
@@ -271,18 +296,39 @@ export function DossierCharacterEditorModal({
             </div>
             <div>
               <label className="block text-xs font-bold mb-1 theme-text-secondary uppercase">
-                Avatar Image URL / Icon
+                Avatar Image / Icon
               </label>
               <input
                 type="text"
                 value={avatarUrl}
                 onChange={(e) => setAvatarUrl(e.target.value)}
-                placeholder="Image URL or Emoji"
+                placeholder="Avatar URL or Emoji"
+                className="w-full p-2 rounded-xl border text-sm font-semibold focus:outline-none"
+                style={inputStyles}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold mb-1 theme-text-secondary uppercase">
+                Full Artwork / Splash URL
+              </label>
+              <input
+                type="text"
+                value={splashArt}
+                onChange={(e) => setSplashArt(e.target.value)}
+                placeholder="High-Res Artwork URL"
                 className="w-full p-2 rounded-xl border text-sm font-semibold focus:outline-none"
                 style={inputStyles}
               />
             </div>
           </div>
+
+          {/* Splash Art Preview */}
+          {splashArt && (
+            <div className="p-2 rounded-xl border border-white/10 bg-black/40 overflow-hidden relative">
+              <span className="text-[10px] uppercase font-mono text-cyan-400 block mb-1">Artwork Preview</span>
+              <img src={splashArt} alt="Splash Art Preview" className="w-full h-32 object-cover rounded-lg border border-white/10" />
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-bold mb-1 theme-text-secondary uppercase">
@@ -298,17 +344,31 @@ export function DossierCharacterEditorModal({
             />
           </div>
 
-          <div className="flex items-center gap-2 pt-1">
-            <input
-              type="checkbox"
-              id="isFavorite"
-              checked={isFavorite}
-              onChange={(e) => setIsFavorite(e.target.checked)}
-              className="w-4 h-4 rounded cursor-pointer accent-amber-500"
-            />
-            <label htmlFor="isFavorite" className="text-xs font-bold cursor-pointer theme-text-primary flex items-center gap-1">
-              <span>⭐ Mark as Favorite Highlight</span>
-            </label>
+          <div className="flex flex-col gap-2 pt-1">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="isFavorite"
+                checked={isFavorite}
+                onChange={(e) => setIsFavorite(e.target.checked)}
+                className="w-4 h-4 rounded cursor-pointer accent-amber-500"
+              />
+              <label htmlFor="isFavorite" className="text-xs font-bold cursor-pointer theme-text-primary flex items-center gap-1">
+                <span>⭐ Mark as Favorite Highlight</span>
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="addToGameChar"
+                checked={addToGameChar}
+                onChange={(e) => setAddToGameChar(e.target.checked)}
+                className="w-4 h-4 rounded cursor-pointer accent-cyan-400"
+              />
+              <label htmlFor="addToGameChar" className="text-xs font-bold cursor-pointer text-cyan-400 flex items-center gap-1">
+                <span>✨ Also Add / Link to Game Character Hub</span>
+              </label>
+            </div>
           </div>
 
           <div className="flex gap-3 pt-3">
