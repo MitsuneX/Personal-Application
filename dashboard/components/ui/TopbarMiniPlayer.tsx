@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { useTheme } from "@/lib/theme";
@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { LyricsModal } from "@/components/ui/LyricsModal";
 import { FloatingLayer } from "./FloatingLayer";
 import { Z_INDEX } from "./ViewportBoundary";
+import { useMusicEngine } from "@/lib/context/MusicEngineContext";
 
 export function TopbarMiniPlayer() {
   const { theme } = useTheme();
@@ -28,77 +29,24 @@ export function TopbarMiniPlayer() {
     cycleLoopMode,
   } = useDashboardStore();
 
+  const {
+    currentTime,
+    duration,
+    volume,
+    isMuted,
+    setVolume,
+    toggleMute,
+    seekTo,
+  } = useMusicEngine();
+
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [lyricsOpen, setLyricsOpen] = useState(false);
   const ambientColor = useAmbientColor(activeTrack?.imageUrl);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
 
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(180);
-
-  // ── Sync HTML5 Audio element ───────────────────────────────────────────────
-  useEffect(() => {
-    if (!audioRef.current) return;
-    if (activeTrack?.audioUrl && !activeTrack.youtubeId) {
-      if (isPlaying) {
-        audioRef.current.play().catch(() => {});
-      } else {
-        audioRef.current.pause();
-      }
-    }
-  }, [isPlaying, activeTrack]);
-
-  // ── Sync YouTube player state via postMessage ──────────────────────────────
-  useEffect(() => {
-    if (!activeTrack?.youtubeId || !iframeRef.current?.contentWindow) return;
-
-    iframeRef.current.contentWindow.postMessage(
-      JSON.stringify({
-        event: "command",
-        func: isPlaying ? "playVideo" : "pauseVideo",
-        args: [],
-      }),
-      "*"
-    );
-  }, [isPlaying, activeTrack]);
-
-  // ── YouTube Progress Timer ─────────────────────────────────────────────────
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (activeTrack?.youtubeId && isPlaying) {
-      interval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= duration) {
-            nextTrack();
-            return 0;
-          }
-          return prev + 1;
-        });
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [activeTrack, isPlaying, duration, nextTrack]);
-
-  // ── Reset progress when track changes ─────────────────────────────────────
-  useEffect(() => {
-    setProgress(0);
-    if (activeTrack?.duration) {
-      const parts = activeTrack.duration.split(":");
-      if (parts.length === 2) {
-        const secs = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
-        if (!isNaN(secs) && secs > 0) setDuration(secs);
-      }
-    } else {
-      setDuration(210);
-    }
-  }, [activeTrack]);
-
   const formatTime = (secs: number) => {
+    if (isNaN(secs) || secs < 0) return "0:00";
     const m = Math.floor(secs / 60);
     const s = Math.floor(secs % 60);
     return `${m}:${s < 10 ? "0" : ""}${s}`;
@@ -108,32 +56,6 @@ export function TopbarMiniPlayer() {
 
   return (
     <div ref={triggerRef} className="relative select-none">
-      {/* Hidden YouTube Iframe Player */}
-      {activeTrack.youtubeId && (
-        <iframe
-          ref={iframeRef}
-          src={`https://www.youtube.com/embed/${activeTrack.youtubeId}?enablejsapi=1&autoplay=${
-            isPlaying ? "1" : "0"
-          }&controls=0`}
-          className="hidden"
-          allow="autoplay"
-        />
-      )}
-
-      {/* Hidden Audio Tag */}
-      {activeTrack.audioUrl && (
-        <audio
-          ref={audioRef}
-          src={activeTrack.audioUrl}
-          onTimeUpdate={(e) => {
-            const el = e.currentTarget;
-            setProgress(el.currentTime);
-            if (el.duration) setDuration(el.duration);
-          }}
-          onEnded={() => nextTrack()}
-        />
-      )}
-
       {/* Topbar Compact Badge Pill */}
       <motion.div
         whileHover={{ scale: 1.02 }}
@@ -230,17 +152,13 @@ export function TopbarMiniPlayer() {
 
           {/* Timeline Scrubbing Bar */}
           <div className="w-full flex items-center gap-2 text-[10px] font-mono opacity-90 pt-1">
-            <span className="shrink-0">{formatTime(progress)}</span>
+            <span className="shrink-0">{formatTime(currentTime)}</span>
             <input
               type="range"
               min={0}
               max={duration || 100}
-              value={progress}
-              onChange={(e) => {
-                const val = parseFloat(e.target.value);
-                setProgress(val);
-                if (audioRef.current) audioRef.current.currentTime = val;
-              }}
+              value={currentTime}
+              onChange={(e) => seekTo(parseFloat(e.target.value))}
               className="flex-1 h-1.5 accent-cyan-400 bg-slate-700 rounded-lg cursor-pointer"
             />
             <span className="shrink-0">{formatTime(duration)}</span>
@@ -249,28 +167,21 @@ export function TopbarMiniPlayer() {
           {/* Volume Control Bar */}
           <div className="flex items-center gap-2 pt-1">
             <button
-              onClick={() => {
-                if (audioRef.current) {
-                  audioRef.current.muted = !audioRef.current.muted;
-                }
-              }}
+              onClick={toggleMute}
               className="text-xs opacity-70 hover:opacity-100 transition-opacity"
               title="Mute / Unmute"
             >
-              🔊
+              {isMuted ? "🔇" : "🔊"}
             </button>
             <input
               type="range"
               min={0}
               max={1}
               step={0.05}
-              defaultValue={1}
-              onChange={(e) => {
-                const vol = parseFloat(e.target.value);
-                if (audioRef.current) audioRef.current.volume = vol;
-              }}
+              value={isMuted ? 0 : volume}
+              onChange={(e) => setVolume(parseFloat(e.target.value))}
               className="flex-1 h-1 accent-cyan-400 bg-slate-700 rounded-lg cursor-pointer"
-              title="Volume"
+              title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
             />
           </div>
 
@@ -375,7 +286,7 @@ export function TopbarMiniPlayer() {
         onClose={() => setLyricsOpen(false)}
         trackTitle={activeTrack?.title || null}
         artistName={activeTrack?.artist || null}
-        currentTime={progress}
+        currentTime={currentTime}
       />
     </div>
   );

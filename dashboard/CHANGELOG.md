@@ -2,6 +2,20 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [5.6.0] - 2026-08-06
+
+### 🎵 Unified Single Source of Truth Audio Engine (Phase 6)
+
+**Global Audio Context Architecture**
+- **Single Source of Truth (`MusicEngineContext.tsx`)**: Refactored the entire audio playback system into a unified `MusicEngineProvider`. This guarantees exactly ONE `HTMLAudioElement` and ONE hidden YouTube `<iframe>` exist simultaneously across the entire application, eliminating all duplicated playback synchronization issues.
+- **Hook Integration (`useMusicEngine`)**: Abstracted `currentTime`, `duration`, `volume`, `isMuted`, `seekTo`, `setVolume`, and `toggleMute` directly into a custom hook. 
+- **Centralized Event Handling**: Migrated Media Session API bindings (lockscreen controls), local storage persistence (`music_playback_session`), global keyboard shortcuts (Space, Arrows, Alt modifiers), and YouTube tracking intervals out of UI components and into the engine.
+
+**Player UI Simplification**
+- **`GlobalMusicPlayer` & `TopbarMiniPlayer`**: Ripped out all independent `<audio>`, `<iframe>`, duplicate timers, and local `useState` bindings. Both components now flawlessly reflect the true global state, enabling perfect instant-sync seeking and playback continuity regardless of where the user interacts.
+- **Provider Injection**: Ensured the engine wraps the `AuthGateInner` inside `RootProviders.tsx` for global app accessibility.
+- **Bug Fixes**: Resolved Next.js `<Script>` tag hydration errors in `layout.tsx` and suppressed stale Turbopack dev-server chunks by unregistering development service workers dynamically.
+
 ## [5.5.0] - 2026-08-06
 
 ### 🚨 Emergency Hub Module & AppShell Dashboard Integration

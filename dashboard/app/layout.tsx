@@ -97,22 +97,36 @@ export default function RootLayout({
         <meta name="application-name" content="Nexus Xenon" />
         <meta name="msapplication-TileColor" content="#FF6B35" />
         <meta name="msapplication-TileImage" content="/icons/icon-192.png" />
-        <Script
+        <script
           id="theme-script"
-          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('dashboard-theme');var root=document.documentElement;if(t==='cyber'){root.setAttribute('data-theme','cyber');root.classList.add('theme-cyber');root.classList.remove('theme-neo-brutal');}else{root.setAttribute('data-theme','brutal');root.classList.add('theme-neo-brutal');root.classList.remove('theme-cyber');}}catch(e){}})();`,
           }}
+          suppressHydrationWarning
         />
       </head>
       <body className="font-[family-name:var(--font-space-grotesk)] antialiased" suppressHydrationWarning>
         {/* 📱 PWA — Service Worker registration */}
-        <Script
+        <script
           id="sw-register"
-          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
-            __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(function(e){console.warn('SW registration failed:',e);});});}`,
+            __html: `
+              if ('serviceWorker' in navigator) {
+                if ('${process.env.NODE_ENV}' === 'production') {
+                  window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('/sw.js', {scope: '/'}).catch(console.warn);
+                  });
+                } else {
+                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for (let registration of registrations) {
+                      registration.unregister();
+                    }
+                  });
+                }
+              }
+            `,
           }}
+          suppressHydrationWarning
         />
         <RootProviders>{children}</RootProviders>
       </body>
