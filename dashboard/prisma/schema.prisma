@@ -275,22 +275,38 @@ model GalleryItem {
 }
 
 model Song {
-  id         String   @id @default(uuid())
-  userId     String?
-  title      String
-  artist     String
-  album      String?
-  imageUrl   String?
-  category   String   // e.g. "All-Time Favorites", "Chill Beats", "Hype/J-Pop", "K-Osts"
-  duration   String?
-  audioUrl   String?
-  youtubeId  String?
-  lyrics     String?
-  geniusId   String?
-  playlistId String?
-  createdAt  DateTime @default(now())
+  id           String    @id @default(uuid())
+  userId       String?
+  title        String
+  artist       String
+  album        String?
+  imageUrl     String?
+  category     String    // e.g. "All-Time Favorites", "Chill Beats", "Hype/J-Pop", "K-Osts"
+  duration     String?
+  audioUrl     String?
+  youtubeId    String?
+  lyrics       String?
+  geniusId     String?
+  playlistId   String?
+  playCount    Int       @default(0)
+  isFavorite   Boolean   @default(false)
+  lastPlayedAt DateTime?
+  createdAt    DateTime  @default(now())
+  memories     MusicMemory[]
 
   @@index([userId])
+}
+
+model MusicMemory {
+  id        String   @id @default(uuid())
+  userId    String
+  songId    String
+  note      String
+  createdAt DateTime @default(now())
+
+  song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@index([userId, songId])
 }
 
 model Playlist {
@@ -300,8 +316,71 @@ model Playlist {
   description String?
   coverUrl    String?
   songs       Json?    // array of song IDs or track objects
+  isAuto      Boolean  @default(false)
+  autoType    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt @default(now())
+
+  @@index([userId])
+}
+
+model MusicPlay {
+  id        String   @id @default(uuid())
+  userId    String
+  songId    String
+  songTitle String
+  artist    String
+  duration  Int?     // seconds played
+  completed Boolean  @default(false)
+  playedAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, playedAt])
+}
+
+model MusicCollection {
+  id          String   @id @default(uuid())
+  userId      String?
+  name        String
+  description String?
+  emoji       String?
+  coverUrl    String?
+  songIds     Json?    // string[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt @default(now())
+
+  @@index([userId])
+}
+
+model MusicTimeline {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String   // SONG_ADDED | SONG_PLAYED | PLAYLIST_CREATED | LYRICS_CACHED | DOWNLOADED | DELETED
+  entityId    String?
+  entityTitle String?
+  metadata    Json?
   createdAt   DateTime @default(now())
 
+  @@index([userId, createdAt])
+}
+
+model MusicStreak {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  currentStreak  Int      @default(0)
+  bestStreak     Int      @default(0)
+  lastListenDate String?  // YYYY-MM-DD
+  totalDays      Int      @default(0)
+  updatedAt      DateTime @updatedAt @default(now())
+}
+
+model MusicAchievement {
+  id         String   @id @default(uuid())
+  userId     String
+  key        String   // FIRST_SONG | TEN_SONGS | FIFTY_SONGS | TEN_HOURS | OFFLINE_COLLECTOR | LYRICS_HUNTER | PLAYLIST_CREATOR
+  unlockedAt DateTime @default(now())
+
+  @@unique([userId, key])
   @@index([userId])
 }
 
@@ -473,4 +552,37 @@ model AiToolItem {
   updatedAt       DateTime  @updatedAt
 
   @@index([userId])
+}
+
+model EmergencyContact {
+  id               String    @id @default(uuid())
+  userId           String?
+  name             String
+  nickname         String?
+  relationship     String?
+  company          String?
+  category         String    @default("Other") // Family, Friends, Partner, Hospital, Police, Fire Department, Ambulance, Doctor, Clinic, Mental Health, Roadside Assistance, Insurance, Work, School, Security, Utilities, Other
+  phoneNumber      String?
+  whatsappNumber   String?
+  telegramUsername String?
+  email            String?
+  website          String?
+  address          String?
+  avatar           String?
+  notes            String?
+  priority         String    @default("MEDIUM") // "HIGH" | "MEDIUM" | "LOW"
+  favorite         Boolean   @default(false)
+  available24Hours Boolean   @default(false)
+  country          String?
+  colorLabel       String?   // hex or color name
+  lastContactedAt  DateTime?
+  lastContactType  String?   // "CALL" | "WHATSAPP" | "EMAIL"
+  birthday         String?   // e.g. "YYYY-MM-DD"
+  reminders        Json?     // Array of reminder objects [{ type, date, note }]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([userId, category])
+  @@index([userId, priority])
 }

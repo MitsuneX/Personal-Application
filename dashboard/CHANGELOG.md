@@ -2,6 +2,51 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [5.5.0] - 2026-08-06
+
+### 🚨 Emergency Hub Module & AppShell Dashboard Integration
+
+**Emergency Hub Priority Center (`/emergency`)**
+- **Priority Quick-Access Roster**: Launched the Emergency Hub position directly under AI Library in the sidebar, providing instant access to family, medical, police, roadside assistance, and emergency contact channels.
+- **1-Click Communication Triggers**: Built direct action triggers for 📞 Call (`tel:`), 💬 WhatsApp (`https://wa.me`), ✉ Email (`mailto:`), 🌐 Website, and 📍 Google Maps location navigation.
+- **Multi-Format Import / Export Engine**: Created `emergencyImportExport.ts` supporting standard vCard (`.vcf`), CSV spreadsheet, and JSON import & export functionality.
+- **Private Emergency Notes & Medical Instructions**: Modal viewer for critical medical notes, penicillin/allergy alerts, apartment numbers, gate passcodes, and preferred ER hospital instructions.
+- **Context-Aware Right-Click Menu**: Implemented `EmergencyContextMenu.tsx` with contact actions (Call, WhatsApp, Email, Web, Maps, Favorite, Edit, Duplicate, Copy Number, Notes, Delete) and canvas actions (Add, Import, Export, Refresh).
+
+**AppShell Layout & Shared Infrastructure Integration**
+- **Seamless AppShell Hierarchy**: Integrated `/emergency` inside `AppShell`, preserving the global Sidebar, Top Navbar, Global Music Player, Search, Notifications, Profile Menu, and Theme Controls without page remounting.
+- **Prisma Schema & Client Hardening**: Added `EmergencyContact` model to `schema.prisma`, pushed Supabase PostgreSQL database tables, and updated `lib/prisma.ts` with self-healing delegate resolution for newly added schema models.
+- **Hydration & Script Hygiene**: Resolved hydration date string mismatches using deterministic UTC date extractions and migrated inline script tags to Next.js `<Script>` components.
+
+## [5.4.0] - 2026-08-05
+
+### 🎵 Music Vault Phase 5 Expansion — Queue Panel, Analytics & Collections
+
+**Queue Panel & Play-Next Management**
+- **`MusicQueuePanel`**: Created queue manager allowing users to reorder queue tracks, clear queue, play next, and remove single items.
+- **`MusicAnalyticsDashboard`**: Added listening analytics dashboard tracking top played artists, most played tracks, listening streaks, and category breakdowns.
+- **`CollectionManager`**: Full CRUD for music collections with custom emoji pickers, song additions/removals, and 1-click play-as-queue functionality.
+
+**Media Session & Hotkeys**
+- **Media Session API**: Bound native browser Media Session API to the Global Music Player for OS lockscreen and hardware media key control.
+- **Global Music Shortcuts**: Bound global keyboard shortcuts (`Space` for play/pause, `ArrowRight`/`ArrowLeft` for next/prev).
+
+## [5.3.0] - 2026-08-05
+
+### 📖 Track Memories & Personal Music Journal
+
+**Music Memories System**
+- **`TrackMemoryModal`**: Integrated personal music journaling system allowing users to record memories, nostalgia logs, location tags, mood badges, and 5-star ratings for any track.
+- **Database Persistence**: Extended music store & API handlers to save track memory logs per user account.
+
+## [5.2.0] - 2026-08-04
+
+### 🎧 Audio Extraction & Stream Resolver
+
+**Stream Caching & UI Polish**
+- **SoundCloud & Direct Stream Engine**: Enhanced music player stream resolver with fallback audio proxies and cached stream URLs.
+- **Vinyl Audio Player Visuals**: Polished rotating vinyl disc animations, tone arm movement, and ambient track color extraction.
+
 ## [5.1.0] - 2026-08-04
 
 ### 🎯 Hobbies Progression Engine & UI Overhaul

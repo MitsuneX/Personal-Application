@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { searchAllRegistries } from "@/lib/search/searchRegistry";
+import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +15,37 @@ export async function GET(req: Request) {
       return NextResponse.json({});
     }
 
-    // Query databases in parallel
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const isGuestCookie = cookieStore.get("is_guest")?.value === "true";
+    const userId = user?.id;
+
+    if (isGuestCookie || !userId) {
+      return NextResponse.json(
+        searchAllRegistries(query, {
+          links: [],
+          notes: [],
+          games: [],
+          dossierCharacters: [],
+          gameShowcaseItems: [],
+          projects: [],
+          aiTools: [],
+          animeList: [],
+          dramas: [],
+          favoriteCharacters: [],
+          hallOfFame: [],
+          gallery: [],
+          songs: [],
+          savedPrompts: [],
+          hobbies: [],
+          profiles: [],
+        })
+      );
+    }
+
+    // Query user-scoped databases in parallel
     const [
       dbLinks,
       dbNotes,
@@ -34,6 +66,7 @@ export async function GET(req: Request) {
     ] = await Promise.all([
       prisma.link.findMany({
         where: {
+          userId,
           OR: [
             { title: { contains: query, mode: "insensitive" } },
             { category: { contains: query, mode: "insensitive" } },
@@ -44,6 +77,7 @@ export async function GET(req: Request) {
       }),
       prisma.note.findMany({
         where: {
+          userId,
           OR: [
             { title: { contains: query, mode: "insensitive" } },
             { content: { contains: query, mode: "insensitive" } },
@@ -53,6 +87,7 @@ export async function GET(req: Request) {
       }),
       prisma.game.findMany({
         where: {
+          userId,
           OR: [
             { game: { contains: query, mode: "insensitive" } },
             { mainCharacter: { contains: query, mode: "insensitive" } },
@@ -66,6 +101,7 @@ export async function GET(req: Request) {
       }),
       prisma.gameDossierCharacter.findMany({
         where: {
+          userId,
           OR: [
             { name: { contains: query, mode: "insensitive" } },
             { category: { contains: query, mode: "insensitive" } },
@@ -77,6 +113,7 @@ export async function GET(req: Request) {
       }),
       prisma.gameShowcaseItem.findMany({
         where: {
+          userId,
           OR: [
             { title: { contains: query, mode: "insensitive" } },
             { description: { contains: query, mode: "insensitive" } },
@@ -87,6 +124,7 @@ export async function GET(req: Request) {
       }),
       prisma.projectItem.findMany({
         where: {
+          userId,
           OR: [
             { name: { contains: query, mode: "insensitive" } },
             { description: { contains: query, mode: "insensitive" } },
@@ -99,6 +137,7 @@ export async function GET(req: Request) {
       }),
       prisma.aiToolItem.findMany({
         where: {
+          userId,
           OR: [
             { name: { contains: query, mode: "insensitive" } },
             { company: { contains: query, mode: "insensitive" } },
@@ -112,6 +151,7 @@ export async function GET(req: Request) {
       }),
       prisma.anime.findMany({
         where: {
+          userId,
           OR: [
             { title: { contains: query, mode: "insensitive" } },
             { genre: { contains: query, mode: "insensitive" } },
@@ -124,6 +164,7 @@ export async function GET(req: Request) {
       }),
       prisma.drama.findMany({
         where: {
+          userId,
           OR: [
             { title: { contains: query, mode: "insensitive" } },
             { genre: { contains: query, mode: "insensitive" } },
@@ -136,6 +177,7 @@ export async function GET(req: Request) {
       }),
       prisma.favoriteCharacter.findMany({
         where: {
+          userId,
           OR: [
             { name: { contains: query, mode: "insensitive" } },
             { anime: { contains: query, mode: "insensitive" } },
@@ -145,6 +187,7 @@ export async function GET(req: Request) {
       }),
       prisma.hallOfFame.findMany({
         where: {
+          userId,
           OR: [
             { name: { contains: query, mode: "insensitive" } },
             { tokusatsuShow: { contains: query, mode: "insensitive" } },
@@ -159,6 +202,7 @@ export async function GET(req: Request) {
       }),
       prisma.galleryItem.findMany({
         where: {
+          userId,
           OR: [
             { title: { contains: query, mode: "insensitive" } },
             { caption: { contains: query, mode: "insensitive" } },
@@ -170,6 +214,7 @@ export async function GET(req: Request) {
       }),
       prisma.song.findMany({
         where: {
+          userId,
           OR: [
             { title: { contains: query, mode: "insensitive" } },
             { artist: { contains: query, mode: "insensitive" } },
@@ -182,6 +227,7 @@ export async function GET(req: Request) {
       }),
       prisma.savedPrompt.findMany({
         where: {
+          userId,
           OR: [
             { title: { contains: query, mode: "insensitive" } },
             { targetAI: { contains: query, mode: "insensitive" } },
@@ -192,6 +238,7 @@ export async function GET(req: Request) {
       }),
       prisma.hobbySkill.findMany({
         where: {
+          userId,
           OR: [
             { name: { contains: query, mode: "insensitive" } },
             { category: { contains: query, mode: "insensitive" } },
@@ -202,14 +249,7 @@ export async function GET(req: Request) {
       }),
       prisma.profile.findMany({
         where: {
-          OR: [
-            { name: { contains: query, mode: "insensitive" } },
-            { tagline: { contains: query, mode: "insensitive" } },
-            { bio: { contains: query, mode: "insensitive" } },
-            { location: { contains: query, mode: "insensitive" } },
-            { mbti: { contains: query, mode: "insensitive" } },
-            { zodiac: { contains: query, mode: "insensitive" } },
-          ],
+          OR: [{ userId }, { id: userId }],
         },
         take: 3,
       }),
@@ -241,3 +281,4 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

@@ -497,6 +497,9 @@ export interface SongEntry {
   lyrics?: string;
   geniusId?: string;
   playlistId?: string;
+  playCount?: number;
+  isFavorite?: boolean;
+  lastPlayedAt?: string;
 }
 
 export interface PlaylistEntry {
@@ -505,7 +508,20 @@ export interface PlaylistEntry {
   description?: string;
   coverUrl?: string;
   songs?: (SongEntry | string)[];
+  isAuto?: boolean;
+  autoType?: string;
   createdAt?: string;
+}
+
+export interface CollectionEntry {
+  id: string;
+  name: string;
+  description?: string;
+  emoji?: string;
+  coverUrl?: string;
+  songIds?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type DramaLogStatus = "GOAT Status" | "All-Star" | "Rising" | "Classic";
@@ -657,6 +673,8 @@ interface DashboardState {
   // Music Actions
   songs: SongEntry[];
   playlists: PlaylistEntry[];
+  collections: CollectionEntry[];
+  recentlyPlayed: SongEntry[];
   activeTrack: SongEntry | null;
   isPlaying: boolean;
   playlistQueue: SongEntry[];
@@ -664,7 +682,9 @@ interface DashboardState {
   loopMode: "off" | "one" | "all";
   saveSong: (id: string, data: Omit<SongEntry, "id">) => Promise<void>;
   deleteSong: (id: string) => Promise<void>;
+  toggleFavoriteSong: (id: string) => Promise<void>;
   playTrack: (track: SongEntry, queue?: SongEntry[]) => void;
+  recordPlay: (songId: string, songTitle: string, artist: string, duration?: number) => Promise<void>;
   togglePlay: () => void;
   setIsPlaying: (playing: boolean) => void;
   toggleShuffle: () => void;
@@ -673,6 +693,9 @@ interface DashboardState {
   prevTrack: () => void;
   savePlaylist: (playlist: PlaylistEntry) => Promise<void>;
   deletePlaylist: (id: string) => Promise<void>;
+  saveCollection: (collection: CollectionEntry) => Promise<void>;
+  deleteCollection: (id: string) => Promise<void>;
+  setPlaylistQueue: (queue: SongEntry[]) => void;
 
   // Drama Log Actions
   dramaLog: DramaLogEntry[];
@@ -847,6 +870,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   gallery: [],
   songs: [],
   playlists: [],
+  collections: [],
+  recentlyPlayed: [],
   activeTrack: null,
   isPlaying: false,
   playlistQueue: [],
@@ -888,6 +913,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       gallery: [],
       songs: [],
       playlists: [],
+      collections: [],
+      recentlyPlayed: [],
       activeTrack: null,
       isPlaying: false,
       playlistQueue: [],
@@ -944,6 +971,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           gallery: data.gallery || [],
           songs: data.songs || [],
           playlists: data.playlists || [],
+          collections: data.collections || [],
           dramaLog: (data.dramaLog || []).map((d: any) => ({
             ...d,
             mainActors: Array.isArray(d.mainActors) ? d.mainActors : [],
@@ -1689,6 +1717,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   // ─── Music Actions ─────────────────────────────────────────────────────────
 
   saveSong: async (id, data) => {
+    const previousSongs = get().songs;
     set((s) => {
       const exists = s.songs.some((song) => song.id === id);
       const newSongs = exists
@@ -1697,26 +1726,31 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       return { songs: newSongs };
     });
     try {
-      await fetch("/api/action", {
+      const res = await fetch("/api/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "UPDATE_SONG", payload: { id, ...data } }),
       });
+      if (!res.ok) throw new Error("Server responded with error");
     } catch (err) {
-      console.error("Failed to sync song:", err);
+      console.error("Failed to sync song, rolling back:", err);
+      set({ songs: previousSongs });
     }
   },
 
   deleteSong: async (id) => {
+    const previousSongs = get().songs;
     set((s) => ({ songs: s.songs.filter((song) => song.id !== id) }));
     try {
-      await fetch("/api/action", {
+      const res = await fetch("/api/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "DELETE_SONG", payload: { id } }),
       });
+      if (!res.ok) throw new Error("Server responded with error");
     } catch (err) {
-      console.error("Failed to delete song:", err);
+      console.error("Failed to delete song, rolling back:", err);
+      set({ songs: previousSongs });
     }
   },
 
@@ -1757,8 +1791,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     let currIdx = queue.findIndex(
       (t) =>
         t.id === activeTrack.id ||
-        (t.youtubeId && t.youtubeId === activeTrack.youtubeId) ||
-        t.title === activeTrack.title
+        (t.youtubeId && activeTrack.youtubeId && t.youtubeId === activeTrack.youtubeId)
     );
     if (currIdx === -1) currIdx = 0;
 
@@ -1773,9 +1806,14 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   prevTrack: () => {
-    const { activeTrack, playlistQueue, songs, isShuffle } = get();
+    const { activeTrack, playlistQueue, songs, isShuffle, loopMode } = get();
     const queue = playlistQueue.length > 0 ? playlistQueue : songs;
     if (!activeTrack || queue.length === 0) return;
+
+    if (loopMode === "one") {
+      set({ activeTrack: { ...activeTrack }, isPlaying: true });
+      return;
+    }
 
     if (isShuffle) {
       const randIdx = Math.floor(Math.random() * queue.length);
@@ -1786,16 +1824,21 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     let currIdx = queue.findIndex(
       (t) =>
         t.id === activeTrack.id ||
-        (t.youtubeId && t.youtubeId === activeTrack.youtubeId) ||
-        t.title === activeTrack.title
+        (t.youtubeId && activeTrack.youtubeId && t.youtubeId === activeTrack.youtubeId)
     );
     if (currIdx === -1) currIdx = 0;
+
+    if (currIdx === 0 && loopMode === "off") {
+      set({ activeTrack: queue[0], isPlaying: true });
+      return;
+    }
 
     const prevIdx = (currIdx - 1 + queue.length) % queue.length;
     set({ activeTrack: queue[prevIdx], isPlaying: true });
   },
 
   savePlaylist: async (playlist) => {
+    const previousPlaylists = get().playlists;
     set((s) => {
       const exists = s.playlists.some((p) => p.id === playlist.id);
       const updated = exists
@@ -1804,26 +1847,133 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       return { playlists: updated };
     });
     try {
-      await fetch("/api/action", {
+      const res = await fetch("/api/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "UPDATE_PLAYLIST", payload: playlist }),
       });
+      if (!res.ok) throw new Error("Server responded with error");
     } catch (err) {
-      console.error("Failed to sync playlist:", err);
+      console.error("Failed to sync playlist, rolling back:", err);
+      set({ playlists: previousPlaylists });
     }
   },
 
   deletePlaylist: async (id) => {
+    const previousPlaylists = get().playlists;
     set((s) => ({ playlists: s.playlists.filter((p) => p.id !== id) }));
     try {
-      await fetch("/api/action", {
+      const res = await fetch("/api/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "DELETE_PLAYLIST", payload: { id } }),
       });
+      if (!res.ok) throw new Error("Server responded with error");
     } catch (err) {
-      console.error("Failed to delete playlist:", err);
+      console.error("Failed to delete playlist, rolling back:", err);
+      set({ playlists: previousPlaylists });
+    }
+  },
+
+  setPlaylistQueue: (queue) => {
+    set({ playlistQueue: queue });
+  },
+
+  toggleFavoriteSong: async (id) => {
+    // Optimistic update
+    set((s) => ({
+      songs: s.songs.map((song) =>
+        song.id === id ? { ...song, isFavorite: !song.isFavorite } : song
+      ),
+    }));
+    try {
+      const res = await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "TOGGLE_SONG_FAVORITE", payload: { id } }),
+      });
+      if (!res.ok) {
+        // Revert on failure
+        set((s) => ({
+          songs: s.songs.map((song) =>
+            song.id === id ? { ...song, isFavorite: !song.isFavorite } : song
+          ),
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to toggle favorite, reverting:", err);
+      set((s) => ({
+        songs: s.songs.map((song) =>
+          song.id === id ? { ...song, isFavorite: !song.isFavorite } : song
+        ),
+      }));
+    }
+  },
+
+  recordPlay: async (songId, songTitle, artist, duration) => {
+    // Update recentlyPlayed in-memory immediately
+    const songEntry = get().songs.find((s) => s.id === songId);
+    if (songEntry) {
+      set((s) => {
+        const filtered = s.recentlyPlayed.filter((r) => r.id !== songId);
+        return { recentlyPlayed: [songEntry, ...filtered].slice(0, 50) };
+      });
+    }
+    // Increment local playCount
+    set((s) => ({
+      songs: s.songs.map((song) =>
+        song.id === songId
+          ? { ...song, playCount: (song.playCount || 0) + 1, lastPlayedAt: new Date().toISOString() }
+          : song
+      ),
+    }));
+    // Fire-and-forget server call
+    try {
+      await fetch("/api/music/play", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ songId, songTitle, artist, duration }),
+      });
+    } catch (err) {
+      console.warn("Failed to record play:", err);
+    }
+  },
+
+  saveCollection: async (collection) => {
+    const previousCollections = get().collections;
+    set((s) => {
+      const exists = s.collections.some((c) => c.id === collection.id);
+      const updated = exists
+        ? s.collections.map((c) => (c.id === collection.id ? collection : c))
+        : [collection, ...s.collections];
+      return { collections: updated };
+    });
+    try {
+      const res = await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "UPDATE_COLLECTION", payload: collection }),
+      });
+      if (!res.ok) throw new Error("Server responded with error");
+    } catch (err) {
+      console.error("Failed to sync collection, rolling back:", err);
+      set({ collections: previousCollections });
+    }
+  },
+
+  deleteCollection: async (id) => {
+    const previousCollections = get().collections;
+    set((s) => ({ collections: s.collections.filter((c) => c.id !== id) }));
+    try {
+      const res = await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_COLLECTION", payload: { id } }),
+      });
+      if (!res.ok) throw new Error("Server responded with error");
+    } catch (err) {
+      console.error("Failed to delete collection, rolling back:", err);
+      set({ collections: previousCollections });
     }
   },
 

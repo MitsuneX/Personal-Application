@@ -13,6 +13,110 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v5.5.0",
+    date: "2026-08-06",
+    title: "Emergency Hub Module & Shared AppShell Integration",
+    badge: "EMERGENCY & LAYOUT INTEGRATION",
+    type: "major",
+    summary: "Launched the priority Emergency Hub module (/emergency) with 1-click calls, WhatsApp, email, maps, multi-format import/export (vCard, CSV, JSON), private emergency notes, right-click context menu engine, and full shared AppShell dashboard integration.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🚨 Emergency Hub Center (/emergency): Priority contact roster positioned directly under AI Library in the sidebar.",
+          "📞 1-Click Communication Triggers: Direct actions for Call (tel:), WhatsApp (wa.me), Email (mailto:), Web, and Google Maps location navigation.",
+          "📇 Multi-Format Import / Export Engine: Import & export contacts via vCard (.vcf), CSV spreadsheet, and JSON formats.",
+          "📝 Private Emergency Notes: Modal viewer for emergency instructions, allergy alerts, gate passcodes, and preferred ER hospital details.",
+          "🖱️ Context-Aware Right-Click Menu: Full right-click context menu engine for contact cards and empty canvas space.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🖼️ Shared AppShell Layout Integration: Integrated Emergency Hub inside AppShell, maintaining Sidebar, Top Navbar, Global Music Player, and Theme controls.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🗄️ Prisma Self-Healing Delegates: Updated lib/prisma.ts with auto-recovery for newly generated schema models in dev mode.",
+          "💧 Hydration & Script Hygiene: Resolved date hydration mismatches with UTC date extractions and migrated inline scripts to Next.js <Script>.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v5.4.0",
+    date: "2026-08-05",
+    title: "Music Vault Phase 5 Expansion — Queue Panel, Analytics & Collections",
+    badge: "MUSIC VAULT EXPANSION",
+    type: "major",
+    summary: "Expanded Music Vault with a dedicated Queue Panel, Music Analytics Dashboard, Collection Manager with full CRUD, Media Session API integration, and global hotkeys.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🎵 Music Queue Manager (MusicQueuePanel.tsx): Reorder queue tracks, clear queue, play next, and remove single items.",
+          "📊 Music Analytics Dashboard (MusicAnalyticsDashboard.tsx): Track top played artists, most played tracks, listening streaks, and category breakdowns.",
+          "📁 Collection Manager (CollectionManager.tsx): Full CRUD for music collections with custom emoji pickers and play-as-queue functionality.",
+          "🎧 Media Session & Hotkeys: Bound native browser Media Session API for lockscreen controls and global keyboard shortcuts (Space, Arrow keys).",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v5.3.0",
+    date: "2026-08-05",
+    title: "Track Memories & Personal Music Journal",
+    badge: "MUSIC MEMORIES ENGINE",
+    type: "minor",
+    summary: "Added a personal music journaling system allowing users to record memories, nostalgia logs, location tags, mood badges, and 5-star ratings for any track.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "📖 Track Memory Modal (TrackMemoryModal.tsx): Capture track memories, nostalgia notes, mood tags, rating stars, and memory locations.",
+          "💾 Database Persistence: Extended music store and API action handlers to persist track memories per user account.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v5.2.0",
+    date: "2026-08-04",
+    title: "Audio Extraction & Stream Resolver Polish",
+    badge: "AUDIO STREAM ENGINE",
+    type: "minor",
+    summary: "Enhanced music player stream resolver with fallback audio proxies, cached stream URLs, direct stream importing, and polished vinyl disc animations.",
+    categories: [
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🎧 Vinyl Disc Visuals: Rotating vinyl disc animations, tone arm movement, and ambient track color extraction.",
+          "🔗 Import URL Modal: Direct audio URL importer with stream proxy caching.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v5.1.0",
+    date: "2026-08-04",
+    title: "Hobbies Progression Engine & UI Overhaul",
+    badge: "HOBBIES PROGRESSION ENGINE",
+    type: "major",
+    summary: "Upgraded Hobbies Progression UI with SkillCard level badges (Lv.X), XP progress bars, Learn Today modal, Add Skill modal, and enhanced stats banner.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🎯 SkillCard Level Badges & XP Bars: Displays level rank, XP amounts, and progress to next level.",
+          "⏱️ Learn Today Modal: Preset minute selector, custom study duration input, notes, and session XP logging.",
+          "➕ Add Custom Skill Modal: Create custom hobby skills with name, category, and priority.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v5.0.0",
     date: "2026-08-01",
     title: "Hall of Fame Evolution (Flagship v5) + Character Directory v2 + Universal Context Menu Engine",

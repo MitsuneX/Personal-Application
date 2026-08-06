@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
@@ -12,13 +12,27 @@ import { ImageCropModal } from "@/components/ui/ImageCropModal";
 import { GeniusArtistModal } from "@/components/ui/GeniusArtistModal";
 import { FloatingFAB } from "@/components/ui/FloatingFAB";
 import { useToast } from "@/components/ui/ToastProvider";
+import { useMusicDownload } from "@/lib/hooks/useMusicDownload";
+import { useAmbientColor } from "@/lib/hooks/useAmbientColor";
+import { MusicQueuePanel } from "@/components/music/MusicQueuePanel";
+import { MusicAnalyticsDashboard } from "@/components/music/MusicAnalyticsDashboard";
+import { CollectionManager } from "@/components/music/CollectionManager";
+import { MusicTimelineView } from "@/components/music/MusicTimelineView";
+import { MusicContextMenu } from "@/components/music/MusicContextMenu";
+import { MusicImportModal } from "@/components/music/MusicImportModal";
+import { MusicJournalModal } from "@/components/music/MusicJournalModal";
+import { LyricsModal } from "@/components/ui/LyricsModal";
 
 const MUSIC_TABS = [
   { id: "all", label: "All Tracks", icon: "◈" },
   { id: "youtube_search", label: "YouTube Search", icon: "🔍" },
   { id: "playlists", label: "Playlists", icon: "📁" },
+  { id: "collections", label: "Collections", icon: "📂" },
+  { id: "queue", label: "Queue", icon: "🎼" },
+  { id: "analytics", label: "Analytics", icon: "📊" },
+  { id: "timeline", label: "Timeline", icon: "⏳" },
   { id: "offline_saved", label: "Offline Cache", icon: "💾" },
-  { id: "All-Time Favorites", label: "All-Time Favorites", icon: "👑" },
+  { id: "All-Time Favorites", label: "Favorites", icon: "👑" },
   { id: "Chill Beats", label: "Chill Beats", icon: "☕" },
   { id: "Hype/J-Pop", label: "Hype/J-Pop", icon: "⚡" },
   { id: "K-Osts", label: "K-Osts", icon: "🌸" },
@@ -34,19 +48,26 @@ export default function MusicPage() {
     deleteSong,
     savePlaylist,
     deletePlaylist,
+    toggleFavoriteSong,
+    recordPlay,
     activeTrack,
     isPlaying,
     playTrack,
     togglePlay,
+    setPlaylistQueue,
   } = useDashboardStore();
   const toast = useToast();
+  const { downloadSong, removeSong, cachedSongIds, cacheSizeFormatted, downloadStatus, progress } = useMusicDownload();
 
   const [activeTab, setActiveTab] = useState("all");
   const [editorOpen, setEditorOpen] = useState(false);
   const [selectedSong, setSelectedSong] = useState<SongEntry | null>(null);
 
-  // Genius Modal State
+  const ambientColor = useAmbientColor(activeTrack?.imageUrl);
+
+  // Genius & Lyrics Modal State
   const [geniusArtist, setGeniusArtist] = useState<string | null>(null);
+  const [lyricsModalSong, setLyricsModalSong] = useState<SongEntry | null>(null);
 
   // YouTube Search States
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,53 +75,37 @@ export default function MusicPage() {
   const [isSearching, setIsSearching] = useState(false);
 
   // Online Music Search Modal State
+  const [contextMenu, setContextMenu] = useState<{ song: SongEntry; x: number; y: number } | null>(null);
   const [onlineSearchModalOpen, setOnlineSearchModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [journalModalSong, setJournalModalSong] = useState<SongEntry | null>(null);
 
   // Playlists States
   const [selectedPlaylist, setSelectedPlaylist] = useState<PlaylistEntry | null>(null);
   const [playlistModalOpen, setPlaylistModalOpen] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState("");
 
-  // Offline Cached Tracks State
-  const [offlineTrackIds, setOfflineTrackIds] = useState<string[]>([]);
+  // Offline tracks now managed by useMusicDownload (IndexedDB)
+  // cachedSongIds is a Set<string> of cached song IDs
 
-  // Load cached tracks list on mount
-  useEffect(() => {
-    if (typeof window !== "undefined" && "caches" in window) {
-      caches.open("music-offline-cache-v1").then(async (cache) => {
-        const keys = await cache.keys();
-        const ids = keys.map((k) => k.url);
-        setOfflineTrackIds(ids);
-      });
+  const handleDownloadSong = useCallback(async (song: SongEntry) => {
+    if (song.youtubeId && !song.audioUrl) {
+      // YouTube-only tracks: open in YouTube
+      window.open(`https://www.youtube.com/watch?v=${song.youtubeId}`, "_blank");
+      toast.info("YouTube tracks cannot be downloaded directly.");
+      return;
     }
-  }, []);
-
-  const handleDownloadSong = async (song: SongEntry) => {
-    try {
-      if (song.audioUrl) {
-        const response = await fetch(song.audioUrl);
-        const blob = await response.blob();
-        const downloadUrl = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = downloadUrl;
-        a.download = `${song.artist || "Artist"} - ${song.title}.mp3`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(downloadUrl);
-      } else if (song.youtubeId) {
-        window.open(`https://www.youtube.com/watch?v=${song.youtubeId}`, "_blank");
-      } else {
-        toast.warning("Audio source URL not available for download.");
-      }
-    } catch (err) {
-      console.error("Download error:", err);
-      toast.error("Error downloading audio file.");
+    if (!song.audioUrl) {
+      toast.warning("No audio source available for download.");
+      return;
     }
-  };
+    toast.info(`Downloading "${song.title}"…`);
+    await downloadSong(song);
+    toast.success(`"${song.title}" downloaded for offline playback!`);
+  }, [downloadSong, toast]);
 
-  const handleSaveOffline = async (song: SongEntry) => {
-    // 1. Ensure track is saved in store / database
+  const handleSaveOffline = useCallback(async (song: SongEntry) => {
+    // 1. Persist to vault DB
     await saveSong(song.id, {
       title: song.title,
       artist: song.artist,
@@ -111,20 +116,10 @@ export default function MusicPage() {
       youtubeId: song.youtubeId,
       duration: song.duration,
     });
-
-    // 2. Cache in Web Cache API
-    const targetUrl = song.audioUrl || song.imageUrl;
-    if (targetUrl && "caches" in window) {
-      try {
-        const cache = await caches.open("music-offline-cache-v1");
-        await cache.add(targetUrl);
-        setOfflineTrackIds((prev) => [...prev, targetUrl]);
-      } catch (err) {
-        console.error("Cache error:", err);
-      }
-    }
+    // 2. Cache to IndexedDB
+    await downloadSong(song);
     toast.success(`Saved "${song.title}" to Vault & Offline Cache!`);
-  };
+  }, [saveSong, downloadSong, toast]);
 
   // YouTube search handler
   const handleYouTubeSearch = async (e: React.FormEvent) => {
@@ -134,10 +129,12 @@ export default function MusicPage() {
     setIsSearching(true);
     setSearchResults([]);
     try {
-      const res = await fetch(`/api/search/youtube?q=${encodeURIComponent(searchQuery)}`);
+      const res = await fetch(`/api/music/search?q=${encodeURIComponent(searchQuery)}`);
       const data = await res.json();
       if (Array.isArray(data.items)) {
         setSearchResults(data.items);
+      } else if (Array.isArray(data.results)) {
+        setSearchResults(data.results);
       }
     } catch (err) {
       console.error("YouTube search error:", err);
@@ -172,7 +169,7 @@ export default function MusicPage() {
   const filteredSongs = activeTab === "all"
     ? songs
     : activeTab === "offline_saved"
-    ? songs.filter((s) => s.audioUrl && offlineTrackIds.includes(s.audioUrl))
+    ? songs.filter((s) => cachedSongIds.has(s.id))
     : songs.filter((s) => s.category === activeTab);
 
   const cardBorderColor = isCyber ? "rgba(0,245,255,0.2)" : "#000000";
@@ -208,6 +205,19 @@ export default function MusicPage() {
               Stream online YouTube tracks, build custom playlists, upload audio, and save tracks offline.
             </p>
           </div>
+
+          <button
+            onClick={() => setImportModalOpen(true)}
+            className="px-4 py-2 text-xs font-black rounded-xl border transition-all hover:scale-105 active:scale-95 flex items-center gap-2 self-start sm:self-auto"
+            style={{
+              backgroundColor: isCyber ? "rgba(0,245,255,0.12)" : "#FFF3E0",
+              borderColor: isCyber ? "#00F5FF" : "#000",
+              color: isCyber ? "#00F5FF" : "#000",
+              boxShadow: isCyber ? "0 0 15px rgba(0,245,255,0.2)" : "2px 2px 0 #000",
+            }}
+          >
+            <span>🔗</span> Import Track URL
+          </button>
         </div>
       </motion.div>
 
@@ -218,10 +228,10 @@ export default function MusicPage() {
         <div className="xl:col-span-1 space-y-4">
           <h3 className="text-xs font-black uppercase tracking-widest theme-text-muted">🎧 Active Audio Console</h3>
           <div
-            className="rounded-2xl p-6 relative overflow-hidden border border-adaptive-unique"
+            className="rounded-2xl p-6 relative overflow-hidden border border-adaptive-unique transition-all duration-700"
             style={{
               backgroundColor: isCyber ? "rgba(10,15,44,0.6)" : "#FFFFFF",
-              boxShadow: cardShadow,
+              boxShadow: activeTrack ? `0 0 35px ${ambientColor}` : cardShadow,
             }}
           >
             {activeTrack ? (
@@ -406,41 +416,130 @@ export default function MusicPage() {
           {/* Playlists View */}
           {activeTab === "playlists" && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {playlists.map((pl) => (
-                  <div
-                    key={pl.id}
-                    className="p-4 rounded-xl border flex flex-col justify-between gap-3 bg-black/20"
-                    style={{ borderColor: isCyber ? "rgba(191,95,255,0.3)" : "#000" }}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-black text-sm" style={{ color: isCyber ? "#BF5FFF" : "#000" }}>📁 {pl.name}</h4>
-                        <p className="text-[10px] opacity-60 mt-0.5">{pl.songs?.length || 0} Tracks</p>
-                      </div>
-                      <button
-                        onClick={() => deletePlaylist(pl.id)}
-                        className="text-red-400 hover:underline text-xs"
-                      >
-                        🗑️ Delete
-                      </button>
-                    </div>
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-xs font-black uppercase tracking-widest opacity-60">
+                  📁 Custom Playlists ({playlists.length})
+                </h3>
+                <button
+                  onClick={() => setPlaylistModalOpen(true)}
+                  className="px-3 py-1 text-xs font-black rounded-lg bg-cyan-400 text-black hover:scale-105 transition-transform"
+                >
+                  + New Playlist
+                </button>
+              </div>
 
-                    <div className="space-y-1">
-                      {(pl.songs || []).slice(0, 3).map((s: any, idx: number) => (
-                        <p key={idx} className="text-[10px] truncate opacity-80">
-                          • {typeof s === "string" ? s : s.title}
-                        </p>
-                      ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {playlists.map((pl) => {
+                  const plSongs = (pl.songs || [])
+                    .map((item: any) =>
+                      typeof item === "string" ? songs.find((s) => s.id === item) : item
+                    )
+                    .filter(Boolean) as SongEntry[];
+
+                  return (
+                    <div
+                      key={pl.id}
+                      className="p-4 rounded-xl border flex flex-col justify-between gap-3 bg-black/20"
+                      style={{ borderColor: isCyber ? "rgba(191,95,255,0.3)" : "#000" }}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-black text-sm" style={{ color: isCyber ? "#BF5FFF" : "#000" }}>
+                            📁 {pl.name}
+                          </h4>
+                          <p className="text-[10px] opacity-60 mt-0.5">
+                            {plSongs.length} Tracks
+                          </p>
+                        </div>
+
+                        <div className="flex gap-2 items-center">
+                          <button
+                            onClick={() => {
+                              const json = JSON.stringify(pl, null, 2);
+                              const blob = new Blob([json], { type: "application/json" });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement("a");
+                              a.href = url;
+                              a.download = `${pl.name.replace(/\s+/g, "_")}_playlist.json`;
+                              a.click();
+                              toast.success(`Exported "${pl.name}" JSON`);
+                            }}
+                            className="text-[10px] font-bold opacity-60 hover:opacity-100"
+                            title="Export JSON"
+                          >
+                            📥 JSON
+                          </button>
+                          <button
+                            onClick={() => deletePlaylist(pl.id)}
+                            className="text-red-400 hover:underline text-xs"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 my-1">
+                        {plSongs.slice(0, 3).map((s, idx) => (
+                          <p key={idx} className="text-[10px] truncate opacity-80">
+                            • {s.title} — <span className="opacity-60">{s.artist}</span>
+                          </p>
+                        ))}
+                      </div>
+
+                      {plSongs.length > 0 && (
+                        <div className="flex gap-2 pt-2 border-t" style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#EEE" }}>
+                          <button
+                            onClick={() => {
+                              setPlaylistQueue(plSongs);
+                              playTrack(plSongs[0]);
+                              toast.success(`Playing playlist "${pl.name}"`);
+                            }}
+                            className="px-2.5 py-1 text-[10px] font-black rounded bg-cyan-400 text-black hover:scale-105 transition-transform"
+                          >
+                            ▶ Play All
+                          </button>
+                          <button
+                            onClick={() => {
+                              const shuffled = [...plSongs].sort(() => Math.random() - 0.5);
+                              setPlaylistQueue(shuffled);
+                              playTrack(shuffled[0]);
+                              toast.success(`Shuffled playlist "${pl.name}"`);
+                            }}
+                            className="px-2.5 py-1 text-[10px] font-black rounded border border-white/20 hover:bg-white/10"
+                          >
+                            🔀 Shuffle
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
 
+          {/* Collections View */}
+          {activeTab === "collections" && (
+            <CollectionManager isCyber={isCyber} />
+          )}
+
+          {/* Queue View */}
+          {activeTab === "queue" && (
+            <MusicQueuePanel isCyber={isCyber} />
+          )}
+
+          {/* Analytics View */}
+          {activeTab === "analytics" && (
+            <MusicAnalyticsDashboard isCyber={isCyber} />
+          )}
+
+          {/* Timeline View */}
+          {activeTab === "timeline" && (
+            <MusicTimelineView isCyber={isCyber} />
+          )}
+
           {/* Standard Songs Grid */}
-          {activeTab !== "youtube_search" && activeTab !== "playlists" && (
+          {activeTab !== "youtube_search" && activeTab !== "playlists" && activeTab !== "collections" && activeTab !== "queue" && activeTab !== "analytics" && activeTab !== "timeline" && (
             <motion.div
               className="grid grid-cols-1 md:grid-cols-2 gap-4"
               variants={gridContainerVariants}
@@ -454,7 +553,11 @@ export default function MusicPage() {
                     key={song.id}
                     variants={cardVariants}
                     custom={i}
-                    className="group relative rounded-xl border p-3 transition-all"
+                    className="group relative rounded-xl border p-3 transition-all cursor-context-menu"
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setContextMenu({ song, x: e.clientX, y: e.clientY });
+                    }}
                     style={{
                       backgroundColor: isCyber ? "rgba(10,15,44,0.4)" : "#FFFFFF",
                       boxShadow: cardShadow,
@@ -492,8 +595,8 @@ export default function MusicPage() {
                           <span className="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/10">
                             {song.category}
                           </span>
-                          {song.audioUrl && offlineTrackIds.includes(song.audioUrl) && (
-                            <span className="text-[9px] font-bold text-green-400">💾 Saved</span>
+                          {cachedSongIds.has(song.id) && (
+                            <span className="text-[9px] font-bold text-green-400">💾 Cached</span>
                           )}
                         </div>
                       </div>
@@ -533,11 +636,47 @@ export default function MusicPage() {
         </div>
       </div>
 
+      {/* ── Context Menu ── */}
+      {contextMenu && (
+        <MusicContextMenu
+          song={contextMenu.song}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          onOpenLyrics={() => setLyricsModalSong(contextMenu.song)}
+          onOpenMemories={() => setJournalModalSong(contextMenu.song)}
+          isCyber={isCyber}
+        />
+      )}
+
       {/* ── Genius Artist Detail Drawer/Modal ── */}
       <GeniusArtistModal
         isOpen={!!geniusArtist}
         onClose={() => setGeniusArtist(null)}
         artistName={geniusArtist}
+      />
+
+      {/* ── Synced Lyrics Modal ── */}
+      <LyricsModal
+        isOpen={!!lyricsModalSong}
+        onClose={() => setLyricsModalSong(null)}
+        trackTitle={lyricsModalSong?.title || null}
+        artistName={lyricsModalSong?.artist || null}
+      />
+
+      {/* ── Music Import Modal ── */}
+      <MusicImportModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        isCyber={isCyber}
+      />
+
+      {/* ── Music Journal Modal ── */}
+      <MusicJournalModal
+        isOpen={!!journalModalSong}
+        onClose={() => setJournalModalSong(null)}
+        song={journalModalSong}
+        isCyber={isCyber}
       />
 
       {/* ── Dedicated Online Music Search Modal (matching Drama Search style) ── */}

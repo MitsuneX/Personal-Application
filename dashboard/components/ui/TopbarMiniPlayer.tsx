@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { useTheme } from "@/lib/theme";
+import { useAmbientColor } from "@/lib/hooks/useAmbientColor";
 import { useRouter } from "next/navigation";
 import { LyricsModal } from "@/components/ui/LyricsModal";
 import { FloatingLayer } from "./FloatingLayer";
@@ -29,6 +30,7 @@ export function TopbarMiniPlayer() {
 
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [lyricsOpen, setLyricsOpen] = useState(false);
+  const ambientColor = useAmbientColor(activeTrack?.imageUrl);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -141,7 +143,7 @@ export function TopbarMiniPlayer() {
           backgroundColor: isCyber ? "rgba(0, 245, 255, 0.08)" : "#FFF9F0",
           borderColor: isCyber ? "rgba(0, 245, 255, 0.3)" : "#000000",
           borderWidth: isCyber ? "1px" : "2px",
-          boxShadow: isCyber ? "0 0 12px rgba(0, 245, 255, 0.15)" : "2px 2px 0 #000000",
+          boxShadow: isCyber ? `0 0 12px ${ambientColor}` : "2px 2px 0 #000000",
         }}
         onClick={() => setPopoverOpen(!popoverOpen)}
       >
@@ -244,6 +246,34 @@ export function TopbarMiniPlayer() {
             <span className="shrink-0">{formatTime(duration)}</span>
           </div>
 
+          {/* Volume Control Bar */}
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              onClick={() => {
+                if (audioRef.current) {
+                  audioRef.current.muted = !audioRef.current.muted;
+                }
+              }}
+              className="text-xs opacity-70 hover:opacity-100 transition-opacity"
+              title="Mute / Unmute"
+            >
+              🔊
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              defaultValue={1}
+              onChange={(e) => {
+                const vol = parseFloat(e.target.value);
+                if (audioRef.current) audioRef.current.volume = vol;
+              }}
+              className="flex-1 h-1 accent-cyan-400 bg-slate-700 rounded-lg cursor-pointer"
+              title="Volume"
+            />
+          </div>
+
           {/* Media Player Control Buttons */}
           <div className="flex items-center justify-between pt-1">
             <button
@@ -303,6 +333,14 @@ export function TopbarMiniPlayer() {
               {loopMode === "one" ? "🔂" : "🔁"}
             </button>
           </div>
+
+          {/* Next Up Preview Badge */}
+          {playlistQueue.length > 0 && (
+            <div className="pt-2 border-t text-[10px] opacity-80 flex items-center justify-between" style={{ borderColor: isCyber ? "rgba(0,245,255,0.15)" : "#EEE" }}>
+              <span className="font-bold opacity-60">NEXT UP:</span>
+              <span className="truncate max-w-[190px] font-semibold">{playlistQueue[0]?.title} — {playlistQueue[0]?.artist}</span>
+            </div>
+          )}
 
           {/* Quick Actions Bar */}
           <div className="pt-2 border-t flex items-center justify-between text-xs" style={{ borderColor: isCyber ? "rgba(0,245,255,0.15)" : "#000" }}>

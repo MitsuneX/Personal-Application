@@ -12,6 +12,7 @@ import { TopLoader } from "@/components/ui/TopLoader";
 import { FloatingHeartEngine } from "@/components/ui/FloatingHeartEngine";
 import { GlobalMusicPlayer } from "@/components/ui/GlobalMusicPlayer";
 import { GuestBanner } from "@/components/ui/GuestBanner";
+import { SessionResumePrompt } from "@/components/ui/SessionResumePrompt";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -137,6 +138,7 @@ export function AppShell({ children }: AppShellProps) {
           <div className="w-full max-w-screen-2xl mx-auto px-4 md:px-6 lg:px-8 py-6 overflow-y-auto h-full">
             <PageWrapper>{children}</PageWrapper>
           </div>
+          <SessionResumePrompt />
         </main>
       </motion.div>
     </>

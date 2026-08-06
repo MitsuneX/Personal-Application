@@ -716,21 +716,23 @@ export async function POST(req: Request) {
 
       // ─── Music Actions ─────────────────────────────────────────────────────────
       case "UPDATE_SONG": {
+        const isNew = !(await prisma.song.findUnique({ where: { id: payload.id } }));
         const song = await prisma.song.upsert({
           where: { id: payload.id },
           update: {
             userId,
             title: payload.title,
             artist: payload.artist,
-            album: payload.album ?? null,
-            imageUrl: payload.imageUrl ?? null,
+            album: payload.album || null,
+            imageUrl: payload.imageUrl || null,
             category: payload.category,
-            duration: payload.duration ?? null,
-            audioUrl: payload.audioUrl ?? null,
-            youtubeId: payload.youtubeId ?? null,
-            lyrics: payload.lyrics ?? null,
-            geniusId: payload.geniusId ?? null,
-            playlistId: payload.playlistId ?? null,
+            duration: payload.duration || null,
+            audioUrl: payload.audioUrl || null,
+            youtubeId: payload.youtubeId || null,
+            lyrics: payload.lyrics || null,
+            geniusId: payload.geniusId || null,
+            playlistId: payload.playlistId || null,
+            ...(payload.isFavorite !== undefined ? { isFavorite: payload.isFavorite } : {}),
           },
           create: {
             id: payload.id,
@@ -746,40 +748,136 @@ export async function POST(req: Request) {
             lyrics: payload.lyrics || null,
             geniusId: payload.geniusId || null,
             playlistId: payload.playlistId || null,
+            isFavorite: Boolean(payload.isFavorite),
           },
         });
+
+        if (isNew) {
+          try {
+            await prisma.musicTimeline.create({
+              data: {
+                userId,
+                type: "SONG_ADDED",
+                entityId: song.id,
+                entityTitle: song.title,
+                metadata: { artist: song.artist, category: song.category },
+              },
+            });
+          } catch (tlErr) {
+            console.warn("[Action Route] Failed to log SONG_ADDED timeline:", tlErr);
+          }
+        }
+
         return NextResponse.json({ success: true, data: song });
       }
 
+      case "TOGGLE_SONG_FAVORITE": {
+        const existing = await prisma.song.findUnique({ where: { id: payload.id } });
+        if (existing) {
+          const updated = await prisma.song.update({
+            where: { id: payload.id },
+            data: { isFavorite: !existing.isFavorite },
+          });
+          return NextResponse.json({ success: true, data: updated });
+        }
+        return NextResponse.json({ error: "Song not found" }, { status: 404 });
+      }
+
       case "DELETE_SONG": {
-        await prisma.song.delete({ where: { id: payload.id } });
+        const songToDelete = await prisma.song.findUnique({ where: { id: payload.id } });
+        await prisma.song.deleteMany({ where: { id: payload.id, userId } });
+
+        if (songToDelete) {
+          try {
+            await prisma.musicTimeline.create({
+              data: {
+                userId,
+                type: "DELETED",
+                entityId: payload.id,
+                entityTitle: songToDelete.title,
+                metadata: { artist: songToDelete.artist },
+              },
+            });
+          } catch (tlErr) {
+            console.warn("[Action Route] Failed to log DELETED timeline:", tlErr);
+          }
+        }
+
         return NextResponse.json({ success: true });
       }
 
       case "UPDATE_PLAYLIST": {
+        const isNew = !(await prisma.playlist.findUnique({ where: { id: payload.id } }));
         const playlist = await prisma.playlist.upsert({
           where: { id: payload.id },
           update: {
             userId,
             name: payload.name,
-            description: payload.description ?? null,
-            coverUrl: payload.coverUrl ?? null,
+            description: payload.description || null,
+            coverUrl: payload.coverUrl || null,
             songs: payload.songs ?? [],
+            isAuto: payload.isAuto ?? false,
+            autoType: payload.autoType || null,
           },
           create: {
             id: payload.id,
             userId,
             name: payload.name,
-            description: payload.description ?? null,
-            coverUrl: payload.coverUrl ?? null,
+            description: payload.description || null,
+            coverUrl: payload.coverUrl || null,
             songs: payload.songs ?? [],
+            isAuto: payload.isAuto ?? false,
+            autoType: payload.autoType || null,
           },
         });
+
+        if (isNew) {
+          try {
+            await prisma.musicTimeline.create({
+              data: {
+                userId,
+                type: "PLAYLIST_CREATED",
+                entityId: playlist.id,
+                entityTitle: playlist.name,
+              },
+            });
+          } catch (tlErr) {
+            console.warn("[Action Route] Failed to log PLAYLIST_CREATED timeline:", tlErr);
+          }
+        }
+
         return NextResponse.json({ success: true, data: playlist });
       }
 
       case "DELETE_PLAYLIST": {
-        await prisma.playlist.delete({ where: { id: payload.id } });
+        await prisma.playlist.deleteMany({ where: { id: payload.id, userId } });
+        return NextResponse.json({ success: true });
+      }
+
+      case "UPDATE_COLLECTION": {
+        const collection = await prisma.musicCollection.upsert({
+          where: { id: payload.id },
+          update: {
+            userId,
+            name: payload.name,
+            description: payload.description || null,
+            coverUrl: payload.coverUrl || null,
+            songIds: payload.songIds ?? [],
+          },
+          create: {
+            id: payload.id,
+            userId,
+            name: payload.name,
+            description: payload.description || null,
+            coverUrl: payload.coverUrl || null,
+            songIds: payload.songIds ?? [],
+          },
+        });
+        return NextResponse.json({ success: true, data: collection });
+      }
+
+      case "DELETE_COLLECTION": {
+        await prisma.musicCollection.deleteMany({ where: { id: payload.id, userId } });
         return NextResponse.json({ success: true });
       }
 
@@ -1149,6 +1247,59 @@ export async function POST(req: Request) {
           take: 10,
         });
         return NextResponse.json({ success: true, data: history });
+      }
+
+      case "UPDATE_COLLECTION": {
+        const { id, name, description, emoji, coverUrl, songIds } = payload;
+        // Check ownership if updating existing
+        if (id && !id.startsWith("collection-")) {
+          const existing = await prisma.musicCollection.findUnique({ where: { id } });
+          if (existing && existing.userId !== userId) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+          }
+        }
+        const col = await prisma.musicCollection.upsert({
+          where: { id: id || "new" },
+          update: {
+            name,
+            description: description ?? null,
+            emoji: emoji ?? null,
+            coverUrl: coverUrl ?? null,
+            songIds: songIds ?? [],
+            updatedAt: new Date(),
+          },
+          create: {
+            id,
+            userId,
+            name,
+            description: description ?? null,
+            emoji: emoji ?? null,
+            coverUrl: coverUrl ?? null,
+            songIds: songIds ?? [],
+          },
+        });
+        return NextResponse.json({ success: true, data: col });
+      }
+
+      case "DELETE_COLLECTION": {
+        const existing = await prisma.musicCollection.findUnique({ where: { id: payload.id } });
+        if (!existing || existing.userId !== userId) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+        await prisma.musicCollection.delete({ where: { id: payload.id } });
+        return NextResponse.json({ success: true });
+      }
+
+      case "TOGGLE_SONG_FAVORITE": {
+        const song = await prisma.song.findUnique({ where: { id: payload.id } });
+        if (!song || song.userId !== userId) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+        const updated = await prisma.song.update({
+          where: { id: payload.id },
+          data: { isFavorite: !song.isFavorite },
+        });
+        return NextResponse.json({ success: true, data: updated });
       }
 
       default:

@@ -33,8 +33,8 @@ function getPrismaClient(): PrismaClient {
     }
     return global.__prismaClient;
   }
-  // Dev mode: re-instantiate if needed to avoid stale cached client schema
-  if (!global.__prismaClient) {
+  // Dev mode: re-instantiate if cached client instance is missing new schema delegates
+  if (!global.__prismaClient || !("emergencyContact" in global.__prismaClient)) {
     global.__prismaClient = new PrismaClient({ adapter, log: ["warn", "error"] });
   }
   return global.__prismaClient;

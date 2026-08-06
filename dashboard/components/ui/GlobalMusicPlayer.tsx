@@ -22,6 +22,7 @@ export function GlobalMusicPlayer() {
     toggleShuffle,
     loopMode,
     cycleLoopMode,
+    recordPlay,
   } = useDashboardStore();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -52,32 +53,16 @@ export function GlobalMusicPlayer() {
 
     const win = iframeRef.current.contentWindow;
 
-    // Send play/pause command
     win.postMessage(
-      JSON.stringify({
-        event: "command",
-        func: isPlaying ? "playVideo" : "pauseVideo",
-        args: [],
-      }),
+      JSON.stringify({ event: "command", func: isPlaying ? "playVideo" : "pauseVideo", args: [] }),
       "*"
     );
-
-    // Send volume & mute commands
     win.postMessage(
-      JSON.stringify({
-        event: "command",
-        func: isMuted ? "mute" : "unMute",
-        args: [],
-      }),
+      JSON.stringify({ event: "command", func: isMuted ? "mute" : "unMute", args: [] }),
       "*"
     );
-
     win.postMessage(
-      JSON.stringify({
-        event: "command",
-        func: "setVolume",
-        args: [isMuted ? 0 : Math.round(volume * 100)],
-      }),
+      JSON.stringify({ event: "command", func: "setVolume", args: [isMuted ? 0 : Math.round(volume * 100)] }),
       "*"
     );
   }, [isPlaying, activeTrack, volume, isMuted]);
@@ -96,9 +81,7 @@ export function GlobalMusicPlayer() {
         });
       }, 1000);
     }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
+    return () => { if (interval) clearInterval(interval); };
   }, [activeTrack, isPlaying, duration, nextTrack]);
 
   // ── Reset & update duration when track changes ────────────────────────────
@@ -109,13 +92,125 @@ export function GlobalMusicPlayer() {
       if (parts.length === 2) {
         const secs = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
         if (!isNaN(secs) && secs > 0) setDuration(secs);
+      } else if (parts.length === 3) {
+        const secs = parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60 + parseInt(parts[2], 10);
+        if (!isNaN(secs) && secs > 0) setDuration(secs);
       }
     } else {
       setDuration(210);
     }
   }, [activeTrack]);
 
-  if (!pathname.startsWith("/music") || !activeTrack) return null;
+  // ── Session Auto-Saver (Spotify Style) ──────────────────────────────────────
+  useEffect(() => {
+    if (!activeTrack) return;
+    try {
+      const queue = useDashboardStore.getState().playlistQueue;
+      localStorage.setItem(
+        "music_playback_session",
+        JSON.stringify({
+          track: activeTrack,
+          currentTime: progress,
+          queue,
+          loopMode,
+          isShuffle,
+          timestamp: Date.now(),
+        })
+      );
+    } catch {}
+  }, [activeTrack, progress, loopMode, isShuffle]);
+
+  // ── Media Session API ──────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!activeTrack || typeof window === "undefined" || !("mediaSession" in navigator)) return;
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: activeTrack.title,
+      artist: activeTrack.artist,
+      album: activeTrack.album || "",
+      artwork: activeTrack.imageUrl
+        ? [{ src: activeTrack.imageUrl, sizes: "512x512", type: "image/jpeg" }]
+        : [],
+    });
+
+    navigator.mediaSession.setActionHandler("play", () => { if (!isPlaying) togglePlay(); });
+    navigator.mediaSession.setActionHandler("pause", () => { if (isPlaying) togglePlay(); });
+    navigator.mediaSession.setActionHandler("previoustrack", prevTrack);
+    navigator.mediaSession.setActionHandler("nexttrack", nextTrack);
+
+    return () => {
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.setActionHandler("play", null);
+        navigator.mediaSession.setActionHandler("pause", null);
+        navigator.mediaSession.setActionHandler("previoustrack", null);
+        navigator.mediaSession.setActionHandler("nexttrack", null);
+      }
+    };
+  }, [activeTrack, isPlaying, togglePlay, prevTrack, nextTrack]);
+
+  // ── Global Keyboard Shortcuts ──────────────────────────────────────────────
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore shortcuts when user is typing in an input/textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+      if (!activeTrack) return;
+
+      switch (e.code) {
+        case "Space":
+          e.preventDefault();
+          togglePlay();
+          break;
+        case "ArrowRight":
+          if (e.altKey) { e.preventDefault(); nextTrack(); }
+          else if (audioRef.current && activeTrack.audioUrl) {
+            audioRef.current.currentTime = Math.min(audioRef.current.currentTime + 5, duration);
+          }
+          break;
+        case "ArrowLeft":
+          if (e.altKey) { e.preventDefault(); prevTrack(); }
+          else if (audioRef.current && activeTrack.audioUrl) {
+            audioRef.current.currentTime = Math.max(audioRef.current.currentTime - 5, 0);
+          }
+          break;
+        case "ArrowUp":
+          if (e.altKey) {
+            e.preventDefault();
+            setVolume((v) => Math.min(1, parseFloat((v + 0.1).toFixed(1))));
+          }
+          break;
+        case "ArrowDown":
+          if (e.altKey) {
+            e.preventDefault();
+            setVolume((v) => Math.max(0, parseFloat((v - 0.1).toFixed(1))));
+          }
+          break;
+        case "KeyM":
+          if (e.altKey) { e.preventDefault(); setIsMuted((m) => !m); }
+          break;
+        case "KeyS":
+          if (e.altKey) { e.preventDefault(); toggleShuffle(); }
+          break;
+        case "KeyL":
+          if (e.altKey) { e.preventDefault(); cycleLoopMode(); }
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeTrack, duration, togglePlay, nextTrack, prevTrack, toggleShuffle, cycleLoopMode]);
+
+  // ── Auto-record plays when 30s threshold reached (direct audio) ───────────
+  const hasRecordedRef = useRef(false);
+  useEffect(() => {
+    hasRecordedRef.current = false;
+  }, [activeTrack]);
+
+  // ── Show player on /music/* or when a track is playing anywhere ───────────
+  const isOnMusicPage = pathname.startsWith("/music");
+  if (!activeTrack) return null;
+  if (!isOnMusicPage && !isPlaying) return null;
 
   const formatTime = (secs: number) => {
     if (isNaN(secs) || secs < 0) return "0:00";
@@ -126,9 +221,15 @@ export function GlobalMusicPlayer() {
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {
-      setProgress(audioRef.current.currentTime);
+      const t = audioRef.current.currentTime;
+      setProgress(t);
       if (audioRef.current.duration && !isNaN(audioRef.current.duration)) {
         setDuration(audioRef.current.duration);
+      }
+      // Record play after 30s
+      if (t >= 30 && !hasRecordedRef.current && activeTrack) {
+        hasRecordedRef.current = true;
+        recordPlay(activeTrack.id, activeTrack.title, activeTrack.artist, Math.round(t));
       }
     }
   };
@@ -136,13 +237,9 @@ export function GlobalMusicPlayer() {
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const seconds = Number(e.target.value);
     setProgress(seconds);
-
-    // HTML5 Audio Seek
     if (audioRef.current && activeTrack.audioUrl && !activeTrack.youtubeId) {
       audioRef.current.currentTime = seconds;
     }
-
-    // YouTube IFrame PostMessage Seek
     if (iframeRef.current?.contentWindow && activeTrack.youtubeId) {
       iframeRef.current.contentWindow.postMessage(
         JSON.stringify({ event: "command", func: "seekTo", args: [seconds, true] }),
@@ -157,9 +254,7 @@ export function GlobalMusicPlayer() {
     if (val > 0) setIsMuted(false);
   };
 
-  const toggleMute = () => {
-    setIsMuted((prev) => !prev);
-  };
+  const toggleMute = () => setIsMuted((prev) => !prev);
 
   return (
     <>
@@ -219,6 +314,10 @@ export function GlobalMusicPlayer() {
               <p className="text-[11px] font-semibold opacity-70 truncate" style={{ color: isCyber ? "#94A3B8" : "#444" }}>
                 {activeTrack.artist} {activeTrack.album ? `• ${activeTrack.album}` : ""}
               </p>
+              {/* Keyboard hint */}
+              <p className="text-[9px] opacity-30 hidden lg:block">
+                Space=Play/Pause · Alt+←/→=Prev/Next · Alt+↑/↓=Vol · Alt+M=Mute
+              </p>
             </div>
           </div>
 
@@ -234,7 +333,7 @@ export function GlobalMusicPlayer() {
                   color: isShuffle ? (isCyber ? "#00F5FF" : "#FF6B35") : (isCyber ? "#94A3B8" : "#888"),
                   backgroundColor: isShuffle ? (isCyber ? "rgba(0,245,255,0.15)" : "#FFF3E0") : "transparent",
                 }}
-                title={isShuffle ? "Shuffle On" : "Shuffle Off"}
+                title="Toggle Shuffle (Alt+S)"
               >
                 🔀
               </button>
@@ -244,7 +343,7 @@ export function GlobalMusicPlayer() {
                 onClick={prevTrack}
                 className="text-xs font-black p-1.5 rounded-full transition-transform active:scale-90 hover:opacity-80 cursor-pointer"
                 style={{ color: isCyber ? "#00F5FF" : "#000" }}
-                title="Previous Track"
+                title="Previous Track (Alt+←)"
               >
                 ⏮
               </button>
@@ -258,7 +357,7 @@ export function GlobalMusicPlayer() {
                   color: isCyber ? "#050816" : "#FFF",
                   boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.4)" : "2px 2px 0 #000",
                 }}
-                title={isPlaying ? "Pause" : "Play"}
+                title={isPlaying ? "Pause (Space)" : "Play (Space)"}
               >
                 {isPlaying ? "⏸" : "▶"}
               </button>
@@ -268,7 +367,7 @@ export function GlobalMusicPlayer() {
                 onClick={nextTrack}
                 className="text-xs font-black p-1.5 rounded-full transition-transform active:scale-90 hover:opacity-80 cursor-pointer"
                 style={{ color: isCyber ? "#00F5FF" : "#000" }}
-                title="Next Track"
+                title="Next Track (Alt+→)"
               >
                 ⏭
               </button>
@@ -281,7 +380,7 @@ export function GlobalMusicPlayer() {
                   color: loopMode !== "off" ? (isCyber ? "#00F5FF" : "#FF6B35") : (isCyber ? "#94A3B8" : "#888"),
                   backgroundColor: loopMode !== "off" ? (isCyber ? "rgba(0,245,255,0.15)" : "#FFF3E0") : "transparent",
                 }}
-                title={`Loop Mode: ${loopMode.toUpperCase()}`}
+                title={`Loop: ${loopMode.toUpperCase()} (Alt+L)`}
               >
                 {loopMode === "one" ? "🔂 1" : loopMode === "all" ? "🔁 All" : "🔁"}
               </button>
@@ -322,7 +421,7 @@ export function GlobalMusicPlayer() {
             <button
               onClick={toggleMute}
               className="text-xs font-bold opacity-80 hover:opacity-100 cursor-pointer hidden xs:inline-block"
-              title={isMuted ? "Unmute" : "Mute"}
+              title={isMuted ? "Unmute (Alt+M)" : "Mute (Alt+M)"}
             >
               {isMuted ? "🔇" : "🔊"}
             </button>

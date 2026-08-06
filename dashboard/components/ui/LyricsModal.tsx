@@ -210,6 +210,22 @@ export function LyricsModal({
               >
                 🌐 Genius Direct
               </a>
+              {lines.length > 0 && (
+                <button
+                  onClick={() => {
+                    const text = lines.map((l) => l.original).join("\n");
+                    navigator.clipboard.writeText(text);
+                  }}
+                  className="px-3.5 py-1.5 text-xs font-black rounded-xl border transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1.5"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(255, 255, 255, 0.05)" : "#E5E7EB",
+                    borderColor: isCyber ? "rgba(255, 255, 255, 0.2)" : "#000000",
+                    color: isCyber ? "#E0E8FF" : "#000000",
+                  }}
+                >
+                  📋 Copy Lyrics
+                </button>
+              )}
             </div>
           </div>
         ) : (
