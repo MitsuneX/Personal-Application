@@ -1997,6 +1997,13 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   likeHof: async (id) => {
+    const isGameChar = id.startsWith("gc-") || get().gameCharacters.some((c) => c.id === id);
+    if (isGameChar) {
+      const cleanId = id.replace(/^gc-/, "");
+      await get().likeGameCharacter(cleanId);
+      return;
+    }
+
     set((s) => {
       const newHof = s.hallOfFame.map((h) =>
         h.id === id ? { ...h, likes: (h.likes || 0) + 1 } : h

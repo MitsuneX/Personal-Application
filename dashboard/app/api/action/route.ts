@@ -526,35 +526,76 @@ export async function POST(req: Request) {
       }
 
       case "LIKE_HOF": {
-        const existing = await prisma.hallOfFame.findUnique({ where: { id: payload.id } });
-        const entry = await prisma.hallOfFame.update({
-          where: { id: payload.id },
-          data: { likes: { increment: 1 } },
-        });
-
-        await logHallEvent(prisma, {
-          userId,
-          type: "LIKES_CHANGED",
-          characterId: entry.id,
-          characterName: entry.name,
-          oldVotes: existing?.likes ?? 0,
-          newVotes: entry.likes,
-          metadata: { increment: 1 },
-        });
-
-        // Check if top rank shifted due to votes
-        const topEntry = await prisma.hallOfFame.findFirst({
-          where: { userId },
-          orderBy: { likes: "desc" },
-        });
-
-        if (topEntry && topEntry.id === entry.id) {
-          await updateChampionshipHistoryOnRankChange(prisma, userId, topEntry);
+        let targetId = payload.id;
+        if (typeof targetId === "string" && targetId.startsWith("gc-")) {
+          targetId = targetId.replace(/^gc-/, "");
         }
 
-        await captureHallRankingSnapshots(prisma, userId);
+        // 1. Try HallOfFame record
+        const existingHof = await prisma.hallOfFame.findUnique({ where: { id: payload.id } });
+        if (existingHof) {
+          const entry = await prisma.hallOfFame.update({
+            where: { id: payload.id },
+            data: { likes: { increment: 1 } },
+          });
 
-        return NextResponse.json({ success: true, data: entry });
+          await logHallEvent(prisma, {
+            userId,
+            type: "LIKES_CHANGED",
+            characterId: entry.id,
+            characterName: entry.name,
+            oldVotes: existingHof.likes ?? 0,
+            newVotes: entry.likes,
+            metadata: { increment: 1 },
+          });
+
+          // Check if top rank shifted due to votes
+          const topEntry = await prisma.hallOfFame.findFirst({
+            where: { userId },
+            orderBy: { likes: "desc" },
+          });
+
+          if (topEntry && topEntry.id === entry.id) {
+            await updateChampionshipHistoryOnRankChange(prisma, userId, topEntry);
+          }
+
+          await captureHallRankingSnapshots(prisma, userId);
+
+          return NextResponse.json({ success: true, data: entry });
+        }
+
+        // 2. Try GameCharacter record
+        const existingGameChar = await prisma.gameCharacter.findUnique({ where: { id: targetId } });
+        if (existingGameChar) {
+          const newLikes = (existingGameChar.likes || 0) + 1;
+          const updatedChar = await prisma.gameCharacter.update({
+            where: { id: targetId },
+            data: { likes: newLikes },
+          });
+
+          if (userId) {
+            try {
+              if ((prisma as any).gameCharacterLike) {
+                await (prisma as any).gameCharacterLike.create({
+                  data: { userId, gameCharacterId: targetId },
+                });
+              } else {
+                await prisma.$executeRawUnsafe(
+                  'INSERT INTO "GameCharacterLike" ("id", "userId", "gameCharacterId", "createdAt") VALUES ($1, $2, $3, NOW()) ON CONFLICT DO NOTHING;',
+                  `gcl-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                  userId,
+                  targetId
+                );
+              }
+            } catch {
+              // ignore duplicate like insert errors
+            }
+          }
+
+          return NextResponse.json({ success: true, data: updatedChar });
+        }
+
+        return NextResponse.json({ error: "Item not found in HallOfFame or GameCharacter" }, { status: 404 });
       }
 
       case "RANK_HOF": {
