@@ -2,6 +2,20 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [6.1.0] - 2026-08-07
+
+### 🛡️ Duplicate Character Collection Elimination & Database Uniqueness Protection
+
+**Root Cause Fix & Centralized Pipeline**
+- **Eliminated Duplicate Creation Paths**: Removed secondary client-side `addDossierCharacter` invocations inside `addGameCharacter()` in `lib/store/dashboardStore.ts`. All character creations now flow exclusively through `processCharacterCreation()`.
+- **Database Uniqueness Constraint (`@@unique([gameId, name])`)**: Enforced a database-level unique constraint on `GameDossierCharacter` in `prisma/schema.prisma` preventing duplicate dossier insertions at the database engine level.
+- **P2002 Safe Fallback Handling**: Handled Prisma unique constraint violation `P2002` in `processCharacterCreation()`, automatically recovering and reusing existing dossiers on concurrent creation attempts.
+- **Case-Insensitive Whitespace Normalization**: Normalizes all character names (`trim()` + collapse interior whitespace + `mode: "insensitive"` matching) to ensure `Jinshi`, `jinshi`, ` JINSHI ` resolve to the exact same dossier entry.
+
+**One-Time Duplicate Repair Utility (`repairDuplicateDossierCharacters`)**
+- **Automatic Merging & Cleaning**: Scans for existing duplicate Character Collection rows, merges them, re-links all associated `GameCharacter` favorite references to canonical dossier IDs, and batch-deletes duplicate rows.
+- **8-Scenario Automated Verification Suite**: Verified 8 test scenarios in `scripts/verify_unified_character_pipeline.ts` across 9 games (*Wuthering Waves*, *Honkai: Star Rail*, *Nikke*, *Zenless Zone Zero*, *Arknights*, *Honkai Impact 3rd*, *Reverse: 1999*, *Punishing: Gray Raven*, *Solo Leveling: Arise*).
+
 ## [6.0.0] - 2026-08-07
 
 ### 🏛️ Centralized Character Creation Service & Self-Healing Pipeline (Single Source of Truth)

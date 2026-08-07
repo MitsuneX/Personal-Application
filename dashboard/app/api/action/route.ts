@@ -74,7 +74,11 @@ export async function POST(req: Request) {
           createDossierOnly: true,
           isFavorite: false,
         });
-        return NextResponse.json({ success: true, data: result.dossierCharacter });
+        return NextResponse.json({
+          success: true,
+          data: result.dossierCharacter,
+          dossierCharacter: result.dossierCharacter,
+        });
       }
 
       case "DELETE_DOSSIER_CHARACTER": {
@@ -89,7 +93,11 @@ export async function POST(req: Request) {
           createFavorite: true,
           isFavorite: true,
         });
-        return NextResponse.json({ success: true, data: result.gameCharacter || result.dossierCharacter });
+        return NextResponse.json({
+          success: true,
+          data: result.gameCharacter || result.dossierCharacter,
+          dossierCharacter: result.dossierCharacter,
+        });
       }
 
       case "DELETE_GAME_CHARACTER": {

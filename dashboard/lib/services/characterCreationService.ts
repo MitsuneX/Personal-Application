@@ -127,7 +127,8 @@ export async function processCharacterCreation(
   input: CreateCharacterInput
 ): Promise<CharacterCreationResult> {
   const trimmedName = input.name?.trim();
-  if (!trimmedName) {
+  const cleanName = input.name.trim().replace(/\s+/g, " ");
+  if (!cleanName) {
     throw new Error("Character name is required");
   }
 
@@ -159,19 +160,26 @@ export async function processCharacterCreation(
   // STEP 2: Character Collection (GameDossierCharacter) UPSERT
   let existingDossier: any = null;
 
-  if (resolvedGameId) {
+  if (input.id) {
+    existingDossier = await prisma.gameDossierCharacter.findUnique({
+      where: { id: input.id },
+    });
+  }
+
+  if (!existingDossier && resolvedGameId) {
     existingDossier = await prisma.gameDossierCharacter.findFirst({
       where: {
         gameId: resolvedGameId,
-        name: { equals: trimmedName, mode: "insensitive" },
+        name: { equals: cleanName, mode: "insensitive" },
         ...(userId ? { userId } : {}),
       },
     });
-  } else if (resolvedGameName) {
-    // Check if matching dossier exists by gameTitle / name
+  }
+
+  if (!existingDossier && resolvedGameName) {
     existingDossier = await prisma.gameDossierCharacter.findFirst({
       where: {
-        name: { equals: trimmedName, mode: "insensitive" },
+        name: { equals: cleanName, mode: "insensitive" },
         ...(userId ? { userId } : {}),
       },
     });
@@ -183,7 +191,7 @@ export async function processCharacterCreation(
   const dossierPayload = {
     userId,
     gameId: resolvedGameId || "pending-game",
-    name: trimmedName,
+    name: cleanName,
     category: input.category || targetGame?.category || "Main Roster",
     role: input.role || input.element || "Roster Member",
     element: input.element || null,
@@ -219,12 +227,35 @@ export async function processCharacterCreation(
     });
     isExistingDossierReused = true;
   } else {
-    dossierCharacter = await prisma.gameDossierCharacter.create({
-      data: {
-        id: input.id && input.createDossierOnly ? input.id : undefined,
-        ...dossierPayload,
-      },
-    });
+    try {
+      dossierCharacter = await prisma.gameDossierCharacter.create({
+        data: {
+          id: input.id && input.createDossierOnly ? input.id : undefined,
+          ...dossierPayload,
+        },
+      });
+    } catch (err: any) {
+      // P2002 is Prisma Unique Constraint Violation
+      if (err?.code === "P2002") {
+        const found = await prisma.gameDossierCharacter.findFirst({
+          where: {
+            gameId: resolvedGameId || "pending-game",
+            name: { equals: cleanName, mode: "insensitive" },
+          },
+        });
+        if (found) {
+          dossierCharacter = await prisma.gameDossierCharacter.update({
+            where: { id: found.id },
+            data: dossierPayload,
+          });
+          isExistingDossierReused = true;
+        } else {
+          throw err;
+        }
+      } else {
+        throw err;
+      }
+    }
   }
 
   // STEP 3: Game Character (Favorites) UPSERT
@@ -338,9 +369,16 @@ export async function repairCharacterDatabase(userId?: string | null): Promise<{
   let repairedCount = 0;
   let linkedGamesCount = 0;
 
-  // 1. Fetch all GameCharacters for user
+  // 1. Fetch only GameCharacters that need repair (missing characterId, missing gameId, or pending-game)
   const gameChars = await prisma.gameCharacter.findMany({
-    where: userId ? { userId } : {},
+    where: {
+      ...(userId ? { userId } : {}),
+      OR: [
+        { characterId: null },
+        { gameId: null },
+        { gameId: "pending-game" },
+      ],
+    },
   });
 
   // 2. Fetch all DossierCharacters
@@ -449,5 +487,64 @@ export async function repairCharacterDatabase(userId?: string | null): Promise<{
     }
   }
 
+  // Also clean up any duplicate character collection records
+  await repairDuplicateDossierCharacters(userId);
+
   return { repairedCount, linkedGamesCount };
+}
+
+// ─── DUPLICATE CHARACTER COLLECTION REPAIR UTILITY ────────────────────────────
+export async function repairDuplicateDossierCharacters(userId?: string | null): Promise<{
+  mergedGroupsCount: number;
+  deletedDuplicatesCount: number;
+}> {
+  const allDossiers = await prisma.gameDossierCharacter.findMany({
+    where: userId ? { userId } : {},
+    select: { id: true, gameId: true, name: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const grouped = new Map<string, any[]>();
+
+  for (const dc of allDossiers) {
+    const key = `${dc.gameId}_${dc.name.trim().toLowerCase().replace(/\s+/g, " ")}`;
+    if (!grouped.has(key)) {
+      grouped.set(key, []);
+    }
+    grouped.get(key)!.push(dc);
+  }
+
+  let mergedGroupsCount = 0;
+  let deletedDuplicatesCount = 0;
+
+  for (const [, group] of grouped.entries()) {
+    if (group.length <= 1) continue;
+
+    mergedGroupsCount++;
+    const canonical = group[0];
+    const duplicates = group.slice(1);
+    const dupIds = duplicates.map((d) => d.id);
+
+    // Re-link any GameCharacter referencing dupIds to canonical.id
+    try {
+      await prisma.gameCharacter.updateMany({
+        where: { characterId: { in: dupIds } },
+        data: { characterId: canonical.id },
+      });
+    } catch (err) {
+      console.warn(`[Duplicate Repair] Failed to re-link GameCharacters:`, err);
+    }
+
+    // Batch delete duplicate dossier rows in one query
+    try {
+      const del = await prisma.gameDossierCharacter.deleteMany({
+        where: { id: { in: dupIds } },
+      });
+      deletedDuplicatesCount += del.count;
+    } catch (err) {
+      console.warn(`[Duplicate Repair] Failed to delete duplicate dossiers:`, err);
+    }
+  }
+
+  return { mergedGroupsCount, deletedDuplicatesCount };
 }

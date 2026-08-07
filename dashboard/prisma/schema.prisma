@@ -129,6 +129,7 @@ model GameDossierCharacter {
 
   @@index([userId])
   @@index([gameId])
+  @@unique([gameId, name])
 }
 
 model GameCharacter {

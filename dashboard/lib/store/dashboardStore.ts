@@ -1216,7 +1216,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
   addGameCharacter: async (itemData) => {
     const state = get();
-    let linkedCharId = itemData.characterId;
 
     // Find parent game if gameId or gameName provided
     const targetGame = state.games.find((g) =>
@@ -1225,41 +1224,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     );
     const resolvedGameId = itemData.gameId || targetGame?.id || "";
     const resolvedGameName = itemData.gameName || targetGame?.game || "";
-
-    // Check if matching DossierCharacter exists
-    let existingDossier = state.dossierCharacters.find((dc) =>
-      (linkedCharId && dc.id === linkedCharId) ||
-      (dc.name.toLowerCase() === (itemData.name || "").toLowerCase() &&
-        (dc.gameId === resolvedGameId || (targetGame && dc.gameId === targetGame.id)))
-    );
-
-    // If DossierCharacter doesn't exist yet but target game exists in Game Database, create it!
-    if (!existingDossier && resolvedGameId && itemData.name) {
-      const newDossierId = `dossier-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-      const newDossier: DossierCharacterEntry = {
-        id: newDossierId,
-        gameId: resolvedGameId,
-        gameTitle: resolvedGameName,
-        name: itemData.name,
-        role: itemData.role || itemData.element || "Roster Member",
-        category: targetGame?.category || itemData.category || "Main Roster",
-        avatarUrl: itemData.cardImage || itemData.avatarUrl,
-        splashArt: itemData.splashArt,
-        accentColor: itemData.accentColor || targetGame?.accentColor || "#3B82F6",
-        isFavorite: itemData.isFavorite ?? false,
-        element: itemData.element,
-        path: itemData.path,
-        weapon: itemData.weapon,
-        rarity: itemData.rarity,
-        nation: itemData.nation,
-        birthday: itemData.birthday,
-        faction: itemData.faction,
-      };
-      await get().addDossierCharacter(newDossier);
-      linkedCharId = newDossierId;
-    } else if (existingDossier) {
-      linkedCharId = existingDossier.id;
-    }
 
     const newItem: GameCharacterEntry = {
       id: itemData.id || `game-char-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
@@ -1315,8 +1279,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       gallery: itemData.gallery,
       accentColor: itemData.accentColor || "#3B82F6",
       // Meta
-      characterId: linkedCharId,
-      isFavorite: itemData.isFavorite ?? false,
+      characterId: itemData.characterId,
+      isFavorite: itemData.isFavorite ?? true,
       notes: itemData.notes,
       metadataStatus: itemData.metadataStatus,
       stats: itemData.stats,
@@ -1326,13 +1290,31 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       createdAt: itemData.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+
     set((s) => ({ gameCharacters: [...s.gameCharacters, newItem] }));
+
     try {
-      await fetch("/api/action", {
+      const res = await fetch("/api/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "UPDATE_GAME_CHARACTER", payload: newItem }),
       });
+      const result = await res.json();
+      if (result.success) {
+        set((s) => {
+          const updatedGameChars = s.gameCharacters.map((gc) =>
+            gc.id === newItem.id ? { ...gc, ...result.data } : gc
+          );
+          let updatedDossiers = s.dossierCharacters;
+          if (result.dossierCharacter) {
+            const exists = updatedDossiers.some((d) => d.id === result.dossierCharacter.id);
+            updatedDossiers = exists
+              ? updatedDossiers.map((d) => (d.id === result.dossierCharacter.id ? { ...d, ...result.dossierCharacter } : d))
+              : [...updatedDossiers, result.dossierCharacter];
+          }
+          return { gameCharacters: updatedGameChars, dossierCharacters: updatedDossiers };
+        });
+      }
     } catch (err) {
       console.error("Failed to sync added game character:", err);
     }

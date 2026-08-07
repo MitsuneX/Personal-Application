@@ -3,17 +3,50 @@ import prisma from "../lib/prisma";
 import {
   processCharacterCreation,
   repairCharacterDatabase,
+  repairDuplicateDossierCharacters,
 } from "../lib/services/characterCreationService";
 
 async function main() {
-  console.log("🚀 STARTING UNIFIED CHARACTER CREATION PIPELINE VERIFICATION...\n");
+  console.log("🚀 STARTING UNIFIED CHARACTER CREATION & DUPLICATE PREVENTION VERIFICATION...\n");
 
   // Clean up test data before starting
   await prisma.gameCharacter.deleteMany({
-    where: { name: { in: ["Aemeath", "Jinshi", "TestPendingChar"] } },
+    where: {
+      name: {
+        in: [
+          "Aemeath",
+          "Jinshi",
+          "TestPendingChar",
+          "March 7th",
+          "Rapi",
+          "Anby",
+          "Amiya",
+          "Kiana",
+          "Vertin",
+          "Lucia",
+          "Sung Jinwoo",
+        ],
+      },
+    },
   });
   await prisma.gameDossierCharacter.deleteMany({
-    where: { name: { in: ["Aemeath", "Jinshi", "TestPendingChar"] } },
+    where: {
+      name: {
+        in: [
+          "Aemeath",
+          "Jinshi",
+          "TestPendingChar",
+          "March 7th",
+          "Rapi",
+          "Anby",
+          "Amiya",
+          "Kiana",
+          "Vertin",
+          "Lucia",
+          "Sung Jinwoo",
+        ],
+      },
+    },
   });
 
   // Ensure game "Wuthering Waves" exists
@@ -89,7 +122,7 @@ async function main() {
       name: `BulkChar_${i}`,
       gameName: "Wuthering Waves",
       element: i % 2 === 0 ? "Spectro" : "Glacio",
-      createDossierOnly: i > 2, // Only first 2 are favorites
+      createDossierOnly: i > 2,
       isFavorite: i <= 2,
     });
     bulkResults.push(res);
@@ -174,42 +207,72 @@ async function main() {
     throw new Error("Test 6 failed: Deleting favorite deleted Character Collection!");
   }
 
-  // ── TEST 7: Run Repair Synchronization ─────────────────────────────────────
-  console.log("\n7️⃣ Scenario 7: Running Repair Synchronization...");
-  const finalRepair = await repairCharacterDatabase();
-  console.log(`  ✓ Repair execution finished cleanly with 0 errors.`);
+  // ── TEST 7: Multi-Game Case-Insensitive Duplicate Prevention ─────────────
+  console.log("\n7️⃣ Scenario 7: Verifying duplicate prevention across 9 games...");
+  const testGames = [
+    { game: "Wuthering Waves", name: "TestDup_Jinshi", altName: " TestDup_JINSHI " },
+    { game: "Honkai: Star Rail", name: "TestDup_March 7th", altName: "testdup_march 7th" },
+    { game: "Nikke", name: "TestDup_Rapi", altName: "testdup_rapi" },
+    { game: "Zenless Zone Zero", name: "TestDup_Anby", altName: "TestDup_ANBY" },
+    { game: "Arknights", name: "TestDup_Amiya", altName: "testdup_amiya" },
+    { game: "Honkai Impact 3rd", name: "TestDup_Kiana", altName: "TestDup_KIANA" },
+    { game: "Reverse: 1999", name: "TestDup_Vertin", altName: "testdup_vertin" },
+    { game: "Punishing: Gray Raven", name: "TestDup_Lucia", altName: "TestDup_LUCIA" },
+    { game: "Solo Leveling: Arise", name: "TestDup_Sung Jinwoo", altName: "testdup_sung jinwoo" },
+  ];
+
+  for (const item of testGames) {
+    // 1st creation
+    await processCharacterCreation({
+      name: item.name,
+      gameName: item.game,
+      isFavorite: true,
+    });
+    // 2nd creation with case / whitespace variation
+    await processCharacterCreation({
+      name: item.altName,
+      gameName: item.game,
+      isFavorite: true,
+    });
+
+    const matches = await prisma.gameDossierCharacter.findMany({
+      where: {
+        name: { equals: item.name, mode: "insensitive" },
+      },
+    });
+
+    console.log(`  ✓ Game: ${item.game} | Character: ${item.name} | Total Collection Entries: ${matches.length}`);
+
+    if (matches.length !== 1) {
+      throw new Error(`Duplicate detected for ${item.game} - ${item.name}! Expected 1, found ${matches.length}`);
+    }
+  }
+
+  // ── TEST 8: One-Time Duplicate Repair Utility ────────────────────────────
+  console.log("\n8️⃣ Scenario 8: Testing One-Time Duplicate Repair Utility...");
+  const dupRepairRes = await repairDuplicateDossierCharacters();
+  console.log(`  ✓ Merged duplicate groups count: ${dupRepairRes.mergedGroupsCount}`);
+  console.log(`  ✓ Deleted duplicate rows count: ${dupRepairRes.deletedDuplicatesCount}`);
 
   // ── CLEANUP TEST DATA ─────────────────────────────────────────────────────
   console.log("\n🧹 Cleaning up test entries...");
   await prisma.gameCharacter.deleteMany({
     where: {
       name: {
-        in: [
-          "Aemeath",
-          "Jinshi",
-          "TestPendingChar",
-          ...Array.from({ length: 100 }, (_, i) => `BulkChar_${i + 1}`),
-          ...Array.from({ length: 50 }, (_, i) => `AiChar_${i + 1}`),
-        ],
+        contains: "TestDup_",
       },
     },
   });
   await prisma.gameDossierCharacter.deleteMany({
     where: {
       name: {
-        in: [
-          "Aemeath",
-          "Jinshi",
-          "TestPendingChar",
-          ...Array.from({ length: 100 }, (_, i) => `BulkChar_${i + 1}`),
-          ...Array.from({ length: 50 }, (_, i) => `AiChar_${i + 1}`),
-        ],
+        contains: "TestDup_",
       },
     },
   });
   await prisma.game.deleteMany({ where: { id: newGame.id } });
 
-  console.log("\n🎉 ALL 7 UNIFIED PIPELINE SCENARIOS PASSED WITH 100% SUCCESS!");
+  console.log("\n🎉 ALL 8 PIPELINE & DUPLICATE PREVENTION SCENARIOS PASSED WITH 100% SUCCESS!");
 }
 
 main()

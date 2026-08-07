@@ -13,6 +13,32 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v6.1.0",
+    date: "2026-08-07",
+    title: "Duplicate Collection Prevention & Database Uniqueness Protection",
+    badge: "CRITICAL REFACTOR",
+    type: "major",
+    summary: "Eliminated duplicate Character Collection creations by removing redundant client-side addDossierCharacter calls in dashboardStore.ts, enforcing @@unique([gameId, name]) database protection in schema.prisma, and implementing auto-recovering P2002 error handling and one-time duplicate repair utilities.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🛡️ Database Uniqueness Protection: Added @@unique([gameId, name]) constraint in schema.prisma preventing duplicate Character Collection entries at database level.",
+          "🧹 One-Time Duplicate Repair Utility (repairDuplicateDossierCharacters): Automatically detects existing duplicate dossiers, merges them, re-links favorite character references, and deletes duplicate rows.",
+          "✨ Case-Insensitive Whitespace Normalization: Normalizes names and collapses spaces to guarantee Jinshi, jinshi, and  JINSHI  resolve to the exact same dossier.",
+          "🧪 8-Scenario Test Suite (verify_unified_character_pipeline.ts): Verified duplicate prevention across 9 games (Wuthering Waves, HSR, Nikke, ZZZ, Arknights, HI3, Reverse: 1999, PGR, Solo Leveling).",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🗄️ Single Pipeline Store Cleanup: Fixed addGameCharacter in dashboardStore.ts to send a single request to processCharacterCreation without secondary dossier calls.",
+          "⚡ P2002 Safe Recovery: Catches Prisma unique constraint violations and reuses existing dossier records seamlessly.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v6.0.0",
     date: "2026-08-07",
     title: "Centralized Character Creation Service & Self-Healing Pipeline",
