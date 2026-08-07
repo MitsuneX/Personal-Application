@@ -71,14 +71,16 @@ export function HofProfileModal({
           >
             <div className="flex items-center gap-4 z-10">
               <div
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 shrink-0 flex items-center justify-center font-black text-2xl"
+                className="w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-2xl md:rounded-3xl overflow-hidden border-2 shrink-0 flex items-center justify-center font-black text-3xl shadow-xl"
                 style={{
                   borderColor: isCyber ? "#00F5FF" : "#000000",
+                  borderWidth: isCyber ? "2px" : "3px",
+                  boxShadow: isCyber ? "0 0 25px rgba(0,245,255,0.35)" : "5px 5px 0 #000000",
                   backgroundColor: isCyber ? "#050816" : "#E2E8F0",
                 }}
               >
                 {entry.imageUrl ? (
-                  <img src={entry.imageUrl} alt={entry.name} className="w-full h-full object-cover" />
+                  <img src={entry.imageUrl} alt={entry.name} className="w-full h-full object-cover object-top" />
                 ) : (
                   <span>{entry.name.charAt(0)}</span>
                 )}

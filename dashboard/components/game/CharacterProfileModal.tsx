@@ -823,33 +823,40 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                         </div>
                       )}
                       <div className="flex flex-col sm:flex-row sm:items-end gap-5">
-                        {/* Character Profile Portrait (Card Image / Avatar) */}
-                        {(hasImg(cardImg) || hasImg(avatar)) && (
-                          <motion.div
-                            whileHover={{ scale: 1.03 }}
-                            transition={{ duration: 0.2 }}
-                            onClick={() => {
-                              const portraitSrc = (cardImg || avatar)!;
+                        {/* Character Profile Portrait (Card Image / Avatar / Fallback) */}
+                        <motion.div
+                          whileHover={{ scale: 1.03 }}
+                          transition={{ duration: 0.2 }}
+                          onClick={() => {
+                            const portraitSrc = cardImg || avatar;
+                            if (portraitSrc) {
                               setLightboxSrc(portraitSrc);
                               setLightboxTitle(`${character.name} Portrait`);
-                            }}
-                            className="shrink-0 w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-2xl md:rounded-3xl overflow-hidden border-2 shadow-2xl cursor-zoom-in relative group"
-                            style={{
-                              borderColor: isCyber ? `${accent}` : "#000000",
-                              borderWidth: isCyber ? "2px" : "3px",
-                              boxShadow: isCyber
-                                ? `0 0 25px ${accent}50, 0 10px 30px rgba(0,0,0,0.8)`
-                                : "5px 5px 0 #000000",
-                              backgroundColor: isCyber ? "rgba(6,8,15,0.8)" : "#FFFFFF",
-                            }}
-                          >
+                            }
+                          }}
+                          className={`shrink-0 w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-2xl md:rounded-3xl overflow-hidden border-2 shadow-2xl relative group flex items-center justify-center font-black text-4xl ${
+                            hasImg(cardImg) || hasImg(avatar) ? "cursor-zoom-in" : ""
+                          }`}
+                          style={{
+                            borderColor: isCyber ? `${accent}` : "#000000",
+                            borderWidth: isCyber ? "2.5px" : "3.5px",
+                            boxShadow: isCyber
+                              ? `0 0 30px ${accent}60, 0 10px 30px rgba(0,0,0,0.85)`
+                              : "6px 6px 0 #000000",
+                            backgroundColor: isCyber ? "rgba(6,8,15,0.9)" : "#FFFFFF",
+                            color: accent,
+                          }}
+                        >
+                          {hasImg(cardImg) || hasImg(avatar) ? (
                             <img
                               src={(cardImg || avatar)!}
                               alt={character.name}
                               className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
                             />
-                          </motion.div>
-                        )}
+                          ) : (
+                            <span className="select-none drop-shadow-md">{character.name.charAt(0)}</span>
+                          )}
+                        </motion.div>
                         <div className="flex-1">
                           <h2
                             className="text-4xl md:text-5xl font-black leading-none tracking-tight"
