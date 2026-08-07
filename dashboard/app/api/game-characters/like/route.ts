@@ -26,12 +26,21 @@ export async function GET() {
       return NextResponse.json({ likedCharacterIds: [] });
     }
 
-    const likes = await prisma.gameCharacterLike.findMany({
-      where: { userId: user.id },
-      select: { gameCharacterId: true },
-    });
+    let likedCharacterIds: string[] = [];
+    if ((prisma as any).gameCharacterLike) {
+      const likes = await (prisma as any).gameCharacterLike.findMany({
+        where: { userId: user.id },
+        select: { gameCharacterId: true },
+      });
+      likedCharacterIds = likes.map((l: any) => l.gameCharacterId);
+    } else {
+      const rawLikes: any[] = await prisma.$queryRawUnsafe(
+        'SELECT "gameCharacterId" FROM "GameCharacterLike" WHERE "userId" = $1;',
+        user.id
+      );
+      likedCharacterIds = (rawLikes || []).map((l: any) => l.gameCharacterId);
+    }
 
-    const likedCharacterIds = likes.map((l) => l.gameCharacterId);
     return NextResponse.json({ likedCharacterIds });
   } catch (error: any) {
     console.error("GET /api/game-characters/like error:", error);
@@ -66,24 +75,43 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Character not found" }, { status: 404 });
     }
 
-    // Check existing like
-    const existingLike = await prisma.gameCharacterLike.findUnique({
-      where: {
-        userId_gameCharacterId: {
-          userId: user.id,
-          gameCharacterId: characterId,
+    // Safely query existing like
+    let existingLike: any = null;
+    if ((prisma as any).gameCharacterLike) {
+      existingLike = await (prisma as any).gameCharacterLike.findUnique({
+        where: {
+          userId_gameCharacterId: {
+            userId: user.id,
+            gameCharacterId: characterId,
+          },
         },
-      },
-    });
+      });
+    } else {
+      const rawLikes: any[] = await prisma.$queryRawUnsafe(
+        'SELECT id FROM "GameCharacterLike" WHERE "userId" = $1 AND "gameCharacterId" = $2 LIMIT 1;',
+        user.id,
+        characterId
+      );
+      if (rawLikes && rawLikes.length > 0) {
+        existingLike = rawLikes[0];
+      }
+    }
 
     let liked = false;
     let newLikesCount = character.likes || 0;
 
     if (existingLike) {
       // Toggle OFF: Unlike
-      await prisma.gameCharacterLike.delete({
-        where: { id: existingLike.id },
-      });
+      if ((prisma as any).gameCharacterLike) {
+        await (prisma as any).gameCharacterLike.delete({
+          where: { id: existingLike.id },
+        });
+      } else {
+        await prisma.$executeRawUnsafe(
+          'DELETE FROM "GameCharacterLike" WHERE "id" = $1;',
+          existingLike.id
+        );
+      }
       newLikesCount = Math.max(0, newLikesCount - 1);
       await prisma.gameCharacter.update({
         where: { id: characterId },
@@ -92,12 +120,23 @@ export async function POST(req: Request) {
       liked = false;
     } else {
       // Toggle ON: Like
-      await prisma.gameCharacterLike.create({
-        data: {
-          userId: user.id,
-          gameCharacterId: characterId,
-        },
-      });
+      const newLikeId = `gcl-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      if ((prisma as any).gameCharacterLike) {
+        await (prisma as any).gameCharacterLike.create({
+          data: {
+            id: newLikeId,
+            userId: user.id,
+            gameCharacterId: characterId,
+          },
+        });
+      } else {
+        await prisma.$executeRawUnsafe(
+          'INSERT INTO "GameCharacterLike" ("id", "userId", "gameCharacterId", "createdAt") VALUES ($1, $2, $3, NOW());',
+          newLikeId,
+          user.id,
+          characterId
+        );
+      }
       newLikesCount = newLikesCount + 1;
       await prisma.gameCharacter.update({
         where: { id: characterId },
