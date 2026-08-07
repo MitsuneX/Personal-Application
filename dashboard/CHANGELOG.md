@@ -2,6 +2,34 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [8.0.0] - 2026-08-07
+
+### 🎬 Unified Media Details Engine V2
+
+**Architecture: Single Details Engine for Drama, Anime & Movies**
+- Created `components/media/MediaDetailsView.tsx` — a single unified component powering all three media types (Drama, Anime, Movie) with media-specific metadata sections.
+- `app/anime/[id]/page.tsx` now exists and renders the same flagship Dossier experience as Drama, powered by the unified engine.
+- `app/drama/[id]/page.tsx` simplified to a 5-line wrapper delegating to `MediaDetailsView`.
+- `MediaCard` "View Details" button now correctly routes to `/anime/[id]` for anime and `/drama/[id]` for dramas.
+
+**Metadata Confidence Scoring System**
+- New `/api/media/metadata/route.ts` unified endpoint replacing the drama-only route.
+- Confidence algorithm scores every candidate: 100% for direct external ID match (IMDb/TMDb/TVMaze/MAL), 70–95% for title+year matches, 45% for partial/sequel matches (e.g., "Taken" vs "Taken 2"), with year-mismatch penalties.
+- If confidence < 90% with multiple candidates, API returns `requiresConfirmation: true` instead of silently using wrong metadata.
+- `MetadataConfirmationModal` shown to user with all candidates and confidence scores — user selects exact entry and external ID is saved for instant future lookups.
+
+**Anime Metadata via Jikan/MyAnimeList API**
+- Full Anime details: Japanese title, English title, studios, source material, episode count, genres, synopsis, score, air year.
+- Real voice actor cast grids: Character name, JP voice actor, EN voice actor, roles (Main / Supporting), actor photos.
+- OP/ED theme songs with YouTube and Spotify search links.
+
+**Episode Navigator Virtualization & Season Navigation**
+- Rewritten `DossierEpisodeNavigator.tsx` with paginated season blocks (24 eps/block) — renders only active season at a time.
+- Season selector tabs for multi-season / long-running series (One Piece, Naruto, Detective Conan).
+- Episode search bar + "Jump to Episode #" input form for instant navigation.
+- "▶ Continue Ep X" shortcut button for one-click resume.
+- Auto-selects the season containing the last watched episode on mount.
+
 ## [7.0.0] - 2026-08-07
 
 ### 🎬 Drama Details V2 — Complete Elimination of Seed & Mock Data

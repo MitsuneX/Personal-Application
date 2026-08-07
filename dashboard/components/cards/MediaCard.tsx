@@ -396,8 +396,12 @@ export function MediaCard({
   const router = useRouter();
 
   const handleViewDetails = useCallback(() => {
-    router.push(`/drama/${id}`);
-  }, [id, router]);
+    if (category === "anime") {
+      router.push(`/anime/${id}`);
+    } else {
+      router.push(`/drama/${id}`);
+    }
+  }, [id, category, router]);
 
   useEffect(() => { setLocalStatus(status); }, [status]);
   useEffect(() => { setLocalEps(episodesWatched); }, [episodesWatched]);

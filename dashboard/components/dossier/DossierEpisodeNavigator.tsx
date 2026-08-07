@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useMemo, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { ThemeAccentConfig } from "./DossierThemeAccent";
 import { DossierEpisode } from "@/lib/store/dashboardStore";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from "recharts";
-import { Tv, CheckCircle2, Play, Activity } from "lucide-react";
+import { Tv, CheckCircle2, Play, Activity, Search, ChevronDown, ChevronUp, ArrowRight } from "lucide-react";
 
 export interface DossierEpisodeNavigatorProps {
   episodes?: DossierEpisode[];
@@ -18,36 +18,98 @@ export interface DossierEpisodeNavigatorProps {
   onToggleEpisodeWatched?: (epNumber: number) => void;
 }
 
+const PAGE_SIZE = 24; // Virtualized page size per season block
+
 export function DossierEpisodeNavigator({
   episodes = [],
   totalEpisodes = 20,
-  episodesWatched = 12,
+  episodesWatched = 0,
   themeConfig,
   onToggleEpisodeWatched,
 }: DossierEpisodeNavigatorProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
 
-  const total = totalEpisodes > 0 ? totalEpisodes : 16;
+  const total = totalEpisodes > 0 ? totalEpisodes : 12;
 
-  // Generate episode list if not fully provided
-  const epList: DossierEpisode[] = Array.from({ length: total }, (_, i) => {
-    const epNum = i + 1;
-    const existing = episodes.find((e) => e.number === epNum);
-    return (
-      existing || {
-        number: epNum,
-        title: `Episode ${epNum}`,
-        runtime: "60m",
-        isWatched: epNum <= episodesWatched,
-      }
+  // Search & Navigation States
+  const [searchQuery, setSearchQuery] = useState("");
+  const [jumpInput, setJumpInput] = useState("");
+  const [activeSeasonIndex, setActiveSeasonIndex] = useState(0);
+
+  // Generate full episode list efficiently
+  const fullEpList: DossierEpisode[] = useMemo(() => {
+    return Array.from({ length: total }, (_, i) => {
+      const epNum = i + 1;
+      const existing = episodes.find((e) => e.number === epNum);
+      return (
+        existing || {
+          number: epNum,
+          title: `Episode ${epNum}`,
+          runtime: "24m",
+          isWatched: epNum <= episodesWatched,
+        }
+      );
+    });
+  }, [total, episodes, episodesWatched]);
+
+  // Group episodes into Seasons / Blocks of 24 episodes
+  const seasons = useMemo(() => {
+    const blocks: { name: string; episodes: DossierEpisode[]; startIndex: number; endIndex: number }[] = [];
+    const numSeasons = Math.ceil(total / PAGE_SIZE);
+
+    for (let s = 0; s < numSeasons; s++) {
+      const start = s * PAGE_SIZE;
+      const end = Math.min(total, (s + 1) * PAGE_SIZE);
+      const slice = fullEpList.slice(start, end);
+      blocks.push({
+        name: `Season ${s + 1} (Eps ${start + 1}–${end})`,
+        episodes: slice,
+        startIndex: start + 1,
+        endIndex: end,
+      });
+    }
+    return blocks;
+  }, [total, fullEpList]);
+
+  // Auto-set active season based on current watched episode on mount
+  useEffect(() => {
+    const currentWatchedSeason = Math.floor(Math.max(0, episodesWatched - 1) / PAGE_SIZE);
+    if (currentWatchedSeason >= 0 && currentWatchedSeason < seasons.length) {
+      setActiveSeasonIndex(currentWatchedSeason);
+    }
+  }, [episodesWatched, seasons.length]);
+
+  // Filter episodes by search query if active
+  const filteredEpisodes = useMemo(() => {
+    if (!searchQuery.trim()) return null;
+    const q = searchQuery.toLowerCase();
+    return fullEpList.filter(
+      (e) => e.number.toString() === q || e.title.toLowerCase().includes(q)
     );
-  });
+  }, [searchQuery, fullEpList]);
+
+  const activeSeason = seasons[activeSeasonIndex] || seasons[0];
+  const episodesToRender = filteredEpisodes || activeSeason?.episodes || [];
+
+  // Next unwatched episode for Continue Watching shortcut
+  const nextEpisodeToWatch = Math.min(total, episodesWatched + 1);
+
+  const handleJumpToEpisode = (e: React.FormEvent) => {
+    e.preventDefault();
+    const epNum = parseInt(jumpInput);
+    if (isNaN(epNum) || epNum < 1 || epNum > total) return;
+
+    const seasonIdx = Math.floor((epNum - 1) / PAGE_SIZE);
+    setActiveSeasonIndex(seasonIdx);
+    setSearchQuery(epNum.toString());
+    setJumpInput("");
+  };
 
   // Dynamic analytics calculations
   const avgDailyPace = episodesWatched > 0 ? (episodesWatched / Math.max(1, Math.min(7, episodesWatched))).toFixed(1) : "0";
-  const estimatedMinsLeft = Math.max(0, total - episodesWatched) * 60;
-  const hoursWatched = Math.round((episodesWatched * 60) / 60);
+  const estimatedMinsLeft = Math.max(0, total - episodesWatched) * 24;
+  const hoursWatched = Math.round((episodesWatched * 24) / 60);
 
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const analyticsData = daysOfWeek.map((day, idx) => {
@@ -69,7 +131,7 @@ export function DossierEpisodeNavigator({
       }}
     >
       {/* Section Header */}
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div className="flex items-center gap-2">
           <Tv size={20} style={{ color: themeConfig.primaryAccent }} />
           <h2
@@ -83,9 +145,28 @@ export function DossierEpisodeNavigator({
           </h2>
         </div>
 
-        <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-md border" style={{ borderColor: themeConfig.primaryAccent, color: themeConfig.primaryAccent }}>
-          {episodesWatched} / {total} Watched
-        </span>
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Continue Watching Shortcut */}
+          {episodesWatched < total && (
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => onToggleEpisodeWatched?.(nextEpisodeToWatch)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-white cursor-pointer shadow-md"
+              style={{ backgroundColor: themeConfig.primaryAccent }}
+            >
+              <Play size={13} fill="#FFF" />
+              <span>Continue Ep {nextEpisodeToWatch}</span>
+            </motion.button>
+          )}
+
+          <span
+            className="text-xs font-mono font-bold px-2.5 py-1.5 rounded-lg border"
+            style={{ borderColor: themeConfig.primaryAccent, color: themeConfig.primaryAccent }}
+          >
+            {episodesWatched} / {total} Watched
+          </span>
+        </div>
       </div>
 
       {/* Analytics Chart & Speed Stats */}
@@ -125,7 +206,7 @@ export function DossierEpisodeNavigator({
             <p className="text-lg font-black" style={{ color: themeConfig.primaryAccent }}>{avgDailyPace} Eps / Day</p>
           </div>
           <div>
-            <p className="text-[10px] font-mono uppercase opacity-60">Total Hours Watched</p>
+            <p className="text-[10px] font-mono uppercase opacity-60">Total Time Watched</p>
             <p className="text-lg font-black" style={{ color: isCyber ? "#E0E8FF" : "#000" }}>{hoursWatched} Hours ({episodesWatched} Eps)</p>
           </div>
           <div>
@@ -135,9 +216,73 @@ export function DossierEpisodeNavigator({
         </div>
       </div>
 
-      {/* Episode Grid */}
+      {/* Season Navigation & Search Bar Controls */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+        {/* Season Selector Tabs */}
+        {seasons.length > 1 && (
+          <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1 scrollbar-none">
+            {seasons.map((season, idx) => {
+              const isActive = activeSeasonIndex === idx;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setActiveSeasonIndex(idx);
+                    setSearchQuery("");
+                  }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold whitespace-nowrap cursor-pointer transition-all border"
+                  style={{
+                    backgroundColor: isActive ? themeConfig.primaryAccent : isCyber ? "rgba(5,8,22,0.6)" : "#FFF",
+                    borderColor: isActive ? themeConfig.primaryAccent : isCyber ? "rgba(255,255,255,0.15)" : "#000",
+                    color: isActive ? "#FFF" : isCyber ? "#94A3B8" : "#334155",
+                  }}
+                >
+                  {season.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Search & Jump Controls */}
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          {/* Episode Search */}
+          <div className="relative flex-1 sm:w-44">
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50" />
+            <input
+              type="text"
+              placeholder="Search episode..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1 rounded-lg text-xs font-mono border bg-black/10 dark:bg-white/5 outline-none"
+              style={{ borderColor: isCyber ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.2)" }}
+            />
+          </div>
+
+          {/* Jump to Episode Form */}
+          <form onSubmit={handleJumpToEpisode} className="flex items-center gap-1">
+            <input
+              type="number"
+              placeholder="Jump #"
+              value={jumpInput}
+              onChange={(e) => setJumpInput(e.target.value)}
+              className="w-16 px-2 py-1 rounded-lg text-xs font-mono border bg-black/10 dark:bg-white/5 outline-none"
+              style={{ borderColor: isCyber ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.2)" }}
+            />
+            <button
+              type="submit"
+              className="p-1.5 rounded-lg border text-xs font-mono font-bold cursor-pointer"
+              style={{ backgroundColor: themeConfig.primaryAccent, color: "#FFF" }}
+            >
+              <ArrowRight size={13} />
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* Paginated / Virtualized Episode Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2.5">
-        {epList.map((ep) => {
+        {episodesToRender.map((ep) => {
           const isCurrent = ep.number === episodesWatched + 1;
           return (
             <motion.button
@@ -161,18 +306,31 @@ export function DossierEpisodeNavigator({
                   : isCyber
                   ? "rgba(255,255,255,0.1)"
                   : "#000000",
-                boxShadow: ep.isWatched || isCurrent ? `0 0 12px ${themeConfig.glowColor}` : "none",
+                boxShadow: ep.isWatched
+                  ? `0 0 12px ${themeConfig.glowColor}`
+                  : isCurrent
+                  ? `0 0 12px ${themeConfig.secondaryAccent}50`
+                  : "none",
               }}
             >
-              <div className="flex items-center gap-1">
-                {ep.isWatched ? (
-                  <CheckCircle2 size={12} style={{ color: themeConfig.primaryAccent }} />
-                ) : isCurrent ? (
-                  <Play size={12} fill="currentColor" style={{ color: themeConfig.secondaryAccent }} />
-                ) : null}
-                <span className="font-black text-xs">EP {ep.number}</span>
-              </div>
-              <span className="text-[9px] font-mono opacity-60 truncate w-full text-center">{ep.runtime}</span>
+              <span className="text-[10px] font-mono opacity-60">EP</span>
+              <span
+                className="text-base font-black tabular-nums"
+                style={{
+                  color: ep.isWatched
+                    ? themeConfig.primaryAccent
+                    : isCurrent
+                    ? themeConfig.secondaryAccent
+                    : isCyber
+                    ? "#E0E8FF"
+                    : "#1A1A1A",
+                }}
+              >
+                {ep.number}
+              </span>
+              <span className="text-[9px] font-mono opacity-50 truncate max-w-full">
+                {ep.isWatched ? "✓ Watched" : isCurrent ? "▶ Current" : ep.runtime || "24m"}
+              </span>
             </motion.button>
           );
         })}

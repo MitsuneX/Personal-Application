@@ -13,6 +13,36 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v8.0.0",
+    date: "2026-08-07",
+    title: "Unified Media Details Engine — Anime, Drama & Movies",
+    badge: "MAJOR RELEASE",
+    type: "major",
+    summary: "Single MediaDetailsView engine powering Drama, Anime, and Movie detail pages with confidence-scored metadata matching, Jikan/MAL anime integration, and virtualized episode navigation.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🎬 Unified MediaDetailsView: Single component powering Drama, Anime, and Movie details — same 11-section Dossier layout for all media types.",
+          "🆕 /anime/[id] route: Anime cards now navigate to a full flagship Dossier page powered by Jikan API (characters, voice actors, OP/ED themes).",
+          "🔍 Metadata Confidence Scoring: Every search candidate scored 0–100%. IMDb/MAL ID = 100%, title+year = 95%, title-only = 70%, sequel penalty drops 'Taken 2' to 45% when searching 'Taken'.",
+          "⚠️ MetadataConfirmationModal: Low-confidence matches (< 90%) show a selection dialog instead of silently using wrong metadata. Selected IDs saved permanently.",
+          "🎌 Jikan/MyAnimeList API: Real anime metadata — Japanese/English titles, studios, source material, voice actors (JP + EN), character photos, OP/ED themes.",
+          "📺 New /api/media/metadata endpoint: Unified route replacing /api/drama/metadata, supporting drama, anime, and movie queries with multi-provider fetching.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "⚡ Episode Navigator Virtualization: Rewritten with paginated season blocks (24 eps each) — One Piece / Naruto / Detective Conan remain fast and responsive.",
+          "🗂️ Season Selector Tabs: Multi-season accordion with expand/collapse. Auto-selects season containing last watched episode on mount.",
+          "🔎 Episode Search & Jump: Search bar filtering + Jump-to-Episode # input form for instant deep navigation.",
+          "▶ Continue Watching shortcut: One-click button to resume from next unwatched episode.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v7.0.0",
     date: "2026-08-07",
     title: "Drama Details V2 — Dynamic Metadata-Driven Experience",
