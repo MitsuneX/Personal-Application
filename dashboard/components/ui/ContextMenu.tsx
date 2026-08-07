@@ -109,7 +109,9 @@ export function ContextMenu({
       }
     };
 
-    const handleScroll = () => {
+    const handleScroll = (e: Event) => {
+      // Only close if the scroll event comes from OUTSIDE the menu itself
+      if (menuRef.current && menuRef.current.contains(e.target as Node)) return;
       onClose();
     };
 
@@ -214,7 +216,7 @@ export function ContextMenu({
                 </div>
               )}
 
-              <div className="py-1 space-y-0.5 max-h-[60vh] overflow-y-auto">
+              <div className="py-1 space-y-0.5 overflow-y-auto" style={{ maxHeight: '70vh' }}>
                 {items.map((item, idx) => {
                   const isHighlighted = activeIndex === idx;
 

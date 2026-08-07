@@ -30,6 +30,12 @@ const orbitron = Orbitron({
 // ─── Metadata ─────────────────────────────────────────────────────────────────
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_VERCEL_URL
+      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+      : "http://localhost:3000"
+  ),
   title: {
     default: "Nexus Xenon — Personal Hub",
     template: "%s | Nexus Xenon",
@@ -97,18 +103,19 @@ export default function RootLayout({
         <meta name="application-name" content="Nexus Xenon" />
         <meta name="msapplication-TileColor" content="#FF6B35" />
         <meta name="msapplication-TileImage" content="/icons/icon-192.png" />
-        <script
+        <Script
           id="theme-script"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('dashboard-theme');var root=document.documentElement;if(t==='cyber'){root.setAttribute('data-theme','cyber');root.classList.add('theme-cyber');root.classList.remove('theme-neo-brutal');}else{root.setAttribute('data-theme','brutal');root.classList.add('theme-neo-brutal');root.classList.remove('theme-cyber');}}catch(e){}})();`,
           }}
-          suppressHydrationWarning
         />
       </head>
       <body className="font-[family-name:var(--font-space-grotesk)] antialiased" suppressHydrationWarning>
         {/* 📱 PWA — Service Worker registration */}
-        <script
+        <Script
           id="sw-register"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
@@ -126,7 +133,6 @@ export default function RootLayout({
               }
             `,
           }}
-          suppressHydrationWarning
         />
         <RootProviders>{children}</RootProviders>
       </body>

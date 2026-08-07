@@ -43,6 +43,7 @@ const NAV_SECTIONS = [
     label: "Gaming",
     items: [
       { href: "/games", icon: "🎮", label: "Games", exact: true },
+      { href: "/game-characters", icon: "⭐", label: "Game Character", activePrefixes: ["/game-characters"] },
       { href: "/heroes", icon: "📊", label: "Game Database", activePrefixes: ["/heroes"] },
     ],
   },

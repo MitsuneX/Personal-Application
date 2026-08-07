@@ -1,0 +1,243 @@
+"use client";
+
+import React, { useRef, useState, useCallback } from "react";
+import { useTheme } from "@/lib/theme";
+import { ImageCropModal } from "@/components/ui/ImageCropModal";
+
+interface CharacterImageUploaderProps {
+  label: string;
+  value?: string;
+  onChange: (dataUrl: string) => void;
+  onClear?: () => void;
+  aspect?: number; // 1 = square avatar, 16/9 = splash
+  hint?: string;
+  previewClass?: string;
+}
+
+export function CharacterImageUploader({
+  label,
+  value,
+  onChange,
+  onClear,
+  aspect = 1,
+  hint,
+  previewClass = "",
+}: CharacterImageUploaderProps) {
+  const { theme } = useTheme();
+  const isCyber = theme === "cyber";
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [isCropOpen, setIsCropOpen] = useState(false);
+
+  const processFile = useCallback((file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const src = e.target?.result as string;
+      setCropSrc(src);
+      setIsCropOpen(true);
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processFile(file);
+    e.target.value = "";
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
+  };
+
+  const handleCropComplete = (blob: Blob) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      onChange(dataUrl);
+    };
+    reader.readAsDataURL(blob);
+    setIsCropOpen(false);
+    setCropSrc(null);
+  };
+
+  const accent = isCyber ? "#00F5FF" : "#000000";
+  const hasImage = Boolean(value && (value.startsWith("http") || value.startsWith("data:") || value.startsWith("/")));
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <label
+          className="text-xs font-mono font-bold uppercase tracking-wider"
+          style={{ color: isCyber ? "rgba(0,245,255,0.7)" : "#6B7280" }}
+        >
+          {label}
+        </label>
+        {hasImage && onClear && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="text-[10px] font-mono opacity-60 hover:opacity-100 text-red-400 transition-opacity"
+          >
+            ✕ Remove
+          </button>
+        )}
+      </div>
+
+      {/* Drop Zone / Preview */}
+      <div
+        className={`relative rounded-xl border-2 border-dashed transition-all cursor-pointer overflow-hidden ${
+          isDragging ? "scale-[1.02]" : ""
+        } ${previewClass || (aspect === 1 ? "h-28 w-28" : "h-28 w-full")}`}
+        style={{
+          borderColor: isDragging ? accent : isCyber ? "rgba(0,245,255,0.25)" : "#D1D5DB",
+          backgroundColor: isDragging
+            ? isCyber ? "rgba(0,245,255,0.08)" : "#F0F9FF"
+            : isCyber ? "rgba(255,255,255,0.03)" : "#F9FAFB",
+        }}
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={handleDrop}
+      >
+        {hasImage ? (
+          <>
+            <img
+              src={value}
+              alt={label}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
+              <span className="text-white text-xs font-bold bg-black/60 px-2 py-1 rounded-lg">
+                ✏️ Replace
+              </span>
+            </div>
+          </>
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 p-2 text-center">
+            <span className="text-2xl opacity-40">
+              {aspect === 1 ? "👤" : "🖼️"}
+            </span>
+            <span
+              className="text-[10px] font-mono font-bold"
+              style={{ color: isCyber ? "rgba(0,245,255,0.5)" : "#9CA3AF" }}
+            >
+              Drop or Click
+            </span>
+          </div>
+        )}
+      </div>
+
+      {hint && (
+        <p className="text-[10px] font-mono opacity-50"
+           style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
+          {hint}
+        </p>
+      )}
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      <ImageCropModal
+        isOpen={isCropOpen}
+        imageSrc={cropSrc}
+        aspect={aspect}
+        title={`Crop ${label}`}
+        onClose={() => { setIsCropOpen(false); setCropSrc(null); }}
+        onCropComplete={handleCropComplete}
+      />
+    </div>
+  );
+}
+
+// Gallery uploader — multiple images
+interface GalleryUploaderProps {
+  images: string[];
+  onChange: (images: string[]) => void;
+}
+
+export function GalleryUploader({ images, onChange }: GalleryUploaderProps) {
+  const { theme } = useTheme();
+  const isCyber = theme === "cyber";
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFiles = (files: FileList) => {
+    const newImages: string[] = [];
+    let processed = 0;
+    Array.from(files).forEach((file) => {
+      if (!file.type.startsWith("image/")) { processed++; return; }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        newImages.push(e.target?.result as string);
+        processed++;
+        if (processed === files.length) {
+          onChange([...images, ...newImages]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (idx: number) => {
+    onChange(images.filter((_, i) => i !== idx));
+  };
+
+  return (
+    <div className="space-y-2">
+      <label
+        className="text-xs font-mono font-bold uppercase tracking-wider"
+        style={{ color: isCyber ? "rgba(0,245,255,0.7)" : "#6B7280" }}
+      >
+        Gallery
+      </label>
+
+      <div className="flex flex-wrap gap-2">
+        {images.map((img, idx) => (
+          <div key={idx} className="relative group w-20 h-20 rounded-lg overflow-hidden border"
+               style={{ borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#D1D5DB" }}>
+            <img src={img} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+            <button
+              type="button"
+              onClick={() => removeImage(idx)}
+              className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-red-400 text-lg font-bold"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+
+        {/* Add button */}
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="w-20 h-20 rounded-lg border-2 border-dashed flex items-center justify-center text-2xl transition-all hover:scale-105"
+          style={{
+            borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#D1D5DB",
+            color: isCyber ? "rgba(0,245,255,0.5)" : "#9CA3AF",
+            backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#F9FAFB",
+          }}
+        >
+          +
+        </button>
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => e.target.files && handleFiles(e.target.files)}
+      />
+    </div>
+  );
+}

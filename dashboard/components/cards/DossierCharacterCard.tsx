@@ -174,13 +174,29 @@ export function DossierCharacterCard({
       onClick={() => onSelect?.(character)}
       onContextMenu={handleContextMenu}
       className={`p-4 rounded-2xl border relative overflow-hidden group transition-all cursor-pointer hover:scale-[1.02] ${
-        linkedGameChar ? "ring-1 ring-cyan-400/40 shadow-cyan-500/10" : ""
+        linkedGameChar
+          ? isCyber
+            ? "ring-2 ring-purple-500/80 shadow-[0_0_25px_rgba(168,85,247,0.3)] animate-pulse"
+            : "ring-2 ring-amber-500 shadow-[4px_4px_0_#A855F7]"
+          : ""
       }`}
       style={{
         backgroundColor: isCyber ? "rgba(10,15,30,0.85)" : "#FFFFFF",
-        borderColor: isCyber ? `${accent}40` : "#000000",
-        borderWidth: isCyber ? "1px" : "2.5px",
-        boxShadow: isCyber ? `0 4px 20px ${accent}15` : "4px 4px 0 #000000",
+        borderColor: linkedGameChar
+          ? isCyber
+            ? "#A855F7"
+            : "#F59E0B"
+          : isCyber
+          ? `${accent}40`
+          : "#000000",
+        borderWidth: linkedGameChar ? (isCyber ? "2px" : "3px") : isCyber ? "1px" : "2.5px",
+        boxShadow: linkedGameChar
+          ? isCyber
+            ? "0 0 30px rgba(168,85,247,0.35)"
+            : "5px 5px 0 #A855F7"
+          : isCyber
+          ? `0 4px 20px ${accent}15`
+          : "4px 4px 0 #000000",
       }}
     >
       {/* Artwork Splash Background */}
@@ -195,7 +211,7 @@ export function DossierCharacterCard({
       {isCyber && (
         <div
           className="absolute -right-8 -top-8 w-24 h-24 rounded-full blur-2xl opacity-20 pointer-events-none z-0"
-          style={{ backgroundColor: accent }}
+          style={{ backgroundColor: linkedGameChar ? "#A855F7" : accent }}
         />
       )}
 
@@ -208,7 +224,7 @@ export function DossierCharacterCard({
             style={{
               backgroundColor: `${accent}20`,
               color: accent,
-              borderColor: isCyber ? `${accent}60` : "#000000",
+              borderColor: linkedGameChar ? (isCyber ? "#A855F7" : "#F59E0B") : isCyber ? `${accent}60` : "#000000",
               borderWidth: isCyber ? "1px" : "2px",
             }}
           >
@@ -230,8 +246,8 @@ export function DossierCharacterCard({
               <h4 className="font-black text-base theme-text-primary truncate leading-tight flex items-center gap-1">
                 <span>{character.name}</span>
                 {linkedGameChar && (
-                  <span className="text-[10px] text-cyan-400 font-mono" title="Linked to Game Character Hub">
-                    ✨
+                  <span className="px-1.5 py-0.5 rounded-full text-[9px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm" title="Personal Favorite Game Character">
+                    ⭐ MY GAME CHAR
                   </span>
                 )}
               </h4>
@@ -256,14 +272,18 @@ export function DossierCharacterCard({
 
         {/* Favorite & Quick Actions */}
         <div className="flex items-center gap-1 shrink-0 z-20">
-          {!linkedGameChar && (
+          {!linkedGameChar ? (
             <button
               onClick={handleLinkToGameChar}
-              className="p-1 rounded-lg text-xs opacity-60 hover:opacity-100 bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 transition-all cursor-pointer"
-              title="Link to Game Character Hub"
+              className="px-2 py-1 rounded-lg text-[10px] font-bold font-mono bg-purple-500/20 text-purple-300 border border-purple-500/40 hover:bg-purple-500/30 transition-all cursor-pointer shadow-sm active:scale-95"
+              title="Add to Game Character Personal Collection"
             >
-              +Hub
+              ⭐ Add to Game Character
             </button>
+          ) : (
+            <span className="px-2 py-0.5 rounded-lg text-[9px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40" title="Already in Game Characters">
+              ✓ Favorited
+            </span>
           )}
           <button
             onClick={handleToggleFavorite}

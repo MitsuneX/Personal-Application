@@ -100,6 +100,7 @@ export interface CharacterStats {
 export interface DossierCharacterEntry {
   id: string;
   gameId: string;
+  gameTitle?: string;
   name: string;
   aliases?: string[];
   category: string;
@@ -149,31 +150,66 @@ export interface GameCharacterEntry {
   gameId?: string;
   gameName?: string;
   name: string;
+  // Basic
   title?: string;
+  officialName?: string;
+  alias?: string;
+  nickname?: string;
+  nativeName?: string;
+  // Identity
+  birthday?: string;
+  age?: string;
+  gender?: string;
+  height?: string;
+  weight?: string;
+  species?: string;
+  race?: string;
+  // World
+  nation?: string;
+  region?: string;
+  planet?: string;
+  organization?: string;
+  affiliation?: string;
+  faction?: string;
+  // Combat
   role?: string;
   category?: string;
   element?: string;
+  attribute?: string;
   path?: string;
   weapon?: string;
   rarity?: string;
-  nation?: string;
-  birthday?: string;
+  damageType?: string;
+  combatRole?: string;
+  // Competitive stats
   health?: number;
   damage?: number;
   difficulty?: string;
   pickRate?: number;
   banRate?: number;
   winRate?: number;
+  // Voice Actors
+  voiceActors?: { jp?: string; cn?: string; kr?: string; en?: string };
+  // Story
+  personality?: string;
+  biography?: string;
+  officialDescription?: string;
+  favoriteQuote?: string;
+  // Media
   avatarUrl?: string;
   splashArt?: string;
+  gallery?: string[];
   accentColor?: string;
+  // Meta
   rank?: number;
   likes?: number;
   isFavorite?: boolean;
   notes?: string;
+  metadataStatus?: "complete" | "pending" | "partial";
   stats?: any;
   tags?: string[];
   links?: any;
+  tier?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -1179,15 +1215,62 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       name: itemData.name || "Unnamed Character",
       gameId: itemData.gameId || "",
       gameName: itemData.gameName || "",
+      // Basic
+      title: itemData.title,
+      officialName: itemData.officialName,
+      alias: itemData.alias,
+      nickname: itemData.nickname,
+      nativeName: itemData.nativeName,
+      // Identity
+      birthday: itemData.birthday,
+      age: itemData.age,
+      gender: itemData.gender,
+      height: itemData.height,
+      weight: itemData.weight,
+      species: itemData.species,
+      race: itemData.race,
+      // World
+      nation: itemData.nation,
+      region: itemData.region,
+      planet: itemData.planet,
+      organization: itemData.organization,
+      affiliation: itemData.affiliation,
+      faction: itemData.faction,
+      // Combat
       role: itemData.role,
       category: itemData.category,
+      element: itemData.element,
+      attribute: itemData.attribute,
+      path: itemData.path,
+      weapon: itemData.weapon,
+      rarity: itemData.rarity,
+      damageType: itemData.damageType,
+      combatRole: itemData.combatRole,
+      // Competitive stats
+      winRate: itemData.winRate,
+      pickRate: itemData.pickRate,
+      banRate: itemData.banRate,
+      // Voice Actors
+      voiceActors: itemData.voiceActors,
+      // Story
+      personality: itemData.personality,
+      biography: itemData.biography,
+      officialDescription: itemData.officialDescription,
+      favoriteQuote: itemData.favoriteQuote,
+      // Media
       avatarUrl: itemData.avatarUrl,
       splashArt: itemData.splashArt,
-      characterId: itemData.characterId,
+      gallery: itemData.gallery,
       accentColor: itemData.accentColor || "#3B82F6",
+      // Meta
+      characterId: itemData.characterId,
       isFavorite: itemData.isFavorite ?? false,
-      winRate: itemData.winRate,
       notes: itemData.notes,
+      metadataStatus: itemData.metadataStatus,
+      stats: itemData.stats,
+      tags: itemData.tags,
+      tier: itemData.tier,
+      rank: itemData.rank,
       createdAt: itemData.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
