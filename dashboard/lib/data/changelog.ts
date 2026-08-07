@@ -13,6 +13,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v9.5.0",
+    date: "2026-08-07",
+    title: "Real-Time Hall of Fame System & Personal Game Character Expansion",
+    badge: "MINOR RELEASE",
+    type: "minor",
+    summary: "Transformed Hall of Fame achievements, season legacy archive, and analytics dashboard into 100% database-driven engines, added top-5 live activity feed with centered activity modal, and seeded 16 new personal game characters across Genshin Impact, Nikke, Wuthering Waves, Tower of Fantasy, and Girls' Frontline 2.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🏛️ 100% Database-Driven Hall Engine: Replaced all static/seed achievements, season legacy records, and analytics visual graphs with live database computations.",
+          "⚡ Top-5 Activity Feed & Centered Modal: Constrained the main activity feed to top 5 items and built a centered HofActivityModal with real-time search, category filters, and pagination.",
+          "🌸 16 Personal Game Characters: Added Scarlet, Chiori, Columbina, Keqing, Skirk, Diluc, Rover, Roslyn, Yan Miao, Fei Se, Fiona, Lin, Daiyan, Loreley, Lainie, and Tololo exclusively to the user's account.",
+          "🔄 Automated Collection Syncing: Integrated personal character creation with processCharacterCreation service for seamless Game Database linking.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v9.4.0",
     date: "2026-08-07",
     title: "Game Character Permanent Like System & Multi-Select Checkbox Fixes",

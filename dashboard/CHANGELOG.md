@@ -2,6 +2,21 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [9.5.0] - 2026-08-07
+
+### 🏛️ Real-Time Hall of Fame System & Personal Game Character Expansion
+
+**Real-Time Hall Engine Enhancements**
+- **Dynamic Achievements & Records**: All Hall Achievements and Historical Records are now computed dynamically from real database records (e.g. first character, games completed, dramas finished, music track milestones, starred favorites, GOAT counts). Zero placeholder values.
+- **Season Legacy & Championship Archive**: Championship history timelines dynamically aggregate top entries, vote leaders, and reign lengths directly from live database history.
+- **Museum Visual Analytics Dashboard**: Visual graphs, category mix, country breakdowns, and vote growth charts now consume 100% live database data.
+- **Top-5 Live Activity Feed & Centered Modal**: Refactored the live activity feed to display ONLY the latest 5 entries. Added a prominent `View More →` trigger opening a centered `HofActivityModal` with full search, type filters (`Additions`, `Ranks`, `Votes`, `Favorites`, `Milestones`), and infinite pagination.
+
+**Personal Game Character Collection Expansion**
+- **16 New Personal Game Characters**: Added official verified character records for Nikke (`Scarlet`), Genshin Impact (`Chiori`, `Columbina`, `Keqing`, `Skirk`, `Diluc`), Wuthering Waves (`Rover`), Tower of Fantasy (`Roslyn`, `Yan Miao`, `Fei Se`, `Fiona`, `Lin`), and Girls' Frontline 2 (`Daiyan`, `Loreley`, `Lainie`, `Tololo`).
+- **Account Isolation**: Injected ONLY into the active user's personal account without modifying global seed scripts or affecting other accounts.
+- **Automatic Character Collection Sync**: Integrated with `processCharacterCreation` service to ensure automatic game linking, Character Collection syncing, and independent editing support.
+
 ## [9.4.0] - 2026-08-07
 
 ### ❤️ Game Character Permanent Like System & Multi-Select Checkbox Fixes

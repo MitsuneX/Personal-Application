@@ -499,6 +499,11 @@ export async function repairCharacterDatabase(userId?: string | null): Promise<{
   // Also clean up any duplicate character collection records
   await repairDuplicateDossierCharacters(userId);
 
+  // Ensure personal user game characters exist for authenticated account
+  if (userId) {
+    await ensureUserPersonalCharacters(userId);
+  }
+
   return { repairedCount, linkedGamesCount };
 }
 
@@ -556,4 +561,218 @@ export async function repairDuplicateDossierCharacters(userId?: string | null): 
   }
 
   return { mergedGroupsCount, deletedDuplicatesCount };
+}
+
+// ─── PERSONAL USER GAME CHARACTERS (USER ACCOUNT ONLY) ────────────────────────
+export const PERSONAL_USER_CHARACTERS: CreateCharacterInput[] = [
+  // NIKKE
+  {
+    gameName: "Goddess of Victory: Nikke",
+    name: "Scarlet",
+    gender: "Female",
+    element: "Electric",
+    weapon: "Blade",
+    role: "Attacker",
+    rarity: "SSR",
+    faction: "Pioneer",
+    species: "Nikke",
+    biography: "Melee sword-wielding Nikke from the Pioneer squad who loves wandering and traditional spirits.",
+  },
+
+  // GENSHIN IMPACT
+  {
+    gameName: "Genshin Impact",
+    name: "Chiori",
+    gender: "Female",
+    element: "Geo",
+    weapon: "Sword",
+    role: "Sub-DPS",
+    rarity: "5-Star",
+    nation: "Inazuma",
+    organization: "Chioriya Boutique",
+    biography: "The proprietor of Chioriya Boutique, a seamstress renowned across Fontaine for her iconic tailor-made fashion.",
+  },
+  {
+    gameName: "Genshin Impact",
+    name: "Columbina",
+    officialName: "Damselette",
+    gender: "Female",
+    element: "Cryo",
+    weapon: "Catalyst",
+    role: "Sub-DPS",
+    rarity: "5-Star",
+    organization: "Fatui Harbingers",
+    title: "3rd of the Eleven Fatui Harbingers",
+    biography: "The 3rd Harbinger of the Fatui, known for her tranquil yet formidable presence.",
+  },
+  {
+    gameName: "Genshin Impact",
+    name: "Keqing",
+    gender: "Female",
+    element: "Electro",
+    weapon: "Sword",
+    role: "Main DPS",
+    rarity: "5-Star",
+    nation: "Liyue",
+    title: "Yuheng of the Liyue Qixing",
+    biography: "The Yuheng of the Liyue Qixing. Keqing has much to say about Rex Lapis's style of governing Liyue.",
+  },
+  {
+    gameName: "Genshin Impact",
+    name: "Skirk",
+    gender: "Female",
+    element: "Quantum",
+    weapon: "Sword",
+    role: "Master",
+    rarity: "5-Star",
+    region: "Abyss",
+    title: "Master of the Abyss",
+    biography: "A mysterious warrior who resides in the darkest depths of the Abyss, martial master to Tartaglia.",
+  },
+  {
+    gameName: "Genshin Impact",
+    name: "Diluc",
+    officialName: "Diluc Ragnvindr",
+    gender: "Male",
+    element: "Pyro",
+    weapon: "Claymore",
+    role: "Main DPS",
+    rarity: "5-Star",
+    nation: "Mondstadt",
+    organization: "Dawn Winery",
+    biography: "As the tycoon of Dawn Winery, Diluc holds sway over Mondstadt's winemaking industry and operates as the Darknight Hero.",
+  },
+
+  // WUTHERING WAVES
+  {
+    gameName: "Wuthering Waves",
+    name: "Rover",
+    gender: "Female",
+    element: "Spectro",
+    weapon: "Sword",
+    role: "Main DPS",
+    rarity: "5-Star",
+    faction: "Kuro Universe",
+    biography: "The awakening protagonist of Solaris-3 possessing mysterious Resonator abilities.",
+  },
+
+  // TOWER OF FANTASY
+  {
+    gameName: "Tower of Fantasy",
+    name: "Roslyn",
+    gender: "Female",
+    element: "Frost",
+    weapon: "Calm Waters (Sword)",
+    role: "DPS",
+    rarity: "SSR",
+    faction: "Domain 9",
+    biography: "An energetic, dedicated security officer of Domain 9 in Tower of Fantasy.",
+  },
+  {
+    gameName: "Tower of Fantasy",
+    name: "Yan Miao",
+    gender: "Female",
+    element: "Physical",
+    weapon: "Equilibrium",
+    role: "DPS",
+    rarity: "SSR",
+    faction: "Domain 9",
+    biography: "Overseer of the Department of Applied Technology in Domain 9.",
+  },
+  {
+    gameName: "Tower of Fantasy",
+    name: "Fei Se",
+    gender: "Female",
+    element: "Flame",
+    weapon: "Endless Bloom",
+    role: "Sub-DPS",
+    rarity: "SSR",
+    faction: "Domain 9",
+    biography: "Chief dancer of Domain 9 famous for her elegance and captivating dance steps.",
+  },
+  {
+    gameName: "Tower of Fantasy",
+    name: "Fiona",
+    gender: "Female",
+    element: "Altered",
+    weapon: "Moonstar Bracelet",
+    role: "Support",
+    rarity: "SSR",
+    faction: "Innars",
+    biography: "The revered Chief Overseer of the underwater city of Innars.",
+  },
+  {
+    gameName: "Tower of Fantasy",
+    name: "Lin",
+    gender: "Female",
+    element: "Altered",
+    weapon: "Shadoweave",
+    role: "DPS",
+    rarity: "SSR",
+    faction: "Mirroria",
+    biography: "The capable daughter of Mirroria's founder and leader of Mirroria's security operations.",
+  },
+
+  // GIRLS' FRONTLINE 2
+  {
+    gameName: "Girls' Frontline 2",
+    name: "Daiyan",
+    gender: "Female",
+    element: "Physical",
+    weapon: "Assault Rifle",
+    role: "Sentinel",
+    rarity: "SSR",
+    faction: "Elmo",
+    biography: "Tactical Doll from Elmo squad known for her refined zither playing and combat prowess.",
+  },
+  {
+    gameName: "Girls' Frontline 2",
+    name: "Loreley",
+    gender: "Female",
+    element: "Volt",
+    weapon: "SMG",
+    role: "Vanguard",
+    rarity: "SSR",
+    faction: "Elmo",
+    biography: "High-mobility Vanguard T-Doll specializing in close-quarters flank assault.",
+  },
+  {
+    gameName: "Girls' Frontline 2",
+    name: "Lainie",
+    gender: "Female",
+    element: "Physical",
+    weapon: "Sniper Rifle",
+    role: "Support",
+    rarity: "SSR",
+    faction: "Elmo",
+    biography: "Precision support Tactical Doll providing long-range suppressive fire.",
+  },
+  {
+    gameName: "Girls' Frontline 2",
+    name: "Tololo",
+    gender: "Female",
+    element: "Thermal",
+    weapon: "Sniper Rifle",
+    role: "Marksman",
+    rarity: "SSR",
+    faction: "Elmo",
+    biography: "Astrophysics enthusiast and elite Marksman T-Doll targeting enemy armor.",
+  },
+];
+
+export async function ensureUserPersonalCharacters(userId: string) {
+  if (!userId) return;
+
+  for (const charInput of PERSONAL_USER_CHARACTERS) {
+    try {
+      await processCharacterCreation({
+        ...charInput,
+        userId,
+        isFavorite: true,
+        createFavorite: true,
+      });
+    } catch (err) {
+      console.warn(`[Personal Seed] Skipped ${charInput.name}:`, err);
+    }
+  }
 }
