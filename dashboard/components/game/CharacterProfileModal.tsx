@@ -823,19 +823,19 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                         </div>
                       )}
                       <div className="flex flex-col sm:flex-row sm:items-end gap-5">
-                        {/* Character Profile Portrait (Card Image / Avatar / Fallback) */}
+                        {/* Character Profile Portrait (Avatar / Card Image / Fallback) */}
                         <motion.div
                           whileHover={{ scale: 1.03 }}
                           transition={{ duration: 0.2 }}
                           onClick={() => {
-                            const portraitSrc = cardImg || avatar;
+                            const portraitSrc = avatar || cardImg;
                             if (portraitSrc) {
                               setLightboxSrc(portraitSrc);
-                              setLightboxTitle(`${character.name} Portrait`);
+                              setLightboxTitle(`${character.name} Avatar`);
                             }
                           }}
                           className={`shrink-0 w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-2xl md:rounded-3xl overflow-hidden border-2 shadow-2xl relative group flex items-center justify-center font-black text-4xl ${
-                            hasImg(cardImg) || hasImg(avatar) ? "cursor-zoom-in" : ""
+                            hasImg(avatar) || hasImg(cardImg) ? "cursor-zoom-in" : ""
                           }`}
                           style={{
                             borderColor: isCyber ? `${accent}` : "#000000",
@@ -847,9 +847,9 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                             color: accent,
                           }}
                         >
-                          {hasImg(cardImg) || hasImg(avatar) ? (
+                          {hasImg(avatar) || hasImg(cardImg) ? (
                             <img
-                              src={(cardImg || avatar)!}
+                              src={(hasImg(avatar) ? avatar : cardImg)!}
                               alt={character.name}
                               className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
                             />
