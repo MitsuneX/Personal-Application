@@ -726,6 +726,7 @@ interface DashboardState {
   requestSequenceId: number;
   isLoading: boolean;
   isHydrated: boolean;
+  isGuest: boolean;
 
   resetUserStore: () => void;
   fetchDashboard: () => Promise<void>;
@@ -1000,6 +1001,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   hobbySessions: [],
   notifications: [],
   profileHistory: [],
+  isGuest: false,
   requestSequenceId: 0,
   isLoading: false,
   isHydrated: false,
@@ -1042,6 +1044,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       hobbySessions: [],
       notifications: [],
       profileHistory: [],
+      isGuest: false,
     }));
   },
 
@@ -1061,6 +1064,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       if (data && !data.error) {
         const currentProfile = get().profile;
         set({
+          isGuest: Boolean(data.isGuest),
           profile: data.profile
             ? {
                 ...currentProfile,

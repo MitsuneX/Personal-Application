@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { GUEST_EMERGENCY_CONTACTS } from "@/lib/data/guestSeedData";
 
 export const dynamic = "force-dynamic";
 
@@ -12,16 +13,16 @@ export async function GET(req: Request) {
     const { data: { user } } = await supabase.auth.getUser();
     const isGuest = cookieStore.get("is_guest")?.value === "true";
 
-    const userId = user?.id || (isGuest ? "guest-demo-user-id" : null);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // ── GUEST MODE: return curated showcase data, never real DB ──
+    if (isGuest || !user) {
+      return NextResponse.json({ contacts: GUEST_EMERGENCY_CONTACTS });
     }
 
     const contacts = await prisma.emergencyContact.findMany({
-      where: { userId },
+      where: { userId: user.id },
       orderBy: [
         { favorite: "desc" },
-        { priority: "asc" }, // HIGH < MEDIUM < LOW alphabetically or sorted
+        { priority: "asc" },
         { name: "asc" },
       ],
     });
@@ -40,9 +41,8 @@ export async function POST(req: Request) {
     const { data: { user } } = await supabase.auth.getUser();
     const isGuest = cookieStore.get("is_guest")?.value === "true";
 
-    const userId = user?.id || (isGuest ? "guest-demo-user-id" : null);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (isGuest || !user) {
+      return NextResponse.json({ error: "Sign in to save contacts." }, { status: 403 });
     }
 
     const body = await req.json();
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
 
     const contact = await prisma.emergencyContact.create({
       data: {
-        userId,
+        userId: user.id,
         name: body.name.trim(),
         nickname: body.nickname?.trim() || null,
         relationship: body.relationship?.trim() || null,
@@ -90,9 +90,8 @@ export async function PUT(req: Request) {
     const { data: { user } } = await supabase.auth.getUser();
     const isGuest = cookieStore.get("is_guest")?.value === "true";
 
-    const userId = user?.id || (isGuest ? "guest-demo-user-id" : null);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (isGuest || !user) {
+      return NextResponse.json({ error: "Sign in to update contacts." }, { status: 403 });
     }
 
     const body = await req.json();
@@ -100,20 +99,16 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Contact ID is required" }, { status: 400 });
     }
 
-    // Handle quick interaction tracking ("CALL" | "WHATSAPP" | "EMAIL")
     if (body.actionType) {
       const updated = await prisma.emergencyContact.updateMany({
-        where: { id: body.id, userId },
-        data: {
-          lastContactedAt: new Date(),
-          lastContactType: body.actionType,
-        },
+        where: { id: body.id, userId: user.id },
+        data: { lastContactedAt: new Date(), lastContactType: body.actionType },
       });
       return NextResponse.json({ success: true, updated });
     }
 
     const contact = await prisma.emergencyContact.updateMany({
-      where: { id: body.id, userId },
+      where: { id: body.id, userId: user.id },
       data: {
         name: body.name?.trim(),
         nickname: body.nickname?.trim() || null,
@@ -152,9 +147,8 @@ export async function DELETE(req: Request) {
     const { data: { user } } = await supabase.auth.getUser();
     const isGuest = cookieStore.get("is_guest")?.value === "true";
 
-    const userId = user?.id || (isGuest ? "guest-demo-user-id" : null);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (isGuest || !user) {
+      return NextResponse.json({ error: "Sign in to delete contacts." }, { status: 403 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -164,7 +158,7 @@ export async function DELETE(req: Request) {
     }
 
     await prisma.emergencyContact.deleteMany({
-      where: { id, userId },
+      where: { id, userId: user.id },
     });
 
     return NextResponse.json({ success: true });

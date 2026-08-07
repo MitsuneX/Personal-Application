@@ -13,6 +13,37 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v9.1.0",
+    date: "2026-08-07",
+    title: "Guest Showcase Mode, Global Theme Dropdown Fix & Editor Cleanup",
+    badge: "MINOR RELEASE",
+    type: "minor",
+    summary: "Guest Mode now shows a curated read-only showcase (AI, music, drama, anime, movies, games, characters, HoF, emergency). Cyber Theme select dropdowns are fully readable. 'Choose From Dossier' removed.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🎭 Guest Showcase Mode: Guests see 3 curated items per section (AI tools, songs, dramas, anime, movies, games, Game Characters, Character Collection, Hall of Fame, Emergency Cards) — all isolated from the real database via lib/data/guestSeedData.ts.",
+          "🛡️ Guest Write Protection: POST/PUT/DELETE on /api/emergency/contacts returns HTTP 403 for guests — zero database writes.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🎨 Global Cyber Theme Dropdown Fix: Native <select> and <option> popups now have dark background + readable cyan text in Cyber mode; white + black in Neo-Brutalism — applied globally in app/globals.css.",
+          "📅 Date/Color Input Theme: input[type='date'], input[type='color'], input[type='time'] now use color-scheme: dark in Cyber mode and light in Neo-Brutalism.",
+          "🖋️ Autofill Styling Fix: -webkit-autofill text-fill-color and box-shadow now correctly match active theme across all inputs and selects.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🗑️ Removed 'Choose From Dossier': Fully deleted the Link from Character Collection dropdown, handleDossierSelect handler, and dossierCharacters store selector from GameCharacterEditorModal — editor is now self-contained.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v9.0.1",
     date: "2026-08-07",
     title: "Game Character Card Image Persistence & Schema Synchronization Fix",

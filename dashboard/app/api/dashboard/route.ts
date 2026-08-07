@@ -2,6 +2,18 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
+import {
+  GUEST_PROFILE,
+  GUEST_AI_TOOLS,
+  GUEST_SONGS,
+  GUEST_DRAMAS,
+  GUEST_ANIMES,
+  GUEST_MOVIES,
+  GUEST_GAMES,
+  GUEST_GAME_CHARACTERS,
+  GUEST_DOSSIER_CHARACTERS,
+  GUEST_HALL_OF_FAME,
+} from "@/lib/data/guestSeedData";
 import { DEFAULT_AI_TOOLS } from "@/lib/data/initialAiTools";
 import { DEFAULT_GAMES } from "@/lib/data/initialGames";
 import { ensureInitialHallHistory } from "@/lib/utils/hofEventEngine";
@@ -19,39 +31,25 @@ export async function GET() {
 
     // ── GUEST MODE DEMO RESPONSE ──────────────────────────────────────────────
     if (isGuestCookie || !user) {
-      const guestProfile = {
-        id: "guest-profile",
-        name: "Guest Explorer",
-        tagline: "Interactive Dashboard Demonstration",
-        bio: "Temporary Guest Session. All modifications are kept in-memory and will reset upon session end.",
-        status: "online",
-        location: "Virtual Sandbox",
-        skills: ["Demonstration Mode", "Zero Data Persistence", "Interactive UI"],
-        socials: [
-          { platform: "GitHub", handle: "@guest", url: "https://github.com" },
-        ],
-        avatar: "/avatar.png",
-        borderStyle: "default",
-      };
-
       return NextResponse.json({
         isGuest: true,
-        profile: guestProfile,
-        games: DEFAULT_GAMES,
-        dossierCharacters: [],
+        profile: GUEST_PROFILE,
+        games: GUEST_GAMES,
+        dossierCharacters: GUEST_DOSSIER_CHARACTERS,
+        gameCharacters: GUEST_GAME_CHARACTERS,
         gameResources: [],
         gameShowcaseItems: [],
         projects: [],
-        aiTools: DEFAULT_AI_TOOLS,
-        animeList: [],
+        aiTools: GUEST_AI_TOOLS,
+        animeList: GUEST_ANIMES,
         favoriteCharacters: [],
-        dramas: [],
-        hallOfFame: [],
+        dramas: GUEST_DRAMAS,
+        hallOfFame: GUEST_HALL_OF_FAME,
         notes: [],
         links: [],
         gallery: [],
-        songs: [],
-        dramaLog: [],
+        songs: GUEST_SONGS,
+        dramaLog: GUEST_MOVIES,
         savedPrompts: [],
         hobbySkills: [],
         hobbyLogs: [],

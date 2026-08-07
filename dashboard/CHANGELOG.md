@@ -2,6 +2,23 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [9.1.0] - 2026-08-07
+
+### 🎭 Guest Showcase Mode, Global Theme Dropdown Fix & Editor Cleanup
+
+**New Features**
+- Guest Mode now serves a fully curated, read-only showcase instead of an empty dashboard. Guests see 3 AI tools (ChatGPT, Gemini, Claude), 3 demo songs, 3 dramas, 3 animes, 3 movies, 3 games, 3 Game Characters, 3 Character Collection entries, 3 Hall of Fame legends, and 3 public emergency cards (Police/Ambulance/Fire).
+- All guest data lives in `lib/data/guestSeedData.ts` — a dedicated seed module completely isolated from the real database.
+- All write operations (POST/PUT/DELETE) in `/api/emergency/contacts` now return HTTP 403 for guests, preventing any database writes.
+
+**UI Improvements**
+- Fixed Cyber Theme native `<select>` and `<option>` popup rendering: options are now readable (dark background + cyan text) in Cyber mode and white/black in Neo-Brutalism — applied globally via `app/globals.css`.
+- Fixed `input[type="date"]`, `input[type="color"]`, `input[type="time"]` color-scheme to match active theme.
+- Fixed `-webkit-autofill` box-shadow and text-fill-color to respect Cyber/Brutal themes across all inputs and selects.
+
+**Bug Fixes & Cleanup**
+- Removed "Choose From Dossier" selector, `handleDossierSelect` handler, and `dossierCharacters` store selector from `GameCharacterEditorModal` — the editor is now fully self-contained.
+
 ## [9.0.1] - 2026-08-07
 
 ### 🐛 Game Character Card Image Persistence & Schema Synchronization Fix

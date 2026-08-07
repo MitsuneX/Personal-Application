@@ -577,4 +577,102 @@ img {
   box-shadow: 0 0 25px rgba(0, 245, 255, 0.25), inset 0 0 15px rgba(0, 245, 255, 0.05) !important;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════
+   GLOBAL FORM ELEMENTS & DROPDOWN SELECT STYLING
+   Resolves browser native option popup white-on-white / unreadable contrast issues
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Cyber Theme Form Select & Option Styling */
+[data-theme="cyber"] select {
+  background-color: #0A0F26 !important;
+  color: #E0E8FF !important;
+  border-color: rgba(0, 245, 255, 0.4) !important;
+}
+
+[data-theme="cyber"] select option,
+[data-theme="cyber"] select optgroup {
+  background-color: #0A0F26 !important;
+  color: #E0E8FF !important;
+  padding: 8px 12px;
+}
+
+[data-theme="cyber"] select option:hover,
+[data-theme="cyber"] select option:focus,
+[data-theme="cyber"] select option:active,
+[data-theme="cyber"] select option:checked {
+  background-color: #131B3E !important;
+  color: #00F5FF !important;
+}
+
+/* Neo-Brutalism Theme Form Select & Option Styling */
+[data-theme="brutal"] select {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+}
+
+[data-theme="brutal"] select option,
+[data-theme="brutal"] select optgroup {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  padding: 8px 12px;
+}
+
+[data-theme="brutal"] select option:hover,
+[data-theme="brutal"] select option:focus,
+[data-theme="brutal"] select option:active,
+[data-theme="brutal"] select option:checked {
+  background-color: #FFD166 !important;
+  color: #000000 !important;
+}
+
+/* Color & Date Pickers */
+[data-theme="cyber"] input[type="color"],
+[data-theme="cyber"] input[type="date"],
+[data-theme="cyber"] input[type="time"],
+[data-theme="cyber"] input[type="datetime-local"] {
+  color-scheme: dark;
+  background-color: #0A0F26;
+  color: #00F5FF;
+}
+
+[data-theme="brutal"] input[type="color"],
+[data-theme="brutal"] input[type="date"],
+[data-theme="brutal"] input[type="time"],
+[data-theme="brutal"] input[type="datetime-local"] {
+  color-scheme: light;
+  background-color: #FFFFFF;
+  color: #000000;
+}
+
+/* WebKit Autofill Styling Fix */
+[data-theme="cyber"] input:-webkit-autofill,
+[data-theme="cyber"] input:-webkit-autofill:hover,
+[data-theme="cyber"] input:-webkit-autofill:focus,
+[data-theme="cyber"] select:-webkit-autofill,
+[data-theme="cyber"] select:-webkit-autofill:hover,
+[data-theme="cyber"] select:-webkit-autofill:focus,
+[data-theme="cyber"] textarea:-webkit-autofill,
+[data-theme="cyber"] textarea:-webkit-autofill:hover,
+[data-theme="cyber"] textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: #00F5FF !important;
+  -webkit-box-shadow: 0 0 0px 1000px #0A0F26 inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+[data-theme="brutal"] input:-webkit-autofill,
+[data-theme="brutal"] input:-webkit-autofill:hover,
+[data-theme="brutal"] input:-webkit-autofill:focus,
+[data-theme="brutal"] select:-webkit-autofill,
+[data-theme="brutal"] select:-webkit-autofill:hover,
+[data-theme="brutal"] select:-webkit-autofill:focus,
+[data-theme="brutal"] textarea:-webkit-autofill,
+[data-theme="brutal"] textarea:-webkit-autofill:hover,
+[data-theme="brutal"] textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: #000000 !important;
+  -webkit-box-shadow: 0 0 0px 1000px #FFFFFF inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+
 

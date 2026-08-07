@@ -329,7 +329,7 @@ function TextareaField({
 export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: Props) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { games, dossierCharacters, addGameCharacter, updateGameCharacter } = useDashboardStore();
+  const { games, addGameCharacter, updateGameCharacter } = useDashboardStore();
   const { success: toastSuccess, error: toastError } = useToast();
 
   const [activeTab, setActiveTab] = useState<TabId>("basic");
@@ -498,19 +498,6 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
     }
   }, [games]);
 
-  // ── Auto-fill from dossier ──
-  const handleDossierSelect = useCallback((dcId: string) => {
-    setCharacterId(dcId);
-    const dc = dossierCharacters.find((c) => c.id === dcId);
-    if (dc) {
-      if (!name) setName(dc.name);
-      if (!avatarUrl && dc.avatarUrl) setAvatarUrl(dc.avatarUrl);
-      if (!splashArt && dc.splashArt) setSplashArt(dc.splashArt);
-      if (dc.gameId) handleGameSelect(dc.gameId);
-      if (dc.role) setRole(dc.role);
-    }
-  }, [dossierCharacters, name, avatarUrl, splashArt, handleGameSelect]);
-
   // ── Auto-fetch metadata from wiki ──
   const handleAutoFill = async () => {
     if (!name.trim()) { toastError("Enter a character name first."); return; }
@@ -667,27 +654,6 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
       case "basic":
         return (
           <div className="space-y-4">
-            {/* Quick-link from dossier */}
-            {!characterToEdit && dossierCharacters.length > 0 && (
-              <div>
-                <label className="block text-[10px] font-mono font-bold mb-1 uppercase tracking-wider"
-                  style={{ color: isCyber ? "rgba(0,245,255,0.6)" : "#6B7280" }}>
-                  Link from Character Collection (optional)
-                </label>
-                <select
-                  value={characterId}
-                  onChange={(e) => handleDossierSelect(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border text-xs font-mono theme-text-primary focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "#F9FAFB", borderColor: isCyber ? "rgba(255,255,255,0.12)" : "#E5E7EB" }}
-                >
-                  <option value="">— Choose from Dossier —</option>
-                  {dossierCharacters.map((dc) => (
-                    <option key={dc.id} value={dc.id}>{dc.name} ({dc.gameTitle || "No Game"})</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
             <div className="grid grid-cols-2 gap-3">
               <FormField label="Character Name" value={name} onChange={setName} placeholder="e.g. Acheron" required isCyber={isCyber} />
               <FormField label="Official Name" value={officialName} onChange={setOfficialName} placeholder="Full official name" isCyber={isCyber} />
