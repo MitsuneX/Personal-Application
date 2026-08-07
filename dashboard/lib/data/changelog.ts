@@ -13,6 +13,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v9.2.1",
+    date: "2026-08-07",
+    title: "Character Profile Detail Modal Avatar Scaling & UI Polish",
+    badge: "PATCH",
+    type: "patch",
+    summary: "Scaled profile header character avatar portrait from 64px to 176px responsive portrait with cardImage/avatarUrl fallbacks, click-to-zoom lightbox, and hover scale motion.",
+    categories: [
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🖼️ Profile Header Avatar Scaling: Increased avatar portrait size in CharacterProfileModal header from 64px thumbnail to 176px responsive profile portrait (w-28 mobile -> sm:w-36 tablet -> md:w-44 desktop).",
+          "🎨 Artwork Fallback & Lightbox: Enabled cardImage as primary portrait with avatarUrl fallback, interactive hover scale motion, and click-to-zoom lightbox preview.",
+          "📐 Balanced Layout Proportions: Adjusted hero banner height to clamp(360px, 50vh, 460px) ensuring character name, rarity, element chips, and tags flow naturally.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v9.2.0",
     date: "2026-08-07",
     title: "Game Category Filtering, Dynamic Game Selector & Featured Character System",

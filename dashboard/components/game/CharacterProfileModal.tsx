@@ -768,7 +768,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                 {/* ── Continuous Scroll Area (Splash Art + Sticky Tabs + Body) ── */}
                 <div className="flex-1 overflow-y-auto overscroll-contain relative custom-scrollbar">
                   {/* ── Splash Art Hero Banner (Full Bleed Edge-to-Edge Header) ───── */}
-                  <div className="relative overflow-hidden w-full shrink-0" style={{ height: "clamp(320px, 46vh, 420px)" }}>
+                  <div className="relative overflow-hidden w-full shrink-0" style={{ height: "clamp(360px, 50vh, 460px)" }}>
                     {/* Background Hero Image */}
                     {hasImg(splash) ? (
                       <motion.img
@@ -822,20 +822,33 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                           {stars}
                         </div>
                       )}
-                      <div className="flex items-end gap-5">
-                        {/* Avatar thumbnail */}
-                        {hasImg(avatar) && (
-                          <div
-                            className="shrink-0 w-16 h-16 rounded-2xl overflow-hidden border-2 shadow-2xl"
+                      <div className="flex flex-col sm:flex-row sm:items-end gap-5">
+                        {/* Character Profile Portrait (Card Image / Avatar) */}
+                        {(hasImg(cardImg) || hasImg(avatar)) && (
+                          <motion.div
+                            whileHover={{ scale: 1.03 }}
+                            transition={{ duration: 0.2 }}
+                            onClick={() => {
+                              const portraitSrc = (cardImg || avatar)!;
+                              setLightboxSrc(portraitSrc);
+                              setLightboxTitle(`${character.name} Portrait`);
+                            }}
+                            className="shrink-0 w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-2xl md:rounded-3xl overflow-hidden border-2 shadow-2xl cursor-zoom-in relative group"
                             style={{
-                              borderColor: isCyber ? `${accent}90` : "#000000",
-                              borderWidth: isCyber ? "2px" : "2.5px",
-                              boxShadow: isCyber ? `0 0 20px ${accent}40` : "3px 3px 0 #000",
-                              backgroundColor: isCyber ? "rgba(0,0,0,0.4)" : "#FFF",
+                              borderColor: isCyber ? `${accent}` : "#000000",
+                              borderWidth: isCyber ? "2px" : "3px",
+                              boxShadow: isCyber
+                                ? `0 0 25px ${accent}50, 0 10px 30px rgba(0,0,0,0.8)`
+                                : "5px 5px 0 #000000",
+                              backgroundColor: isCyber ? "rgba(6,8,15,0.8)" : "#FFFFFF",
                             }}
                           >
-                            <img src={avatar!} alt="" className="w-full h-full object-cover object-top" />
-                          </div>
+                            <img
+                              src={(cardImg || avatar)!}
+                              alt={character.name}
+                              className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
+                            />
+                          </motion.div>
                         )}
                         <div className="flex-1">
                           <h2

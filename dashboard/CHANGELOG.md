@@ -2,6 +2,15 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [9.2.1] - 2026-08-07
+
+### 🖼️ Character Profile Detail Modal Avatar Scaling & UI Polish
+
+**UI & Aesthetics**
+- **Profile Header Avatar Scaling**: Increased character avatar portrait size in `CharacterProfileModal` header from 64px x 64px thumbnail to a responsive 176px x 176px profile portrait (`w-28 h-28` mobile -> `sm:w-36 sm:h-36` tablet -> `md:w-44 md:h-44` desktop).
+- **Artwork Fallback & Lightbox**: Updated avatar display to use `cardImage` as primary portrait source with `avatarUrl` fallback, interactive hover scale motion, and click-to-zoom lightbox preview.
+- **Header Layout Balance**: Expanded hero banner height to `clamp(360px, 50vh, 460px)` to balance character name, rarity stars, element chips, and tags seamlessly beside the scaled profile portrait.
+
 ## [9.2.0] - 2026-08-07
 
 ### 🎮 Game Category Filtering, Dynamic Game Selector & Featured Character System
