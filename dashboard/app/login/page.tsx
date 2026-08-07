@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTheme } from "@/lib/theme";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -115,15 +116,15 @@ function LoginPageInner() {
   const supabase = createClient();
   const passwordInputRef = React.useRef<HTMLInputElement>(null);
 
-  // ── Theme ──
-  const [theme, setTheme] = useState<Theme>("cyber");
-  const isCyber = theme === "cyber";
+  // ── Theme & Mounted Guard ──
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
-  // Sync with global theme on mount
   useEffect(() => {
-    const stored = localStorage.getItem("dashboard-theme");
-    if (stored === "brutal" || stored === "cyber") setTheme(stored);
+    setMounted(true);
   }, []);
+
+  const isCyber = mounted ? theme === "cyber" : true;
 
   // ── Auth state ──
   const [mode, setMode] = useState<AuthMode>("signin");
