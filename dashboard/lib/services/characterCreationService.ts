@@ -271,7 +271,7 @@ export async function processCharacterCreation(
 
   if (shouldCreateFavorite) {
     // Check if favorite record already exists for this dossierCharacter or name+game
-    let existingFavorite = await prisma.gameCharacter.findFirst({
+    let existingFavorite: any = await prisma.gameCharacter.findFirst({
       where: {
         OR: [
           { characterId: dossierCharacter.id },
