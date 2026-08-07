@@ -30,8 +30,10 @@ function GameCharactersContent() {
   // ── Filter / Sort state ──
   const [search, setSearch] = useState("");
   const [gameFilter, setGameFilter] = useState("all");
+  const [gameCategoryFilter, setGameCategoryFilter] = useState("all");
   const [elementFilter, setElementFilter] = useState("all");
   const [favOnly, setFavOnly] = useState(false);
+  const [featuredOnly, setFeaturedOnly] = useState(false);
   const [sortBy, setSortBy] = useState<"rank" | "name" | "winRate" | "rarity">("rank");
 
   // ── Modal state (Single active modal manager to prevent modal stacking) ──
@@ -49,16 +51,39 @@ function GameCharactersContent() {
     return Array.from(s).sort();
   }, [gameCharacters]);
 
+  // Category matcher helper
+  const matchCategory = (gCat?: string | null, filter?: string) => {
+    if (!filter || filter === "all") return true;
+    if (!gCat) return false;
+    const cat = gCat.toLowerCase();
+    const f = filter.toLowerCase();
+    if (cat === f) return true;
+    if (f === "gacha") return cat.includes("gacha");
+    if (f === "action rpg") return cat.includes("action");
+    if (f === "turn-based rpg") return cat.includes("turn");
+    if (f === "tactical rpg") return cat.includes("tactical") || cat.includes("strategy");
+    if (f === "gacha action rpg") return cat.includes("gacha") && cat.includes("action");
+    return cat.includes(f);
+  };
+
   // Filtered & sorted characters
   const filtered = useMemo(() => {
     return gameCharacters
       .filter((c) => {
         if (favOnly && !c.isFavorite) return false;
+        if (featuredOnly && !c.isFeatured) return false;
         if (gameFilter === "orphaned") {
           if (c.gameId && games.some((g) => g.id === c.gameId)) return false;
         } else if (gameFilter !== "all") {
           if (c.gameId !== gameFilter && c.gameName !== gameFilter) return false;
         }
+
+        if (gameCategoryFilter !== "all") {
+          const parentGame = games.find((g) => g.id === c.gameId || g.game.toLowerCase() === (c.gameName || "").toLowerCase());
+          const cat = parentGame?.category || c.category;
+          if (!matchCategory(cat, gameCategoryFilter)) return false;
+        }
+
         if (elementFilter !== "all" && (c.element || "").toLowerCase() !== elementFilter.toLowerCase()) return false;
         if (search.trim()) {
           const q = search.toLowerCase();
@@ -73,6 +98,10 @@ function GameCharactersContent() {
         return true;
       })
       .sort((a, b) => {
+        // Featured priority
+        if (a.isFeatured !== b.isFeatured) {
+          return a.isFeatured ? -1 : 1;
+        }
         if (sortBy === "rank") {
           const ra = a.rank && a.rank > 0 ? a.rank : 9999;
           const rb = b.rank && b.rank > 0 ? b.rank : 9999;
@@ -85,7 +114,7 @@ function GameCharactersContent() {
         }
         return a.name.localeCompare(b.name);
       });
-  }, [gameCharacters, games, favOnly, gameFilter, elementFilter, search, sortBy]);
+  }, [gameCharacters, games, favOnly, featuredOnly, gameFilter, gameCategoryFilter, elementFilter, search, sortBy]);
 
   // Stats
   const totalFavs = gameCharacters.filter((c) => c.isFavorite).length;
@@ -244,11 +273,39 @@ function GameCharactersContent() {
           />
         </div>
 
+        {/* Game Category filter */}
+        <select
+          value={gameCategoryFilter}
+          onChange={(e) => setGameCategoryFilter(e.target.value)}
+          className="py-2 px-3 rounded-xl text-xs font-mono theme-text-primary focus:outline-none border cursor-pointer"
+          style={{
+            backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#FFF",
+            borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#D1D5DB",
+          }}
+        >
+          <option value="all">All Game Categories</option>
+          <option value="Gacha">🎰 Gacha</option>
+          <option value="Action RPG">⚔️ Action RPG</option>
+          <option value="Gacha Action RPG">🔥 Gacha Action RPG</option>
+          <option value="Turn-Based RPG">⏳ Turn-Based RPG</option>
+          <option value="Tactical RPG">🎯 Tactical RPG</option>
+          <option value="MOBA">🛡️ MOBA</option>
+          <option value="Fighting">👊 Fighting</option>
+          <option value="Shooter">🔫 Shooter</option>
+          <option value="MMORPG">🌍 MMORPG</option>
+          <option value="Strategy">♟️ Strategy</option>
+          <option value="Simulation">🛸 Simulation</option>
+          <option value="Rhythm">🎵 Rhythm</option>
+          <option value="Sandbox">🧱 Sandbox</option>
+          <option value="Survival">🏕️ Survival</option>
+          <option value="Other">🎲 Other</option>
+        </select>
+
         {/* Game filter */}
         <select
           value={gameFilter}
           onChange={(e) => setGameFilter(e.target.value)}
-          className="py-2 px-3 rounded-xl text-xs font-mono theme-text-primary focus:outline-none border"
+          className="py-2 px-3 rounded-xl text-xs font-mono theme-text-primary focus:outline-none border cursor-pointer"
           style={{
             backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#FFF",
             borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#D1D5DB",
@@ -266,7 +323,7 @@ function GameCharactersContent() {
           <select
             value={elementFilter}
             onChange={(e) => setElementFilter(e.target.value)}
-            className="py-2 px-3 rounded-xl text-xs font-mono theme-text-primary focus:outline-none border"
+            className="py-2 px-3 rounded-xl text-xs font-mono theme-text-primary focus:outline-none border cursor-pointer"
             style={{
               backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#FFF",
               borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#D1D5DB",
@@ -278,6 +335,20 @@ function GameCharactersContent() {
             ))}
           </select>
         )}
+
+        {/* Featured Only toggle */}
+        <button
+          onClick={() => setFeaturedOnly(!featuredOnly)}
+          className="px-3 py-2 rounded-xl text-xs font-black border transition-all cursor-pointer flex items-center gap-1.5"
+          style={{
+            backgroundColor: featuredOnly ? (isCyber ? "rgba(255,215,0,0.2)" : "#FEF08A") : (isCyber ? "rgba(255,255,255,0.05)" : "#FFF"),
+            borderColor: featuredOnly ? (isCyber ? "#FFD700" : "#EAB308") : (isCyber ? "rgba(255,255,255,0.1)" : "#D1D5DB"),
+            color: featuredOnly ? (isCyber ? "#FFD700" : "#854D0E") : (isCyber ? "rgba(255,255,255,0.5)" : "#6B7280"),
+          }}
+        >
+          <span>⭐</span>
+          <span>{featuredOnly ? "Featured Only" : "Featured"}</span>
+        </button>
 
         {/* Sort */}
         <select

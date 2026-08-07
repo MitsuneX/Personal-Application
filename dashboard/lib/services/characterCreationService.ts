@@ -48,6 +48,7 @@ export interface CreateCharacterInput {
 
   // Mode Controls
   isFavorite?: boolean;
+  isFeatured?: boolean;
   createFavorite?: boolean;
   createDossierOnly?: boolean;
 
@@ -313,6 +314,7 @@ export async function processCharacterCreation(
       rank: input.rank !== undefined ? Number(input.rank) : 0,
       likes: input.likes !== undefined ? Number(input.likes) : 0,
       isFavorite: true,
+      isFeatured: input.isFeatured ?? false,
       notes: input.notes || null,
       stats: {
         ...(input.stats || {}),

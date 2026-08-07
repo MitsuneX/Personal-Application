@@ -2,6 +2,17 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [9.2.0] - 2026-08-07
+
+### 🎮 Game Category Filtering, Dynamic Game Selector & Featured Character System
+
+**New Features**
+- **Game Category Filter**: Added a dedicated Game Category filter supporting 16 genres (Gacha, Action RPG, Turn-Based RPG, Tactical RPG, MOBA, Fighting, Shooter, MMORPG, Strategy, Simulation, Rhythm, Sandbox, Survival, etc.) with automatic genre substring matching.
+- **Dynamic Game Filter**: Created a live Game selector dynamically populated from the Game Database — adding a new game to the DB automatically displays it in the filter controls without hardcoded lists.
+- **⭐ Featured Game Character System**: Added `isFeatured` flag to `GameCharacter` schema & database table, allowing characters to be marked as Featured. Featured characters display a glowing ⭐ badge, a gold/cyan border highlight, and priority sorting.
+- **⭐ Featured Only Filter**: Added a Featured Only filter toggle allowing users to isolate featured characters across all roster grids and Hall of Fame views.
+- **Stacking Filters**: All filters (Category, Game, Featured, Element, Search, Sort) stack seamlessly for multi-dimensional roster exploration.
+
 ## [9.1.0] - 2026-08-07
 
 ### 🎭 Guest Showcase Mode, Global Theme Dropdown Fix & Editor Cleanup

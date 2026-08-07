@@ -207,6 +207,7 @@ export interface GameCharacterEntry {
   rank?: number;
   likes?: number;
   isFavorite?: boolean;
+  isFeatured?: boolean;
   notes?: string;
   metadataStatus?: "complete" | "pending" | "partial";
   stats?: any;
@@ -1318,6 +1319,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       // Meta
       characterId: itemData.characterId,
       isFavorite: itemData.isFavorite ?? true,
+      isFeatured: itemData.isFeatured ?? false,
       notes: itemData.notes,
       metadataStatus: itemData.metadataStatus,
       stats: itemData.stats,

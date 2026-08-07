@@ -161,6 +161,7 @@ model GameCharacter {
   rank         Int?     @default(0)
   likes        Int      @default(0)
   isFavorite   Boolean  @default(true)
+  isFeatured   Boolean  @default(false) // Featured Game Character toggle
   notes        String?
   stats        Json?
   tags         Json?    // string[]

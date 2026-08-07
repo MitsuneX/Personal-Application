@@ -227,10 +227,12 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
       className="relative cursor-pointer select-none overflow-hidden rounded-2xl"
       style={{
         aspectRatio: "3/4",
-        border: isCyber ? `1.5px solid rgba(255,255,255,0.08)` : `3px solid #000000`,
-        boxShadow: isCyber
-          ? `0 4px 24px rgba(0,0,0,0.6), 0 0 0 0 ${accent}`
-          : "6px 6px 0 #000000",
+        border: character.isFeatured
+          ? (isCyber ? `2px solid #FFD700` : `3.5px solid #000000`)
+          : (isCyber ? `1.5px solid rgba(255,255,255,0.08)` : `3px solid #000000`),
+        boxShadow: character.isFeatured
+          ? (isCyber ? `0 0 25px rgba(255,215,0,0.35), inset 0 0 15px rgba(255,215,0,0.1)` : "7px 7px 0 #000000")
+          : (isCyber ? `0 4px 24px rgba(0,0,0,0.6), 0 0 0 0 ${accent}` : "6px 6px 0 #000000"),
         backgroundColor: isCyber ? "#090d1c" : "#FFFFFF",
       }}
     >
@@ -284,19 +286,39 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
         }}
       />
 
-      {/* ── Top-left: Favorite glow ───────────────────────────────────── */}
-      {character.isFavorite && (
-        <motion.div
-          className="absolute top-3 left-3 z-20"
-          animate={{ opacity: [0.7, 1, 0.7] }}
-          transition={{ repeat: Infinity, duration: 2.5 }}
-        >
-          <span
-            className="text-lg drop-shadow-lg"
-            style={{ filter: isCyber ? `drop-shadow(0 0 6px #FBB724)` : undefined }}
-          >⭐</span>
-        </motion.div>
-      )}
+      {/* ── Top-left: Featured & Favorite badges ───────────────────────────── */}
+      <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5">
+        {character.isFeatured && (
+          <motion.span
+            initial={{ scale: 0.9 }}
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ repeat: Infinity, duration: 2 }}
+            className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1 border"
+            style={{
+              backgroundColor: isCyber ? "rgba(255,215,0,0.2)" : "#FEF08A",
+              color: isCyber ? "#FFD700" : "#854D0E",
+              borderColor: isCyber ? "#FFD700" : "#000000",
+              borderWidth: isCyber ? "1px" : "2px",
+              backdropFilter: "blur(8px)",
+              boxShadow: isCyber ? "0 0 10px rgba(255,215,0,0.4)" : "2px 2px 0 #000",
+            }}
+          >
+            ⭐ FEATURED
+          </motion.span>
+        )}
+
+        {character.isFavorite && !character.isFeatured && (
+          <motion.div
+            animate={{ opacity: [0.7, 1, 0.7] }}
+            transition={{ repeat: Infinity, duration: 2.5 }}
+          >
+            <span
+              className="text-lg drop-shadow-lg"
+              style={{ filter: isCyber ? `drop-shadow(0 0 6px #FBB724)` : undefined }}
+            >⭐</span>
+          </motion.div>
+        )}
+      </div>
 
       {/* ── Top-right: Rarity stars ───────────────────────────────────── */}
       {stars && (

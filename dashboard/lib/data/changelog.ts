@@ -13,6 +13,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v9.2.0",
+    date: "2026-08-07",
+    title: "Game Category Filtering, Dynamic Game Selector & Featured Character System",
+    badge: "MINOR RELEASE",
+    type: "minor",
+    summary: "Added 16-genre Game Category filtering, dynamic Game DB selector, ⭐ Featured Game Character toggle with glowing gold badge & priority sorting, and Featured Only filter toggle.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🎮 Game Category Filter: 16 game genres (Gacha, Action RPG, Turn-Based RPG, Tactical RPG, MOBA, Fighting, Shooter, etc.) with automatic genre substring matching.",
+          "🎮 Dynamic Game Filter: Live Game selector automatically populated from the Game Database — new games added to DB appear dynamically.",
+          "⭐ Featured Game Character System: Added isFeatured column & property to GameCharacter model & store with glowing ⭐ badge, gold border highlight, and priority list sorting.",
+          "⭐ Featured Only Filter: Added Featured Only toggle across roster grid and Hall of Fame views to isolate featured favorites.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v9.1.0",
     date: "2026-08-07",
     title: "Guest Showcase Mode, Global Theme Dropdown Fix & Editor Cleanup",

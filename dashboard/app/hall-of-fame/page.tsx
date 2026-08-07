@@ -29,13 +29,16 @@ import {
 export default function HallOfFamePage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { hallOfFame = [], hallEvents = [], championshipHistory = [], deleteHof, likeHof } = useDashboardStore();
+  const { hallOfFame = [], games = [], hallEvents = [], championshipHistory = [], deleteHof, likeHof } = useDashboardStore();
   const router = useRouter();
   const { confirm } = useConfirm();
   const { openContextMenu } = useContextMenu();
 
   // Dropdown Filter Toolbar State
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [gameCategoryFilter, setGameCategoryFilter] = useState<string>("all");
+  const [gameFilter, setGameFilter] = useState<string>("all");
+  const [featuredOnly, setFeaturedOnly] = useState<boolean>(false);
   const [countryFilter, setCountryFilter] = useState<string>("all");
   const [professionFilter, setProfessionFilter] = useState<string>("all");
   const [seasonFilter, setSeasonFilter] = useState<string>("all");
@@ -52,6 +55,9 @@ export default function HallOfFamePage() {
 
   const handleResetFilters = useCallback(() => {
     setCategoryFilter("all");
+    setGameCategoryFilter("all");
+    setGameFilter("all");
+    setFeaturedOnly(false);
     setCountryFilter("all");
     setProfessionFilter("all");
     setSeasonFilter("all");
@@ -317,6 +323,13 @@ export default function HallOfFamePage() {
           isCyber={isCyber}
           categoryFilter={categoryFilter}
           setCategoryFilter={setCategoryFilter}
+          gameCategoryFilter={gameCategoryFilter}
+          setGameCategoryFilter={setGameCategoryFilter}
+          gameFilter={gameFilter}
+          setGameFilter={setGameFilter}
+          featuredOnly={featuredOnly}
+          setFeaturedOnly={setFeaturedOnly}
+          games={games}
           countryFilter={countryFilter}
           setCountryFilter={setCountryFilter}
           professionFilter={professionFilter}

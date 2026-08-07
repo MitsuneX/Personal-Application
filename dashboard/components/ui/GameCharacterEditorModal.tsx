@@ -349,6 +349,7 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
   const [tier, setTier] = useState("S");
   const [rank, setRank] = useState<number | "">("");
   const [isFavorite, setIsFavorite] = useState(true);
+  const [isFeatured, setIsFeatured] = useState(false);
   const [accentColor, setAccentColor] = useState("#00F5FF");
 
   // ── Identity ──
@@ -422,6 +423,7 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
       setTier(characterToEdit.tier || "S");
       setRank(characterToEdit.rank ?? "");
       setIsFavorite(characterToEdit.isFavorite ?? true);
+      setIsFeatured(characterToEdit.isFeatured ?? false);
       setAccentColor(characterToEdit.accentColor || "#00F5FF");
       // Identity
       setBirthday(characterToEdit.birthday || "");
@@ -474,7 +476,7 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
     } else {
       // Reset all
       setName(""); setOfficialName(""); setAlias(""); setNickname(""); setNativeName(""); setTitle("");
-      setGameId(""); setGameName(""); setCharacterId(""); setTier("S"); setRank(""); setIsFavorite(true); setAccentColor("#00F5FF");
+      setGameId(""); setGameName(""); setCharacterId(""); setTier("S"); setRank(""); setIsFavorite(true); setIsFeatured(false); setAccentColor("#00F5FF");
       setBirthday(""); setAge(""); setGender(""); setHeight(""); setWeight(""); setSpecies(""); setRace("");
       setNation(""); setRegion(""); setPlanet(""); setOrganization(""); setAffiliation(""); setFaction("");
       setRole(""); setElement(""); setPath(""); setWeapon(""); setRarity(""); setAttribute(""); setDamageType(""); setCombatRole("");
@@ -574,9 +576,10 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
       gameId: gameId || undefined,
       gameName: gameName || undefined,
       characterId: characterId || undefined,
-      tier,
-      rank: rank !== "" ? Number(rank) : 0,
+      tier: tier || "S",
+      rank: rank === "" ? undefined : Number(rank),
       isFavorite,
+      isFeatured,
       accentColor,
       // Identity
       birthday: birthday || undefined,
@@ -669,6 +672,41 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
 
             {/* Game selector */}
             <GameDropdown games={games} value={gameId} onChange={handleGameSelect} isCyber={isCyber} />
+
+            {/* Featured Character Toggle */}
+            <div
+              className="flex items-center justify-between p-3 rounded-2xl border transition-all"
+              style={{
+                backgroundColor: isCyber ? (isFeatured ? "rgba(255,215,0,0.1)" : "rgba(255,255,255,0.03)") : (isFeatured ? "#FEF9C3" : "#F9FAFB"),
+                borderColor: isCyber ? (isFeatured ? "#FFD700" : "rgba(255,255,255,0.12)") : (isFeatured ? "#EAB308" : "#E5E7EB"),
+                borderWidth: isCyber ? "1px" : "2px",
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-base">⭐</span>
+                <div>
+                  <div className="text-xs font-black uppercase tracking-wider theme-text-primary">
+                    Featured Game Character
+                  </div>
+                  <div className="text-[10px] theme-text-muted">
+                    Highlight character across roster grids & Hall of Fame rankings
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsFeatured(!isFeatured)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  isFeatured ? (isCyber ? "bg-amber-400" : "bg-yellow-500") : "bg-gray-700"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                    isFeatured ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
 
             <div className="grid grid-cols-3 gap-3">
               {/* Tier */}
