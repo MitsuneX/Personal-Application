@@ -13,6 +13,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v5.8.1",
+    date: "2026-08-07",
+    title: "Modal Stacking Prevention & Seamless Character Editor Transition",
+    badge: "MODAL MANAGER & UX POLISH",
+    type: "minor",
+    summary: "Refactored modal state architecture in Game Characters to eliminate modal stacking conflicts. Clicking Edit inside Character Detail now seamlessly transitions into Character Editor with state preservation and continuous scroll locking.",
+    categories: [
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🎭 Single Active Modal Manager: Implemented activeModal enum ('none' | 'profile' | 'editor') ensuring only one primary fullscreen modal exists at a time.",
+          "✨ Seamless Profile-to-Editor Transition: Clicking Edit in Character Detail automatically unmounts the profile modal and presents the editor.",
+          "🔒 Continuous Background Scroll Lock: Maintained scroll lock throughout transitions to prevent body scrolling glitches.",
+          "🎯 Z-Index Hierarchy Audit: Standardized backdrop and modal z-indexes (z-[900] / z-[901]) across all themes.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v5.8.0",
     date: "2026-08-07",
     title: "Game Character ↔ Character Collection Synchronization Architecture Refactor",

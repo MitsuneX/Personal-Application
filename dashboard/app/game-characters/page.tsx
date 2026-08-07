@@ -34,10 +34,9 @@ function GameCharactersContent() {
   const [favOnly, setFavOnly] = useState(false);
   const [sortBy, setSortBy] = useState<"rank" | "name" | "winRate" | "rarity">("rank");
 
-  // ── Modal state ──
-  const [profileChar, setProfileChar] = useState<GameCharacterEntry | null>(null);
-  const [editingChar, setEditingChar] = useState<GameCharacterEntry | null>(null);
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  // ── Modal state (Single active modal manager to prevent modal stacking) ──
+  const [activeModal, setActiveModal] = useState<"none" | "profile" | "editor">("none");
+  const [selectedChar, setSelectedChar] = useState<GameCharacterEntry | null>(null);
 
   const orphanCount = gameCharacters.filter(
     (c) => !c.gameId || !games.some((g) => g.id === c.gameId)
@@ -94,22 +93,27 @@ function GameCharactersContent() {
 
   // ── Handlers ──
   const handleOpenProfile = (char: GameCharacterEntry) => {
-    setProfileChar(char);
+    setSelectedChar(char);
+    setActiveModal("profile");
   };
 
-  const handleEditFromProfile = (char: GameCharacterEntry) => {
-    setEditingChar(char);
-    setIsEditorOpen(true);
+  const handleEditCharacter = (char: GameCharacterEntry) => {
+    setSelectedChar(char);
+    setActiveModal("editor");
   };
 
   const handleAddNew = () => {
-    setEditingChar(null);
-    setIsEditorOpen(true);
+    setSelectedChar(null);
+    setActiveModal("editor");
+  };
+
+  const handleCloseModal = () => {
+    setActiveModal("none");
   };
 
   const handleDeleteFromProfile = async (char: GameCharacterEntry) => {
     await removeGameCharacter(char.id);
-    setProfileChar(null);
+    setActiveModal("none");
   };
 
   return (
@@ -352,7 +356,7 @@ function GameCharactersContent() {
                 key={char.id}
                 character={char}
                 onClick={handleOpenProfile}
-                onEdit={handleEditFromProfile}
+                onEdit={handleEditCharacter}
                 onDelete={handleDeleteFromProfile}
               />
             ))}
@@ -362,21 +366,18 @@ function GameCharactersContent() {
 
       {/* ── Character Profile Modal ───────────────────────────────────── */}
       <CharacterProfileModal
-        isOpen={Boolean(profileChar)}
-        character={profileChar}
-        onClose={() => setProfileChar(null)}
-        onEdit={handleEditFromProfile}
+        isOpen={activeModal === "profile"}
+        character={selectedChar}
+        onClose={handleCloseModal}
+        onEdit={handleEditCharacter}
         onDelete={handleDeleteFromProfile}
       />
 
       {/* ── Editor Modal ──────────────────────────────────────────────── */}
       <GameCharacterEditorModal
-        isOpen={isEditorOpen}
-        onClose={() => {
-          setIsEditorOpen(false);
-          setEditingChar(null);
-        }}
-        characterToEdit={editingChar}
+        isOpen={activeModal === "editor"}
+        onClose={handleCloseModal}
+        characterToEdit={selectedChar}
       />
     </div>
   );

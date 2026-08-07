@@ -2,6 +2,16 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [5.8.1] - 2026-08-07
+
+### 🎭 Modal Stacking Prevention & Seamless Character Editor Transition
+
+**Single Active Modal Manager (`activeModal`)**
+- **Eliminated Modal Stacking**: Refactored modal state in `/game-characters` to use a single active modal manager (`activeModal: "none" | "profile" | "editor"`).
+- **Seamless Profile-to-Editor Transition**: Clicking **Edit** inside the Character Detail Profile modal unmounts the profile view and seamlessly opens the Character Editor modal without requiring the user to manually close the profile modal first.
+- **State & Data Preservation**: Passes character data directly to the editor modal without refetching or resetting state.
+- **Background Scroll Locking & Z-Index Audit**: Maintained continuous scroll locking (`document.body.style.overflow = "hidden"`) during modal transitions and aligned backdrop/modal z-indexes (`z-[900]` / `z-[901]`).
+
 ## [5.8.0] - 2026-08-07
 
 ### 🔄 Game Character ↔ Character Collection Synchronization & Architecture Refactor

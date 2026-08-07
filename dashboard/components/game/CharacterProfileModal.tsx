@@ -708,7 +708,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
             />
 
             {/* ── Modal Container ────────────────────────────────────────── */}
-            <div className="fixed inset-0 z-[901] flex items-center justify-center p-4 pointer-events-none">
+            <div data-modal-open="true" className="fixed inset-0 z-[901] flex items-center justify-center p-4 pointer-events-none">
               <motion.div
                 key="modal"
                 initial={{ opacity: 0, scale: 0.92 }}
