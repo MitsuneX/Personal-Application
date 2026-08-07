@@ -40,6 +40,8 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
   const {
     games,
     dossierCharacters,
+    userLikedGameCharacterIds = [],
+    likeGameCharacter,
     updateGameCharacter,
     addGameCharacter,
     syncGameCharacterCardImage,
@@ -47,7 +49,7 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
     syncOrphanedGameCharacters,
   } = useDashboardStore();
   const { openContextMenu } = useContextMenu();
-  const { success: toastSuccess } = useToast();
+  const { success: toastSuccess, error: toastError } = useToast();
 
   const parentGame = games.find((g) => g.id === character.gameId);
   const linkedDossierChar = dossierCharacters.find(
@@ -415,9 +417,9 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
           </p>
         )}
 
-        {/* Bottom row: Linked badge */}
-        <div className="flex items-center justify-between mt-2">
-          <div>
+        {/* Bottom row: Linked badge + Like Button */}
+        <div className="flex items-center justify-between mt-2.5">
+          <div className="flex items-center gap-2">
             {isLinked ? (
               <span className="text-[9px] font-mono font-bold flex items-center gap-1" style={{ color: isCyber ? "#4ADE80" : "#15803D" }}>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
@@ -430,11 +432,57 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
               </span>
             )}
           </div>
-          {character.rank && character.rank > 0 ? (
-            <span className="text-[9px] font-mono opacity-40" style={{ color: isCyber ? "#FFFFFF" : "#000000" }}>
-              #{character.rank}
-            </span>
-          ) : null}
+
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={async (e) => {
+              e.stopPropagation();
+              const isLiked = userLikedGameCharacterIds.includes(character.id);
+              try {
+                const res = await likeGameCharacter(character.id);
+                if (res.liked) {
+                  toastSuccess(`Liked ${character.name}! ❤️`);
+                }
+              } catch (err: any) {
+                toastError(err.message || "Sign in to like this character.");
+              }
+            }}
+            className="px-2 py-1 rounded-xl text-[10px] font-mono font-black flex items-center gap-1.5 cursor-pointer transition-all border"
+            style={{
+              backgroundColor: userLikedGameCharacterIds.includes(character.id)
+                ? isCyber
+                  ? "rgba(255,20,147,0.25)"
+                  : "#FFE4E6"
+                : isCyber
+                ? "rgba(255,255,255,0.06)"
+                : "#F3F4F6",
+              color: userLikedGameCharacterIds.includes(character.id)
+                ? isCyber
+                  ? "#FF1493"
+                  : "#E11D48"
+                : isCyber
+                ? "#94A3B8"
+                : "#4B5563",
+              borderColor: userLikedGameCharacterIds.includes(character.id)
+                ? isCyber
+                  ? "#FF1493"
+                  : "#E11D48"
+                : isCyber
+                ? "rgba(255,255,255,0.15)"
+                : "#000000",
+              borderWidth: isCyber ? "1px" : "2px",
+              boxShadow: userLikedGameCharacterIds.includes(character.id)
+                ? isCyber
+                  ? "0 0 12px rgba(255,20,147,0.4)"
+                  : "2px 2px 0 #000000"
+                : "none",
+            }}
+          >
+            <span className={userLikedGameCharacterIds.includes(character.id) ? "animate-pulse text-xs" : "text-xs opacity-70"}>❤️</span>
+            <span>{character.likes || 0}</span>
+          </motion.button>
         </div>
       </div>
     </motion.div>

@@ -708,6 +708,7 @@ interface DashboardState {
   games: GameEntry[];
   dossierCharacters: DossierCharacterEntry[];
   gameCharacters: GameCharacterEntry[];
+  userLikedGameCharacterIds: string[];
   gameResources: GameResourceEntry[];
   gameShowcaseItems: GameShowcaseEntry[];
   projects: ProjectItemEntry[];
@@ -741,6 +742,7 @@ interface DashboardState {
   addGameCharacter: (item: Partial<GameCharacterEntry>) => Promise<GameCharacterEntry | null>;
   updateGameCharacter: (id: string, data: Partial<GameCharacterEntry>) => Promise<void>;
   removeGameCharacter: (id: string) => Promise<void>;
+  likeGameCharacter: (characterId: string) => Promise<{ liked: boolean; likesCount: number }>;
   syncGameCharacterArtwork: (gameCharId: string, dossierCharId: string, direction: "to_game_character" | "to_dossier_character") => Promise<void>;
   syncGameCharacterCardImage: (gameCharId: string, dossierCharId: string, direction: "to_game_character" | "to_dossier_character") => Promise<void>;
   syncGameCharacterSplashArt: (gameCharId: string, dossierCharId: string, direction: "to_game_character" | "to_dossier_character") => Promise<void>;
@@ -971,6 +973,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   games: [],
   dossierCharacters: initialDossierCharacters,
   gameCharacters: [],
+  userLikedGameCharacterIds: [],
   gameResources: initialGameResources,
   gameShowcaseItems: [],
   projects: initialProjects,
@@ -1127,6 +1130,18 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           })),
           isHydrated: true,
         });
+
+        // Fetch liked character IDs for authenticated user
+        if (!data.isGuest) {
+          fetch("/api/game-characters/like")
+            .then((r) => r.json())
+            .then((likesData) => {
+              if (likesData && Array.isArray(likesData.likedCharacterIds)) {
+                set({ userLikedGameCharacterIds: likesData.likedCharacterIds });
+              }
+            })
+            .catch(() => {});
+        }
       }
     } catch (err) {
       console.error("Failed to fetch dashboard:", err);
@@ -1491,6 +1506,60 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           notes: dc.notes,
         });
       }
+    }
+  },
+
+  likeGameCharacter: async (characterId: string) => {
+    const isGuest = get().isGuest;
+    if (isGuest) {
+      throw new Error("Sign in to like this character.");
+    }
+
+    const gameChar = get().gameCharacters.find((c) => c.id === characterId);
+    if (!gameChar) return { liked: false, likesCount: 0 };
+
+    const alreadyLiked = get().userLikedGameCharacterIds.includes(characterId);
+    const newLikedState = !alreadyLiked;
+    const newLikesCount = newLikedState
+      ? (gameChar.likes || 0) + 1
+      : Math.max(0, (gameChar.likes || 0) - 1);
+
+    // Optimistic store update
+    set((s) => ({
+      gameCharacters: s.gameCharacters.map((c) =>
+        c.id === characterId ? { ...c, likes: newLikesCount } : c
+      ),
+      userLikedGameCharacterIds: newLikedState
+        ? [...s.userLikedGameCharacterIds, characterId]
+        : s.userLikedGameCharacterIds.filter((id) => id !== characterId),
+    }));
+
+    try {
+      const res = await fetch("/api/game-characters/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ characterId }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        // Revert optimistic update
+        set((s) => ({
+          gameCharacters: s.gameCharacters.map((c) =>
+            c.id === characterId ? { ...c, likes: gameChar.likes } : c
+          ),
+          userLikedGameCharacterIds: alreadyLiked
+            ? [...s.userLikedGameCharacterIds, characterId]
+            : s.userLikedGameCharacterIds.filter((id) => id !== characterId),
+        }));
+        throw new Error(errData.error || "Sign in to like this character.");
+      }
+
+      const data = await res.json();
+      return { liked: data.liked, likesCount: data.likesCount };
+    } catch (err: any) {
+      console.error("likeGameCharacter store action error:", err);
+      throw err;
     }
   },
 

@@ -244,7 +244,7 @@ export function HofFilterToolbar({
               borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000",
             }}
           >
-            <option value="likes">❤️ Most Votes</option>
+            <option value="likes">❤️ Most Liked</option>
             <option value="name">🔤 Name (A-Z)</option>
             <option value="works">🎬 Most Works</option>
           </select>

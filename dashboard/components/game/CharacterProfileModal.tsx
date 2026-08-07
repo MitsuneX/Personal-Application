@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { GameCharacterEntry, useDashboardStore } from "@/lib/store/dashboardStore";
 import { ImageLightboxModal } from "@/components/ui/ImageLightboxModal";
+import { useToast } from "@/components/ui/ToastProvider";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Props {
@@ -155,9 +156,12 @@ function SectionTitle({ children, isCyber }: { children: React.ReactNode; isCybe
 export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDelete }: Props) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
+  const { success: toastSuccess, error: toastError } = useToast();
   const {
     games,
     dossierCharacters,
+    userLikedGameCharacterIds = [],
+    likeGameCharacter,
     updateGameCharacter,
     syncGameCharacterCardImage,
     syncGameCharacterSplashArt,
@@ -923,6 +927,56 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                                 ✦ {character.rarity}
                               </span>
                             )}
+                            {/* Like Button */}
+                            <motion.button
+                              type="button"
+                              whileHover={{ scale: 1.06 }}
+                              whileTap={{ scale: 0.94 }}
+                              onClick={async () => {
+                                try {
+                                  const res = await likeGameCharacter(character.id);
+                                  if (res.liked) {
+                                    toastSuccess(`Liked ${character.name}! ❤️`);
+                                  }
+                                } catch (err: any) {
+                                  toastError(err.message || "Sign in to like this character.");
+                                }
+                              }}
+                              className="px-3 py-1 rounded-full text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer transition-all border shadow-sm"
+                              style={{
+                                backgroundColor: userLikedGameCharacterIds.includes(character.id)
+                                  ? isCyber
+                                    ? "rgba(255,20,147,0.25)"
+                                    : "#FFE4E6"
+                                  : isCyber
+                                  ? "rgba(255,255,255,0.08)"
+                                  : "#F8FAFC",
+                                color: userLikedGameCharacterIds.includes(character.id)
+                                  ? isCyber
+                                    ? "#FF1493"
+                                    : "#E11D48"
+                                  : isCyber
+                                  ? "#E2E8F0"
+                                  : "#000000",
+                                borderColor: userLikedGameCharacterIds.includes(character.id)
+                                  ? isCyber
+                                    ? "#FF1493"
+                                    : "#E11D48"
+                                  : isCyber
+                                  ? "rgba(255,255,255,0.2)"
+                                  : "#000000",
+                                borderWidth: isCyber ? "1px" : "2px",
+                                boxShadow: userLikedGameCharacterIds.includes(character.id)
+                                  ? isCyber
+                                    ? "0 0 14px rgba(255,20,147,0.4)"
+                                    : "2px 2px 0 #000000"
+                                  : "none",
+                              }}
+                            >
+                              <span className={userLikedGameCharacterIds.includes(character.id) ? "animate-pulse text-sm" : "text-sm opacity-80"}>❤️</span>
+                              <span>{character.likes ? `${character.likes.toLocaleString()} Likes` : "Like"}</span>
+                            </motion.button>
+
                             {isLinked ? (
                               <span
                                 className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold border"

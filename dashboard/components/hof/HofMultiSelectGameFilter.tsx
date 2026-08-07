@@ -56,17 +56,36 @@ export function HofMultiSelectGameFilter({
     return games.filter((g) => g.game.toLowerCase().includes(q));
   }, [games, searchTerm]);
 
-  const allGameNames = useMemo(() => games.map((g) => g.game), [games]);
-
-  const isAllSelected = selectedGames.length === 0 || selectedGames.length === games.length;
+  // Explicit selection state check helper
+  const isGameSelected = (gameName: string): boolean => {
+    if (selectedGames.includes("__NONE__")) return false;
+    if (selectedGames.length === 0 || selectedGames.length === games.length) return true;
+    return selectedGames.includes(gameName);
+  };
 
   const handleToggleGame = (gameName: string) => {
+    if (selectedGames.includes("__NONE__")) {
+      // If currently cleared, selecting a game activates only that game
+      onChangeSelectedGames([gameName]);
+      return;
+    }
+
+    if (selectedGames.length === 0) {
+      // Currently all games are implicitly selected. Unchecking gameName means select all EXCEPT gameName.
+      const allExceptMe = games.map((g) => g.game).filter((g) => g !== gameName);
+      onChangeSelectedGames(allExceptMe);
+      return;
+    }
+
     if (selectedGames.includes(gameName)) {
       const updated = selectedGames.filter((g) => g !== gameName);
-      onChangeSelectedGames(updated);
+      if (updated.length === 0) {
+        onChangeSelectedGames(["__NONE__"]);
+      } else {
+        onChangeSelectedGames(updated);
+      }
     } else {
       const updated = [...selectedGames, gameName];
-      // If user selected all individually, clear to empty (means all)
       if (updated.length === games.length) {
         onChangeSelectedGames([]);
       } else {
@@ -95,15 +114,23 @@ export function HofMultiSelectGameFilter({
     return `🎮 ${selectedGames.length} Games Selected`;
   }, [selectedGames, games]);
 
+  // Active game chips list (when not all games selected and not none)
+  const activeChips = useMemo(() => {
+    if (selectedGames.includes("__NONE__") || selectedGames.length === 0 || selectedGames.length === games.length) {
+      return [];
+    }
+    return selectedGames;
+  }, [selectedGames, games]);
+
   return (
-    <div className="space-y-1 relative" ref={containerRef}>
+    <div className="space-y-1.5 relative" ref={containerRef}>
       <label className="text-[10px] font-bold uppercase theme-text-muted block">🎮 Game Filter ▼</label>
 
       {/* Trigger Button */}
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-3 py-2 rounded-xl border text-xs font-mono font-bold flex items-center justify-between gap-2 cursor-pointer transition-all"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="w-full px-3 py-2 rounded-xl border text-xs font-mono font-bold flex items-center justify-between gap-2 cursor-pointer transition-all hover:brightness-110 active:scale-[0.99]"
         style={{
           backgroundColor: isCyber ? "rgba(0,245,255,0.08)" : "#F8FAFC",
           color: isCyber ? "#00F5FF" : "#000000",
@@ -113,10 +140,35 @@ export function HofMultiSelectGameFilter({
         }}
       >
         <span className="truncate">{buttonLabel}</span>
-        <span className="text-[10px] opacity-70 transition-transform duration-200" style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+        <span
+          className="text-[10px] opacity-70 transition-transform duration-200"
+          style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+        >
           ▼
         </span>
       </button>
+
+      {/* Active Selected Chips */}
+      {activeChips.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-1.5 max-h-16 overflow-y-auto custom-scrollbar">
+          {activeChips.map((gName) => (
+            <button
+              key={gName}
+              type="button"
+              onClick={() => handleToggleGame(gName)}
+              className="px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 transition-all hover:scale-105 cursor-pointer"
+              style={{
+                backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#FEF08A",
+                color: isCyber ? "#00F5FF" : "#000000",
+                border: isCyber ? "1px solid rgba(0,245,255,0.4)" : "1.5px solid #000000",
+              }}
+            >
+              <span>{gName}</span>
+              <span className="opacity-70 hover:opacity-100">✕</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Dropdown Popover Panel */}
       <AnimatePresence>
@@ -159,7 +211,7 @@ export function HofMultiSelectGameFilter({
               <button
                 type="button"
                 onClick={handleSelectAll}
-                className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer"
+                className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer hover:scale-105 active:scale-95"
                 style={{
                   backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#E0F2FE",
                   color: isCyber ? "#00F5FF" : "#0284C7",
@@ -170,7 +222,7 @@ export function HofMultiSelectGameFilter({
               <button
                 type="button"
                 onClick={handleClearAll}
-                className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer"
+                className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer hover:scale-105 active:scale-95"
                 style={{
                   backgroundColor: isCyber ? "rgba(239,68,68,0.15)" : "#FEE2E2",
                   color: isCyber ? "#EF4444" : "#DC2626",
@@ -188,20 +240,19 @@ export function HofMultiSelectGameFilter({
                 </div>
               ) : (
                 filteredGames.map((g) => {
-                  const isChecked =
-                    !selectedGames.includes("__NONE__") &&
-                    (selectedGames.length === 0 || selectedGames.includes(g.game));
+                  const isChecked = isGameSelected(g.game);
                   const count = countsByGame[g.game] || 0;
 
                   return (
-                    <label
+                    <button
                       key={g.id}
+                      type="button"
                       onClick={() => handleToggleGame(g.game)}
-                      className="flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer select-none group"
+                      className="w-full flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer select-none group text-left active:scale-[0.98]"
                       style={{
                         backgroundColor: isChecked
                           ? isCyber
-                            ? "rgba(0,245,255,0.12)"
+                            ? "rgba(0,245,255,0.14)"
                             : "#FEF08A"
                           : isCyber
                           ? "rgba(255,255,255,0.02)"
@@ -213,13 +264,18 @@ export function HofMultiSelectGameFilter({
                           : isCyber
                           ? "rgba(255,255,255,0.08)"
                           : "#E2E8F0",
-                        borderWidth: isCyber ? "1px" : "2px",
+                        borderWidth: isCyber ? "1.5px" : "2.5px",
+                        boxShadow: isChecked
+                          ? isCyber
+                            ? "0 0 12px rgba(0,245,255,0.25)"
+                            : "2px 2px 0 #000000"
+                          : "none",
                       }}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        {/* Checkbox box */}
+                        {/* Checkbox Icon */}
                         <div
-                          className="w-4 h-4 rounded-md border flex items-center justify-center text-[10px] font-black shrink-0 transition-colors"
+                          className="w-4 h-4 rounded-md border flex items-center justify-center text-[10px] font-black shrink-0 transition-all group-hover:scale-110"
                           style={{
                             backgroundColor: isChecked
                               ? isCyber
@@ -242,8 +298,8 @@ export function HofMultiSelectGameFilter({
                           className={`text-xs font-bold truncate ${
                             isChecked
                               ? isCyber
-                                ? "text-cyan-300"
-                                : "text-black"
+                                ? "text-cyan-300 font-extrabold"
+                                : "text-black font-extrabold"
                               : isCyber
                               ? "text-slate-300"
                               : "text-gray-700"
@@ -257,14 +313,14 @@ export function HofMultiSelectGameFilter({
                         <span
                           className="px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold shrink-0"
                           style={{
-                            backgroundColor: isCyber ? "rgba(255,255,255,0.08)" : "#E2E8F0",
+                            backgroundColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0",
                             color: isCyber ? "#94A3B8" : "#64748B",
                           }}
                         >
                           {count}
                         </span>
                       )}
-                    </label>
+                    </button>
                   );
                 })
               )}

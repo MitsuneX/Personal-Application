@@ -2,6 +2,20 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [9.4.0] - 2026-08-07
+
+### ❤️ Game Character Permanent Like System & Multi-Select Checkbox Fixes
+
+**New Feature & Database Migration**
+- **Permanent Like Persistence**: Added `likes` count on `GameCharacter` model and `GameCharacterLike` database table with `@unique([userId, gameCharacterId])` constraint for strict 1-like-per-user enforcement.
+- **Like API & Store Actions**: Created `/api/game-characters/like` endpoint and `likeGameCharacter` store action with instant optimistic UI updates and guest sandbox 403 protection ("Sign in to like this character.").
+- **Interactive UI Integration**: Added animated compact Like button (`❤️ 1,254 Likes`) to `GameCharacterCard` and `CharacterProfileModal` header with Cyberpunk neon glow / Neo-Brutalism pop effects.
+- **Hall of Fame "❤️ Most Liked" Ranking**: Added "❤️ Most Liked" sorting to Hall of Fame, fully integrated with game filter stacking, search, and featured filters.
+
+**UI & Filter Repairs**
+- **Refactored Multi-Select Checkbox Interactions**: Replaced `<label>` traps in `HofMultiSelectGameFilter.tsx` with dedicated interactive row button components, ensuring instant selection toggling on row/checkbox click with native accessibility.
+- **Removable Active Game Chips**: Added removable selection chips below the game filter trigger button for instant visual feedback.
+
 ## [9.3.0] - 2026-08-07
 
 ### 🎮 Hall of Fame Dynamic Multi-Select Game Filter Architecture

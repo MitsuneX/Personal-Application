@@ -13,6 +13,32 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v9.4.0",
+    date: "2026-08-07",
+    title: "Game Character Permanent Like System & Multi-Select Checkbox Fixes",
+    badge: "MINOR RELEASE",
+    type: "minor",
+    summary: "Implemented permanent 1-like-per-user database persistence for Game Characters, interactive Like buttons across cards and modals, Hall of Fame 'Most Liked' sorting, and instant multi-select game checkbox row selection.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "❤️ Permanent Game Character Like System: Added GameCharacterLike table with unique (userId, characterId) constraints for strict 1-like-per-user enforcement.",
+          "⚡ Instant Optimistic Likes: Added likeGameCharacter store action and /api/game-characters/like endpoint with optimistic state update and guest mode protection.",
+          "🏆 Hall of Fame Most Liked Sorting: Added '❤️ Most Liked' sort filter to Hall of Fame, fully stackable with game filter, search, and featured toggles.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "☑️ Multi-Select Checkbox Fixes: Refactored HofMultiSelectGameFilter row interaction buttons for 100% reliable instant toggling on row or checkbox click.",
+          "🏷️ Active Game Chips: Added removable selection chips below the game filter trigger button for quick selection clearing.",
+          "🎨 Dual-Theme Heart Animations: Styled Like buttons with pulsing neon pink glow in Cyberpunk mode and bold outlined pop effects in Neo-Brutalism mode.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v9.3.0",
     date: "2026-08-07",
     title: "Hall of Fame Dynamic Multi-Select Game Filter Architecture",
