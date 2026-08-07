@@ -2,6 +2,15 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [9.0.1] - 2026-08-07
+
+### 🐛 Game Character Card Image Persistence & Schema Synchronization Fix
+
+**Bug Fixes**
+- Fixed `cardImage` not persisting after page refresh by adding a dedicated `cardImage` column to `GameCharacter` Prisma schema and PostgreSQL database.
+- Fixed `characterCreationService` payload mapping so `cardImage` (3:4 ratio roster grid card) and `avatarUrl` (1:1 official icon) remain 100% independent and never overwrite each other.
+- Ensured existing character card images are preserved cleanly during edit modal updates.
+
 ## [9.0.0] - 2026-08-07
 
 ### 🖼️ Global Image Crop System V2 & Image Persistence Architecture

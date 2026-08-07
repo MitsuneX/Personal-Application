@@ -13,6 +13,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v9.0.1",
+    date: "2026-08-07",
+    title: "Game Character Card Image Persistence & Schema Synchronization Fix",
+    badge: "PATCH",
+    type: "patch",
+    summary: "Fixed Card Image persistence bug by adding cardImage column to Prisma schema & database, maintaining 100% independence between Card Image and official Avatar URL.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🐛 Card Image Persistence: Added cardImage column to GameCharacter Prisma model & production database table so uploaded card images persist permanently across refreshes.",
+          "🛡️ Independent Artwork: Separated cardImage (roster grid 3:4 portrait) from avatarUrl (official 1:1 icon) in characterCreationService so changing one never overwrites the other.",
+          "🔄 Edit Preservation: Ensured existing cardImage, avatarUrl, and splashArt values are preserved during character updates.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v9.0.0",
     date: "2026-08-07",
     title: "Global Image Crop System V2 & Game Character Image Architecture",

@@ -185,7 +185,9 @@ export async function processCharacterCreation(
     });
   }
 
-  const officialAvatar = input.avatarUrl || input.cardImage || null;
+  // avatarUrl = official portrait (synced with Character Collection)
+  // cardImage = personal favourite card art override (independent 3:4 column)
+  const officialAvatar = input.avatarUrl || null;
   const officialSplash = input.splashArt || null;
 
   const dossierPayload = {
@@ -281,8 +283,13 @@ export async function processCharacterCreation(
       },
     });
 
-    const favAvatar = input.cardImage || input.avatarUrl || dossierCharacter.avatarUrl;
-    const favSplash = input.favoriteSplashArt || input.splashArt || dossierCharacter.splashArt;
+    // cardImage: personal favourite card art (independent column, never overwrites avatarUrl)
+    // avatarUrl: official character portrait (synced with Character Collection)
+    const favCardImage = input.cardImage !== undefined ? (input.cardImage || null) : (existingFavorite?.cardImage || null);
+    const favAvatar = input.avatarUrl !== undefined ? (input.avatarUrl || null) : (existingFavorite?.avatarUrl || dossierCharacter.avatarUrl || null);
+    const favSplash = (input.favoriteSplashArt || input.splashArt) !== undefined
+      ? (input.favoriteSplashArt || input.splashArt || null)
+      : (existingFavorite?.splashArt || dossierCharacter.splashArt || null);
 
     const favoritePayload = {
       userId,
@@ -300,6 +307,7 @@ export async function processCharacterCreation(
       nation: input.nation || null,
       birthday: input.birthday || null,
       avatarUrl: favAvatar,
+      cardImage: favCardImage,
       splashArt: favSplash,
       accentColor: input.accentColor || dossierCharacter.accentColor || "#3B82F6",
       rank: input.rank !== undefined ? Number(input.rank) : 0,
@@ -332,7 +340,6 @@ export async function processCharacterCreation(
         officialDescription: input.officialDescription,
         favoriteQuote: input.favoriteQuote,
         gallery: input.gallery,
-        cardImage: favAvatar,
       } as any,
       tags: input.tags ? (input.tags as any) : undefined,
       links: input.links ? (input.links as any) : undefined,

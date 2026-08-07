@@ -155,6 +155,7 @@ model GameCharacter {
   banRate      Float?
   winRate      Float?
   avatarUrl    String?
+  cardImage    String?  // Independent 3:4 portrait card art for roster grid
   splashArt    String?  // Independent artwork from Character Collection
   accentColor  String?
   rank         Int?     @default(0)
