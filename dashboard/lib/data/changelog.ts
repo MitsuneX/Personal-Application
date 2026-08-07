@@ -30,7 +30,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
         ],
       },
       {
-        name: "UI Refactor & Polish",
+        name: "UI & Aesthetics",
         items: [
           "🧹 Zero Mock Data: Cleaned out all hardcoded unsplash photos, seed characters (Kim Bong-seok), and fake reviews across all 11 Dossier components.",
           "⚡ Responsive & Dual-Theme: Preserved exact Framer Motion animations, glassmorphism, Cyberpunk, and Neo-Brutalism design systems with zero visual regressions.",
