@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
+import { processCharacterCreation } from "@/lib/services/characterCreationService";
 
 export const dynamic = "force-dynamic";
 
@@ -43,78 +44,12 @@ export async function POST(req: Request) {
     const user = await getAuthUser();
     const body = await req.json();
 
-    const {
-      characterId,
-      gameId,
-      gameName,
-      name,
-      title,
-      role,
-      category,
-      element,
-      path,
-      weapon,
-      rarity,
-      nation,
-      birthday,
-      health,
-      damage,
-      difficulty,
-      pickRate,
-      banRate,
-      winRate,
-      avatarUrl,
-      splashArt,
-      accentColor,
-      rank,
-      likes,
-      isFavorite,
-      notes,
-      stats,
-      tags,
-      links,
-    } = body;
-
-    if (!name) {
-      return NextResponse.json({ error: "Character name is required" }, { status: 400 });
-    }
-
-    const newChar = await prisma.gameCharacter.create({
-      data: {
-        userId: user?.id || null,
-        characterId: characterId || null,
-        gameId: gameId || null,
-        gameName: gameName || null,
-        name,
-        title: title || null,
-        role: role || null,
-        category: category || null,
-        element: element || null,
-        path: path || null,
-        weapon: weapon || null,
-        rarity: rarity || null,
-        nation: nation || null,
-        birthday: birthday || null,
-        health: health ? Number(health) : null,
-        damage: damage ? Number(damage) : null,
-        difficulty: difficulty || null,
-        pickRate: pickRate ? Number(pickRate) : null,
-        banRate: banRate ? Number(banRate) : null,
-        winRate: winRate ? Number(winRate) : null,
-        avatarUrl: avatarUrl || null,
-        splashArt: splashArt || null,
-        accentColor: accentColor || "#00F5FF",
-        rank: rank !== undefined ? Number(rank) : 0,
-        likes: likes !== undefined ? Number(likes) : 0,
-        isFavorite: isFavorite !== undefined ? Boolean(isFavorite) : true,
-        notes: notes || null,
-        stats: stats || null,
-        tags: tags || null,
-        links: links || null,
-      },
+    const result = await processCharacterCreation({
+      ...body,
+      userId: user?.id || null,
     });
 
-    return NextResponse.json(newChar);
+    return NextResponse.json(result.gameCharacter || result.dossierCharacter);
   } catch (error: any) {
     console.error("POST /api/game-characters error:", error);
     return NextResponse.json({ error: error.message || "Failed to create game character" }, { status: 500 });

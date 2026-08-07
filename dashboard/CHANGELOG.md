@@ -2,6 +2,20 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [6.0.0] - 2026-08-07
+
+### 🏛️ Centralized Character Creation Service & Self-Healing Pipeline (Single Source of Truth)
+
+**Architecture Refactor (`lib/services/characterCreationService.ts`)**
+- **Single Source of Truth Service (`processCharacterCreation`)**: Centralized ALL character creation logic into a single pipeline service. Regardless of whether a character originates from Game Characters Hub UI, Character Collection UI, AI Agents, JSON/CSV Imports, API endpoints, or Bulk Imports, all creations pass through `processCharacterCreation()`.
+- **Automatic Game Normalization & Pending Links**: Normalizes game names (e.g. `wuwa`, `wuthering waves`, `hsr`, `honkai: star rail`) and creates `pending_link` entries when parent games do not exist yet without losing data.
+- **Character Collection UPSERT & Duplicate Prevention**: Automatically searches for existing `GameDossierCharacter` entries by `gameId + characterName`, updating official metadata without creating duplicate entries.
+- **AI Agent Compatibility**: Provides zero-overhead bulk creation for AI Agents and import tools while guaranteeing database relationship integrity and image initialization.
+
+**Self-Healing Synchronization (`repairCharacterDatabase`)**
+- **Automatic Auto-Healing Utility**: Utility scans for orphaned favorites or missing Character Collection entries and automatically creates/links them.
+- **Background Auto-Validation**: Triggers silent repair on `/api/dashboard` load, guaranteeing zero broken links or orphaned entries.
+
 ## [5.8.1] - 2026-08-07
 
 ### 🎭 Modal Stacking Prevention & Seamless Character Editor Transition

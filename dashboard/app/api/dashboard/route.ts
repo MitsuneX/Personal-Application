@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { DEFAULT_AI_TOOLS } from "@/lib/data/initialAiTools";
 import { DEFAULT_GAMES } from "@/lib/data/initialGames";
 import { ensureInitialHallHistory } from "@/lib/utils/hofEventEngine";
+import { repairCharacterDatabase } from "@/lib/services/characterCreationService";
 
 export const dynamic = "force-dynamic";
 
@@ -233,6 +234,11 @@ export async function GET() {
     if (dbHOF.length > 0 && dbHallEvents.length === 0) {
       await ensureInitialHallHistory(prisma, userId, dbHOF);
     }
+
+    // Auto-repair missing Character Collection links or pending games in background
+    repairCharacterDatabase(userId).catch((err) =>
+      console.error("Auto-repair character database error:", err)
+    );
 
     return NextResponse.json({
       isGuest: false,

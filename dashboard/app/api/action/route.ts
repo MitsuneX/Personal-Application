@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
+import { processCharacterCreation } from "@/lib/services/characterCreationService";
 import { logHallEvent, captureHallRankingSnapshots, updateChampionshipHistoryOnRankChange } from "@/lib/utils/hofEventEngine";
 import { calculateWritingXp, calculateSessionXp, getLevelDetailsFromXp } from "@/lib/utils/hobbyProgression";
 
@@ -67,61 +68,13 @@ export async function POST(req: Request) {
       }
 
       case "UPDATE_DOSSIER_CHARACTER": {
-        const item = await prisma.gameDossierCharacter.upsert({
-          where: { id: payload.id },
-          update: {
-            userId,
-            gameId: payload.gameId,
-            name: payload.name,
-            category: payload.category || "Main Roster",
-            role: payload.role ?? null,
-            levelRank: payload.levelRank ?? null,
-            winRate: payload.winRate ? Number(payload.winRate) : 0,
-            matches: payload.matches ? Number(payload.matches) : 0,
-            notes: payload.notes ?? null,
-            avatarUrl: payload.avatarUrl ?? null,
-            splashArt: payload.splashArt ?? null,
-            accentColor: payload.accentColor ?? null,
-            isFavorite: payload.isFavorite ?? false,
-            element: payload.element ?? null,
-            path: payload.path ?? null,
-            weapon: payload.weapon ?? null,
-            rarity: payload.rarity ?? null,
-            nation: payload.nation ?? null,
-            birthday: payload.birthday ?? null,
-            faction: payload.faction ?? null,
-            specialty: payload.specialty ?? null,
-            stats: payload.stats ?? null,
-            tags: payload.tags ?? null,
-          },
-          create: {
-            id: payload.id,
-            userId,
-            gameId: payload.gameId,
-            name: payload.name,
-            category: payload.category || "Main Roster",
-            role: payload.role || null,
-            levelRank: payload.levelRank || null,
-            winRate: payload.winRate ? Number(payload.winRate) : 0,
-            matches: payload.matches ? Number(payload.matches) : 0,
-            notes: payload.notes || null,
-            avatarUrl: payload.avatarUrl || null,
-            splashArt: payload.splashArt || null,
-            accentColor: payload.accentColor || null,
-            isFavorite: payload.isFavorite || false,
-            element: payload.element || null,
-            path: payload.path || null,
-            weapon: payload.weapon || null,
-            rarity: payload.rarity || null,
-            nation: payload.nation || null,
-            birthday: payload.birthday || null,
-            faction: payload.faction || null,
-            specialty: payload.specialty || null,
-            stats: payload.stats || null,
-            tags: payload.tags || null,
-          },
+        const result = await processCharacterCreation({
+          ...payload,
+          userId,
+          createDossierOnly: true,
+          isFavorite: false,
         });
-        return NextResponse.json({ success: true, data: item });
+        return NextResponse.json({ success: true, data: result.dossierCharacter });
       }
 
       case "DELETE_DOSSIER_CHARACTER": {
@@ -130,75 +83,13 @@ export async function POST(req: Request) {
       }
 
       case "UPDATE_GAME_CHARACTER": {
-        const item = await prisma.gameCharacter.upsert({
-          where: { id: payload.id },
-          update: {
-            userId,
-            characterId: payload.characterId ?? null,
-            gameId: payload.gameId ?? null,
-            gameName: payload.gameName ?? null,
-            name: payload.name,
-            title: payload.title ?? null,
-            role: payload.role ?? null,
-            category: payload.category ?? null,
-            element: payload.element ?? null,
-            path: payload.path ?? null,
-            weapon: payload.weapon ?? null,
-            rarity: payload.rarity ?? null,
-            nation: payload.nation ?? null,
-            birthday: payload.birthday ?? null,
-            health: payload.health ? Number(payload.health) : null,
-            damage: payload.damage ? Number(payload.damage) : null,
-            difficulty: payload.difficulty ?? null,
-            pickRate: payload.pickRate ? Number(payload.pickRate) : null,
-            banRate: payload.banRate ? Number(payload.banRate) : null,
-            winRate: payload.winRate ? Number(payload.winRate) : null,
-            avatarUrl: payload.avatarUrl ?? payload.cardImage ?? null,
-            splashArt: payload.splashArt ?? null,
-            accentColor: payload.accentColor ?? null,
-            rank: payload.rank !== undefined ? Number(payload.rank) : 0,
-            likes: payload.likes !== undefined ? Number(payload.likes) : 0,
-            isFavorite: payload.isFavorite !== undefined ? Boolean(payload.isFavorite) : true,
-            notes: payload.notes ?? null,
-            stats: payload.stats ?? null,
-            tags: payload.tags ?? null,
-            links: payload.links ?? null,
-          },
-          create: {
-            id: payload.id,
-            userId,
-            characterId: payload.characterId || null,
-            gameId: payload.gameId || null,
-            gameName: payload.gameName || null,
-            name: payload.name,
-            title: payload.title || null,
-            role: payload.role || null,
-            category: payload.category || null,
-            element: payload.element || null,
-            path: payload.path || null,
-            weapon: payload.weapon || null,
-            rarity: payload.rarity || null,
-            nation: payload.nation || null,
-            birthday: payload.birthday || null,
-            health: payload.health ? Number(payload.health) : null,
-            damage: payload.damage ? Number(payload.damage) : null,
-            difficulty: payload.difficulty || null,
-            pickRate: payload.pickRate ? Number(payload.pickRate) : null,
-            banRate: payload.banRate ? Number(payload.banRate) : null,
-            winRate: payload.winRate ? Number(payload.winRate) : null,
-            avatarUrl: payload.avatarUrl || payload.cardImage || null,
-            splashArt: payload.splashArt || null,
-            accentColor: payload.accentColor || null,
-            rank: payload.rank !== undefined ? Number(payload.rank) : 0,
-            likes: payload.likes !== undefined ? Number(payload.likes) : 0,
-            isFavorite: payload.isFavorite !== undefined ? Boolean(payload.isFavorite) : true,
-            notes: payload.notes || null,
-            stats: payload.stats || null,
-            tags: payload.tags || null,
-            links: payload.links || null,
-          },
+        const result = await processCharacterCreation({
+          ...payload,
+          userId,
+          createFavorite: true,
+          isFavorite: true,
         });
-        return NextResponse.json({ success: true, data: item });
+        return NextResponse.json({ success: true, data: result.gameCharacter || result.dossierCharacter });
       }
 
       case "DELETE_GAME_CHARACTER": {

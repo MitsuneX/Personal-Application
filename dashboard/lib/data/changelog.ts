@@ -13,6 +13,32 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v6.0.0",
+    date: "2026-08-07",
+    title: "Centralized Character Creation Service & Self-Healing Pipeline",
+    badge: "ARCHITECTURE REFACTOR",
+    type: "major",
+    summary: "Redesigned character creation architecture into a centralized Single Source of Truth service (processCharacterCreation). All creation paths (UI, API, AI Agents, JSON/CSV imports) now flow through one unified pipeline with game alias normalization, zero-duplicate Character Collection upserts, pending game links, and self-healing auto-validation.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🏛️ Centralized Character Creation Service (characterCreationService.ts): Unified creation pipeline handling input validation, game name normalization, zero-duplicate Character Collection upserts, and favorite linking.",
+          "🤖 AI Agent & Bulk Import Compatibility: Seamless support for AI-driven bulk character creation without requiring internal database relationship logic.",
+          "🛡️ Self-Healing Auto Validation (repairCharacterDatabase): Automatic repair utility that detects and restores missing Character Collection entries or links newly added games in background.",
+          "🏷️ Game Name Normalization: Resolves game shorthand (e.g. WuWa, HSR, Genshin, ZZZ, Nikke, PGR) to canonical game entries automatically.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🗄️ Single Source of Truth API Routes: Refactored /api/game-characters and /api/action POST handlers to delegate through processCharacterCreation.",
+          "🧪 7-Scenario Automated Test Suite: Verified all creation scenarios via scripts/verify_unified_character_pipeline.ts.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v5.8.1",
     date: "2026-08-07",
     title: "Modal Stacking Prevention & Seamless Character Editor Transition",
