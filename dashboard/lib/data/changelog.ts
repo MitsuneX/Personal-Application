@@ -13,6 +13,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v9.5.1",
+    date: "2026-08-07",
+    title: "Custom Select Dropdown & Floating Layer Anchor Fix",
+    badge: "PATCH",
+    type: "patch",
+    summary: "Fixed top-left unanchored dropdown rendering by isolating Floating UI positioning from Framer Motion transform animations, correcting viewport-relative fixed coordinates, and adding hidden-until-positioned visibility checks.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🎯 Anchored Dropdown Viewport: Fixed Game Database select dropdowns in Edit Character Modal and CustomSelect from rendering in the top-left corner.",
+          "🛡️ Transform Collision Isolation: Separated outer Floating UI container from inner Framer Motion scale/opacity animation container to prevent transform property overwrites.",
+          "📐 Viewport Coordinate Calculation: Corrected CollisionDetector fixed position calculations and added trigger width matching.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v9.5.0",
     date: "2026-08-07",
     title: "Real-Time Hall of Fame System & Personal Game Character Expansion",

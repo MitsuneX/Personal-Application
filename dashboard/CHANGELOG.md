@@ -2,6 +2,16 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [9.5.1] - 2026-08-07
+
+### 🐛 Custom Select Dropdown & Floating Layer Positioning Fix
+
+**Floating Layer Anchor & Transform Collision Fix**
+- **Floating Viewport Anchor Positioning**: Fixed an unanchored top-left corner (`0, 0`) rendering bug in custom select dropdowns (`GameDropdown` inside `GameCharacterEditorModal` and `CustomSelect`).
+- **Framer Motion Transform Isolation**: Separated outer Floating UI container (`position: fixed`, `transform`, `visibility: isPositioned ? 'visible' : 'hidden'`) from inner Framer Motion animation container (`opacity`, `scale`) to eliminate property collisions where Framer Motion overwrote `@floating-ui`'s position coordinates.
+- **Viewport-Relative Fixed Coordinates**: Corrected `CollisionDetector` calculation for fixed position overlays by eliminating duplicate document `scrollTop` additions on `getBoundingClientRect()` coordinates.
+- **Auto Width Matching**: Set dropdown panel minimum width to match the exact trigger element's width seamlessly across all devices and themes.
+
 ## [9.5.0] - 2026-08-07
 
 ### 🏛️ Real-Time Hall of Fame System & Personal Game Character Expansion

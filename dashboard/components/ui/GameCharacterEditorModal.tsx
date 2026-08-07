@@ -61,7 +61,7 @@ function GameDropdown({
   const [search, setSearch] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const { refs, floatingStyles, context } = useFloating({
+  const { refs, floatingStyles, context, isPositioned } = useFloating({
     open,
     onOpenChange: setOpen,
     placement: "bottom-start",
@@ -71,9 +71,10 @@ function GameDropdown({
       flip({ padding: 12 }),
       shift({ padding: 12 }),
       size({
-        apply({ availableHeight, elements }) {
+        apply({ availableHeight, elements, rects }) {
           Object.assign(elements.floating.style, {
             maxHeight: `${Math.min(availableHeight - 16, 320)}px`,
+            width: `${Math.max(rects.reference.width, 220)}px`,
           });
         },
         padding: 12,
@@ -111,7 +112,7 @@ function GameDropdown({
         ref={refs.setReference}
         type="button"
         {...getReferenceProps()}
-        className="w-full flex items-center justify-between gap-2 p-2.5 rounded-xl border text-xs font-mono text-left transition-all"
+        className="w-full flex items-center justify-between gap-2 p-2.5 rounded-xl border text-xs font-mono text-left transition-all cursor-pointer"
         style={{
           backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "#F9FAFB",
           borderColor: open ? accent : isCyber ? "rgba(255,255,255,0.12)" : "#E5E7EB",
@@ -130,31 +131,36 @@ function GameDropdown({
       </button>
 
       {/* Floating dropdown */}
-      <AnimatePresence>
-        {open && (
-          <FloatingPortal>
-            <motion.div
+      <FloatingPortal>
+        <AnimatePresence>
+          {open && (
+            <div
               ref={refs.setFloating}
               {...getFloatingProps()}
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.14 }}
-              className="rounded-xl border shadow-2xl overflow-hidden flex flex-col"
               onPointerDown={(e) => e.stopPropagation()}
               style={{
                 ...floatingStyles,
                 zIndex: 9999,
-                minWidth: "220px",
-                backgroundColor: isCyber ? "rgba(8,12,28,0.98)" : "#FFFFFF",
-                borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000000",
-                borderWidth: isCyber ? "1px" : "2px",
-                backdropFilter: "blur(16px)",
-                boxShadow: isCyber
-                  ? "0 16px 48px rgba(0,0,0,0.8), 0 0 30px rgba(0,245,255,0.2)"
-                  : "6px 6px 0 #000000",
+                visibility: isPositioned ? "visible" : "hidden",
               }}
             >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.14 }}
+                className="rounded-xl border shadow-2xl overflow-hidden flex flex-col"
+                style={{
+                  minWidth: "220px",
+                  backgroundColor: isCyber ? "rgba(8,12,28,0.98)" : "#FFFFFF",
+                  borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000000",
+                  borderWidth: isCyber ? "1px" : "2px",
+                  backdropFilter: "blur(16px)",
+                  boxShadow: isCyber
+                    ? "0 16px 48px rgba(0,0,0,0.8), 0 0 30px rgba(0,245,255,0.2)"
+                    : "6px 6px 0 #000000",
+                }}
+              >
               {/* Search */}
               <div
                 className="p-2 border-b"
@@ -237,9 +243,10 @@ function GameDropdown({
                 ))}
               </div>
             </motion.div>
-          </FloatingPortal>
+          </div>
         )}
       </AnimatePresence>
+    </FloatingPortal>
     </div>
   );
 }

@@ -31,7 +31,7 @@ export function FloatingLayer({
   placement = "bottom-start",
   offset = 8,
   virtualPoint = null,
-  zIndex = Z_INDEX.POPOVER,
+  zIndex = Z_INDEX.DROPDOWN,
   className = "",
   closeOnOutsideClick = true,
   closeOnEscape = true,
@@ -40,7 +40,7 @@ export function FloatingLayer({
   const overlayRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
 
-  const { position, updatePosition } = useFloatingPosition({
+  const { position, updatePosition, isPositioned } = useFloatingPosition({
     triggerRef,
     isOpen,
     placement,
@@ -154,6 +154,7 @@ export function FloatingLayer({
                       maxWidth: position.maxWidth,
                       transformOrigin: position.transformOrigin,
                       zIndex,
+                      visibility: isPositioned ? "visible" : "hidden",
                     }
               }
               className={

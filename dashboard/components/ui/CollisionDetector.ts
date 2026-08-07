@@ -34,12 +34,13 @@ export function computeFloatingPosition(
   customViewport?: ViewportRect
 ): CollisionResult {
   const viewport = customViewport || getViewportRect(safeMargin);
+  const { width: vw, height: vh } = viewport;
 
-  const { width: vw, height: vh, scrollTop, scrollLeft } = viewport;
-  const triggerTop = triggerRect.top + scrollTop;
-  const triggerBottom = triggerRect.bottom + scrollTop;
-  const triggerLeft = triggerRect.left + scrollLeft;
-  const triggerRight = triggerRect.right + scrollLeft;
+  // Viewport-relative coordinates for position: fixed
+  const triggerTop = triggerRect.top;
+  const triggerBottom = triggerRect.bottom;
+  const triggerLeft = triggerRect.left;
+  const triggerRight = triggerRect.right;
 
   let placement = preferredPlacement;
 
@@ -70,15 +71,15 @@ export function computeFloatingPosition(
   const overlayRight = left + overlaySize.width;
   const overlayBottom = top + overlaySize.height;
 
-  const minLeft = scrollLeft + safeMargin;
-  const maxRight = scrollLeft + vw - safeMargin;
-  const minTop = scrollTop + safeMargin;
-  const maxBottom = scrollTop + vh - safeMargin;
+  const minLeft = safeMargin;
+  const maxRight = vw - safeMargin;
+  const minTop = safeMargin;
+  const maxBottom = vh - safeMargin;
 
   // Flip vertical if overflowing bottom/top
   if (placement.startsWith("bottom") && overlayBottom > maxBottom) {
     const spaceAbove = triggerRect.top - safeMargin;
-    if (spaceAbove >= Math.min(overlaySize.height, 150)) {
+    if (spaceAbove >= Math.min(overlaySize.height, 120)) {
       placement = placement.replace("bottom", "top") as Placement;
       ({ top, left } = calculateRawCoords(
         placement,
@@ -93,7 +94,7 @@ export function computeFloatingPosition(
     }
   } else if (placement.startsWith("top") && top < minTop) {
     const spaceBelow = vh - triggerRect.bottom - safeMargin;
-    if (spaceBelow >= Math.min(overlaySize.height, 150)) {
+    if (spaceBelow >= Math.min(overlaySize.height, 120)) {
       placement = placement.replace("top", "bottom") as Placement;
       ({ top, left } = calculateRawCoords(
         placement,
