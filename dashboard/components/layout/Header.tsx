@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { usePathname, useRouter } from "next/navigation";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
@@ -31,6 +31,7 @@ const PAGE_TITLES: Record<string, { title: string; icon: string }> = {
   "/drama/indonesia":   { title: "Indonesian Drama", icon: "🇮🇩" },
   "/hall-of-fame":      { title: "Hall of Fame", icon: "🏆" },
   "/games":             { title: "Games HUD",    icon: "🎮" },
+  "/game-characters":   { title: "Game Characters", icon: "⚔️" },
   "/heroes":            { title: "Game Database Hub", icon: "📊" },
   "/profile":           { title: "Profile Panel", icon: "👤" },
   "/notepad":           { title: "Notepad Workspace", icon: "📝" },
@@ -51,32 +52,36 @@ function NotificationBell() {
       offsetDistance={12}
       content={() => (
         <div
-          className="w-80 p-4 rounded-2xl flex flex-col gap-3 shadow-2xl"
+          className="w-80 p-4 rounded-2xl flex flex-col gap-3 shadow-2xl backdrop-blur-xl font-mono"
           style={{
-            background: isCyber ? "rgba(10,15,30,0.95)" : "#FFFFFF",
-            border: isCyber ? "1px solid rgba(0,245,255,0.25)" : "2.5px solid #000",
-            boxShadow: isCyber ? "0 10px 40px rgba(0,245,255,0.15)" : "5px 5px 0 #000",
+            background: isCyber ? "rgba(5,8,22,0.96)" : "#FFFFFF",
+            border: isCyber ? "1px solid rgba(0,245,255,0.3)" : "3px solid #000000",
+            boxShadow: isCyber ? "0 0 30px rgba(0,245,255,0.2)" : "5px 5px 0 #000000",
+            color: isCyber ? "#E0E8FF" : "#000000",
           }}
         >
-          <div className="flex items-center justify-between pb-2" style={{ borderBottom: isCyber ? "1px solid rgba(255,255,255,0.1)" : "1.5px dashed #000" }}>
+          <div className="flex items-center justify-between pb-2" style={{ borderBottom: isCyber ? "1px solid rgba(0,245,255,0.15)" : "2px dashed #000000" }}>
             <div className="flex items-center gap-2">
               <span className="text-base">🔔</span>
-              <h3 className="font-black text-xs uppercase tracking-wider" style={{ color: isCyber ? "#00F5FF" : "#1A1A1A" }}>
+              <h3 className="font-black text-xs uppercase tracking-wider" style={{ color: isCyber ? "#00F5FF" : "#000000" }}>
                 Notifications
               </h3>
             </div>
             {notifications.length > 0 && (
               <button
                 onClick={() => clearNotifications()}
-                className="text-[10px] font-bold px-2 py-0.5 rounded hover:opacity-80"
-                style={{ color: isCyber ? "#FF0055" : "#EF4444" }}
+                className="text-[10px] font-mono font-bold px-2 py-0.5 rounded hover:opacity-80 transition-opacity"
+                style={{
+                  color: isCyber ? "#FF0055" : "#EF4444",
+                  background: isCyber ? "rgba(255,0,85,0.1)" : "#FEE2E2",
+                }}
               >
                 Clear All
               </button>
             )}
           </div>
 
-          <div className="flex flex-col gap-2 max-h-72 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin" }}>
+          <div className="flex flex-col gap-2 max-h-72 overflow-y-auto pr-1 font-mono custom-scrollbar">
             {notifications.length === 0 ? (
               <p className="text-[11px] font-bold text-center py-6" style={{ color: isCyber ? "rgba(255,255,255,0.4)" : "#8A8A8A" }}>
                 No notifications right now.
@@ -88,7 +93,7 @@ function NotificationBell() {
                   className="p-2.5 rounded-xl flex items-start gap-2.5"
                   style={{
                     background: isCyber ? "rgba(255,255,255,0.03)" : "#FFF9F0",
-                    border: isCyber ? "1px solid rgba(255,255,255,0.06)" : "1.5px solid #000",
+                    border: isCyber ? "1px solid rgba(255,255,255,0.08)" : "1.5px solid #000000",
                   }}
                 >
                   <span className="text-sm mt-0.5">
@@ -117,23 +122,28 @@ function NotificationBell() {
       )}
     >
       <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.92 }}
-        className="w-9 h-9 rounded-xl flex items-center justify-center relative cursor-pointer"
+        whileHover={{ scale: 1.05, y: -1 }}
+        whileTap={{ scale: 0.94 }}
+        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+        className="w-10 h-10 rounded-xl flex items-center justify-center relative cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 shrink-0"
         style={{
-          background: isCyber ? "rgba(0,245,255,0.05)" : "#FFF9F0",
-          border: isCyber ? "1px solid rgba(0,245,255,0.2)" : "2px solid #000",
-          boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.1)" : "2px 2px 0 #000",
+          backgroundColor: isCyber ? "rgba(0,245,255,0.05)" : "#FFF9F0",
+          borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000000",
+          borderWidth: isCyber ? "1px" : "2px",
+          color: isCyber ? "#00F5FF" : "#000000",
+          boxShadow: isCyber ? "0 0 12px rgba(0,245,255,0.15)" : "2.5px 2.5px 0 #000000",
         }}
+        aria-label="Notifications"
       >
         <span className="text-base">🔔</span>
         {unreadCount > 0 && (
           <span
-            className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-black flex items-center justify-center"
+            className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-mono font-black flex items-center justify-center"
             style={{
               background: isCyber ? "#FF0055" : "#FF6B35",
-              color: "#FFF",
-              border: isCyber ? "1px solid rgba(255,255,255,0.5)" : "1px solid #000",
+              color: "#FFFFFF",
+              border: isCyber ? "1px solid rgba(255,255,255,0.6)" : "1.5px solid #000000",
+              boxShadow: isCyber ? "0 0 8px rgba(255,0,85,0.6)" : "none",
             }}
           >
             {unreadCount}
@@ -144,99 +154,67 @@ function NotificationBell() {
   );
 }
 
+function HeaderClock() {
+  const { theme } = useTheme();
+  const isCyber = theme === "cyber";
+  const [time, setTime] = useState("");
+
+  useEffect(() => {
+    const tick = () =>
+      setTime(
+        new Date().toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        })
+      );
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      whileHover={{ scale: 1.04, y: -1 }}
+      className="hidden sm:flex items-center gap-2 h-10 px-3 rounded-xl font-mono text-[11px] font-black tracking-widest border shrink-0 cursor-default select-none"
+      style={{
+        backgroundColor: isCyber ? "rgba(0,245,255,0.05)" : "#FFF9F0",
+        borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000000",
+        borderWidth: isCyber ? "1px" : "2px",
+        color: isCyber ? "#00F5FF" : "#000000",
+        boxShadow: isCyber ? "0 0 12px rgba(0,245,255,0.15)" : "2.5px 2.5px 0 #000000",
+        letterSpacing: "0.1em",
+      }}
+    >
+      <span
+        className="w-2 h-2 rounded-full animate-pulse shrink-0"
+        style={{
+          backgroundColor: isCyber ? "#00F5FF" : "#10B981",
+          boxShadow: isCyber ? "0 0 8px #00F5FF" : "none",
+        }}
+      />
+      <span>{time || "00:00:00"}</span>
+    </motion.div>
+  );
+}
+
 export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const pathname = usePathname();
-  const router = useRouter();
-  const searchRef = useRef<HTMLDivElement>(null);
 
   // States
   const [editorOpen, setEditorOpen] = useState(false);
   const [aestheticsOpen, setAestheticsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showResults, setShowResults] = useState(false);
 
   // Data Selectors
-  const { profile, games, animeList, dramas, hallOfFame } = useDashboardStore();
+  const { profile } = useDashboardStore();
   const avatar = profile.avatar || "/avatar.png";
 
   const pageInfo = PAGE_TITLES[pathname] ?? { title: "Dashboard", icon: "🏠" };
-
-  // Handle Search Filtering
-  const searchResults: Array<{ id: string; name: string; type: string; url: string; detail?: string }> = [];
-
-  if (searchQuery.trim().length > 1) {
-    const query = searchQuery.toLowerCase();
-
-    // Search Games
-    games.forEach((g) => {
-      if (
-        g.game.toLowerCase().includes(query) ||
-        (query === "pgr" && g.game.toLowerCase().includes("punishing")) ||
-        g.mainCharacter.toLowerCase().includes(query) ||
-        g.category.toLowerCase().includes(query)
-      ) {
-        searchResults.push({ id: g.id, name: g.game, type: "Game", url: "/games", detail: `${g.rank || ""} · ${g.mainCharacter}` });
-      }
-    });
-
-    // Search Game Dossier Characters
-    useDashboardStore.getState().dossierCharacters.forEach((c) => {
-      if (
-        c.name.toLowerCase().includes(query) ||
-        c.category.toLowerCase().includes(query) ||
-        (c.role && c.role.toLowerCase().includes(query)) ||
-        (c.notes && c.notes.toLowerCase().includes(query))
-      ) {
-        searchResults.push({
-          id: c.id,
-          name: c.name,
-          type: "Game Hero",
-          url: `/games/${c.gameId}`,
-          detail: `${c.category} · ${c.role || c.levelRank || ""}`,
-        });
-      }
-    });
-
-    // Search Anime
-    animeList.forEach((a) => {
-      if (a.title.toLowerCase().includes(query) || (a.genre && a.genre.toLowerCase().includes(query)) || (a.studio && a.studio.toLowerCase().includes(query))) {
-        searchResults.push({ id: a.id, name: a.title, type: "Anime", url: "/anime", detail: `${a.status} · ${a.episodesWatched}/${a.totalEpisodes} eps` });
-      }
-    });
-
-    // Search Drama
-    dramas.forEach((d) => {
-      if (d.title.toLowerCase().includes(query) || d.genre.toLowerCase().includes(query) || d.country.toLowerCase().includes(query)) {
-        searchResults.push({ id: d.id, name: d.title, type: "Drama", url: `/drama/${d.country}`, detail: `${d.country.toUpperCase()} · ${d.status} (${d.episodesWatched}/${d.episodes})` });
-      }
-    });
-
-    // Search Hall of Fame
-    hallOfFame.forEach((h) => {
-      if (h.name.toLowerCase().includes(query) || h.knownFor.some((w) => w.toLowerCase().includes(query))) {
-        searchResults.push({ id: h.id, name: h.name, type: "Hall of Fame", url: "/hall-of-fame", detail: `${h.type.toUpperCase()} · ${h.status}` });
-      }
-    });
-  }
-
-  // Click outside search listener
-  useEffect(() => {
-    const clickOutside = (e: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setShowResults(false);
-      }
-    };
-    document.addEventListener("mousedown", clickOutside);
-    return () => document.removeEventListener("mousedown", clickOutside);
-  }, []);
-
-  const handleResultClick = (url: string) => {
-    router.push(url);
-    setSearchQuery("");
-    setShowResults(false);
-  };
 
   return (
     <>
@@ -249,13 +227,13 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
         }}
         transition={{ duration: 0.4 }}
       >
-        {/* Left Section: Hamburger & Icon */}
+        {/* Left Section: Hamburger & Page Title */}
         <div className="flex items-center gap-3 shrink-0">
-          {/* Animated Hamburger / Close button */}
+          {/* Mobile Menu Hamburger button */}
           <motion.button
-            className="md:hidden p-2 rounded-lg flex flex-col items-center justify-center gap-[4px] w-9 h-9"
+            className="md:hidden p-2 rounded-xl flex flex-col items-center justify-center gap-[4px] w-10 h-10 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
             onClick={onMenuToggle}
-            whileTap={{ scale: 0.88 }}
+            whileTap={{ scale: 0.92 }}
             animate={{ color: isCyber ? "#94A3B8" : "#4A4A4A" }}
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
           >
@@ -279,27 +257,35 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
             />
           </motion.button>
 
-          {/* Mobile search icon (sm and below only) */}
+          {/* Mobile search icon button */}
           <motion.button
-            className="sm:hidden p-2 rounded-lg"
+            className="sm:hidden w-10 h-10 rounded-xl flex items-center justify-center border cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
             onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
-            whileTap={{ scale: 0.88 }}
-            animate={{ color: isCyber ? "#00F5FF" : "#4A4A4A" }}
-            aria-label="Search"
+            whileHover={{ scale: 1.05, y: -1 }}
+            whileTap={{ scale: 0.94 }}
+            style={{
+              backgroundColor: isCyber ? "rgba(0,245,255,0.05)" : "#FFF9F0",
+              borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000000",
+              borderWidth: isCyber ? "1px" : "2px",
+              color: isCyber ? "#00F5FF" : "#000000",
+              boxShadow: isCyber ? "0 0 12px rgba(0,245,255,0.15)" : "2.5px 2.5px 0 #000000",
+            }}
+            aria-label="Search dashboard"
           >
             <span className="text-base">🔍</span>
           </motion.button>
 
+          {/* Title Banner */}
           <motion.div
             key={pathname}
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 26 }}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2.5"
           >
-            <span className="text-lg">{pageInfo.icon}</span>
+            <span className="text-lg md:text-xl">{pageInfo.icon}</span>
             <motion.h1
-              className="font-black text-sm md:text-base lg:text-lg"
+              className="font-black text-sm md:text-base lg:text-lg tracking-tight"
               animate={{
                 color: isCyber ? "#E0E8FF" : "#1A1A1A",
                 fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
@@ -313,31 +299,44 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
         </div>
 
         {/* Middle Section: Search Bar Triggering Command Palette */}
-        <div className="flex-1 max-w-md mx-6 hidden sm:block relative">
-          <motion.div 
+        <div className="flex-1 max-w-md mx-4 md:mx-6 hidden sm:block relative">
+          <motion.div
             onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
             whileHover={{ scale: 1.015, y: -1 }}
-            whileTap={{ scale: 0.98, y: 1 }}
+            whileTap={{ scale: 0.985 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            suppressHydrationWarning
-            className="w-full pl-9 pr-3 py-1.5 text-xs font-mono font-bold tracking-wide rounded-lg border outline-none transition-colors flex items-center justify-between cursor-pointer"
+            tabIndex={0}
+            role="button"
+            aria-label="Open search command palette"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                window.dispatchEvent(new Event("open-command-palette"));
+              }
+            }}
+            className="w-full h-10 pl-3.5 pr-3 py-2 text-xs font-mono font-bold tracking-wide rounded-xl border outline-none transition-all flex items-center justify-between cursor-pointer focus-visible:ring-2 focus-visible:ring-cyan-400"
             style={{
-              backgroundColor: isCyber ? "rgba(0,245,255,0.03)" : "#FFF9F0",
-              borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#000000",
-              boxShadow: isCyber ? "0 0 15px rgba(0,245,255,0.15)" : "2.5px 2.5px 0px #000000",
-              color: isCyber ? "#00F5FF" : "#1A1A1A",
+              backgroundColor: isCyber ? "rgba(0,245,255,0.04)" : "#FFF9F0",
+              borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000000",
+              borderWidth: isCyber ? "1px" : "2px",
+              boxShadow: isCyber ? "0 0 15px rgba(0,245,255,0.12)" : "2.5px 2.5px 0 #000000",
+              color: isCyber ? "#00F5FF" : "#000000",
             }}
           >
-            <div className="flex items-center gap-2">
-              <span className="opacity-70">🔍</span>
-              <span className="opacity-50">{isCyber ? "SEARCH_REGISTRY..." : "Search dashboard..."}</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-sm shrink-0 opacity-80">🔍</span>
+              <span className="opacity-60 truncate">
+                {isCyber ? "SEARCH_REGISTRY..." : "Search dashboard..."}
+              </span>
             </div>
-            <span 
-              className="text-[9px] px-1.5 py-0.5 rounded font-black border uppercase tracking-wider shrink-0"
+            <span
+              className="text-[9px] px-2 py-0.5 rounded-md font-black border uppercase tracking-wider shrink-0 ml-2"
               style={{
-                backgroundColor: isCyber ? "rgba(0,245,255,0.1)" : "#E5E7EB",
-                borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#D1D5DB",
-                color: isCyber ? "#00F5FF" : "#4B5563"
+                backgroundColor: isCyber ? "rgba(0,245,255,0.12)" : "#E5E7EB",
+                borderColor: isCyber ? "rgba(0,245,255,0.4)" : "#000000",
+                borderWidth: isCyber ? "1px" : "1.5px",
+                color: isCyber ? "#00F5FF" : "#000000",
+                boxShadow: isCyber ? "none" : "1px 1px 0 #000000",
               }}
             >
               Ctrl + K
@@ -345,21 +344,21 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
           </motion.div>
         </div>
 
-        {/* Right Section: customizable profile, topbar player, and clock */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Right Section: Mini Player, Clock, Notifications, Theme, Settings, Profile */}
+        <div className="flex items-center gap-2.5 shrink-0">
           <TopbarMiniPlayer />
-          {isCyber && <CyberClock />}
+          <HeaderClock />
 
           {/* Notification Bell */}
           <NotificationBell />
 
-          {/* Theme switcher toggle added in the Header */}
+          {/* Theme Switcher Toggle */}
           <ThemeSwitcherToggle />
 
-          {/* Settings gear dropdown menu */}
+          {/* Settings Gear Dropdown */}
           <SettingsDropdown onOpenAesthetics={() => setAestheticsOpen(true)} />
 
-          {/* Customizable Profile Header Item — FloatingPopover anchored to avatar button */}
+          {/* Customizable Profile Card Popover */}
           <FloatingPopover
             placement="bottom-end"
             triggerMode="hover-or-click"
@@ -372,65 +371,112 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
             )}
           >
             <motion.div
-              className="flex items-center gap-2 cursor-pointer p-1 rounded-lg border border-transparent transition-all"
-              whileHover={{
-                borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#000000",
-                backgroundColor: isCyber ? "rgba(0,245,255,0.05)" : "rgba(0,0,0,0.05)",
+              whileHover={{ scale: 1.04, y: -1 }}
+              whileTap={{ scale: 0.94 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              tabIndex={0}
+              role="button"
+              aria-label="Open profile popover"
+              className="flex items-center gap-2.5 h-10 px-2.5 rounded-xl border transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 select-none font-mono"
+              style={{
+                backgroundColor: isCyber ? "rgba(0,245,255,0.05)" : "#FFF9F0",
+                borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000000",
+                borderWidth: isCyber ? "1px" : "2px",
+                boxShadow: isCyber ? "0 0 12px rgba(0,245,255,0.15)" : "2.5px 2.5px 0 #000000",
               }}
             >
-              {/* Customizable Profile Picture */}
-              <div className="relative w-8 h-8 rounded-full overflow-hidden border-2"
+              {/* Customizable Avatar */}
+              <div
+                className="relative w-7 h-7 rounded-full overflow-hidden border shrink-0"
                 style={{
-                  borderColor: isCyber ? "#00F5FF" : "#FF6B35",
-                  boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.5)" : "none",
+                  borderColor: isCyber ? "#00F5FF" : "#000000",
+                  boxShadow: isCyber ? "0 0 8px rgba(0,245,255,0.6)" : "none",
                 }}
               >
                 <Image
                   src={avatar}
-                  alt="Profile"
-                  width={32}
-                  height={32}
+                  alt="Profile Avatar"
+                  width={28}
+                  height={28}
                   className="w-full h-full object-cover"
                   priority
-                  sizes="32px"
+                  sizes="28px"
                 />
               </div>
 
-              {/* Custom Name */}
-              <span className="text-xs font-black hidden lg:inline-block" style={{ color: isCyber ? "#E0E8FF" : "#1A1A1A" }}>
+              {/* Custom Username */}
+              <span
+                className="text-xs font-black hidden lg:inline-block truncate"
+                style={{ color: isCyber ? "#E0E8FF" : "#000000" }}
+              >
                 {profile.name}
               </span>
             </motion.div>
           </FloatingPopover>
 
-          {/* Status dot */}
-          <Link href="/profile">
+          {/* Status Badge */}
+          <Link href="/profile" className="shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-full">
             {(() => {
               const s = (profile.status || "online").toLowerCase();
-              const isBusy = s.includes("busy");
+              const isBusy = s.includes("busy") || s.includes("dnd");
               const isAfk = s.includes("afk") || s.includes("away") || s.includes("idle");
-              const color = isBusy ? "#EF4444" : isAfk ? "#F59E0B" : "#22C55E";
-              const label = isBusy ? "BUSY" : isAfk ? "AFK" : "ONLINE";
-              const bg = isBusy
-                ? (isCyber ? "rgba(239,68,68,0.12)" : "#FEE2E2")
-                : isAfk
-                ? (isCyber ? "rgba(245,158,11,0.12)" : "#FEF3C7")
-                : (isCyber ? "rgba(34,197,94,0.12)" : "#DCFCE7");
+              const isOffline = s.includes("offline");
+              const isFocus = s.includes("focus");
+              const isStreaming = s.includes("stream");
+
+              let color = "#22C55E";
+              let label = "ONLINE";
+              let bgCyber = "rgba(34,197,94,0.12)";
+              let bgNeo = "#DCFCE7";
+
+              if (isBusy) {
+                color = "#EF4444";
+                label = "BUSY";
+                bgCyber = "rgba(239,68,68,0.12)";
+                bgNeo = "#FEE2E2";
+              } else if (isAfk) {
+                color = "#F59E0B";
+                label = "AWAY";
+                bgCyber = "rgba(245,158,11,0.12)";
+                bgNeo = "#FEF3C7";
+              } else if (isFocus) {
+                color = "#A855F7";
+                label = "FOCUS";
+                bgCyber = "rgba(168,85,247,0.12)";
+                bgNeo = "#F3E8FF";
+              } else if (isStreaming) {
+                color = "#EC4899";
+                label = "LIVE";
+                bgCyber = "rgba(236,72,153,0.12)";
+                bgNeo = "#FCE7F3";
+              } else if (isOffline) {
+                color = "#94A3B8";
+                label = "OFFLINE";
+                bgCyber = "rgba(148,163,184,0.12)";
+                bgNeo = "#F1F5F9";
+              }
 
               return (
                 <motion.div
-                  className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full cursor-pointer border"
+                  whileHover={{ scale: 1.05, y: -1 }}
+                  whileTap={{ scale: 0.94 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  className="hidden lg:flex items-center gap-2 h-10 px-3 rounded-full cursor-pointer border select-none font-mono"
                   style={{
-                    backgroundColor: bg,
-                    borderColor: color,
+                    backgroundColor: isCyber ? bgCyber : bgNeo,
+                    borderColor: isCyber ? color : "#000000",
+                    borderWidth: isCyber ? "1px" : "2px",
+                    boxShadow: isCyber ? `0 0 12px ${color}30` : "2.5px 2.5px 0 #000000",
                   }}
-                  transition={{ duration: 0.4 }}
                 >
                   <span
-                    className="w-2 h-2 rounded-full animate-pulse"
-                    style={{ backgroundColor: color, boxShadow: isCyber ? `0 0 8px ${color}` : "none" }}
+                    className="w-2 h-2 rounded-full animate-pulse shrink-0"
+                    style={{
+                      backgroundColor: color,
+                      boxShadow: isCyber ? `0 0 8px ${color}` : "none",
+                    }}
                   />
-                  <span className="text-[10px] font-black uppercase tracking-wider" style={{ color }}>
+                  <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: isCyber ? color : "#000000" }}>
                     {label}
                   </span>
                 </motion.div>
@@ -449,27 +495,5 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
       {/* Global Command Palette */}
       <CommandPalette />
     </>
-  );
-}
-
-function CyberClock() {
-  const [time, setTime] = useState("");
-  useEffect(() => {
-    const tick = () => setTime(new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded font-mono text-[10px] font-black tracking-widest border border-cyber-neon"
-      style={{ color: "#00F5FF", border: "1px solid rgba(0,245,255,0.25)", background: "rgba(0,245,255,0.05)", letterSpacing: "0.12em" }}
-    >
-      <span className="w-1.5 h-1.5 rounded-full bg-[#00F5FF] animate-pulse" />
-      {time}
-    </motion.div>
   );
 }

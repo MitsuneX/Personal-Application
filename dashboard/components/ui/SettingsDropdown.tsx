@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { ChangelogModal } from "@/components/ui/ChangelogModal";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
-import { FloatingLayer } from "./FloatingLayer";
 import { FloatingPopover } from "@/components/ui/FloatingPopover";
 import { Z_INDEX } from "./ViewportBoundary";
 
@@ -36,7 +35,7 @@ export function SettingsDropdown({ onOpenAesthetics }: SettingsDropdownProps) {
         zIndex={Z_INDEX.POPOVER}
         content={({ close }) => (
           <div
-            className="w-56 p-2 rounded-2xl border shadow-2xl backdrop-blur-xl space-y-1 select-none"
+            className="w-56 p-2 rounded-2xl border shadow-2xl backdrop-blur-xl space-y-1 select-none font-mono"
             style={{
               backgroundColor: isCyber ? "rgba(5, 8, 22, 0.96)" : "#FFFFFF",
               borderColor: isCyber ? "rgba(0, 245, 255, 0.4)" : "#000000",
@@ -52,7 +51,7 @@ export function SettingsDropdown({ onOpenAesthetics }: SettingsDropdownProps) {
             >
               <span
                 className="text-[10px] font-black uppercase tracking-wider opacity-60"
-                style={{ color: isCyber ? "#00F5FF" : "#000" }}
+                style={{ color: isCyber ? "#00F5FF" : "#000000" }}
               >
                 ⚙️ Quick Settings
               </span>
@@ -76,7 +75,7 @@ export function SettingsDropdown({ onOpenAesthetics }: SettingsDropdownProps) {
                 <span>Log Updates</span>
               </div>
               <span className="text-[9px] font-mono px-1.5 py-0.5 rounded font-bold uppercase bg-cyan-500/20 text-cyan-300">
-                v4.3.0
+                v9.5.0
               </span>
             </button>
 
@@ -152,15 +151,16 @@ export function SettingsDropdown({ onOpenAesthetics }: SettingsDropdownProps) {
       >
         <motion.button
           ref={buttonRef}
-          whileHover={{ scale: 1.05, rotate: 30 }}
-          whileTap={{ scale: 0.92 }}
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black border cursor-pointer transition-colors"
+          whileHover={{ scale: 1.05, y: -1, rotate: 20 }}
+          whileTap={{ scale: 0.94 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          className="w-10 h-10 rounded-xl flex items-center justify-center text-base font-black border cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 shrink-0"
           style={{
-            backgroundColor: isCyber ? "rgba(0,245,255,0.08)" : "#FFF9F0",
+            backgroundColor: isCyber ? "rgba(0,245,255,0.05)" : "#FFF9F0",
             borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000000",
             borderWidth: isCyber ? "1px" : "2px",
             color: isCyber ? "#00F5FF" : "#000000",
-            boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.2)" : "2px 2px 0 #000000",
+            boxShadow: isCyber ? "0 0 12px rgba(0,245,255,0.15)" : "2.5px 2.5px 0 #000000",
           }}
           title="Settings & Log Updates"
           aria-label="Settings Menu"
