@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { usePathname, useRouter } from "next/navigation";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
+import { useToast } from "@/components/ui/ToastProvider";
 import { ProfileEditorModal } from "@/components/ui/ProfileEditorModal";
 import { ThemeSwitcherToggle } from "@/components/ui/ThemeSwitcherToggle";
 import { FloatingPopover } from "@/components/ui/FloatingPopover";
@@ -198,6 +199,114 @@ function HeaderClock() {
       />
       <span>{time || "00:00:00"}</span>
     </motion.div>
+  );
+}
+
+function HeaderStatusBadge() {
+  const { theme } = useTheme();
+  const isCyber = theme === "cyber";
+  const { profile, updateProfile } = useDashboardStore();
+  const { success: toastSuccess } = useToast();
+
+  const STATUSES = [
+    { id: "online", label: "ONLINE", icon: "🟢", color: "#22C55E", bgCyber: "rgba(34,197,94,0.12)", bgNeo: "#DCFCE7" },
+    { id: "busy", label: "BUSY", icon: "🔴", color: "#EF4444", bgCyber: "rgba(239,68,68,0.12)", bgNeo: "#FEE2E2" },
+    { id: "away", label: "AWAY", icon: "🟡", color: "#F59E0B", bgCyber: "rgba(245,158,11,0.12)", bgNeo: "#FEF3C7" },
+    { id: "focus", label: "FOCUS", icon: "🟣", color: "#A855F7", bgCyber: "rgba(168,85,247,0.12)", bgNeo: "#F3E8FF" },
+    { id: "streaming", label: "LIVE", icon: "💗", color: "#EC4899", bgCyber: "rgba(236,72,153,0.12)", bgNeo: "#FCE7F3" },
+    { id: "offline", label: "OFFLINE", icon: "⚪", color: "#94A3B8", bgCyber: "rgba(148,163,184,0.12)", bgNeo: "#F1F5F9" },
+  ];
+
+  const currentStatusStr = (profile.status || "online").toLowerCase();
+  const currentStatus = STATUSES.find((s) => currentStatusStr.includes(s.id)) || STATUSES[0];
+
+  return (
+    <FloatingPopover
+      placement="bottom-end"
+      triggerMode="click"
+      offsetDistance={10}
+      content={({ close }) => (
+        <div
+          className="w-48 p-2 rounded-2xl border shadow-2xl backdrop-blur-xl space-y-1 select-none font-mono"
+          style={{
+            backgroundColor: isCyber ? "rgba(5, 8, 22, 0.96)" : "#FFFFFF",
+            borderColor: isCyber ? "rgba(0, 245, 255, 0.4)" : "#000000",
+            borderWidth: isCyber ? "1px" : "3px",
+            boxShadow: isCyber ? "0 0 25px rgba(0, 245, 255, 0.25)" : "4px 4px 0 #000000",
+            color: isCyber ? "#E0E8FF" : "#000000",
+          }}
+        >
+          <div
+            className="px-3 py-1.5 border-b mb-1 flex items-center justify-between"
+            style={{ borderColor: isCyber ? "rgba(0,245,255,0.15)" : "rgba(0,0,0,0.1)" }}
+          >
+            <span
+              className="text-[10px] font-black uppercase tracking-wider opacity-60"
+              style={{ color: isCyber ? "#00F5FF" : "#000000" }}
+            >
+              Set Status
+            </span>
+            <span className="text-[9px] opacity-40 font-mono">1-Click Sync</span>
+          </div>
+
+          {STATUSES.map((st) => (
+            <button
+              key={st.id}
+              onClick={async () => {
+                close();
+                await updateProfile({ status: st.id as any });
+                toastSuccess(`Status changed to ${st.label}`);
+              }}
+              className="w-full text-left px-3 py-2 text-xs font-black rounded-xl transition-all flex items-center justify-between cursor-pointer border hover:scale-[1.02]"
+              style={{
+                backgroundColor: currentStatus.id === st.id
+                  ? isCyber ? st.bgCyber : st.bgNeo
+                  : "transparent",
+                color: isCyber ? (currentStatus.id === st.id ? st.color : "#E0E8FF") : "#000000",
+                borderColor: currentStatus.id === st.id
+                  ? isCyber ? st.color : "#000000"
+                  : "transparent",
+                borderWidth: isCyber ? "1px" : "1.5px",
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: st.color }} />
+                <span>{st.label}</span>
+              </div>
+              {currentStatus.id === st.id && (
+                <span className="text-xs font-bold" style={{ color: st.color }}>✓</span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    >
+      <motion.button
+        whileHover={{ scale: 1.05, y: -1 }}
+        whileTap={{ scale: 0.94 }}
+        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+        className="hidden lg:flex items-center gap-2 h-10 px-3 rounded-full cursor-pointer border select-none font-mono outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 shrink-0"
+        style={{
+          backgroundColor: isCyber ? currentStatus.bgCyber : currentStatus.bgNeo,
+          borderColor: isCyber ? currentStatus.color : "#000000",
+          borderWidth: isCyber ? "1px" : "2px",
+          boxShadow: isCyber ? `0 0 12px ${currentStatus.color}30` : "2.5px 2.5px 0 #000000",
+        }}
+        aria-label="Change Status"
+      >
+        <span
+          className="w-2 h-2 rounded-full animate-pulse shrink-0"
+          style={{
+            backgroundColor: currentStatus.color,
+            boxShadow: isCyber ? `0 0 8px ${currentStatus.color}` : "none",
+          }}
+        />
+        <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: isCyber ? currentStatus.color : "#000000" }}>
+          {currentStatus.label}
+        </span>
+        <span className="text-[9px] opacity-60 ml-0.5">▼</span>
+      </motion.button>
+    </FloatingPopover>
   );
 }
 
@@ -414,75 +523,8 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
             </motion.div>
           </FloatingPopover>
 
-          {/* Status Badge */}
-          <Link href="/profile" className="shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-full">
-            {(() => {
-              const s = (profile.status || "online").toLowerCase();
-              const isBusy = s.includes("busy") || s.includes("dnd");
-              const isAfk = s.includes("afk") || s.includes("away") || s.includes("idle");
-              const isOffline = s.includes("offline");
-              const isFocus = s.includes("focus");
-              const isStreaming = s.includes("stream");
-
-              let color = "#22C55E";
-              let label = "ONLINE";
-              let bgCyber = "rgba(34,197,94,0.12)";
-              let bgNeo = "#DCFCE7";
-
-              if (isBusy) {
-                color = "#EF4444";
-                label = "BUSY";
-                bgCyber = "rgba(239,68,68,0.12)";
-                bgNeo = "#FEE2E2";
-              } else if (isAfk) {
-                color = "#F59E0B";
-                label = "AWAY";
-                bgCyber = "rgba(245,158,11,0.12)";
-                bgNeo = "#FEF3C7";
-              } else if (isFocus) {
-                color = "#A855F7";
-                label = "FOCUS";
-                bgCyber = "rgba(168,85,247,0.12)";
-                bgNeo = "#F3E8FF";
-              } else if (isStreaming) {
-                color = "#EC4899";
-                label = "LIVE";
-                bgCyber = "rgba(236,72,153,0.12)";
-                bgNeo = "#FCE7F3";
-              } else if (isOffline) {
-                color = "#94A3B8";
-                label = "OFFLINE";
-                bgCyber = "rgba(148,163,184,0.12)";
-                bgNeo = "#F1F5F9";
-              }
-
-              return (
-                <motion.div
-                  whileHover={{ scale: 1.05, y: -1 }}
-                  whileTap={{ scale: 0.94 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  className="hidden lg:flex items-center gap-2 h-10 px-3 rounded-full cursor-pointer border select-none font-mono"
-                  style={{
-                    backgroundColor: isCyber ? bgCyber : bgNeo,
-                    borderColor: isCyber ? color : "#000000",
-                    borderWidth: isCyber ? "1px" : "2px",
-                    boxShadow: isCyber ? `0 0 12px ${color}30` : "2.5px 2.5px 0 #000000",
-                  }}
-                >
-                  <span
-                    className="w-2 h-2 rounded-full animate-pulse shrink-0"
-                    style={{
-                      backgroundColor: color,
-                      boxShadow: isCyber ? `0 0 8px ${color}` : "none",
-                    }}
-                  />
-                  <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: isCyber ? color : "#000000" }}>
-                    {label}
-                  </span>
-                </motion.div>
-              );
-            })()}
-          </Link>
+          {/* Interactive Status Selector Popover */}
+          <HeaderStatusBadge />
         </div>
       </motion.header>
 
