@@ -2,6 +2,21 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [9.3.0] - 2026-08-07
+
+### 🎮 Hall of Fame Dynamic Multi-Select Game Filter Architecture
+
+**Feature Expansion & Architecture Refactor**
+- **Removed Standalone Game Category Filter**: Cleaned up the redundant `Game Category` filter dropdown, state, and matching logic from Hall of Fame.
+- **Added "Game" Option to Category Filter**: Expanded the main Category dropdown options (`Drama`, `Anime`, `Movie`, `Tokusatsu`, `Character`, `AI`, `Music`, `Game`).
+- **Dynamic Multi-Select Game Filter (`HofMultiSelectGameFilter`)**: Built an interactive multi-select checkbox dropdown populated dynamically from the Game Database (`games`).
+  - **Real-Time Game Search**: Integrated internal search bar to filter game list items instantly.
+  - **Selection Controls**: Added `Select All` and `Clear All` action triggers.
+  - **Dynamic Character Counts**: Displays live character counts per game.
+  - **Click-Outside Guard & Animations**: Smooth Framer Motion popover transition and click-outside popover dismissal.
+- **Dynamic Ranking Integration**: Hall of Fame rankings, podiums, records, and analytics now dynamically evaluate and filter single game, multi-game, and all-game selections seamlessly.
+- **Dual-Theme Support**: Styled for both Cyberpunk (cyan neon checkboxes, purple glow, glassmorphism) and Neo-Brutalism (thick 3px black borders, high-contrast checkbox styling).
+
 ## [9.2.1] - 2026-08-07
 
 ### 🖼️ Character Profile Detail Modal Avatar Scaling & UI Polish

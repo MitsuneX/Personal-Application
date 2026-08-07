@@ -13,6 +13,33 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v9.3.0",
+    date: "2026-08-07",
+    title: "Hall of Fame Dynamic Multi-Select Game Filter Architecture",
+    badge: "MINOR RELEASE",
+    type: "minor",
+    summary: "Removed redundant Game Category filter, added Game option to Category dropdown, and integrated dynamic multi-select checkbox Game Filter with live search, Select All / Clear All controls, and multi-game ranking support.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🎮 Dynamic Multi-Select Game Filter: Added HofMultiSelectGameFilter checkbox dropdown generated dynamically from Game Database (games).",
+          "🔍 Real-Time Game Search: Added search bar inside popover for instant live filtering of games.",
+          "⚡ Quick Selection Triggers: Added Select All and Clear All action buttons with live character count badges.",
+          "🏛️ Multi-Game Hall of Fame Rankings: Hall of Fame rankings, podiums, records, and analytics now dynamically evaluate and filter single game, multi-game, and all-game selections.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🗑️ Standalone Game Category Cleanup: Removed redundant standalone Game Category filter dropdown, state, and code.",
+          "🎯 Category Dropdown Expansion: Added Game option into main Category filter dropdown alongside Drama, Anime, Movie, Tokusatsu, Character, AI, and Music.",
+          "🎨 Dual-Theme Alignment: Styled with cyan neon glow and glassmorphism for Cyberpunk theme, and 3px solid black outlines with high-contrast checkboxes for Neo-Brutalism theme.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v9.2.1",
     date: "2026-08-07",
     title: "Character Profile Detail Modal Avatar Scaling & UI Polish",

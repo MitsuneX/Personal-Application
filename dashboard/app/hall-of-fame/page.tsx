@@ -29,15 +29,14 @@ import {
 export default function HallOfFamePage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { hallOfFame = [], games = [], hallEvents = [], championshipHistory = [], deleteHof, likeHof } = useDashboardStore();
+  const { hallOfFame = [], games = [], gameCharacters = [], hallEvents = [], championshipHistory = [], deleteHof, likeHof } = useDashboardStore();
   const router = useRouter();
   const { confirm } = useConfirm();
   const { openContextMenu } = useContextMenu();
 
   // Dropdown Filter Toolbar State
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [gameCategoryFilter, setGameCategoryFilter] = useState<string>("all");
-  const [gameFilter, setGameFilter] = useState<string>("all");
+  const [selectedGames, setSelectedGames] = useState<string[]>([]);
   const [featuredOnly, setFeaturedOnly] = useState<boolean>(false);
   const [countryFilter, setCountryFilter] = useState<string>("all");
   const [professionFilter, setProfessionFilter] = useState<string>("all");
@@ -55,8 +54,7 @@ export default function HallOfFamePage() {
 
   const handleResetFilters = useCallback(() => {
     setCategoryFilter("all");
-    setGameCategoryFilter("all");
-    setGameFilter("all");
+    setSelectedGames([]);
     setFeaturedOnly(false);
     setCountryFilter("all");
     setProfessionFilter("all");
@@ -116,12 +114,59 @@ export default function HallOfFamePage() {
     setIsCompareOpen(true);
   };
 
+  // Map Game Characters to HallOfFameEntry interface for Game category rankings
+  const gameHofEntries = useMemo(() => {
+    return gameCharacters.map((gc) => ({
+      id: `gc-${gc.id}`,
+      name: gc.name,
+      type: "none" as const,
+      status: "Completed" as any,
+      knownFor: [gc.gameName || "Game Character", gc.role || "", gc.element || ""].filter(Boolean),
+      nationality: gc.nation || gc.gameName || "Game",
+      singerType: gc.gameName || undefined,
+      note: gc.notes || undefined,
+      imageUrl: gc.cardImage || gc.avatarUrl || gc.splashArt || undefined,
+      rank: gc.rank || null,
+      likes: gc.likes || 0,
+      isChampion: false,
+      isFavorite: gc.isFavorite,
+      badges: gc.isFeatured ? ["⭐ FEATURED"] : [],
+      gameName: gc.gameName,
+      isFeatured: gc.isFeatured,
+    }));
+  }, [gameCharacters]);
+
   // Helper filters
   const sortedList = useMemo(() => {
-    let list = [...hallOfFame];
+    let list: any[] = [...hallOfFame];
 
     // Category filter
-    if (categoryFilter !== "all") {
+    if (categoryFilter === "game") {
+      // Combine game characters with game-related hall of fame entries
+      list = [
+        ...gameHofEntries,
+        ...hallOfFame.filter(
+          (e) =>
+            (e as any).gameName ||
+            (Array.isArray(e.knownFor) && e.knownFor.some((k: string) => games.some((g) => k.toLowerCase().includes(g.game.toLowerCase()))))
+        ),
+      ];
+
+      // Multi-Select Game Filtering
+      if (selectedGames.includes("__NONE__")) {
+        list = [];
+      } else if (selectedGames.length > 0 && selectedGames.length < games.length) {
+        const lowerSelected = selectedGames.map((g) => g.toLowerCase());
+        list = list.filter((e) => {
+          const gName = (e.gameName || e.nationality || "").toLowerCase();
+          const matchGameName = lowerSelected.some((sg) => gName.includes(sg));
+          const matchKnownFor =
+            Array.isArray(e.knownFor) &&
+            e.knownFor.some((k: string) => lowerSelected.some((sg) => k.toLowerCase().includes(sg)));
+          return matchGameName || matchKnownFor;
+        });
+      }
+    } else if (categoryFilter !== "all") {
       if (categoryFilter === "drama")
         list = list.filter((e) => e.type !== "anime" && e.type !== "tokusatsu" && e.type !== "singer");
       else if (categoryFilter === "anime") list = list.filter((e) => e.type === "anime");
@@ -129,6 +174,12 @@ export default function HallOfFamePage() {
         list = list.filter((e) => e.type === "tokusatsu" || !!e.tokusatsuFranchise);
       else if (categoryFilter === "music")
         list = list.filter((e) => e.type === "singer" || (e.nationality || "").toLowerCase().includes("singer"));
+      else if (categoryFilter === "movie")
+        list = list.filter(
+          (e) =>
+            (e.nationality || "").toLowerCase().includes("movie") ||
+            (Array.isArray(e.knownFor) && e.knownFor.some((k: string) => k.toLowerCase().includes("movie")))
+        );
     }
 
     // Country filter
@@ -149,6 +200,11 @@ export default function HallOfFamePage() {
     // Prestige filter
     if (prestigeFilter !== "all") {
       list = list.filter((e, idx) => getPrestigeTier(e, idx).name === prestigeFilter);
+    }
+
+    // Featured Only filter
+    if (featuredOnly) {
+      list = list.filter((e) => e.isFeatured || e.isFavorite);
     }
 
     // Search query
@@ -173,7 +229,19 @@ export default function HallOfFamePage() {
         );
       return (b.likes || 0) - (a.likes || 0);
     });
-  }, [hallOfFame, categoryFilter, countryFilter, professionFilter, prestigeFilter, sortFilter, searchQuery]);
+  }, [
+    hallOfFame,
+    gameHofEntries,
+    games,
+    categoryFilter,
+    selectedGames,
+    countryFilter,
+    professionFilter,
+    prestigeFilter,
+    featuredOnly,
+    sortFilter,
+    searchQuery,
+  ]);
 
   // Derived Statistics & Records (100% Live & Reactive)
   const statsOverview = useMemo(() => {
@@ -323,13 +391,12 @@ export default function HallOfFamePage() {
           isCyber={isCyber}
           categoryFilter={categoryFilter}
           setCategoryFilter={setCategoryFilter}
-          gameCategoryFilter={gameCategoryFilter}
-          setGameCategoryFilter={setGameCategoryFilter}
-          gameFilter={gameFilter}
-          setGameFilter={setGameFilter}
+          selectedGames={selectedGames}
+          setSelectedGames={setSelectedGames}
           featuredOnly={featuredOnly}
           setFeaturedOnly={setFeaturedOnly}
           games={games}
+          gameCharacters={gameCharacters}
           countryFilter={countryFilter}
           setCountryFilter={setCountryFilter}
           professionFilter={professionFilter}

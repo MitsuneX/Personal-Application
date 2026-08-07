@@ -1,18 +1,15 @@
-"use client";
-
-import React from "react";
+import { HofMultiSelectGameFilter } from "./HofMultiSelectGameFilter";
 
 interface HofFilterToolbarProps {
   isCyber: boolean;
   categoryFilter: string;
   setCategoryFilter: (v: string) => void;
-  gameCategoryFilter?: string;
-  setGameCategoryFilter?: (v: string) => void;
-  gameFilter?: string;
-  setGameFilter?: (v: string) => void;
+  selectedGames?: string[];
+  setSelectedGames?: (selected: string[]) => void;
   featuredOnly?: boolean;
   setFeaturedOnly?: (v: boolean) => void;
-  games?: Array<{ id: string; game: string; category?: string }>;
+  games?: Array<{ id: string; game: string }>;
+  gameCharacters?: Array<{ gameId?: string; gameName?: string }>;
   countryFilter: string;
   setCountryFilter: (v: string) => void;
   professionFilter: string;
@@ -32,13 +29,12 @@ export function HofFilterToolbar({
   isCyber,
   categoryFilter,
   setCategoryFilter,
-  gameCategoryFilter = "all",
-  setGameCategoryFilter,
-  gameFilter = "all",
-  setGameFilter,
+  selectedGames = [],
+  setSelectedGames,
   featuredOnly = false,
   setFeaturedOnly,
   games = [],
+  gameCharacters = [],
   countryFilter,
   setCountryFilter,
   professionFilter,
@@ -54,9 +50,8 @@ export function HofFilterToolbar({
   onReset,
 }: HofFilterToolbarProps) {
   const isFiltered =
-    categoryFilter !== "all" ||
-    gameCategoryFilter !== "all" ||
-    gameFilter !== "all" ||
+    (categoryFilter as string) !== "all" ||
+    (categoryFilter === "game" && selectedGames.length > 0) ||
     featuredOnly ||
     countryFilter !== "all" ||
     professionFilter !== "all" ||
@@ -114,65 +109,6 @@ export function HofFilterToolbar({
           </div>
         )}
 
-        {/* Game Category Dropdown */}
-        {setGameCategoryFilter && (
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase theme-text-muted block">Game Category ▼</label>
-            <select
-              value={gameCategoryFilter}
-              onChange={(e) => setGameCategoryFilter(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border text-xs font-mono font-bold cursor-pointer"
-              style={{
-                backgroundColor: isCyber ? "rgba(255,255,255,0.08)" : "#F8FAFC",
-                color: isCyber ? "#FFF" : "#000",
-                borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000",
-              }}
-            >
-              <option value="all">All Game Categories</option>
-              <option value="Gacha">🎰 Gacha</option>
-              <option value="Action RPG">⚔️ Action RPG</option>
-              <option value="Gacha Action RPG">🔥 Gacha Action RPG</option>
-              <option value="Turn-Based RPG">⏳ Turn-Based RPG</option>
-              <option value="Tactical RPG">🎯 Tactical RPG</option>
-              <option value="MOBA">🛡️ MOBA</option>
-              <option value="Fighting">👊 Fighting</option>
-              <option value="Shooter">🔫 Shooter</option>
-              <option value="MMORPG">🌍 MMORPG</option>
-              <option value="Strategy">♟️ Strategy</option>
-              <option value="Simulation">🛸 Simulation</option>
-              <option value="Rhythm">🎵 Rhythm</option>
-              <option value="Sandbox">🧱 Sandbox</option>
-              <option value="Survival">🏕️ Survival</option>
-              <option value="Other">🎲 Other</option>
-            </select>
-          </div>
-        )}
-
-        {/* Dynamic Game Dropdown */}
-        {setGameFilter && (
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase theme-text-muted block">Game ▼</label>
-            <select
-              value={gameFilter}
-              onChange={(e) => setGameFilter(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border text-xs font-mono font-bold cursor-pointer"
-              style={{
-                backgroundColor: isCyber ? "rgba(255,255,255,0.08)" : "#F8FAFC",
-                color: isCyber ? "#FFF" : "#000",
-                borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000",
-              }}
-            >
-              <option value="all">All Games</option>
-              {games.map((g) => (
-                <option key={g.id} value={g.game}>
-                  {g.game}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {/* Category Dropdown */}
         {/* Category Dropdown */}
         <div className="space-y-1">
           <label className="text-[10px] font-bold uppercase theme-text-muted block">Category ▼</label>
@@ -189,10 +125,23 @@ export function HofFilterToolbar({
             <option value="all">All Categories</option>
             <option value="drama">🎭 Drama</option>
             <option value="anime">⛩️ Anime</option>
+            <option value="movie">🎬 Movie</option>
             <option value="tokusatsu">🦸 Tokusatsu</option>
             <option value="music">🎵 Music</option>
+            <option value="game">🎮 Game</option>
           </select>
         </div>
+
+        {/* Dynamic Multi-Select Game Filter (Revealed when Category === "game") */}
+        {categoryFilter === "game" && setSelectedGames && (
+          <HofMultiSelectGameFilter
+            isCyber={isCyber}
+            games={games}
+            gameCharacters={gameCharacters}
+            selectedGames={selectedGames}
+            onChangeSelectedGames={setSelectedGames}
+          />
+        )}
 
         {/* Country Dropdown */}
         <div className="space-y-1">
