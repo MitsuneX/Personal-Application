@@ -395,6 +395,7 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
   const [notes, setNotes] = useState("");
 
   // ── Images ──
+  const [cardImage, setCardImage] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [splashArt, setSplashArt] = useState("");
   const [gallery, setGallery] = useState<string[]>([]);
@@ -456,6 +457,7 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
       setFavoriteQuote(characterToEdit.favoriteQuote || characterToEdit.stats?.favoriteQuote || "");
       setNotes(characterToEdit.notes || "");
       // Images
+      setCardImage(characterToEdit.cardImage || "");
       setAvatarUrl(characterToEdit.avatarUrl || "");
       setSplashArt(characterToEdit.splashArt || "");
       setGallery(characterToEdit.gallery || characterToEdit.stats?.gallery || []);
@@ -469,7 +471,7 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
       setWinRate(""); setPickRate(""); setBanRate("");
       setVoiceJP(""); setVoiceCN(""); setVoiceKR(""); setVoiceEN("");
       setPersonality(""); setBiography(""); setOfficialDescription(""); setFavoriteQuote(""); setNotes("");
-      setAvatarUrl(""); setSplashArt(""); setGallery([]);
+      setCardImage(""); setAvatarUrl(""); setSplashArt(""); setGallery([]);
     }
   }, [characterToEdit, isOpen]);
 
@@ -614,6 +616,7 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
       favoriteQuote: favoriteQuote || undefined,
       notes: notes || undefined,
       // Media
+      cardImage: cardImage || undefined,
       avatarUrl: avatarUrl || undefined,
       splashArt: splashArt || undefined,
       gallery: gallery.length > 0 ? gallery : undefined,
@@ -850,18 +853,37 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
       case "images":
         return (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <CharacterImageUploader
-                  label="Avatar"
+                  label="Card Image (3:4)"
+                  value={cardImage}
+                  onChange={setCardImage}
+                  onClear={() => setCardImage("")}
+                  aspect={3 / 4}
+                  hint="Used ONLY on grid cards."
+                  previewClass="h-40 w-full"
+                />
+                <input
+                  type="text"
+                  value={cardImage.startsWith("data:") ? "" : cardImage}
+                  onChange={(e) => setCardImage(e.target.value)}
+                  placeholder="Or paste image URL…"
+                  className="w-full p-2 rounded-lg border text-xs font-mono theme-text-primary focus:outline-none"
+                  style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "#F9FAFB", borderColor: isCyber ? "rgba(255,255,255,0.12)" : "#E5E7EB" }}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <CharacterImageUploader
+                  label="Avatar (1:1)"
                   value={avatarUrl}
                   onChange={setAvatarUrl}
                   onClear={() => setAvatarUrl("")}
                   aspect={1}
-                  hint="Square crop, 1:1 ratio. Shows as character icon."
-                  previewClass="h-36 w-36"
+                  hint="Square icon ratio."
+                  previewClass="h-40 w-40 mx-auto"
                 />
-                {/* URL fallback */}
                 <input
                   type="text"
                   value={avatarUrl.startsWith("data:") ? "" : avatarUrl}
@@ -874,13 +896,13 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
 
               <div className="space-y-2">
                 <CharacterImageUploader
-                  label="Splash Art"
+                  label="Splash Art (16:9)"
                   value={splashArt}
                   onChange={setSplashArt}
                   onClear={() => setSplashArt("")}
                   aspect={16 / 9}
-                  hint="16:9 landscape crop. Used as card background."
-                  previewClass="h-36 w-full"
+                  hint="Used ONLY for Profile hero banner."
+                  previewClass="h-40 w-full"
                 />
                 <input
                   type="text"

@@ -110,8 +110,10 @@ export function ContextMenu({
     };
 
     const handleScroll = (e: Event) => {
-      // Only close if the scroll event comes from OUTSIDE the menu itself
-      if (menuRef.current && menuRef.current.contains(e.target as Node)) return;
+      // Never close if the scroll event originates from inside or over the context menu
+      if (menuRef.current && (menuRef.current === e.target || menuRef.current.contains(e.target as Node))) {
+        return;
+      }
       onClose();
     };
 

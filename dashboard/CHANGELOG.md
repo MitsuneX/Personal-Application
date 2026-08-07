@@ -2,6 +2,25 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [5.7.0] - 2026-08-07
+
+### ⚔️ Game Characters Complete Overhaul & Flagship Character Profile
+
+**Flagship Character Profile Modal (`CharacterProfileModal.tsx`)**
+- **Centered Cinematic Codex**: Transformed the Game Characters profile view into a 1150px centered modal featuring scale + spring entrance animations and blurred backdrop (`backdrop-filter: blur(12px)`).
+- **Single Continuous Scroll Container**: Converted the modal body into a single smooth scrollable container where the splash art banner naturally scrolls away together with tab navigation and content.
+- **Simplified 3-Tab Architecture**: Re-architected tab layout into **Overview** (merged Identity, World, Combat, Voice, Story & Lore), **Gallery** (all artwork with click-to-fullscreen lightbox), and **Personal** (Favorite, Rating 1-10, Pull Status, Investment Level, Custom Tags, Notes).
+
+**Dual-Theme Consistency & Rendering Polish**
+- **Neo-Brutalism & Cyberpunk Contrast Fix**: Resolved text/input white-on-white contrast issues by implementing dynamic theme tokens across all tabs, buttons, labels, and textareas.
+- **Neo-Brutalism Theme**: Styled with bold 3px black borders, offset drop shadows (`6px 6px 0 #000`), yellow/cyan chunky buttons, and high-contrast gaming energy.
+- **Cyberpunk Theme**: Styled with sleek dark backgrounds (`#06080f`), neon ambient lighting, and glowing accent borders.
+
+**Independent Image Management & Database Synchronization**
+- **Dedicated Card Image & Splash Art**: Added independent `cardImage` (3:4 ratio for roster cards) and `splashArt` (16:9 for profile banner) properties with dedicated upload, drag & drop, crop, zoom, and rotate handlers.
+- **Automatic Game Database Linking**: Automatically links or creates `dossierCharacters` entries in the Game Database when adding characters, keeping shared official metadata synchronized while preserving personal fields.
+- **Context Menu & Controls**: Added 14+ right-click context menu actions on character cards (Profile, Edit, Database, Sync, Upload/Crop, Duplicate, Rank, Copy, Export JSON, Delete) with internal scroll safety (`max-height: 70vh`).
+
 ## [5.6.0] - 2026-08-06
 
 ### 🎵 Unified Single Source of Truth Audio Engine (Phase 6)

@@ -13,6 +13,41 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v5.7.0",
+    date: "2026-08-07",
+    title: "Game Characters Complete Overhaul & Flagship Character Profile",
+    badge: "GAME CHARACTERS OVERHAUL",
+    type: "major",
+    summary: "Transformed the Game Characters module into an official AAA character encyclopedia featuring a centered cinematic modal, continuous scrolling banner, 3-tab layout (Overview, Gallery, Personal), dual-theme contrast polish, independent Card Art & Splash Art, right-click context menu, and automatic Game Database synchronization.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "⚔️ Flagship Character Profile Modal (CharacterProfileModal.tsx): Centered 1150px modal with spring entrance animations and blurred backdrop (backdrop-filter: blur(12px)).",
+          "📜 Single Continuous Scroll Area: Banner and splash art naturally scroll away with tab navigation and content in one smooth scrolling container.",
+          "🖼️ Independent Card Image & Splash Art: Separate cardImage (3:4 ratio for roster grid cards) and splashArt (16:9 for profile banner) with independent upload, drag & drop, crop, zoom, and rotate handlers.",
+          "🖱️ Context-Aware Right-Click Menu: Added 14+ right-click actions on character cards (Profile, Edit, Database, Sync, Upload/Crop, Duplicate, Rank, Copy Summary, Export JSON, Delete).",
+          "🎮 Automatic Game Database Synchronization: Auto-links or creates dossierCharacters entries in the Game Database when adding characters, keeping shared official metadata synchronized.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🎨 Dual-Theme Consistency (Cyberpunk & Neo-Brutalism): Fully polished both themes. Neo-Brutalism features bold 3px black borders, hard drop shadows (6px 6px 0 #000), chunky yellow/cyan buttons, and Persona/Nintendo game UI vibes.",
+          "📊 Simplified 3-Tab Layout: Streamlined tabs into Overview (Identity, World, Combat, Voice, Story), Gallery (Artwork grid + Lightbox viewer), and Personal (Rating, Status, Investment, Tags, Notes).",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🐛 Personal Tab Contrast Fix: Fixed white-on-white text and input rendering bugs on light backgrounds.",
+          "📜 Context Menu Scroll Fix: Fixed menu auto-closing during mouse wheel scrolling with max-height: 70vh scroll containment.",
+          "🖼️ Modal Scrollbar & Footer Clipping: Ensured scrollbars respect modal border radius and fixed footer padding alignment.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v5.5.0",
     date: "2026-08-06",
     title: "Emergency Hub Module & Shared AppShell Integration",

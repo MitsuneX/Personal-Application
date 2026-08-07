@@ -196,6 +196,7 @@ export interface GameCharacterEntry {
   officialDescription?: string;
   favoriteQuote?: string;
   // Media
+  cardImage?: string;
   avatarUrl?: string;
   splashArt?: string;
   gallery?: string[];
@@ -704,6 +705,8 @@ interface DashboardState {
   updateGameCharacter: (id: string, data: Partial<GameCharacterEntry>) => Promise<void>;
   removeGameCharacter: (id: string) => Promise<void>;
   syncGameCharacterArtwork: (gameCharId: string, dossierCharId: string, direction: "to_game_character" | "to_dossier_character") => Promise<void>;
+  syncGameCharacterCardImage: (gameCharId: string, dossierCharId: string, direction: "to_game_character" | "to_dossier_character") => Promise<void>;
+  syncGameCharacterSplashArt: (gameCharId: string, dossierCharId: string, direction: "to_game_character" | "to_dossier_character") => Promise<void>;
   syncOrphanedGameCharacters: (gameId?: string, gameName?: string) => Promise<void>;
   addGameResource: (item: GameResourceEntry) => Promise<void>;
   updateGameResource: (id: string, data: Partial<GameResourceEntry>) => Promise<void>;
@@ -1210,11 +1213,50 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   addGameCharacter: async (itemData) => {
+    const state = get();
+    let linkedCharId = itemData.characterId;
+
+    // Find parent game if gameId or gameName provided
+    const targetGame = state.games.find((g) =>
+      (itemData.gameId && g.id === itemData.gameId) ||
+      (itemData.gameName && g.game.toLowerCase() === itemData.gameName.toLowerCase())
+    );
+    const resolvedGameId = itemData.gameId || targetGame?.id || "";
+    const resolvedGameName = itemData.gameName || targetGame?.game || "";
+
+    // Check if matching DossierCharacter exists
+    let existingDossier = state.dossierCharacters.find((dc) =>
+      (linkedCharId && dc.id === linkedCharId) ||
+      (dc.name.toLowerCase() === (itemData.name || "").toLowerCase() &&
+        (dc.gameId === resolvedGameId || (targetGame && dc.gameId === targetGame.id)))
+    );
+
+    // If DossierCharacter doesn't exist yet but target game exists in Game Database, create it!
+    if (!existingDossier && resolvedGameId && itemData.name) {
+      const newDossierId = `dossier-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      const newDossier: DossierCharacterEntry = {
+        id: newDossierId,
+        gameId: resolvedGameId,
+        gameTitle: resolvedGameName,
+        name: itemData.name,
+        role: itemData.role || itemData.element || "Roster Member",
+        category: targetGame?.category || itemData.category || "Main Roster",
+        avatarUrl: itemData.cardImage || itemData.avatarUrl,
+        splashArt: itemData.splashArt,
+        accentColor: itemData.accentColor || targetGame?.accentColor || "#3B82F6",
+        isFavorite: itemData.isFavorite ?? false,
+      };
+      await get().addDossierCharacter(newDossier);
+      linkedCharId = newDossierId;
+    } else if (existingDossier) {
+      linkedCharId = existingDossier.id;
+    }
+
     const newItem: GameCharacterEntry = {
       id: itemData.id || `game-char-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       name: itemData.name || "Unnamed Character",
-      gameId: itemData.gameId || "",
-      gameName: itemData.gameName || "",
+      gameId: resolvedGameId,
+      gameName: resolvedGameName,
       // Basic
       title: itemData.title,
       officialName: itemData.officialName,
@@ -1258,12 +1300,13 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       officialDescription: itemData.officialDescription,
       favoriteQuote: itemData.favoriteQuote,
       // Media
+      cardImage: itemData.cardImage,
       avatarUrl: itemData.avatarUrl,
       splashArt: itemData.splashArt,
       gallery: itemData.gallery,
       accentColor: itemData.accentColor || "#3B82F6",
       // Meta
-      characterId: itemData.characterId,
+      characterId: linkedCharId,
       isFavorite: itemData.isFavorite ?? false,
       notes: itemData.notes,
       metadataStatus: itemData.metadataStatus,
@@ -1300,6 +1343,18 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "UPDATE_GAME_CHARACTER", payload: item }),
         });
+
+        // Sync shared official metadata if linked to dossierCharacter
+        if (item.characterId) {
+          const dc = get().dossierCharacters.find((d) => d.id === item.characterId);
+          if (dc) {
+            await get().updateDossierCharacter(dc.id, {
+              name: item.name || dc.name,
+              role: item.role || dc.role,
+              accentColor: item.accentColor || dc.accentColor,
+            });
+          }
+        }
       }
     } catch (err) {
       console.error("Failed to sync updated game character:", err);
@@ -1326,15 +1381,48 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
     if (direction === "to_game_character") {
       await get().updateGameCharacter(gameCharId, {
+        cardImage: dossierChar.avatarUrl || gameChar.cardImage,
         avatarUrl: dossierChar.avatarUrl || gameChar.avatarUrl,
         splashArt: dossierChar.splashArt || gameChar.splashArt,
         accentColor: dossierChar.accentColor || gameChar.accentColor,
       });
     } else {
       await get().updateDossierCharacter(dossierCharId, {
-        avatarUrl: gameChar.avatarUrl || dossierChar.avatarUrl,
+        avatarUrl: gameChar.cardImage || gameChar.avatarUrl || dossierChar.avatarUrl,
         splashArt: gameChar.splashArt || dossierChar.splashArt,
         accentColor: gameChar.accentColor || dossierChar.accentColor,
+      });
+    }
+  },
+
+  syncGameCharacterCardImage: async (gameCharId: string, dossierCharId: string, direction: "to_game_character" | "to_dossier_character") => {
+    const gameChar = get().gameCharacters.find((gc) => gc.id === gameCharId);
+    const dossierChar = get().dossierCharacters.find((dc) => dc.id === dossierCharId);
+    if (!gameChar || !dossierChar) return;
+
+    if (direction === "to_game_character") {
+      await get().updateGameCharacter(gameCharId, {
+        cardImage: dossierChar.avatarUrl || gameChar.cardImage,
+      });
+    } else {
+      await get().updateDossierCharacter(dossierCharId, {
+        avatarUrl: gameChar.cardImage || gameChar.avatarUrl || dossierChar.avatarUrl,
+      });
+    }
+  },
+
+  syncGameCharacterSplashArt: async (gameCharId: string, dossierCharId: string, direction: "to_game_character" | "to_dossier_character") => {
+    const gameChar = get().gameCharacters.find((gc) => gc.id === gameCharId);
+    const dossierChar = get().dossierCharacters.find((dc) => dc.id === dossierCharId);
+    if (!gameChar || !dossierChar) return;
+
+    if (direction === "to_game_character") {
+      await get().updateGameCharacter(gameCharId, {
+        splashArt: dossierChar.splashArt || gameChar.splashArt,
+      });
+    } else {
+      await get().updateDossierCharacter(dossierCharId, {
+        splashArt: gameChar.splashArt || dossierChar.splashArt,
       });
     }
   },
