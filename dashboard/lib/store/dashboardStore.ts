@@ -106,6 +106,8 @@ export interface DossierCharacterEntry {
   category: string;
   role?: string;
   element?: string;
+  path?: string;
+  specialty?: string;
   rarity?: string;
   weapon?: string;
   classType?: string;
@@ -1245,6 +1247,13 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         splashArt: itemData.splashArt,
         accentColor: itemData.accentColor || targetGame?.accentColor || "#3B82F6",
         isFavorite: itemData.isFavorite ?? false,
+        element: itemData.element,
+        path: itemData.path,
+        weapon: itemData.weapon,
+        rarity: itemData.rarity,
+        nation: itemData.nation,
+        birthday: itemData.birthday,
+        faction: itemData.faction,
       };
       await get().addDossierCharacter(newDossier);
       linkedCharId = newDossierId;

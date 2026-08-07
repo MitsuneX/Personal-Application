@@ -240,9 +240,19 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
   const currentGame = games.find((g) => g.id === gameId) || games.find((g) => g.game.toLowerCase().replace(/[^a-z0-9]/g, "") === gameId.toLowerCase().replace(/[^a-z0-9]/g, ""));
 
   const handleDeleteDossierChar = (char: DossierCharacterEntry) => {
+    const gameCharacters = useDashboardStore.getState().gameCharacters || [];
+    const isFav = gameCharacters.some(
+      (gc) =>
+        gc.characterId === char.id ||
+        (gc.name.toLowerCase() === char.name.toLowerCase() &&
+          (gc.gameId === char.gameId || (currentGame && gc.gameName?.toLowerCase() === currentGame.game.toLowerCase())))
+    );
+
     confirm({
       title: `Delete ${char.name}?`,
-      message: `Are you sure you want to remove ${char.name} from this game's dossier?`,
+      message: isFav
+        ? `This character is favourited. Deleting this character will also unlink the favourite profile.`
+        : `Are you sure you want to remove ${char.name} from this game's dossier?`,
       variant: "danger",
       itemPreview: {
         title: char.name,

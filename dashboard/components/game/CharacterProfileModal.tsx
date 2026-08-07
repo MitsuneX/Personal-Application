@@ -927,6 +927,23 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                                 ⚠️ Unlinked
                               </span>
                             )}
+                            {character.gameId && (
+                              <button
+                                onClick={() => {
+                                  window.location.href = `/games/${character.gameId}`;
+                                }}
+                                className="px-3 py-1 rounded-full text-xs font-bold border transition-all cursor-pointer flex items-center gap-1"
+                                style={{
+                                  backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#E0F2FE",
+                                  borderColor: isCyber ? "rgba(0,245,255,0.4)" : "#000000",
+                                  borderWidth: isCyber ? "1px" : "1.5px",
+                                  color: isCyber ? "#00F5FF" : "#0369A1",
+                                }}
+                                title="Open Character Collection in Game Database"
+                              >
+                                🎮 Open Character Collection
+                              </button>
+                            )}
                             <button
                               onClick={handleToggleFav}
                               className="px-3 py-1 rounded-full text-xs font-bold border transition-all cursor-pointer"

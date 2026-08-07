@@ -281,8 +281,8 @@ export function DossierCharacterCard({
               ⭐ Add to Game Character
             </button>
           ) : (
-            <span className="px-2 py-0.5 rounded-lg text-[9px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40" title="Already in Game Characters">
-              ✓ Favorited
+            <span className="px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold bg-amber-400 text-black border border-black shadow-[1.5px_1.5px_0_#000]" title="Linked Favorite Game Character">
+              ★ Favourite
             </span>
           )}
           <button

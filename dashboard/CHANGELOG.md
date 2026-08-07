@@ -2,6 +2,24 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [5.8.0] - 2026-08-07
+
+### 🔄 Game Character ↔ Character Collection Synchronization & Architecture Refactor
+
+**Database & Data Architecture Fix (`schema.prisma` & `app/api/action/route.ts`)**
+- **Root Cause Resolution**: Added missing `UPDATE_GAME_CHARACTER`, `DELETE_GAME_CHARACTER`, `UPDATE_DOSSIER_CHARACTER`, and `DELETE_DOSSIER_CHARACTER` action handlers to `/api/action/route.ts` with full field mapping for Prisma upserts.
+- **Relational Integrity**: Enforced proper hierarchy where `Game Database └── Character Collection (GameDossierCharacter)` is the master repository, and `Game Characters (GameCharacter)` represents personal favorites linking to `Character Collection` via `characterId`.
+- **Automatic Character Collection Creation**: Creating or updating a Game Character automatically upserts the corresponding `GameDossierCharacter` in the Game Database, eliminating "Character Collection (0)" empty states.
+
+**Artwork Independence & Auto-Sync**
+- **Independent Personal vs. Official Artwork**: Official artwork (`avatarUrl`, `splashArt` on `GameDossierCharacter`) remains independent from personal artwork (`cardImage`, `splashArt` on `GameCharacter`). Personal edits never overwrite official collection artwork.
+- **Sync Official Artwork**: Added explicit "Sync Official Artwork" action allowing users to selectively sync official artwork with personal cards upon confirmation.
+
+**Bidirectional Navigation & UX Badging**
+- **★ Favourite Badge**: Rendered a prominent `★ Favourite` badge on Character Collection cards inside Game Database (`/games/[gameId]`) if linked to a favorite.
+- **Bidirectional Navigation**: Added "🎮 Open Character Collection" button on Game Character profiles and "👁️ Open Favourite Profile" on Character Collection cards.
+- **Delete Guardrails**: Added confirmation warnings when deleting a favorited character from Character Collection (`"This character is favourited. Deleting this character will also unlink the favourite profile."`). Deleting a favorite profile leaves the Character Collection entry intact.
+
 ## [5.7.0] - 2026-08-07
 
 ### ⚔️ Game Characters Complete Overhaul & Flagship Character Profile

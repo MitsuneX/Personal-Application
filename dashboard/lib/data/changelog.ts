@@ -13,6 +13,33 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v5.8.0",
+    date: "2026-08-07",
+    title: "Game Character ↔ Character Collection Synchronization Architecture Refactor",
+    badge: "CHARACTER SYNC ARCHITECTURE",
+    type: "major",
+    summary: "Complete production refactor of Game Character ↔ Character Collection data flow, database persistence handlers, Zustand auto-linking, artwork independence, bidirectional navigation, and delete safety guardrails.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🔄 Automatic Character Collection Sync: Creating or updating a Game Character automatically creates or links the corresponding DossierCharacter in the Game Database.",
+          "⭐ ★ Favourite Badge & Reverse Sync: Character Collection cards inside Game Database (/games/[gameId]) display a prominent ★ Favourite badge when linked to a personal favorite.",
+          "🎮 Bidirectional Navigation: Added '🎮 Open Character Collection' button on Game Character profiles and '👁️ Open Favourite Profile' on Character Collection cards.",
+          "🖼️ Independent Artwork Management: Personal card & splash art are stored independently from official collection artwork with optional manual sync.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🗄️ Action API Route Persistence Fix: Resolved missing UPDATE_GAME_CHARACTER, DELETE_GAME_CHARACTER, UPDATE_DOSSIER_CHARACTER, and DELETE_DOSSIER_CHARACTER API handlers in /api/action/route.ts.",
+          "🛡️ Delete Guardrails: Deleting a favorite profile only removes the favorite record while keeping the Character Collection entry intact. Deleting a Character Collection entry warns when linked to a favorite.",
+          "🧪 13-Step Automated Verification Suite: Created scripts/verify_game_character_sync.ts verifying 13 real-world synchronization & linking edge cases.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v5.7.0",
     date: "2026-08-07",
     title: "Game Characters Complete Overhaul & Flagship Character Profile",
