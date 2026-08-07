@@ -13,6 +13,32 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v7.0.0",
+    date: "2026-08-07",
+    title: "Drama Details V2 — Dynamic Metadata-Driven Experience",
+    badge: "MAJOR RELEASE",
+    type: "major",
+    summary: "Transformed Drama Details into a fully dynamic media intelligence page powered by live TMDb, TVMaze, OMDb, Wikipedia, and iTunes APIs with zero seed/mock data across all 11 sections.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🎬 Dynamic Metadata API (/api/drama/metadata): Multi-provider pipeline retrieving real synopses, cast grids, episode guides, OST songs, awards, and streaming links with 24-hour LRU caching.",
+          "📊 14-Category Rating Radar: Expanded multi-category rating breakdown supporting Story, Characters, Romance, Comedy, Action, Drama, Soundtrack, Ending, Visuals, Cinematography, World Building, Emotion, Chemistry, and Pacing.",
+          "🎵 Real OST Integration: Live iTunes Search API integration rendering song titles, artists, album artwork, audio previews, Spotify links, and Apple Music links.",
+          "🏆 Awards & External Links: Live awards parsing from OMDb/Wikipedia and dynamic links to IMDb, TMDb, TVMaze, MyDramaList, Netflix, Disney+, Viki, and Prime Video.",
+        ],
+      },
+      {
+        name: "UI Refactor & Polish",
+        items: [
+          "🧹 Zero Mock Data: Cleaned out all hardcoded unsplash photos, seed characters (Kim Bong-seok), and fake reviews across all 11 Dossier components.",
+          "⚡ Responsive & Dual-Theme: Preserved exact Framer Motion animations, glassmorphism, Cyberpunk, and Neo-Brutalism design systems with zero visual regressions.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v6.1.0",
     date: "2026-08-07",
     title: "Duplicate Collection Prevention & Database Uniqueness Protection",

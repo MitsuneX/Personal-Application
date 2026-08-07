@@ -1,9 +1,9 @@
 "use client";
 
-import React, { use, useState } from "react";
+import React, { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
-import { useDashboardStore, DramaEntry } from "@/lib/store/dashboardStore";
+import { useDashboardStore, DramaEntry, CategoryRatings } from "@/lib/store/dashboardStore";
 import { resolveDossierTheme } from "@/components/dossier/DossierThemeAccent";
 import { DossierHero } from "@/components/dossier/DossierHero";
 import { DossierStatsBar } from "@/components/dossier/DossierStatsBar";
@@ -16,6 +16,7 @@ import { DossierMemoryGallery } from "@/components/dossier/DossierMemoryGallery"
 import { DossierEmotionalTimeline } from "@/components/dossier/DossierEmotionalTimeline";
 import { DossierReviewEditor } from "@/components/dossier/DossierReviewEditor";
 import { DossierExternalLinks } from "@/components/dossier/DossierExternalLinks";
+import { Loader2 } from "lucide-react";
 
 export default function DramaDossierPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -25,39 +26,84 @@ export default function DramaDossierPage({ params }: { params: Promise<{ id: str
   const dramaId = resolvedParams.id;
 
   // Search existing drama entry or log
-  const existingDrama = dramas.find((d) => d.id === dramaId) || dramas.find((d) => d.title.toLowerCase().replace(/\s+/g, "-") === dramaId);
+  const existingDrama =
+    dramas.find((d) => d.id === dramaId) ||
+    dramas.find((d) => d.title.toLowerCase().replace(/\s+/g, "-") === dramaId);
+
   const existingLog = dramaLog.find((d) => d.id === dramaId);
 
-  // Default fallback data if ID is new
-  const dossierData: DramaEntry = existingDrama || {
-    id: dramaId,
-    title: existingLog?.title || "Moving",
-    originalTitle: "무빙 (Moving)",
-    country: (existingLog?.country as any) || "korean",
-    episodes: existingLog?.totalEpisodes || 20,
-    episodesWatched: existingLog?.episodesWatched || 20,
-    status: "Completed",
-    rating: existingLog?.rating ? Number(existingLog.rating) : 9.8,
-    genre: existingLog?.type || "Superhero, Action, Romance, Mystery",
-    year: existingLog?.releaseYear || 2023,
-    platform: "Disney+",
-    posterUrl: existingLog?.posterUrl || "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=600&q=80",
-    backdropUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
-    synopsis: existingLog?.plotSummary || "Children who live with superpowered abilities hidden from society, along with their parents who harbor painful secrets from their past, face huge dangers together across time.",
-    studio: "Studio FINECUT / Disney+ Original",
-    runtime: "60 mins / Episode",
-    startDate: "2023-08-09",
-    finishDate: "2023-09-20",
-    rewatchCount: 2,
-    favoriteEpisode: "Episode 13 (Namsan Pork Cutlet)",
-    favoriteCharacter: "Kim Bong-seok & Jang Ju-won",
-    emotionalEpisode: "Episode 12 (Parent Backstory)",
-    mood: "Hyped, Nostalgic & Emotional",
-    wouldRewatch: true,
+  const [liveMetadata, setLiveMetadata] = useState<any>(null);
+  const [loadingMetadata, setLoadingMetadata] = useState(false);
+  const [metadataError, setMetadataError] = useState<string | null>(null);
+
+  const rawTitle = existingDrama?.title || existingLog?.title || dramaId.replace(/-/g, " ");
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadMetadata() {
+      if (!rawTitle || rawTitle.trim().length < 2) return;
+      setLoadingMetadata(true);
+      setMetadataError(null);
+      try {
+        const imdbId = existingLog?.omdbId;
+        const url = `/api/drama/metadata?title=${encodeURIComponent(rawTitle)}${imdbId ? `&imdbId=${imdbId}` : ""}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Metadata request failed");
+        const json = await res.json();
+        if (json.success && json.metadata && isMounted) {
+          setLiveMetadata(json.metadata);
+        }
+      } catch (err: any) {
+        if (isMounted) setMetadataError(err.message || "Failed to load live metadata");
+      } finally {
+        if (isMounted) setLoadingMetadata(false);
+      }
+    }
+    loadMetadata();
+    return () => {
+      isMounted = false;
+    };
+  }, [rawTitle, existingLog?.omdbId]);
+
+  // Combined Single Source of Truth
+  const dossierData: DramaEntry = {
+    id: existingDrama?.id || dramaId,
+    title: existingDrama?.title || liveMetadata?.title || existingLog?.title || rawTitle,
+    originalTitle: existingDrama?.originalTitle || liveMetadata?.originalTitle || undefined,
+    country: (existingDrama?.country || liveMetadata?.country || existingLog?.country || "korean") as any,
+    episodes: existingDrama?.episodes || liveMetadata?.episodes || existingLog?.totalEpisodes || 12,
+    episodesWatched: existingDrama?.episodesWatched || existingLog?.episodesWatched || 0,
+    status: existingDrama?.status || "Watching",
+    rating: existingDrama?.rating ?? (existingLog?.rating ? Number(existingLog.rating) : 0),
+    genre: existingDrama?.genre || (liveMetadata?.genres?.length ? liveMetadata.genres.join(", ") : existingLog?.type || "Drama"),
+    year: existingDrama?.year || liveMetadata?.year || existingLog?.releaseYear || new Date().getFullYear(),
+    platform: existingDrama?.platform || liveMetadata?.studio || "Streaming Platform",
+    posterUrl: existingDrama?.posterUrl || liveMetadata?.posterUrl || existingLog?.posterUrl || undefined,
+    backdropUrl: existingDrama?.backdropUrl || liveMetadata?.backdropUrl || existingDrama?.posterUrl || liveMetadata?.posterUrl || undefined,
+    synopsis: existingDrama?.synopsis || liveMetadata?.synopsis || existingLog?.plotSummary || undefined,
+    studio: existingDrama?.studio || liveMetadata?.studio || undefined,
+    runtime: existingDrama?.runtime || liveMetadata?.runtime || undefined,
+    startDate: existingDrama?.startDate || undefined,
+    finishDate: existingDrama?.finishDate || undefined,
+    rewatchCount: existingDrama?.rewatchCount || 0,
+    favoriteEpisode: existingDrama?.favoriteEpisode || undefined,
+    favoriteCharacter: existingDrama?.favoriteCharacter || undefined,
+    emotionalEpisode: existingDrama?.emotionalEpisode || undefined,
+    mood: existingDrama?.mood || undefined,
+    wouldRewatch: existingDrama?.wouldRewatch || false,
+    categoryRatings: existingDrama?.categoryRatings || undefined,
+    characters: existingDrama?.characters || undefined,
+    castGrid: existingDrama?.castGrid?.length ? existingDrama.castGrid : liveMetadata?.castGrid || [],
+    episodeLog: existingDrama?.episodeLog?.length ? existingDrama.episodeLog : liveMetadata?.episodeLog || [],
+    emotionalTimeline: existingDrama?.emotionalTimeline || [],
+    ostTracks: existingDrama?.ostTracks?.length ? existingDrama.ostTracks : liveMetadata?.ostTracks || [],
+    externalLinks: { ...(liveMetadata?.externalLinks || {}), ...(existingDrama?.externalLinks || {}) },
+    reviewMarkdown: existingDrama?.reviewMarkdown || undefined,
+    awards: existingDrama?.awards?.length ? existingDrama.awards : liveMetadata?.awards || [],
   };
 
   const themeConfig = resolveDossierTheme(dossierData.country, dossierData.genre);
-  const [isFavorite, setIsFavorite] = useState(dossierData.isFavorite ?? true);
+  const [isFavorite, setIsFavorite] = useState(existingDrama?.isFavorite ?? true);
 
   const handleToggleFavorite = () => {
     const next = !isFavorite;
@@ -80,9 +126,30 @@ export default function DramaDossierPage({ params }: { params: Promise<{ id: str
     }
   };
 
+  const handleSaveRatings = (ratings: CategoryRatings) => {
+    if (existingDrama) {
+      const ratedVals = Object.values(ratings).filter((v) => typeof v === "number" && v > 0) as number[];
+      const avg = ratedVals.length > 0 ? Math.round(ratedVals.reduce((a, b) => a + b, 0) / ratedVals.length) : dossierData.rating;
+      updateDrama(existingDrama.id, { categoryRatings: ratings, rating: avg });
+    }
+  };
+
+  const handleSaveReview = (reviewMarkdown: string) => {
+    if (existingDrama) {
+      updateDrama(existingDrama.id, { reviewMarkdown });
+    }
+  };
+
   return (
     <AppShell>
       <div className="w-full max-w-7xl mx-auto pb-12">
+        {loadingMetadata && (
+          <div className="flex items-center gap-2 p-3 mb-4 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono">
+            <Loader2 size={14} className="animate-spin" />
+            <span>Fetching live metadata from TMDb, TVMaze, and OMDb...</span>
+          </div>
+        )}
+
         {/* 1. Hero Banner with Parallax Backdrop & Poster */}
         <DossierHero
           title={dossierData.title}
@@ -150,7 +217,11 @@ export default function DramaDossierPage({ params }: { params: Promise<{ id: str
         />
 
         {/* 7. Rating Breakdown Radar Chart */}
-        <DossierRatingRadar ratings={dossierData.categoryRatings} themeConfig={themeConfig} />
+        <DossierRatingRadar
+          ratings={dossierData.categoryRatings}
+          themeConfig={themeConfig}
+          onSaveRatings={handleSaveRatings}
+        />
 
         {/* 8. Memory Gallery & Screenshots */}
         <DossierMemoryGallery themeConfig={themeConfig} />
@@ -159,7 +230,11 @@ export default function DramaDossierPage({ params }: { params: Promise<{ id: str
         <DossierEmotionalTimeline timeline={dossierData.emotionalTimeline} themeConfig={themeConfig} />
 
         {/* 10. Personal Review & Critique */}
-        <DossierReviewEditor reviewMarkdown={dossierData.reviewMarkdown} themeConfig={themeConfig} />
+        <DossierReviewEditor
+          reviewMarkdown={dossierData.reviewMarkdown}
+          themeConfig={themeConfig}
+          onSaveReview={handleSaveReview}
+        />
 
         {/* 11. External Resources & Soundtracks */}
         <DossierExternalLinks

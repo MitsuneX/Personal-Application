@@ -49,18 +49,22 @@ export function DossierHero({
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
 
-  const fallbackPoster = "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=600&q=80";
-  const fallbackBackdrop = posterUrl || fallbackPoster;
+  const hasPoster = Boolean(posterUrl);
+  const hasBackdrop = Boolean(backdropUrl || posterUrl);
 
   return (
     <div className="relative w-full overflow-hidden rounded-2xl mb-8">
       {/* Parallax / Ambient Backdrop Image */}
       <div className="absolute inset-0 z-0 overflow-hidden">
-        <img
-          src={backdropUrl || fallbackBackdrop}
-          alt={title}
-          className="w-full h-full object-cover object-center filter blur-md scale-105 opacity-35 transition-all duration-700"
-        />
+        {hasBackdrop ? (
+          <img
+            src={backdropUrl || posterUrl}
+            alt={title}
+            className="w-full h-full object-cover object-center filter blur-md scale-105 opacity-35 transition-all duration-700"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 opacity-60" />
+        )}
         <div
           className="absolute inset-0"
           style={{
@@ -118,11 +122,18 @@ export function DossierHero({
                 : "6px 6px 0px #000000",
             }}
           >
-            <img
-              src={posterUrl || fallbackPoster}
-              alt={title}
-              className="w-full h-full object-cover"
-            />
+            {hasPoster ? (
+              <img
+                src={posterUrl}
+                alt={title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-slate-800 text-slate-400">
+                <Film size={48} className="mb-2 opacity-50" />
+                <span className="text-xs font-mono font-bold text-center line-clamp-2">{title}</span>
+              </div>
+            )}
             {/* Status Badge */}
             <div
               className="absolute top-2 left-2 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider backdrop-blur-md border shadow-lg"

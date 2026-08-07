@@ -2,6 +2,27 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [7.0.0] - 2026-08-07
+
+### 🎬 Drama Details V2 — Complete Elimination of Seed & Mock Data
+
+**Dynamic Live Metadata Pipeline (`/api/drama/metadata`)**
+- **Single Source of Truth**: Replaced every piece of hardcoded placeholder/seed data across all 11 Drama Dossier sections with real database records, user watch logs, and live external metadata.
+- **Multi-Source Pipeline**: Integrates TMDb, OMDb, TVMaze API, Wikipedia API, and iTunes Search API with in-memory 24-hour LRU caching to automatically retrieve drama synopses, backdrops, real cast grids, full episode guides, OST tracks, awards, and streaming links.
+
+**11 Fully Dynamic Media Intelligence Sections**
+- **Section 1: Overview & Quick Stats**: Real episode progress, metadata total episodes, calculated completion %, exact days taken (`startDate` to `finishDate`), personal score, and rewatch count.
+- **Section 2: Character Spotlight & Cast**: Dynamic cast grid from TVMaze/OMDb featuring real character names, actor names, actor pictures, character pictures, and main/supporting roles. Hides gracefully if unavailable.
+- **Section 3: Episode Navigator & Watch Analytics**: Dynamic episode list with real watched progress indicators, dynamic pace chart, average daily watching rate, total hours watched, and estimated time remaining.
+- **Section 4: Multi-Category Rating Radar**: Expanded rating breakdown across all 14 categories (*Story*, *Characters*, *Romance*, *Comedy*, *Action*, *Drama*, *Soundtrack*, *Ending*, *Visuals*, *Cinematography*, *World Building*, *Emotion*, *Chemistry*, *Pacing*) with interactive sliders and calculated overall score.
+- **Section 5: Memory Gallery**: Renders user-uploaded screenshots and wallpapers. Features clean attach dropzone without unsplash defaults.
+- **Section 6: Emotional Journey Timeline**: Chronological user milestone timeline tracking start/finish events, episode milestones, and custom emotional reactions.
+- **Section 7: Personal Review & Critique**: Live Markdown review editor with spoiler toggle, pros/cons, favorite quote, favorite scene, and last edited timestamp.
+- **Section 8: Original Soundtracks (OST)**: Real OST songs retrieved via iTunes API with album art, artist details, audio previews, Spotify links, YouTube links, and Apple Music links.
+- **Section 9: Awards & Recognition**: Displays real awards and honors from OMDb/Wikipedia. Hides gracefully if unawarded.
+- **Section 10: External Resources**: Dynamic links to IMDb, TMDb, TVMaze, MyDramaList, Wikipedia, Official Site, YouTube Trailer, Netflix, Disney+, Viki, and Prime Video.
+- **Section 11: Personal Watch Journey**: Custom watch journey parameters (`favoriteEpisode`, `favoriteCharacter`, `emotionalEpisode`, `mood`, `wouldRewatch`) tied directly to user state.
+
 ## [6.1.0] - 2026-08-07
 
 ### 🛡️ Duplicate Character Collection Elimination & Database Uniqueness Protection

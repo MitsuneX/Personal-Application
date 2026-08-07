@@ -29,30 +29,7 @@ export function DossierMemoryGallery({
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
 
-  const defaultShots: MemoryScreenshot[] = screenshots.length > 0 ? screenshots : [
-    {
-      id: "shot-1",
-      url: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=800&q=80",
-      caption: "Bong-seok flying towards the sunset with Hui-soo",
-      episode: "Ep 10",
-      character: "Kim Bong-seok",
-    },
-    {
-      id: "shot-2",
-      url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
-      caption: "Namsan Pork Cutlet Restaurant iconic scene",
-      episode: "Ep 13",
-      character: "Jang Ju-won",
-    },
-    {
-      id: "shot-3",
-      url: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=800&q=80",
-      caption: "Jeowon High School final showdown",
-      episode: "Ep 19",
-      character: "Full Cast",
-    },
-  ];
-
+  const [userScreenshots, setUserScreenshots] = useState<MemoryScreenshot[]>(screenshots);
   const [activeImage, setActiveImage] = useState<{ url: string; title: string } | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
 
@@ -69,6 +46,7 @@ export function DossierMemoryGallery({
       caption: captionInput || "Drama Memory Screenshot",
       episode: epInput || "Ep 1",
     };
+    setUserScreenshots((prev) => [...prev, newShot]);
     onAddScreenshot?.(newShot);
     setUrlInput("");
     setCaptionInput("");
@@ -116,34 +94,46 @@ export function DossierMemoryGallery({
         </button>
       </div>
 
-      {/* Gallery Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {defaultShots.map((shot) => (
-          <motion.div
-            key={shot.id}
-            whileHover={{ scale: 1.03, y: -3 }}
-            onClick={() => setActiveImage({ url: shot.url, title: shot.caption || "Screenshot" })}
-            className="group relative aspect-video rounded-xl overflow-hidden border cursor-pointer select-none"
-            style={{
-              borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#000000",
-              boxShadow: isCyber ? "0 0 15px rgba(0,0,0,0.5)" : "3px 3px 0px #000000",
-            }}
-          >
-            <img src={shot.url} alt={shot.caption} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-between">
-              <div className="flex justify-between items-center">
-                {shot.episode && (
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-black/60 text-white border border-white/20">
-                    {shot.episode}
-                  </span>
-                )}
-                <Maximize2 size={14} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+      {/* Gallery Grid or Empty State */}
+      {userScreenshots.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {userScreenshots.map((shot) => (
+            <motion.div
+              key={shot.id}
+              whileHover={{ scale: 1.03, y: -3 }}
+              onClick={() => setActiveImage({ url: shot.url, title: shot.caption || "Screenshot" })}
+              className="group relative aspect-video rounded-xl overflow-hidden border cursor-pointer select-none"
+              style={{
+                borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#000000",
+                boxShadow: isCyber ? "0 0 15px rgba(0,0,0,0.5)" : "3px 3px 0px #000000",
+              }}
+            >
+              <img src={shot.url} alt={shot.caption} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-between">
+                <div className="flex justify-between items-center">
+                  {shot.episode && (
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-black/60 text-white border border-white/20">
+                      {shot.episode}
+                    </span>
+                  )}
+                  <Maximize2 size={14} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+                <p className="text-xs font-semibold text-white line-clamp-1">{shot.caption}</p>
               </div>
-              <p className="text-xs font-semibold text-white line-clamp-1">{shot.caption}</p>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div
+          onClick={() => setShowUploadModal(true)}
+          className="p-8 rounded-xl border border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-colors"
+          style={{ borderColor: isCyber ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)" }}
+        >
+          <ImageIcon size={32} className="mb-2 opacity-40" style={{ color: themeConfig.primaryAccent }} />
+          <p className="text-xs font-mono font-bold uppercase opacity-70">No screenshots attached yet</p>
+          <p className="text-[11px] opacity-50 mt-1">Click to attach favorite scenes, wallpapers, or user screenshots</p>
+        </div>
+      )}
 
       {/* Lightbox Modal */}
       {activeImage && (

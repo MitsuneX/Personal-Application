@@ -21,15 +21,7 @@ export function DossierEmotionalTimeline({
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
 
-  const defaultTimeline: DossierEmotionMilestone[] = timeline.length > 0 ? timeline : [
-    { episode: "Episode 1", emotion: "😊 Intrigued", note: "Bong-seok floating in class was both hilarious & adorable!", date: "2023-08-09" },
-    { episode: "Episode 7", emotion: "😲 Shocked", note: "Frank's brutal assassin fight sequences were unreal cinema quality!", date: "2023-08-16" },
-    { episode: "Episode 12", emotion: "😭 Cried", note: "Ju-won's backstory with his wife in Namsan... purest love story ever.", date: "2023-08-23" },
-    { episode: "Episode 18", emotion: "🔥 Hyped", note: "School battle climax with parents fighting alongside kids!", date: "2023-09-13" },
-    { episode: "Finale (Ep 20)", emotion: "❤️ Masterpiece", note: "Flawless conclusion. Absolute GOAT status series!", date: "2023-09-20" },
-  ];
-
-  const [milestones, setMilestones] = useState<DossierEmotionMilestone[]>(defaultTimeline);
+  const [milestones, setMilestones] = useState<DossierEmotionMilestone[]>(timeline);
   const [showAddModal, setShowAddModal] = useState(false);
 
   // Form State
@@ -94,46 +86,58 @@ export function DossierEmotionalTimeline({
       </div>
 
       {/* Timeline Visual Flow */}
-      <div className="relative pl-6 border-l-2 border-dashed space-y-6" style={{ borderColor: themeConfig.primaryAccent }}>
-        {milestones.map((m, idx) => (
-          <motion.div
-            key={idx}
-            initial={{ opacity: 0, x: -15 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: idx * 0.08 }}
-            className="relative p-4 rounded-xl border group backdrop-blur-md"
-            style={{
-              backgroundColor: isCyber ? "rgba(5,8,22,0.8)" : "#FFF5E4",
-              borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#000000",
-            }}
-          >
-            {/* Timeline Dot */}
-            <div
-              className="absolute -left-[31px] top-4 w-4 h-4 rounded-full border-2 border-white shadow-lg"
-              style={{ backgroundColor: themeConfig.primaryAccent }}
-            />
+      {milestones.length > 0 ? (
+        <div className="relative pl-6 border-l-2 border-dashed space-y-6" style={{ borderColor: themeConfig.primaryAccent }}>
+          {milestones.map((m, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, x: -15 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: idx * 0.08 }}
+              className="relative p-4 rounded-xl border group backdrop-blur-md"
+              style={{
+                backgroundColor: isCyber ? "rgba(5,8,22,0.8)" : "#FFF5E4",
+                borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#000000",
+              }}
+            >
+              {/* Timeline Dot */}
+              <div
+                className="absolute -left-[31px] top-4 w-4 h-4 rounded-full border-2 border-white shadow-lg"
+                style={{ backgroundColor: themeConfig.primaryAccent }}
+              />
 
-            <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
-              <div className="flex items-center gap-2">
-                <span className="font-mono font-black text-xs px-2 py-0.5 rounded border" style={{ borderColor: themeConfig.primaryAccent, color: themeConfig.primaryAccent }}>
-                  {m.episode}
-                </span>
-                <span className="font-bold text-sm">{m.emotion}</span>
+              <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-black text-xs px-2 py-0.5 rounded border" style={{ borderColor: themeConfig.primaryAccent, color: themeConfig.primaryAccent }}>
+                    {m.episode}
+                  </span>
+                  <span className="font-bold text-sm">{m.emotion}</span>
+                </div>
+                {m.date && (
+                  <span className="text-[10px] font-mono opacity-50 flex items-center gap-1">
+                    <Calendar size={11} />
+                    <span>{m.date}</span>
+                  </span>
+                )}
               </div>
-              {m.date && (
-                <span className="text-[10px] font-mono opacity-50 flex items-center gap-1">
-                  <Calendar size={11} />
-                  <span>{m.date}</span>
-                </span>
-              )}
-            </div>
 
-            <p className="text-xs leading-relaxed opacity-85 mt-1" style={{ color: isCyber ? "#94A3B8" : "#374151" }}>
-              {m.note}
-            </p>
-          </motion.div>
-        ))}
-      </div>
+              <p className="text-xs leading-relaxed opacity-85 mt-1" style={{ color: isCyber ? "#94A3B8" : "#374151" }}>
+                {m.note}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div
+          onClick={() => setShowAddModal(true)}
+          className="p-8 rounded-xl border border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-colors"
+          style={{ borderColor: isCyber ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)" }}
+        >
+          <Heart size={32} className="mb-2 opacity-40" style={{ color: themeConfig.primaryAccent }} />
+          <p className="text-xs font-mono font-bold uppercase opacity-70">No emotional milestones logged</p>
+          <p className="text-[11px] opacity-50 mt-1">Click &apos;Add Reaction&apos; to log your emotional reaction for key episodes</p>
+        </div>
+      )}
 
       {/* Add Milestone Modal */}
       <AnimatePresence>

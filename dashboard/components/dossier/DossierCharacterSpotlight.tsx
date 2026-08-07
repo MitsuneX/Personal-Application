@@ -21,37 +21,26 @@ export function DossierCharacterSpotlight({
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
 
-  const [activeCharacter, setActiveCharacter] = useState<DossierCharacter | null>(null);
+  const [activeCharacter, setActiveCharacter] = useState<any | null>(null);
 
-  const defaultCharacters: DossierCharacter[] = characters.length > 0 ? characters : [
-    {
-      id: "char-1",
-      name: "Kim Bong-seok",
-      actor: "Lee Jung-ha",
-      role: "Main Protagonist (Flying Ability)",
-      portraitUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
-      isFavorite: true,
-      notes: "Innocent high school student inheriting flight and superhuman senses.",
-    },
-    {
-      id: "char-2",
-      name: "Jang Hui-soo",
-      actor: "Go Youn-jung",
-      role: "Main Protagonist (Regeneration)",
-      portraitUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=300&q=80",
-      isFavorite: true,
-      notes: "Athletic transfer student with instantaneous athletic recovery & healing.",
-    },
-    {
-      id: "char-3",
-      name: "Kim Doo-shik",
-      actor: "Zo In-sung",
-      role: "Legendary Black Ops Agent (Flight)",
-      portraitUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80",
-      isFavorite: false,
-      notes: "Veteran NIS black ops agent with unprecedented flight skills.",
-    },
-  ];
+  const hasCast = (castGrid && castGrid.length > 0) || (characters && characters.length > 0);
+
+  if (!hasCast) {
+    return null;
+  }
+
+  // Map castGrid items to standard display structure
+  const displayCast = castGrid.length > 0
+    ? castGrid.map((c) => ({
+        id: c.id,
+        name: c.characterName || c.name,
+        actor: c.characterName ? c.name : "Actor",
+        role: c.role || "Cast",
+        portraitUrl: c.photoUrl || c.characterImageUrl,
+        isFavorite: false,
+        notes: c.nationality ? `Nationality: ${c.nationality}` : undefined,
+      }))
+    : characters;
 
   return (
     <div
@@ -80,7 +69,7 @@ export function DossierCharacterSpotlight({
 
       {/* Characters Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-        {defaultCharacters.map((c) => (
+        {displayCast.map((c) => (
           <motion.div
             key={c.id}
             whileHover={{ scale: 1.03, y: -3 }}

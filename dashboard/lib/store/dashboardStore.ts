@@ -345,8 +345,10 @@ export interface DossierCharacter {
 export interface DossierCastMember {
   id: string;
   name: string;
+  characterName?: string;
   role: string;
   photoUrl?: string;
+  characterImageUrl?: string;
   nationality?: string;
 }
 
@@ -357,43 +359,66 @@ export interface DossierEpisode {
   airDate?: string;
   isWatched: boolean;
   rating?: number;
+  userNotes?: string;
 }
 
 export interface DossierEmotionMilestone {
+  id?: string;
   episode: string;
   emotion: string;
   note: string;
   date?: string;
   image?: string;
+  type?: "started" | "progress" | "paused" | "finished" | "rewatched" | "rated" | "favorite" | "memory";
 }
 
 export interface DossierOstTrack {
+  id?: string;
   title: string;
   artist: string;
-  type: "OP" | "ED" | "OST";
+  type?: "OP" | "ED" | "OST" | string;
+  albumArt?: string;
+  duration?: string;
+  releaseDate?: string;
+  previewUrl?: string;
+  youtubeUrl?: string;
+  spotifyUrl?: string;
+  appleMusicUrl?: string;
   url?: string;
 }
 
 export interface CategoryRatings {
-  story: number;
-  characters: number;
-  ending: number;
-  ost: number;
-  romance: number;
-  comedy: number;
-  action: number;
-  visuals: number;
-  rewatchValue: number;
+  story?: number;
+  characters?: number;
+  romance?: number;
+  comedy?: number;
+  action?: number;
+  drama?: number;
+  soundtrack?: number;
+  ending?: number;
+  visuals?: number;
+  cinematography?: number;
+  worldBuilding?: number;
+  emotion?: number;
+  chemistry?: number;
+  pacing?: number;
+  ost?: number;
+  rewatchValue?: number;
 }
 
 export interface ExternalLinks {
   imdb?: string;
+  tmdb?: string;
   mydramalist?: string;
+  tvmaze?: string;
   wikipedia?: string;
+  officialSite?: string;
+  trailerUrl?: string;
+  rottenTomatoes?: string;
   netflix?: string;
   disney?: string;
   viki?: string;
-  trailerUrl?: string;
+  primeVideo?: string;
 }
 
 export interface CinematicDossierFields {
@@ -420,7 +445,15 @@ export interface CinematicDossierFields {
   ostTracks?: DossierOstTrack[];
   externalLinks?: ExternalLinks;
   reviewMarkdown?: string;
+  spoilerAlert?: boolean;
+  pros?: string[];
+  cons?: string[];
+  favoriteQuote?: string;
+  favoriteScene?: string;
+  wouldRecommend?: boolean;
+  reviewLastEdited?: string;
   awards?: string[];
+  gallery?: string[];
 }
 
 export interface AnimeEntry extends CinematicDossierFields {

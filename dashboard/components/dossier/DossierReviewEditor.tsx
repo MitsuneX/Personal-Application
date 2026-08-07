@@ -20,20 +20,7 @@ export function DossierReviewEditor({
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
 
-  const defaultReview =
-    reviewMarkdown ||
-    `### 🌟 Personal Reflection
-
-*Moving* (2023) is undoubtedly one of the most emotional, thrilling, and beautifully crafted K-Dramas ever produced. The way it weaves supernatural superhero abilities with deep family ties and sacrifices makes every episode hits right in the heart.
-
-> "A superhero isn't someone who flies high, but someone who knows how to hold on when falling."
-
-#### Highlights:
-1. **Pacing & Character Arcs**: Dividing the story into student years -> parent backstories -> final school showdown was brilliant.
-2. **Action Choreography**: Combat choreography for Ju-won and Frank felt raw and grounded.
-3. **Soundtrack & Atmosphere**: The emotional score elevated every key scene.`;
-
-  const [text, setText] = useState(defaultReview);
+  const [text, setText] = useState(reviewMarkdown);
   const [isEditing, setIsEditing] = useState(false);
   const [hideSpoilers, setHideSpoilers] = useState(true);
 
@@ -113,7 +100,7 @@ export function DossierReviewEditor({
             </button>
           </div>
         </div>
-      ) : (
+      ) : text ? (
         <div
           className={`p-4 rounded-xl border leading-relaxed text-sm whitespace-pre-line ${
             hideSpoilers ? "blur-none" : ""
@@ -125,6 +112,16 @@ export function DossierReviewEditor({
           }}
         >
           {text}
+        </div>
+      ) : (
+        <div
+          onClick={() => setIsEditing(true)}
+          className="p-8 rounded-xl border border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-colors opacity-70"
+          style={{ borderColor: isCyber ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)" }}
+        >
+          <FileText size={32} className="mb-2 opacity-40" style={{ color: themeConfig.primaryAccent }} />
+          <p className="text-xs font-mono font-bold uppercase">No personal review written yet</p>
+          <p className="text-[11px] opacity-50 mt-1">Click &apos;Edit Review&apos; to write your thoughts, highlights, and quotes</p>
         </div>
       )}
     </div>

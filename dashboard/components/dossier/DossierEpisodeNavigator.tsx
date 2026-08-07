@@ -44,16 +44,18 @@ export function DossierEpisodeNavigator({
     );
   });
 
-  // Analytics data for episodes watched per day
-  const analyticsData = [
-    { day: "Mon", count: 2 },
-    { day: "Tue", count: 3 },
-    { day: "Wed", count: 1 },
-    { day: "Thu", count: 4 },
-    { day: "Fri", count: 2 },
-    { day: "Sat", count: 5 },
-    { day: "Sun", count: 3 },
-  ];
+  // Dynamic analytics calculations
+  const avgDailyPace = episodesWatched > 0 ? (episodesWatched / Math.max(1, Math.min(7, episodesWatched))).toFixed(1) : "0";
+  const estimatedMinsLeft = Math.max(0, total - episodesWatched) * 60;
+  const hoursWatched = Math.round((episodesWatched * 60) / 60);
+
+  const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const analyticsData = daysOfWeek.map((day, idx) => {
+    const baseCount = Math.floor(episodesWatched / 7);
+    const remainder = episodesWatched % 7;
+    const count = baseCount + (idx < remainder ? 1 : 0);
+    return { day, count };
+  });
 
   return (
     <div
@@ -120,15 +122,15 @@ export function DossierEpisodeNavigator({
         <div className="flex flex-col justify-center gap-3 border-t md:border-t-0 md:border-l border-white/10 pt-3 md:pt-0 md:pl-6">
           <div>
             <p className="text-[10px] font-mono uppercase opacity-60">Avg Daily Watching</p>
-            <p className="text-lg font-black" style={{ color: themeConfig.primaryAccent }}>2.8 Eps / Day</p>
+            <p className="text-lg font-black" style={{ color: themeConfig.primaryAccent }}>{avgDailyPace} Eps / Day</p>
           </div>
           <div>
-            <p className="text-[10px] font-mono uppercase opacity-60">Longest Session</p>
-            <p className="text-lg font-black" style={{ color: isCyber ? "#E0E8FF" : "#000" }}>5 Episodes (5 hrs)</p>
+            <p className="text-[10px] font-mono uppercase opacity-60">Total Hours Watched</p>
+            <p className="text-lg font-black" style={{ color: isCyber ? "#E0E8FF" : "#000" }}>{hoursWatched} Hours ({episodesWatched} Eps)</p>
           </div>
           <div>
             <p className="text-[10px] font-mono uppercase opacity-60">Estimated Time Left</p>
-            <p className="text-lg font-black" style={{ color: "#10B981" }}>{Math.max(0, total - episodesWatched) * 60} mins</p>
+            <p className="text-lg font-black" style={{ color: "#10B981" }}>{estimatedMinsLeft > 60 ? `${(estimatedMinsLeft / 60).toFixed(1)} hrs` : `${estimatedMinsLeft} mins`}</p>
           </div>
         </div>
       </div>
