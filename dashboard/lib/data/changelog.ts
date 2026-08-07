@@ -13,6 +13,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v9.0.0",
+    date: "2026-08-07",
+    title: "Global Image Crop System V2 & Game Character Image Architecture",
+    badge: "MAJOR RELEASE",
+    type: "major",
+    summary: "Unified image positioning & crop modal across all uploaders, persistent crop metadata, full bleed splash art banner, disk fallback image persistence, and upgraded fullscreen gallery lightbox.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🖼️ Global Image Crop Engine: Single shared ImageCropModal with Zoom In/Out, Drag to Pan, Rotate 90°, Fit, Fill, Center, Reset, Touch Pinch/Drag, and Wheel Zoom.",
+          "💾 Persistent Crop Data: Saves zoom, x/y offsets, rotation, aspect ratio, and crop area into database metadata — restoring exact crops on refresh and re-edit.",
+          "✨ Full Bleed Splash Art Banner: Character profile hero banner now spans 100% width edge-to-edge without white gutters or gaps.",
+          "💽 Permanent Image Persistence: /api/upload upgraded with local disk storage (public/uploads/) and base64 fallbacks — uploaded card images persist permanently across refreshes.",
+          "🔍 Fullscreen Lightbox V2: Upgraded ImageLightboxModal with gallery multi-image navigation (Arrow keys + on-screen buttons), Download Image, and Open Original action buttons.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v8.0.0",
     date: "2026-08-07",
     title: "Unified Media Details Engine — Anime, Drama & Movies",

@@ -2,8 +2,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import Cropper from "react-easy-crop";
-import getCroppedImg from "@/utils/cropImage";
+import { ImageCropModal, CropData } from "@/components/ui/ImageCropModal";
+
+// In HofEditorModal:
+// Use ImageCropModal component instead of inline cropper block
+
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
@@ -105,20 +108,11 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
     reader.readAsDataURL(file);
   };
 
-  const onCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  };
-
-  const handleCropAndUpload = async () => {
-    if (!cropImageSrc || !croppedAreaPixels) return;
-
+  const handleCropComplete = async (croppedBlob: Blob) => {
     setIsUploading(true);
     try {
-      const croppedBlob = await getCroppedImg(cropImageSrc, croppedAreaPixels);
-      if (!croppedBlob) throw new Error("Crop failed");
-
       const formData = new FormData();
-      formData.append("file", croppedBlob, "cropped.jpg");
+      formData.append("file", croppedBlob, `hof-${Date.now()}.png`);
 
       const res = await fetch("/api/upload", {
         method: "POST",
@@ -128,7 +122,6 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       if (data.url) {
         setImageUrl(data.url);
         setImgError(false);
-        setCropImageSrc(null); // Return to main form
       } else {
         toastError("Upload failed: " + (data.error || "Unknown error"));
       }
@@ -137,6 +130,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       toastError("Error uploading image");
     } finally {
       setIsUploading(false);
+      setCropImageSrc(null);
     }
   };
 
@@ -210,62 +204,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                   </button>
                 </div>
 
-                {cropImageSrc ? (
-                  <div className="space-y-4">
-                    <div className="relative w-full h-80 bg-black rounded-lg overflow-hidden">
-                      <Cropper
-                        image={cropImageSrc}
-                        crop={crop}
-                        zoom={zoom}
-                        aspect={3 / 4} // Portrait aspect ratio standard for Hall of Fame
-                        onCropChange={setCrop}
-                        onZoomChange={setZoom}
-                        onCropComplete={onCropComplete}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2 px-2">
-                      <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
-                        Zoom
-                      </label>
-                      <input
-                        type="range"
-                        min={1}
-                        max={3}
-                        step={0.1}
-                        value={zoom}
-                        onChange={(e) => setZoom(Number(e.target.value))}
-                        className="w-full accent-[#00F5FF]"
-                      />
-                    </div>
-                    <div className="flex justify-end gap-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => { setCropImageSrc(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
-                        className="px-4 py-2 text-sm font-bold rounded-lg border-2 transition-colors"
-                        style={{
-                          borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB",
-                          color: isCyber ? "#94A3B8" : "#6B7280",
-                          backgroundColor: "transparent",
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleCropAndUpload}
-                        disabled={isUploading}
-                        className="px-5 py-2 text-sm font-black rounded-lg transition-transform active:scale-95 disabled:opacity-60"
-                        style={{
-                          backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
-                          color: isCyber ? "#050816" : "#fff",
-                        }}
-                      >
-                        {isUploading ? "Uploading..." : "Crop & Upload"}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSave} className="space-y-4">
+                <form onSubmit={handleSave} className="space-y-4">
 
                     {/* Image Preview + Option Toggles */}
                   <div className="flex flex-col gap-2">
@@ -621,7 +560,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                     <button
                       type="submit"
                       disabled={isSaving || isUploading}
-                      className="px-5 py-2 text-sm font-black rounded-lg transition-transform active:scale-95 disabled:opacity-60"
+                      className="px-5 py-2 text-sm font-black rounded-lg transition-transform active:scale-95 disabled:opacity-60 cursor-pointer"
                       style={{
                         backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
                         color: isCyber ? "#050816" : "#fff",
@@ -631,8 +570,16 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                     </button>
                   </div>
                 </form>
-              )}
             </div>
+
+            <ImageCropModal
+              isOpen={Boolean(cropImageSrc)}
+              imageSrc={cropImageSrc}
+              aspect={3 / 4}
+              title="Position & Crop Legend Photo"
+              onClose={() => setCropImageSrc(null)}
+              onCropComplete={handleCropComplete}
+            />
     </Modal>
   );
 }

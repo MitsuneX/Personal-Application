@@ -166,6 +166,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [lightboxTitle, setLightboxTitle] = useState("");
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   // Personal fields
   const [personalRating, setPersonalRating] = useState(0);
@@ -482,7 +483,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                     key={i}
                     whileHover={{ scale: 1.04 }}
                     transition={{ duration: 0.2 }}
-                    onClick={() => { setLightboxSrc(src); setLightboxTitle(label); }}
+                    onClick={() => { setLightboxSrc(src); setLightboxTitle(label); setLightboxIndex(i); }}
                     className={`relative aspect-[3/4] rounded-2xl overflow-hidden cursor-zoom-in border group ${
                       isCyber ? "border-white/10 bg-black/40" : "border-black bg-gray-100 shadow-[3px_3px_0_#000]"
                     }`}
@@ -766,14 +767,14 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
 
                 {/* ── Continuous Scroll Area (Splash Art + Sticky Tabs + Body) ── */}
                 <div className="flex-1 overflow-y-auto overscroll-contain relative custom-scrollbar">
-                  {/* ── Splash Art Hero Banner (Scrolls away naturally) ───── */}
-                  <div className="relative overflow-hidden w-full" style={{ height: "clamp(320px, 46vh, 420px)" }}>
+                  {/* ── Splash Art Hero Banner (Full Bleed Edge-to-Edge Header) ───── */}
+                  <div className="relative overflow-hidden w-full shrink-0" style={{ height: "clamp(320px, 46vh, 420px)" }}>
                     {/* Background Hero Image */}
                     {hasImg(splash) ? (
                       <motion.img
                         src={splash!}
                         alt={character.name}
-                        className="absolute inset-0 w-full h-full object-contain object-center"
+                        className="absolute inset-0 w-full h-full object-cover object-top"
                         initial={{ scale: 1.05 }}
                         animate={{ scale: 1 }}
                         transition={{ duration: 0.7, ease: "easeOut" }}
@@ -784,7 +785,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                       <img
                         src={(cardImg || avatar)!}
                         alt={character.name}
-                        className="absolute inset-0 w-full h-full object-contain object-center"
+                        className="absolute inset-0 w-full h-full object-cover object-top"
                         style={{ filter: "brightness(0.85)" }}
                       />
                     ) : (
@@ -1053,6 +1054,8 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
       <ImageLightboxModal
         isOpen={Boolean(lightboxSrc)}
         imageUrl={lightboxSrc || ""}
+        images={galleryImages.map(g => ({ src: g.src, label: g.label }))}
+        initialIndex={lightboxIndex}
         title={lightboxTitle}
         onClose={() => setLightboxSrc(null)}
       />

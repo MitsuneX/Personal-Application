@@ -2,16 +2,17 @@
 
 import React, { useRef, useState, useCallback } from "react";
 import { useTheme } from "@/lib/theme";
-import { ImageCropModal } from "@/components/ui/ImageCropModal";
+import { ImageCropModal, CropData } from "@/components/ui/ImageCropModal";
 
 interface CharacterImageUploaderProps {
   label: string;
   value?: string;
-  onChange: (dataUrl: string) => void;
+  onChange: (url: string, cropData?: CropData) => void;
   onClear?: () => void;
   aspect?: number; // 1 = square avatar, 16/9 = splash
   hint?: string;
   previewClass?: string;
+  cropData?: CropData;
 }
 
 export function CharacterImageUploader({
@@ -22,6 +23,7 @@ export function CharacterImageUploader({
   aspect = 1,
   hint,
   previewClass = "",
+  cropData,
 }: CharacterImageUploaderProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
@@ -29,6 +31,7 @@ export function CharacterImageUploader({
   const [isDragging, setIsDragging] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [isCropOpen, setIsCropOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const processFile = useCallback((file: File) => {
     if (!file.type.startsWith("image/")) return;
@@ -54,22 +57,51 @@ export function CharacterImageUploader({
     if (file) processFile(file);
   };
 
-  const handleCropComplete = (blob: Blob) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      onChange(dataUrl);
-    };
-    reader.readAsDataURL(blob);
+  const handleCropComplete = async (blob: Blob, newCropData: CropData) => {
     setIsCropOpen(false);
-    setCropSrc(null);
+    setIsUploading(true);
+    try {
+      // Create FormData and upload blob to permanent server storage
+      const formData = new FormData();
+      const filename = `crop-${Date.now()}.png`;
+      formData.append("file", blob, filename);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const json = await res.json();
+      if (json.success && json.url) {
+        onChange(json.url, newCropData);
+      } else {
+        // Fallback to data URL if upload response was missing URL
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target?.result as string;
+          onChange(dataUrl, newCropData);
+        };
+        reader.readAsDataURL(blob);
+      }
+    } catch (err) {
+      console.error("Upload error, using fallback data URL:", err);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        onChange(dataUrl, newCropData);
+      };
+      reader.readAsDataURL(blob);
+    } finally {
+      setIsUploading(false);
+      setCropSrc(null);
+    }
   };
 
   const accent = isCyber ? "#00F5FF" : "#000000";
   const hasImage = Boolean(value && (value.startsWith("http") || value.startsWith("data:") || value.startsWith("/")));
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1.5 select-none">
       <div className="flex items-center justify-between">
         <label
           className="text-xs font-mono font-bold uppercase tracking-wider"
@@ -81,7 +113,7 @@ export function CharacterImageUploader({
           <button
             type="button"
             onClick={onClear}
-            className="text-[10px] font-mono opacity-60 hover:opacity-100 text-red-400 transition-opacity"
+            className="text-[10px] font-mono opacity-60 hover:opacity-100 text-red-400 transition-opacity cursor-pointer"
           >
             ✕ Remove
           </button>
@@ -104,16 +136,21 @@ export function CharacterImageUploader({
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
       >
-        {hasImage ? (
+        {isUploading ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/60 text-cyan-400">
+            <span className="animate-spin text-xl">🌀</span>
+            <span className="text-[10px] font-mono font-bold">Uploading…</span>
+          </div>
+        ) : hasImage ? (
           <>
             <img
               src={value}
               alt={label}
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
-              <span className="text-white text-xs font-bold bg-black/60 px-2 py-1 rounded-lg">
-                ✏️ Replace
+            <div className="absolute inset-0 bg-black/0 hover:bg-black/50 transition-colors flex items-center justify-center gap-2 opacity-0 hover:opacity-100">
+              <span className="text-white text-xs font-bold bg-black/70 px-2.5 py-1 rounded-lg backdrop-blur">
+                ✏️ Replace / Recrop
               </span>
             </div>
           </>
@@ -151,7 +188,8 @@ export function CharacterImageUploader({
         isOpen={isCropOpen}
         imageSrc={cropSrc}
         aspect={aspect}
-        title={`Crop ${label}`}
+        title={`Position & Crop ${label}`}
+        initialCropData={cropData}
         onClose={() => { setIsCropOpen(false); setCropSrc(null); }}
         onCropComplete={handleCropComplete}
       />
@@ -170,21 +208,43 @@ export function GalleryUploader({ images, onChange }: GalleryUploaderProps) {
   const isCyber = theme === "cyber";
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFiles = (files: FileList) => {
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFiles = async (files: FileList) => {
+    setIsUploading(true);
     const newImages: string[] = [];
-    let processed = 0;
-    Array.from(files).forEach((file) => {
-      if (!file.type.startsWith("image/")) { processed++; return; }
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        newImages.push(e.target?.result as string);
-        processed++;
-        if (processed === files.length) {
-          onChange([...images, ...newImages]);
+
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith("image/")) continue;
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const json = await res.json();
+        if (json.success && json.url) {
+          newImages.push(json.url);
+        } else {
+          const reader = new FileReader();
+          await new Promise<void>((resolve) => {
+            reader.onload = (e) => {
+              newImages.push(e.target?.result as string);
+              resolve();
+            };
+            reader.readAsDataURL(file);
+          });
         }
-      };
-      reader.readAsDataURL(file);
-    });
+      } catch (err) {
+        console.error("Gallery upload error:", err);
+      }
+    }
+
+    if (newImages.length > 0) {
+      onChange([...images, ...newImages]);
+    }
+    setIsUploading(false);
   };
 
   const removeImage = (idx: number) => {

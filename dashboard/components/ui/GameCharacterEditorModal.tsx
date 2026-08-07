@@ -400,6 +400,11 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
   const [splashArt, setSplashArt] = useState("");
   const [gallery, setGallery] = useState<string[]>([]);
 
+  // ── Persistent Crop Metadata ──
+  const [cardImageCrop, setCardImageCrop] = useState<any>(null);
+  const [avatarCrop, setAvatarCrop] = useState<any>(null);
+  const [splashArtCrop, setSplashArtCrop] = useState<any>(null);
+
   // ── Reset on open ──
   useEffect(() => {
     if (!isOpen) return;
@@ -461,6 +466,11 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
       setAvatarUrl(characterToEdit.avatarUrl || "");
       setSplashArt(characterToEdit.splashArt || "");
       setGallery(characterToEdit.gallery || characterToEdit.stats?.gallery || []);
+      // Persistent Crop Data
+      const existingCrop = characterToEdit.stats?.cropData || {};
+      setCardImageCrop(existingCrop.cardImageCrop || null);
+      setAvatarCrop(existingCrop.avatarCrop || null);
+      setSplashArtCrop(existingCrop.splashArtCrop || null);
     } else {
       // Reset all
       setName(""); setOfficialName(""); setAlias(""); setNickname(""); setNativeName(""); setTitle("");
@@ -472,6 +482,7 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
       setVoiceJP(""); setVoiceCN(""); setVoiceKR(""); setVoiceEN("");
       setPersonality(""); setBiography(""); setOfficialDescription(""); setFavoriteQuote(""); setNotes("");
       setCardImage(""); setAvatarUrl(""); setSplashArt(""); setGallery([]);
+      setCardImageCrop(null); setAvatarCrop(null); setSplashArtCrop(null);
     }
   }, [characterToEdit, isOpen]);
 
@@ -620,6 +631,14 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
       avatarUrl: avatarUrl || undefined,
       splashArt: splashArt || undefined,
       gallery: gallery.length > 0 ? gallery : undefined,
+      stats: {
+        ...(characterToEdit?.stats || {}),
+        cropData: {
+          cardImageCrop,
+          avatarCrop,
+          splashArtCrop,
+        },
+      },
     };
 
     try {
@@ -858,8 +877,12 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
                 <CharacterImageUploader
                   label="Card Image (3:4)"
                   value={cardImage}
-                  onChange={setCardImage}
-                  onClear={() => setCardImage("")}
+                  cropData={cardImageCrop}
+                  onChange={(url, crop) => {
+                    setCardImage(url);
+                    if (crop) setCardImageCrop(crop);
+                  }}
+                  onClear={() => { setCardImage(""); setCardImageCrop(null); }}
                   aspect={3 / 4}
                   hint="Used ONLY on grid cards."
                   previewClass="h-40 w-full"
@@ -878,8 +901,12 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
                 <CharacterImageUploader
                   label="Avatar (1:1)"
                   value={avatarUrl}
-                  onChange={setAvatarUrl}
-                  onClear={() => setAvatarUrl("")}
+                  cropData={avatarCrop}
+                  onChange={(url, crop) => {
+                    setAvatarUrl(url);
+                    if (crop) setAvatarCrop(crop);
+                  }}
+                  onClear={() => { setAvatarUrl(""); setAvatarCrop(null); }}
                   aspect={1}
                   hint="Square icon ratio."
                   previewClass="h-40 w-40 mx-auto"
@@ -898,8 +925,12 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
                 <CharacterImageUploader
                   label="Splash Art (16:9)"
                   value={splashArt}
-                  onChange={setSplashArt}
-                  onClear={() => setSplashArt("")}
+                  cropData={splashArtCrop}
+                  onChange={(url, crop) => {
+                    setSplashArt(url);
+                    if (crop) setSplashArtCrop(crop);
+                  }}
+                  onClear={() => { setSplashArt(""); setSplashArtCrop(null); }}
                   aspect={16 / 9}
                   hint="Used ONLY for Profile hero banner."
                   previewClass="h-40 w-full"

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import fs from "fs";
+import path from "path";
 
 export const dynamic = "force-dynamic";
 
@@ -14,20 +16,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: "Supabase storage is not configured (missing env keys)." },
-        { status: 500 }
-      );
-    }
-
-    // Initialize Supabase Client with Service Role Key to bypass RLS
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        persistSession: false,
-      },
-    });
-
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
@@ -35,26 +23,55 @@ export async function POST(req: Request) {
     const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const fileName = `${Date.now()}-${safeName}`;
 
-    // Upload buffer to Supabase Storage 'uploads' bucket
-    const { error } = await supabase.storage
-      .from("uploads")
-      .upload(fileName, buffer, {
-        contentType: file.type,
-      });
+    // 1. Try Supabase Storage if configured
+    if (supabaseUrl && supabaseServiceKey) {
+      try {
+        const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+          auth: { persistSession: false },
+        });
 
-    if (error) {
-      console.error("Supabase Storage upload error:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+        const { error } = await supabase.storage
+          .from("uploads")
+          .upload(fileName, buffer, {
+            contentType: file.type,
+          });
+
+        if (!error) {
+          const { data: urlData } = supabase.storage
+            .from("uploads")
+            .getPublicUrl(fileName);
+          return NextResponse.json({ success: true, url: urlData.publicUrl });
+        }
+        console.warn("Supabase upload failed, falling back to local disk storage:", error);
+      } catch (sbErr) {
+        console.warn("Supabase client error, falling back to local disk storage:", sbErr);
+      }
     }
 
-    // Retrieve public URL
-    const { data: urlData } = supabase.storage
-      .from("uploads")
-      .getPublicUrl(fileName);
+    // 2. Local Disk Storage Fallback (public/uploads/)
+    try {
+      const uploadsDir = path.join(process.cwd(), "public", "uploads");
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
 
-    return NextResponse.json({ success: true, url: urlData.publicUrl });
+      const filePath = path.join(uploadsDir, fileName);
+      await fs.promises.writeFile(filePath, buffer);
+
+      const publicUrl = `/uploads/${fileName}`;
+      return NextResponse.json({ success: true, url: publicUrl });
+    } catch (fsErr: any) {
+      console.warn("Local disk write error:", fsErr);
+
+      // 3. In-memory data URL fallback for serverless read-only environments
+      const mimeType = file.type || "image/png";
+      const base64 = buffer.toString("base64");
+      const dataUrl = `data:${mimeType};base64,${base64}`;
+      return NextResponse.json({ success: true, url: dataUrl });
+    }
   } catch (error: any) {
     console.error("Upload API error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

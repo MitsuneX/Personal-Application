@@ -2,6 +2,31 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [9.0.0] - 2026-08-07
+
+### 🖼️ Global Image Crop System V2 & Image Persistence Architecture
+
+**Global Image Crop Engine & Positioning Controls**
+- Reusable `ImageCropModal` shared across all upload components (`CharacterImageUploader`, `GalleryUploader`, `HofEditorModal`, etc.).
+- Complete position & alignment toolbar: Zoom In/Out slider, Zoom +/- buttons, Fit, Fill, Center, Rotate Left/Right (90° steps), Reset position, Touch Pinch/Drag, Mouse Wheel Zoom, and Double-Click Reset.
+
+**Persistent Crop Data**
+- Saved `cropData` structure (`zoom`, `x`, `y`, `rotation`, `aspect`, `cropArea`) alongside image URLs in stats/metadata.
+- Refreshing the page or re-opening image editors restores the exact crop position and zoom level.
+
+**Full Bleed Splash Art Banner**
+- Fixed splash art container in `CharacterProfileModal` to be a true edge-to-edge full bleed header.
+- Eliminated all white side gutters and gaps by switching banner render mode to `object-cover object-top`.
+
+**Permanent Image Persistence Architecture**
+- Enhanced `/api/upload` endpoint with local disk storage fallback (`public/uploads/`) and in-memory WebP fallback when external CDN/Supabase keys are unconfigured.
+- Eliminated disappearing character card images after page refresh — all uploaded character images are stored permanently on server disk/DB.
+
+**Premium Fullscreen Image Viewer (Lightbox V2)**
+- Upgraded `ImageLightboxModal` with support for gallery image navigation (`images` array, Left/Right arrow key shortcuts, previous/next on-screen buttons).
+- Built-in "Save / Download Image" and "Open Original in New Tab" action buttons.
+- High-blur backdrop filter, spring-animated transitions, mouse wheel zoom, and drag-to-pan when scaled.
+
 ## [8.0.0] - 2026-08-07
 
 ### 🎬 Unified Media Details Engine V2
