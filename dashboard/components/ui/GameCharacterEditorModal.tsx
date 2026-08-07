@@ -65,6 +65,7 @@ function GameDropdown({
     open,
     onOpenChange: setOpen,
     placement: "bottom-start",
+    strategy: "fixed",
     whileElementsMounted: autoUpdate,
     middleware: [
       offset(6),
@@ -142,6 +143,8 @@ function GameDropdown({
                 ...floatingStyles,
                 zIndex: 9999,
                 visibility: isPositioned ? "visible" : "hidden",
+                display: "flex",
+                flexDirection: "column",
               }}
             >
               <motion.div
@@ -149,9 +152,10 @@ function GameDropdown({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.96 }}
                 transition={{ duration: 0.14 }}
-                className="rounded-xl border shadow-2xl overflow-hidden flex flex-col"
+                className="rounded-xl border shadow-2xl overflow-hidden flex flex-col flex-1 min-h-0"
                 style={{
-                  minWidth: "220px",
+                  width: "100%",
+                  maxHeight: "100%",
                   backgroundColor: isCyber ? "rgba(8,12,28,0.98)" : "#FFFFFF",
                   borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000000",
                   borderWidth: isCyber ? "1px" : "2px",
@@ -161,27 +165,27 @@ function GameDropdown({
                     : "6px 6px 0 #000000",
                 }}
               >
-              {/* Search */}
-              <div
-                className="p-2 border-b"
-                style={{ borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#E5E7EB" }}
-              >
-                <input
-                  ref={searchRef}
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search games…"
-                  className="w-full px-2 py-1.5 rounded-lg text-xs font-mono focus:outline-none"
-                  style={{
-                    backgroundColor: isCyber ? "rgba(255,255,255,0.06)" : "#F3F4F6",
-                    color: isCyber ? "#E0E8FF" : "#111827",
-                  }}
-                />
-              </div>
+                {/* Search */}
+                <div
+                  className="p-2 border-b shrink-0"
+                  style={{ borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#E5E7EB" }}
+                >
+                  <input
+                    ref={searchRef}
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search games…"
+                    className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono focus:outline-none"
+                    style={{
+                      backgroundColor: isCyber ? "rgba(255,255,255,0.06)" : "#F3F4F6",
+                      color: isCyber ? "#E0E8FF" : "#111827",
+                    }}
+                  />
+                </div>
 
-              {/* Options */}
-              <div className="overflow-y-auto flex-1 py-1">
+                {/* Options */}
+                <div className="overflow-y-auto flex-1 min-h-0 py-1 scrollbar-thin">
                 {/* Clear option */}
                 <button
                   type="button"
