@@ -6,7 +6,7 @@ export interface ChangelogEntry {
   type: "major" | "minor" | "patch";
   summary: string;
   categories: {
-    name: "New Features" | "Bug Fixes & Engine" | "UI & Aesthetics" | "PWA & Mobile";
+    name: "New Features" | "Bug Fixes & Engine" | "UI & Aesthetics" | "PWA & Mobile" | "Security & Authentication";
     items: string[];
   }[];
 }
