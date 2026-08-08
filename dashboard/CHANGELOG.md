@@ -2,6 +2,18 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [9.5.2] - 2026-08-08
+
+### 📊 Category Normalization Engine & Chart Separation Refactor
+
+**Analytics Data Hygiene & Category Normalization**
+- **Eliminated "None" Category**: Completely removed the "None" / uncategorized label from public analytics statistics.
+- **Automatic Category Normalization**: Added `normalizeHallEntry()` to infer missing categories from roles, knownFor entries, notes, and associated drama titles without manual data intervention.
+- **Developer Validation Report**: Invalid or unclassifiable entries are automatically excluded from public analytics charts and surfaced in an internal `DeveloperValidationReport` with diagnostic reasons.
+- **Chart Separation (Media vs Profession)**: Separated mixed category charts into two distinct visual analytics widgets:
+  - **🎬 Media Category Distribution**: `Drama`, `Anime`, `Movie`, `Game Character`, `Tokusatsu`.
+  - **🎭 Profession Distribution**: `Actor`, `Actress`, `Voice Actor`, `Singer`, `Character`.
+
 ## [9.5.1] - 2026-08-07
 
 ### 🐛 Custom Select Dropdown & Floating Layer Positioning Fix

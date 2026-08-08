@@ -496,7 +496,7 @@ export interface DramaEntry extends CinematicDossierFields {
 export interface HallOfFameEntry {
   id: string;
   name: string;
-  type: "actor" | "actress" | "anime" | "singer" | "tokusatsu" | "none";
+  type: "actor" | "actress" | "anime" | "singer" | "tokusatsu";
   status: MediaStatus;
   knownFor: string[];
   nationality?: string;

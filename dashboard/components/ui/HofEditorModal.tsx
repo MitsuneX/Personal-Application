@@ -27,7 +27,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   const { error: toastError } = useToast();
 
   const [name, setName] = useState("");
-  const [type, setType] = useState<"actor" | "actress" | "anime" | "singer" | "tokusatsu" | "none">("actress");
+  const [type, setType] = useState<"actor" | "actress" | "anime" | "singer" | "tokusatsu">("actress");
   const [status, setStatus] = useState<MediaStatus>("GOAT Status");
   const [knownFor, setKnownFor] = useState("");
   const [nationality, setNationality] = useState("");
@@ -152,9 +152,9 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
         note: note.trim() || undefined,
         rank: rank === null ? null : Number(rank),
         isChampion,
-        tokusatsuFranchise: (type === "tokusatsu" || type === "none") ? (tokusatsuFranchise || null) : null,
-        tokusatsuShow: (type === "tokusatsu" || type === "none") ? (tokusatsuShow.trim() || null) : null,
-        associatedDramas: (type === "tokusatsu" || type === "none") ? associatedDramas.split(",").map(d => d.trim()).filter(Boolean) : [],
+        tokusatsuFranchise: type === "tokusatsu" ? (tokusatsuFranchise || null) : null,
+        tokusatsuShow: type === "tokusatsu" ? (tokusatsuShow.trim() || null) : null,
+        associatedDramas: type === "tokusatsu" ? associatedDramas.split(",").map(d => d.trim()).filter(Boolean) : [],
       });
       onClose();
     } catch (err) {
@@ -460,7 +460,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                   </div>
 
                   {/* Tokusatsu Ecosystem (Shown only for Tokusatsu / none) */}
-                  {(type === "tokusatsu" || type === "none" || tokusatsuFranchise) && (
+                  {(type === "tokusatsu" || Boolean(tokusatsuFranchise)) && (
                     <div className="border border-adaptive-unique p-3 rounded-xl space-y-3 bg-black/5 dark:bg-white/5">
                       <p className="text-[10px] font-black uppercase tracking-widest text-[#00F5FF]">📺 Tokusatsu Ecosystem</p>
                       

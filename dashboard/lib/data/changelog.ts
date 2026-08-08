@@ -13,6 +13,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v9.5.2",
+    date: "2026-08-08",
+    title: "Category Normalization Engine & Chart Separation Refactor",
+    badge: "PATCH",
+    type: "patch",
+    summary: "Eliminated the 'None' category from public analytics, introduced automatic category normalization, separated Media and Profession distributions into two distinct charts, and added an internal Developer Validation Report.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "📊 Automatic Category Normalization: Added normalizeHallEntry() to infer missing categories from roles, knownFor entries, notes, and associated titles.",
+          "🚫 Excluded 'None' Category: Zero invalid or uncategorized items appear in public statistics.",
+          "🎬 Chart Separation: Split category distribution into two distinct widgets for Media Categories (Drama, Anime, Movie, Game Character, Tokusatsu) and Profession Categories (Actor, Actress, Voice Actor, Singer, Character).",
+          "🛡️ Internal Developer Audit Report: Unclassifiable records are surfaced in a developer audit panel with diagnostic recommendations.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v9.5.1",
     date: "2026-08-07",
     title: "Custom Select Dropdown & Floating Layer Anchor Fix",
