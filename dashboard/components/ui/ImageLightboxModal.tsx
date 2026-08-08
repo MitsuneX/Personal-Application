@@ -30,6 +30,9 @@ export function ImageLightboxModal({
   const isCyber = theme === "cyber";
 
   // Build unified list of images
+  const isVideo = (src: string) =>
+    src.endsWith(".mp4") || src.endsWith(".webm") || src.startsWith("data:video/");
+
   const normalizedImages: LightboxImageItem[] = React.useMemo(() => {
     if (images && images.length > 0) {
       return images.map((item, i) =>
@@ -299,12 +302,12 @@ export function ImageLightboxModal({
                 </motion.button>
               )}
 
-              {/* Image Transform Wrapper */}
+              {/* Image / Video Transform Wrapper */}
               <motion.div
-                drag={scale > 1}
+                drag={!isVideo(currentSrc) && scale > 1}
                 dragConstraints={viewportRef}
                 dragElastic={0.08}
-                onDoubleClick={handleDoubleTap}
+                onDoubleClick={!isVideo(currentSrc) ? handleDoubleTap : undefined}
                 onClick={(e) => e.stopPropagation()}
                 className="relative max-w-full max-h-full flex items-center justify-center"
                 style={{
@@ -312,22 +315,42 @@ export function ImageLightboxModal({
                   y: dragPosition.y,
                 }}
               >
-                <motion.img
-                  key={currentSrc}
-                  src={currentSrc}
-                  alt={currentLabel}
-                  initial={{ opacity: 0.8, scale: 0.95 }}
-                  animate={{ opacity: 1, scale }}
-                  transition={{ type: "spring", stiffness: 280, damping: 25 }}
-                  className="max-h-[68vh] sm:max-h-[74vh] max-w-[85vw] md:max-w-[75vw] w-auto h-auto object-contain rounded-2xl border shadow-2xl pointer-events-auto select-none"
-                  style={{
-                    borderColor: isCyber ? "rgba(0, 245, 255, 0.45)" : "#000000",
-                    borderWidth: isCyber ? "1.5px" : "3px",
-                    boxShadow: isCyber
-                      ? "0 0 35px rgba(0, 245, 255, 0.25), 0 0 70px rgba(191, 95, 255, 0.15)"
-                      : "6px 6px 0px #000000",
-                  }}
-                />
+                {isVideo(currentSrc) ? (
+                  <video
+                    key={currentSrc}
+                    src={currentSrc}
+                    autoPlay
+                    loop
+                    muted={false}
+                    playsInline
+                    controls
+                    className="max-h-[68vh] sm:max-h-[74vh] max-w-[85vw] md:max-w-[75vw] w-auto h-auto rounded-2xl border shadow-2xl pointer-events-auto"
+                    style={{
+                      borderColor: isCyber ? "rgba(0, 245, 255, 0.45)" : "#000000",
+                      borderWidth: isCyber ? "1.5px" : "3px",
+                      boxShadow: isCyber
+                        ? "0 0 35px rgba(0, 245, 255, 0.25), 0 0 70px rgba(191, 95, 255, 0.15)"
+                        : "6px 6px 0px #000000",
+                    }}
+                  />
+                ) : (
+                  <motion.img
+                    key={currentSrc}
+                    src={currentSrc}
+                    alt={currentLabel}
+                    initial={{ opacity: 0.8, scale: 0.95 }}
+                    animate={{ opacity: 1, scale }}
+                    transition={{ type: "spring", stiffness: 280, damping: 25 }}
+                    className="max-h-[68vh] sm:max-h-[74vh] max-w-[85vw] md:max-w-[75vw] w-auto h-auto object-contain rounded-2xl border shadow-2xl pointer-events-auto select-none"
+                    style={{
+                      borderColor: isCyber ? "rgba(0, 245, 255, 0.45)" : "#000000",
+                      borderWidth: isCyber ? "1.5px" : "3px",
+                      boxShadow: isCyber
+                        ? "0 0 35px rgba(0, 245, 255, 0.25), 0 0 70px rgba(191, 95, 255, 0.15)"
+                        : "6px 6px 0px #000000",
+                    }}
+                  />
+                )}
               </motion.div>
 
               {/* Next Image Button */}
@@ -353,17 +376,18 @@ export function ImageLightboxModal({
 
             {/* ── Viewer Footer Control Bar ── */}
             <div className="w-full max-w-6xl mx-auto flex items-center justify-center pointer-events-auto shrink-0 z-50">
-              <div
-                className="p-1.5 sm:p-2 rounded-2xl flex items-center gap-2 border shadow-lg backdrop-blur-md"
-                style={{
-                  backgroundColor: isCyber ? "rgba(10, 15, 30, 0.88)" : "#FFFFFF",
-                  borderColor: isCyber ? "rgba(0, 245, 255, 0.35)" : "#000000",
-                  borderWidth: isCyber ? "1px" : "2.5px",
-                  boxShadow: isCyber
-                    ? "0 0 20px rgba(0, 245, 255, 0.25)"
-                    : "4px 4px 0px #000000",
-                }}
-              >
+              {!isVideo(currentSrc) && (
+                <div
+                  className="p-1.5 sm:p-2 rounded-2xl flex items-center gap-2 border shadow-lg backdrop-blur-md"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(10, 15, 30, 0.88)" : "#FFFFFF",
+                    borderColor: isCyber ? "rgba(0, 245, 255, 0.35)" : "#000000",
+                    borderWidth: isCyber ? "1px" : "2.5px",
+                    boxShadow: isCyber
+                      ? "0 0 20px rgba(0, 245, 255, 0.25)"
+                      : "4px 4px 0px #000000",
+                  }}
+                >
                 {/* Zoom Out */}
                 <motion.button
                   whileHover={{ scale: 1.08 }}
@@ -425,7 +449,8 @@ export function ImageLightboxModal({
                     ✋ Drag to Pan
                   </span>
                 )}
-              </div>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>

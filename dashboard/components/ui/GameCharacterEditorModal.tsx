@@ -893,13 +893,14 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
                   label="Card Image (3:4)"
                   value={cardImage}
                   cropData={cardImageCrop}
+                  allowVideo={true}
                   onChange={(url, crop) => {
                     setCardImage(url);
                     if (crop) setCardImageCrop(crop);
                   }}
                   onClear={() => { setCardImage(""); setCardImageCrop(null); }}
                   aspect={3 / 4}
-                  hint="Used ONLY on grid cards."
+                  hint="Used ONLY on grid cards. Supports MP4."
                   previewClass="h-40 w-full"
                 />
                 <input

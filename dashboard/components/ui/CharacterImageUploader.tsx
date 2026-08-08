@@ -13,6 +13,7 @@ interface CharacterImageUploaderProps {
   hint?: string;
   previewClass?: string;
   cropData?: CropData;
+  allowVideo?: boolean;
 }
 
 export function CharacterImageUploader({
@@ -24,6 +25,7 @@ export function CharacterImageUploader({
   hint,
   previewClass = "",
   cropData,
+  allowVideo = false,
 }: CharacterImageUploaderProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
@@ -33,7 +35,29 @@ export function CharacterImageUploader({
   const [isCropOpen, setIsCropOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
+  const handleVideoUpload = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file, file.name);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const json = await res.json();
+      if (json.success && json.url) {
+        onChange(json.url);
+      }
+    } catch (err) {
+      console.error("Video upload error:", err);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const processFile = useCallback((file: File) => {
+    if (file.type.startsWith("video/")) {
+      if (!allowVideo) return;
+      handleVideoUpload(file);
+      return;
+    }
     if (!file.type.startsWith("image/")) return;
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -42,7 +66,7 @@ export function CharacterImageUploader({
       setIsCropOpen(true);
     };
     reader.readAsDataURL(file);
-  }, []);
+  }, [allowVideo, onChange]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -143,11 +167,22 @@ export function CharacterImageUploader({
           </div>
         ) : hasImage ? (
           <>
-            <img
-              src={value}
-              alt={label}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
+            {value?.endsWith(".mp4") || value?.endsWith(".webm") || value?.startsWith("data:video/") ? (
+              <video
+                src={value}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <img
+                src={value}
+                alt={label}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            )}
             <div className="absolute inset-0 bg-black/0 hover:bg-black/50 transition-colors flex items-center justify-center gap-2 opacity-0 hover:opacity-100">
               <span className="text-white text-xs font-bold bg-black/70 px-2.5 py-1 rounded-lg backdrop-blur">
                 ✏️ Replace / Recrop
@@ -179,7 +214,7 @@ export function CharacterImageUploader({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept={allowVideo ? "image/*,video/mp4,video/webm" : "image/*"}
         className="hidden"
         onChange={handleFileChange}
       />

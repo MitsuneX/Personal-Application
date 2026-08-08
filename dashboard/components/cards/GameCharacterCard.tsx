@@ -245,12 +245,24 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
         transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
       >
         {hasCardImg ? (
-          <img
-            src={cardImg!}
-            alt={character.name}
-            className="w-full h-full object-cover object-top"
-            draggable={false}
-          />
+          cardImg!.endsWith(".mp4") || cardImg!.endsWith(".webm") || cardImg!.startsWith("data:video/") ? (
+            <video
+              src={cardImg!}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover object-top"
+              draggable={false}
+            />
+          ) : (
+            <img
+              src={cardImg!}
+              alt={character.name}
+              className="w-full h-full object-cover object-top"
+              draggable={false}
+            />
+          )
         ) : hasAvatar ? (
           <img
             src={avatar!}

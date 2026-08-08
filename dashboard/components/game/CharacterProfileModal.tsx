@@ -483,20 +483,31 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
                 {galleryImages.map(({ src, label }, i) => (
-                  <motion.div
-                    key={i}
-                    whileHover={{ scale: 1.04 }}
-                    transition={{ duration: 0.2 }}
-                    onClick={() => { setLightboxSrc(src); setLightboxTitle(label); setLightboxIndex(i); }}
-                    className={`relative aspect-[3/4] rounded-2xl overflow-hidden cursor-zoom-in border group ${
-                      isCyber ? "border-white/10 bg-black/40" : "border-black bg-gray-100 shadow-[3px_3px_0_#000]"
-                    }`}
-                  >
-                    <img
-                      src={src}
-                      alt={label}
-                      className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
-                    />
+                <motion.div
+                key={i}
+                whileHover={{ scale: 1.04 }}
+                transition={{ duration: 0.2 }}
+                onClick={() => { setLightboxSrc(src); setLightboxTitle(label); setLightboxIndex(i); }}
+                className={`relative aspect-[3/4] rounded-2xl overflow-hidden cursor-zoom-in border group ${
+                  isCyber ? "border-white/10 bg-black/40" : "border-black bg-gray-100 shadow-[3px_3px_0_#000]"
+                }`}
+              >
+                {src.endsWith(".mp4") || src.endsWith(".webm") || src.startsWith("data:video/") ? (
+                  <video
+                    src={src}
+                    muted
+                    loop
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                  />
+                ) : (
+                  <img
+                    src={src}
+                    alt={label}
+                    className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                  />
+                )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
                       <span className="text-[10px] font-mono text-white font-bold">{label}</span>
                     </div>

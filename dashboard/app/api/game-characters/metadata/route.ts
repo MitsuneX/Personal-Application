@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import masterDb from "@/lib/data/game_characters_master.json";
 
 export const dynamic = "force-dynamic";
 
@@ -116,6 +117,41 @@ function mapToCharacterFields(infobox: Record<string, string>, gameName: string)
   };
 }
 
+function findLocalCharacter(name: string, game?: string | null) {
+  if (!name) return null;
+  const targetName = name.trim().toLowerCase();
+  const targetGame = game?.trim().toLowerCase();
+
+  for (const group of (masterDb as any[])) {
+    if (targetGame) {
+      const gTitle = (group.gameTitle || "").toLowerCase();
+      if (!gTitle.includes(targetGame) && !targetGame.includes(gTitle)) {
+        continue;
+      }
+    }
+    const flatChars = Array.isArray(group.characters) ? group.characters.flat(Infinity) : [];
+    const match = flatChars.find(
+      (c: any) => c?.name && (c.name.toLowerCase() === targetName || c.name.toLowerCase().includes(targetName))
+    );
+    if (match) {
+      return { match, gameTitle: group.gameTitle };
+    }
+  }
+
+  // Global fallback search across all games
+  for (const group of (masterDb as any[])) {
+    const flatChars = Array.isArray(group.characters) ? group.characters.flat(Infinity) : [];
+    const match = flatChars.find(
+      (c: any) => c?.name && c.name.toLowerCase() === targetName
+    );
+    if (match) {
+      return { match, gameTitle: group.gameTitle };
+    }
+  }
+
+  return null;
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const characterName = searchParams.get("name");
@@ -123,6 +159,43 @@ export async function GET(req: NextRequest) {
 
   if (!characterName) {
     return NextResponse.json({ error: "Character name is required" }, { status: 400 });
+  }
+
+  // 1. Try local JSON Master database first
+  const localResult = findLocalCharacter(characterName, gameName);
+  if (localResult) {
+    const c = localResult.match as any;
+    const stats = (c.stats || {}) as any;
+    const va = (stats.voiceActors || {}) as any;
+
+    const data: Record<string, any> = {
+      title: c.title,
+      role: c.role,
+      category: c.category,
+      element: c.element,
+      weapon: c.weapon,
+      rarity: c.rarity,
+      nation: c.nation,
+      birthday: c.birthday,
+      accentColor: c.accentColor,
+      species: stats.species,
+      gender: stats.gender,
+      height: stats.height,
+      weight: stats.weight,
+      path: c.path,
+      faction: stats.affiliation || c.nation,
+      officialDescription: c.notes || stats.personality,
+      voiceActors: Object.keys(va).length > 0 ? va : undefined,
+    };
+
+    Object.keys(data).forEach((k) => data[k] === undefined && delete data[k]);
+
+    return NextResponse.json({
+      success: true,
+      metadataStatus: "complete",
+      wikiSource: `Master JSON File (${localResult.gameTitle})`,
+      data,
+    });
   }
 
   const wikiBase = gameName ? getGameWikiBase(gameName) : null;
