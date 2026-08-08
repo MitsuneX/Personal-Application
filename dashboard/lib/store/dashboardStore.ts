@@ -740,6 +740,7 @@ interface DashboardState {
   isLoading: boolean;
   isHydrated: boolean;
   isGuest: boolean;
+  fetchError: string | null;
 
   resetUserStore: () => void;
   fetchDashboard: () => Promise<void>;
@@ -1029,12 +1030,14 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   requestSequenceId: 0,
   isLoading: false,
   isHydrated: false,
+  fetchError: null,
 
   resetUserStore: () => {
     set((s) => ({
       requestSequenceId: s.requestSequenceId + 1,
       isHydrated: false,
       isLoading: false,
+      fetchError: null,
       profile: initialProfile,
       games: [],
       dossierCharacters: initialDossierCharacters,
@@ -1075,7 +1078,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   fetchDashboard: async () => {
     if (get().isLoading) return;
     const seq = get().requestSequenceId + 1;
-    set({ isLoading: true, requestSequenceId: seq });
+    set({ isLoading: true, fetchError: null, requestSequenceId: seq });
     try {
       const res = await fetch("/api/dashboard?t=" + Date.now(), { cache: "no-store" });
       const data = await res.json();
@@ -1149,6 +1152,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
             createdAt: h.createdAt ?? new Date().toISOString(),
           })),
           isHydrated: true,
+          fetchError: null,
         });
 
         // Fetch liked character IDs for authenticated user
@@ -1162,9 +1166,12 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
             })
             .catch(() => {});
         }
+      } else if (data && data.error) {
+        set({ fetchError: data.error });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to fetch dashboard:", err);
+      set({ fetchError: err?.message || "Failed to connect to workspace server." });
     } finally {
       if (get().requestSequenceId === seq) {
         set({ isLoading: false });

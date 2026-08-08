@@ -36,6 +36,9 @@ export default function WelcomePage() {
   };
 
   const handleEnterDashboard = () => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("mobile_intro_passed", "true");
+    }
     router.push("/");
   };
 

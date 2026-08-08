@@ -350,7 +350,14 @@ function LoginPageInner() {
 
             <div className="p-8">
               {/* Header */}
-              <div className="mb-8 text-center">
+              <div className="mb-8 flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-2xl overflow-hidden border shadow-xl mb-3 relative">
+                  <img
+                    src="/branding/master-logo.jpg"
+                    alt="NX Nexus Xenon Master Application Logo"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
                 <div
                   className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4"
                   style={{

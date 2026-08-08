@@ -384,6 +384,15 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
             <span className="text-base">🔍</span>
           </motion.button>
 
+          {/* Mobile Theme Logo Branding */}
+          <div className="md:hidden w-8 h-8 rounded-lg border overflow-hidden shrink-0 shadow">
+            <img
+              src={isCyber ? "/branding/cyber-logo.jpg" : "/branding/brutal-logo.jpg"}
+              alt={isCyber ? "N Nexus Logo" : "X Xenon Logo"}
+              className="w-full h-full object-cover"
+            />
+          </div>
+
           {/* Title Banner */}
           <motion.div
             key={pathname}

@@ -13,6 +13,8 @@ import { FloatingHeartEngine } from "@/components/ui/FloatingHeartEngine";
 import { GlobalMusicPlayer } from "@/components/ui/GlobalMusicPlayer";
 import { GuestBanner } from "@/components/ui/GuestBanner";
 import { SessionResumePrompt } from "@/components/ui/SessionResumePrompt";
+import { GlobalWorkspaceLoader } from "@/components/ui/GlobalWorkspaceLoader";
+import { MobileIntroHandler } from "@/components/ui/MobileIntroHandler";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -63,6 +65,8 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <>
+      <MobileIntroHandler />
+      <GlobalWorkspaceLoader />
       <FloatingHeartEngine />
       <TopLoader />
       <GlobalMusicPlayer />

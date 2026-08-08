@@ -2,6 +2,20 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [11.1.0] - 2026-08-08
+
+### 🛡️ Official Logo System, Mobile Intro Startup Flow & Workspace Loading Gate
+
+**Official Application Branding & Logo System**
+- **Master Application Identity Logo (Picture 1: NX Nexus Xenon)**: Integrated primary application identity asset (`/branding/master-logo.jpg`) into Login page, Auth screens, Landing page header, and PWA branding.
+- **Cyberpunk Theme Logo (Picture 2: N Nexus)**: Integrated theme-specific logo (`/branding/cyber-logo.jpg`) into Sidebar, mobile Header bar, and Cyberpunk workspace loading screen.
+- **Neo-Brutalism Theme Logo (Picture 3: X Xenon)**: Integrated theme-specific logo (`/branding/brutal-logo.jpg`) into Sidebar, mobile Header bar, and Neo-Brutalism workspace loading screen.
+
+**Mobile Intro Startup & Workspace Loading Gate**
+- **Mobile Intro Startup Flow (`MobileIntroHandler.tsx`)**: Directs mobile viewport access (`< 768px`) or standalone PWA launches on root `/` to the cinematic `/welcome` intro route. Preserves authenticated `Continue as [Name] →` shortcut without auth redirect loops.
+- **Global Workspace Data Loading Gate (`GlobalWorkspaceLoader.tsx`)**: Full-viewport theme-aware loading screen covering the screen while authenticated workspace data is fetched. Completely prevents seed data or old cached user data from flashing on screen.
+- **Cross-Account Data Protection**: `resetUserStore()` automatically resets `isHydrated: false` and `fetchError: null` upon logout or account switch, ensuring previous account data is invalidated immediately.
+
 ## [11.0.1] - 2026-08-08
 
 ### 🛠️ Prisma Client Proxy Delegation & React Script Hydration Fix

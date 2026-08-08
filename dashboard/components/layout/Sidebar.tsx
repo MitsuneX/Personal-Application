@@ -123,16 +123,20 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
           style={{ borderBottom: isCyber ? "1px solid rgba(0,245,255,0.12)" : "2px solid rgba(0,0,0,0.1)" }}
         >
           <motion.div
-            className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-base shrink-0"
+            className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-base shrink-0 border overflow-hidden relative"
             animate={{
-              backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
-              color: isCyber ? "#050816" : "#fff",
-              boxShadow: isCyber ? "0 0 12px rgba(0,245,255,0.7)" : "2px 2px 0px 0px rgba(0,0,0,1)",
+              borderColor: isCyber ? "rgba(0,245,255,0.5)" : "#000000",
+              borderWidth: isCyber ? "1px" : "2px",
+              boxShadow: isCyber ? "0 0 12px rgba(0,245,255,0.4)" : "2px 2px 0px 0px #000000",
               borderRadius: isCyber ? "8px" : "4px",
             }}
             transition={{ duration: 0.5 }}
           >
-            {isCyber ? "◈" : "✦"}
+            <img
+              src={isCyber ? "/branding/cyber-logo.jpg" : "/branding/brutal-logo.jpg"}
+              alt={isCyber ? "N Nexus (Cyberpunk)" : "X Xenon (Neo-Brutalism)"}
+              className="w-full h-full object-cover"
+            />
           </motion.div>
 
           {!collapsed && (

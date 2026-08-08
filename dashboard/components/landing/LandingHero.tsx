@@ -68,18 +68,37 @@ export function LandingHero({
       <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12">
         {/* Text & Identity Section */}
         <div className="flex-1 text-center md:text-left space-y-4 max-w-2xl">
-          {/* Badge */}
-          <div
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-widest uppercase border backdrop-blur-md"
-            style={{
-              backgroundColor: isCyber ? "rgba(0,245,255,0.08)" : "#FFE600",
-              borderColor: isCyber ? `${accentColor}40` : "#000000",
-              color: isCyber ? accentColor : "#000000",
-              boxShadow: isCyber ? `0 0 15px ${accentColor}20` : "2px 2px 0 #000000",
-            }}
-          >
-            <Sparkles size={13} className="animate-spin-slow" />
-            <span>PERSONAL DIGITAL SANCTUARY</span>
+          {/* Official Master Application Logo */}
+          <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="w-12 h-12 rounded-2xl overflow-hidden border shadow-lg relative shrink-0"
+              style={{
+                borderColor: isCyber ? accentColor : "#000000",
+                borderWidth: isCyber ? "1.5px" : "2.5px",
+                boxShadow: isCyber ? `0 0 20px ${accentColor}40` : "3px 3px 0 #000000",
+              }}
+            >
+              <img
+                src="/branding/master-logo.jpg"
+                alt="NX Nexus Xenon Master Logo"
+                className="w-full h-full object-cover"
+              />
+            </motion.div>
+
+            {/* Badge */}
+            <div
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold tracking-widest uppercase border backdrop-blur-md"
+              style={{
+                backgroundColor: isCyber ? "rgba(0,245,255,0.08)" : "#FFE600",
+                borderColor: isCyber ? `${accentColor}40` : "#000000",
+                color: isCyber ? accentColor : "#000000",
+                boxShadow: isCyber ? `0 0 15px ${accentColor}20` : "2px 2px 0 #000000",
+              }}
+            >
+              <Sparkles size={13} className="animate-spin-slow" />
+              <span>PERSONAL DIGITAL SANCTUARY</span>
+            </div>
           </div>
 
           {/* World Name Title */}

@@ -13,6 +13,32 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v11.1.0",
+    date: "2026-08-08",
+    title: "Official Logo System, Mobile Intro Startup Flow & Workspace Loading Gate",
+    badge: "FEATURE",
+    type: "minor",
+    summary: "Integrated official master and theme-specific logo assets across the application, added direct mobile app startup to cinematic /welcome intro flow, and introduced a theme-aware Global Workspace Data Loading Gate eliminating seed data flashing and ensuring cross-account data isolation.",
+    categories: [
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🖼️ Master Application Logo (Picture 1 - NX Nexus Xenon): Integrated primary application identity asset into Login page, Auth screens, PWA branding, and Landing Page header.",
+          "⚡ Cyberpunk Theme Logo (Picture 2 - N Nexus): Integrated theme-specific logo into Sidebar, mobile Header bar, and Cyberpunk loading screen.",
+          "🎨 Neo-Brutalism Theme Logo (Picture 3 - X Xenon): Integrated theme-specific logo into Sidebar, mobile Header bar, and Neo-Brutalism loading screen.",
+        ],
+      },
+      {
+        name: "PWA & Mobile",
+        items: [
+          "📱 Mobile Intro Startup Flow: Directs mobile devices and standalone PWA launches to cinematic /welcome intro route with authenticated 'Continue as [Name] →' shortcut.",
+          "🛡️ Global Workspace Data Loading Gate (GlobalWorkspaceLoader.tsx): Full-viewport theme-aware loading gate covering the screen until authenticated workspace data is fully populated, completely eliminating seed data flashing.",
+          "🔒 Cross-Account Data Isolation: Automatically invalidates and clears store data upon logout or user identity change, preventing previous account data from flashing.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v11.0.1",
     date: "2026-08-08",
     title: "Prisma Client Proxy Delegation & React Script Hydration Fix",
