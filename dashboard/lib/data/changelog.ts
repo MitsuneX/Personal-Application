@@ -13,6 +13,65 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v11.0.1",
+    date: "2026-08-08",
+    title: "Prisma Client Proxy Delegation & React Script Hydration Fix",
+    badge: "PATCH",
+    type: "patch",
+    summary: "Fixed Prisma Client dev-server singleton caching by implementing a dynamic ES Proxy delegation wrapper in lib/prisma.ts, and eliminated React script tag hydration warnings by moving Next.js <Script> tags outside of <head> in RootLayout.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🛠️ Dynamic Prisma Proxy Delegation: Wrapped exported prisma instance in an ES Proxy in lib/prisma.ts, ensuring hot-reloaded API routes dynamically access updated PrismaClient models (profile fields & userAccount delegate).",
+          "💧 React Script Hydration Hygiene: Moved ThemeInitializer script from inside <head> to root layout level in app/layout.tsx, eliminating React script tag rendering warnings.",
+          "🔒 Payload Sanitization: Verified full server-side payload mapping for landing customization fields in app/api/profile/route.ts.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v11.0.0",
+    date: "2026-08-08",
+    title: "Cinematic Public Landing Page & Configurable World Branding Platform",
+    badge: "MAJOR",
+    type: "major",
+    summary: "Introduced a public-facing cinematic landing page (/welcome) and configurable personal world branding system, allowing any account to customize world identity, privacy toggles, landing modes, hero intensity styles, and live draft previews.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🌐 Cinematic Landing Page (/welcome): Created a public intro route featuring a hero banner, non-SaaS digital sanctuary summary bar, feature module allowlist showcase, and optional about section.",
+          "🏷️ Configurable Personal World Identity: Dynamic fallback naming (dashboardName ?? `${displayName}'s World`), resolving to 'Mitsu's World', 'Alex's World', or custom names like 'Elysium'.",
+          "🔒 Opt-In Data Privacy Controls: Enforced privacy-first defaults (showPublicStats, showAboutSection, showSocialLinks all OFF by default) keeping private statistics and profile details safe.",
+          "👁️ Live Draft Preview Modal: Integrated a real-time preview modal in Profile Customization enabling owners to test unsaved draft landing page settings in Cyberpunk and Neo-Brutalism modes.",
+          "⚡ Authenticated Session Shortcut: Logged-in users see a 'Continue as [Name] →' CTA button routing directly to the dashboard without re-authenticating.",
+          "🎨 Hero Intensity Styles: Configurable hero presentation modes ('cinematic', 'minimal', 'ambient', 'custom').",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v10.0.0",
+    date: "2026-08-08",
+    title: "Comprehensive Application-Wide Mobile & UX Overhaul",
+    badge: "MAJOR",
+    type: "major",
+    summary: "Executed a comprehensive mobile responsiveness pass across all dashboard routes, modals, cards, music player, context menus, and forms while strictly preserving desktop source of truth and dual Cyberpunk/Neo-Brutalism aesthetics.",
+    categories: [
+      {
+        name: "PWA & Mobile",
+        items: [
+          "📱 Mobile Navigation & AppShell Drawer: Transformed desktop sidebar into a mobile slide-out drawer with compacted top header controls.",
+          "🎯 Mobile Long-Press Context Menus: Integrated 500ms touch long-press engine in ContextMenuProvider for touch devices without right-click.",
+          "🎵 Global Music Player Reflow: Configured touch-friendly bottom player with flexible flex-wrapping on mobile viewports.",
+          "🖼️ Character & Media Detail Viewports: Responsive grid reflowing for Game Characters, Game Database, Hall of Fame, and Dossier Detail pages across 320px–414px displays.",
+          "📐 Viewport-Bound Modals: Enforced max-h-[85vh] viewport limits and internal content scrolling across all modals.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v9.6.0",
     date: "2026-08-08",
     title: "Dual-Identifier Authentication & 2-Step Email Relinking System",

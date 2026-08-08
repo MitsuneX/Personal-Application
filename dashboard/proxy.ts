@@ -5,7 +5,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
 
 // ─── Protected Routes ─────────────────────────────────────────────────────────
-const PUBLIC_ROUTES = ["/login", "/signup", "/auth", "/api/auth", "/api/"];
+const PUBLIC_ROUTES = ["/welcome", "/login", "/signup", "/auth", "/api/auth", "/api/"];
 
 function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some((route) => pathname.startsWith(route));

@@ -27,6 +27,17 @@ export interface ProfileData {
   phoneNumber?: string;
   mbti?: string;
   zodiac?: string;
+  // Landing Page & Identity Customization
+  dashboardName?: string;
+  landingMode?: "enabled" | "disabled" | "preview";
+  heroStyle?: "cinematic" | "minimal" | "ambient" | "custom";
+  showPublicStats?: boolean;
+  showAboutSection?: boolean;
+  showSocialLinks?: boolean;
+  aboutWorldText?: string;
+  landingBgStyle?: "matrix" | "nebula" | "grid" | "minimal";
+  landingAccentColor?: string;
+  visibleFeatures?: string[];
 }
 
 export interface ProfileHistoryEntry {
@@ -872,6 +883,15 @@ const initialProfile: ProfileData = {
   phoneNumber: "",
   mbti: "",
   zodiac: "",
+  landingMode: "enabled",
+  heroStyle: "cinematic",
+  showPublicStats: false,
+  showAboutSection: false,
+  showSocialLinks: false,
+  aboutWorldText: "",
+  landingBgStyle: "matrix",
+  landingAccentColor: "#00F5FF",
+  visibleFeatures: ["game-database", "game-characters", "hall-of-fame", "music", "media", "ai-library", "hobbies", "emergency"],
 };
 
 const initialMedia: MediaEntry = {

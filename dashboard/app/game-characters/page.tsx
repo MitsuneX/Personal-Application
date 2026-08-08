@@ -277,7 +277,7 @@ function GameCharactersContent() {
         <select
           value={gameCategoryFilter}
           onChange={(e) => setGameCategoryFilter(e.target.value)}
-          className="py-2 px-3 rounded-xl text-xs font-mono theme-text-primary focus:outline-none border cursor-pointer"
+          className="w-full sm:w-auto py-2 px-3 rounded-xl text-xs font-mono theme-text-primary focus:outline-none border cursor-pointer"
           style={{
             backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#FFF",
             borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#D1D5DB",
@@ -305,7 +305,7 @@ function GameCharactersContent() {
         <select
           value={gameFilter}
           onChange={(e) => setGameFilter(e.target.value)}
-          className="py-2 px-3 rounded-xl text-xs font-mono theme-text-primary focus:outline-none border cursor-pointer"
+          className="w-full sm:w-auto py-2 px-3 rounded-xl text-xs font-mono theme-text-primary focus:outline-none border cursor-pointer"
           style={{
             backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#FFF",
             borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#D1D5DB",
@@ -323,7 +323,7 @@ function GameCharactersContent() {
           <select
             value={elementFilter}
             onChange={(e) => setElementFilter(e.target.value)}
-            className="py-2 px-3 rounded-xl text-xs font-mono theme-text-primary focus:outline-none border cursor-pointer"
+            className="w-full sm:w-auto py-2 px-3 rounded-xl text-xs font-mono theme-text-primary focus:outline-none border cursor-pointer"
             style={{
               backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#FFF",
               borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#D1D5DB",
@@ -339,7 +339,7 @@ function GameCharactersContent() {
         {/* Featured Only toggle */}
         <button
           onClick={() => setFeaturedOnly(!featuredOnly)}
-          className="px-3 py-2 rounded-xl text-xs font-black border transition-all cursor-pointer flex items-center gap-1.5"
+          className="w-full sm:w-auto px-3 py-2 rounded-xl text-xs font-black border transition-all cursor-pointer flex items-center justify-center gap-1.5"
           style={{
             backgroundColor: featuredOnly ? (isCyber ? "rgba(255,215,0,0.2)" : "#FEF08A") : (isCyber ? "rgba(255,255,255,0.05)" : "#FFF"),
             borderColor: featuredOnly ? (isCyber ? "#FFD700" : "#EAB308") : (isCyber ? "rgba(255,255,255,0.1)" : "#D1D5DB"),
@@ -354,7 +354,7 @@ function GameCharactersContent() {
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-          className="py-2 px-3 rounded-xl text-xs font-mono theme-text-primary focus:outline-none border"
+          className="w-full sm:w-auto py-2 px-3 rounded-xl text-xs font-mono theme-text-primary focus:outline-none border"
           style={{
             backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#FFF",
             borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#D1D5DB",
@@ -369,7 +369,7 @@ function GameCharactersContent() {
         {/* Favorites toggle */}
         <button
           onClick={() => setFavOnly(!favOnly)}
-          className="px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5"
+          className="w-full sm:w-auto px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5"
           style={{
             backgroundColor: favOnly ? "rgba(251,191,36,0.15)" : isCyber ? "rgba(255,255,255,0.05)" : "#FFF",
             borderColor: favOnly ? "rgba(251,191,36,0.5)" : isCyber ? "rgba(255,255,255,0.1)" : "#D1D5DB",

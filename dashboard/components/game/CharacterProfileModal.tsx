@@ -118,12 +118,12 @@ function InfoRow({ label, value, isCyber }: { label: string; value?: string | nu
   if (!value) return null;
   return (
     <div
-      className={`flex items-start gap-3 py-2.5 border-b last:border-0 ${
+      className={`flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 py-2.5 border-b last:border-0 ${
         isCyber ? "border-white/[0.06]" : "border-black/10"
       }`}
     >
       <span
-        className={`text-[10px] font-mono font-bold uppercase tracking-widest w-32 shrink-0 pt-0.5 ${
+        className={`text-[10px] font-mono font-bold uppercase tracking-widest sm:w-32 shrink-0 pt-0.5 ${
           isCyber ? "text-white/40" : "text-gray-500"
         }`}
       >

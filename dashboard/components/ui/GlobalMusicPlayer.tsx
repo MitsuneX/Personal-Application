@@ -66,7 +66,7 @@ export function GlobalMusicPlayer() {
           initial={{ y: 80, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 80, opacity: 0 }}
-          className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[60] w-[95%] max-w-4xl rounded-2xl border p-3 shadow-2xl backdrop-blur-xl flex items-center justify-between gap-4 select-none"
+          className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[60] w-[95%] max-w-4xl rounded-2xl border p-3 shadow-2xl backdrop-blur-xl flex flex-wrap md:flex-nowrap items-center justify-between gap-3 md:gap-4 select-none"
           style={{
             backgroundColor: isCyber ? "rgba(5, 8, 22, 0.95)" : "rgba(255, 255, 255, 0.98)",
             borderColor: isCyber ? "rgba(0, 245, 255, 0.4)" : "#000000",
@@ -75,7 +75,7 @@ export function GlobalMusicPlayer() {
           }}
         >
           {/* Track Thumbnail & Info */}
-          <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex items-center gap-3 min-w-0 flex-1 w-full md:w-auto">
             <div
               className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border relative bg-slate-800 flex items-center justify-center font-bold text-xs"
               style={{ borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000" }}
@@ -104,7 +104,7 @@ export function GlobalMusicPlayer() {
           </div>
 
           {/* Timeline & Controls */}
-          <div className="flex flex-col items-center gap-1.5 flex-1 max-w-md">
+          <div className="flex flex-col items-center gap-1.5 w-full md:flex-1 max-w-md order-3 md:order-none">
             {/* Control Suite Buttons */}
             <div className="flex items-center gap-3">
               {/* Shuffle Toggle */}
@@ -184,7 +184,7 @@ export function GlobalMusicPlayer() {
           </div>
 
           {/* Right Action Widgets: Volume, Lyrics, Mute */}
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 order-2 md:order-none">
             {/* Lyrics Button */}
             <button
               onClick={() => setLyricsOpen(true)}

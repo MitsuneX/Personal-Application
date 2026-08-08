@@ -112,7 +112,7 @@ export function Modal({
           >
             {/* Inner modal content card */}
             <motion.div
-              className={`w-full ${maxWidth} max-h-[calc(100vh-32px)] sm:max-h-[calc(100vh-48px)] flex flex-col rounded-2xl overflow-hidden ${className}`.trim()}
+              className={`w-full max-w-[calc(100vw-32px)] sm:${maxWidth} max-h-[calc(100vh-32px)] sm:max-h-[calc(100vh-48px)] flex flex-col rounded-2xl overflow-y-auto overflow-x-hidden ${className}`.trim()}
               style={{
                 background: isCyber
                   ? "rgba(5, 8, 22, 0.97)"

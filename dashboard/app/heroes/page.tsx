@@ -406,7 +406,7 @@ function GameDatabaseOverviewPageContent() {
                 <select
                   value={selectedGameFilter}
                   onChange={(e) => handleGameFilterChange(e.target.value)}
-                  className="px-3.5 py-2 rounded-xl border text-xs font-bold focus:outline-none cursor-pointer"
+                  className="w-full sm:w-auto px-3.5 py-2 rounded-xl border text-xs font-bold focus:outline-none cursor-pointer"
                   style={{
                     backgroundColor: isCyber ? "rgba(10,15,30,0.75)" : "#F8FAFC",
                     color: isCyber ? "#F8FAFC" : "#0F172A",

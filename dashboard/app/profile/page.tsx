@@ -9,11 +9,22 @@ import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { ImageCropModal } from "@/components/ui/ImageCropModal";
+import { LandingPreviewModal } from "@/components/landing/LandingPreviewModal";
 import { useRouter } from "next/navigation";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 import { useToast } from "@/components/ui/ToastProvider";
 
 const PLATFORMS = ["GitHub", "Twitter/X", "Discord", "Instagram", "LinkedIn", "Tiktok"];
+const ALL_MODULE_FEATURES = [
+  { id: "game-database", label: "Game Database" },
+  { id: "game-characters", label: "Game Characters" },
+  { id: "hall-of-fame", label: "Hall of Fame" },
+  { id: "music", label: "Music Vault" },
+  { id: "media", label: "Drama, Anime & Tokusatsu" },
+  { id: "ai-library", label: "AI Prompt Library" },
+  { id: "hobbies", label: "Hobbies & Creative Log" },
+  { id: "emergency", label: "Emergency Hub" },
+];
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -38,6 +49,21 @@ export default function ProfilePage() {
   
   // Socials list state
   const [socials, setSocials] = useState<{ platform: string; handle: string; url?: string }[]>([]);
+
+  // ── Landing Page Customization State ──
+  const [dashboardName, setDashboardName] = useState("");
+  const [landingMode, setLandingMode] = useState<"enabled" | "disabled" | "preview">("enabled");
+  const [heroStyle, setHeroStyle] = useState<"cinematic" | "minimal" | "ambient" | "custom">("cinematic");
+  const [showPublicStats, setShowPublicStats] = useState(false);
+  const [showAboutSection, setShowAboutSection] = useState(false);
+  const [showSocialLinks, setShowSocialLinks] = useState(false);
+  const [aboutWorldText, setAboutWorldText] = useState("");
+  const [landingBgStyle, setLandingBgStyle] = useState<"matrix" | "nebula" | "grid" | "minimal">("matrix");
+  const [landingAccentColor, setLandingAccentColor] = useState("#00F5FF");
+  const [visibleFeatures, setVisibleFeatures] = useState<string[]>([
+    "game-database", "game-characters", "hall-of-fame", "music", "media", "ai-library", "hobbies", "emergency"
+  ]);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -160,6 +186,20 @@ export default function ProfilePage() {
     setMbti(profile.mbti || "");
     setZodiac(profile.zodiac || "");
 
+    // Landing settings
+    setDashboardName(profile.dashboardName || "");
+    setLandingMode(profile.landingMode || "enabled");
+    setHeroStyle(profile.heroStyle || "cinematic");
+    setShowPublicStats(Boolean(profile.showPublicStats));
+    setShowAboutSection(Boolean(profile.showAboutSection));
+    setShowSocialLinks(Boolean(profile.showSocialLinks));
+    setAboutWorldText(profile.aboutWorldText || "");
+    setLandingBgStyle(profile.landingBgStyle || "matrix");
+    setLandingAccentColor(profile.landingAccentColor || "#00F5FF");
+    if (profile.visibleFeatures && profile.visibleFeatures.length > 0) {
+      setVisibleFeatures(profile.visibleFeatures);
+    }
+
     // Auto-detect image source
     if (profile.avatar && profile.avatar.startsWith("/uploads/")) {
       setImageSource("upload");
@@ -184,30 +224,23 @@ export default function ProfilePage() {
   const handleCropComplete = async (croppedBlob: Blob) => {
     setIsCropOpen(false);
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", croppedBlob, "avatar-cropped.jpg");
-
     try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const formData = new FormData();
+      formData.append("file", croppedBlob, "profile-avatar.webp");
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
       const data = await res.json();
-      if (data.url) {
+
+      if (res.ok && data.url) {
         setAvatar(data.url);
-        // Direct local save option
-        await updateProfile({ ...profile, avatar: data.url });
-        toast.success("Avatar uploaded and updated!");
+        toast.success("Avatar image uploaded cleanly!");
       } else {
         toast.error("Upload failed: " + (data.error || "Unknown error"));
       }
     } catch (err) {
-      console.error("Upload error:", err);
-      toast.error("Error uploading image");
+      console.error(err);
+      toast.error("Error uploading image file.");
     } finally {
       setIsUploading(false);
-      setCropImageSrc(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -223,6 +256,14 @@ export default function ProfilePage() {
 
   const removeSocialRow = (index: number) => {
     setSocials(socials.filter((_, i) => i !== index));
+  };
+
+  const toggleFeatureSelect = (id: string) => {
+    if (visibleFeatures.includes(id)) {
+      setVisibleFeatures(visibleFeatures.filter((f) => f !== id));
+    } else {
+      setVisibleFeatures([...visibleFeatures, id]);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -241,8 +282,18 @@ export default function ProfilePage() {
         phoneNumber: phoneNumber.trim(),
         mbti: mbti,
         zodiac: zodiac,
+        dashboardName: dashboardName.trim() || undefined,
+        landingMode: landingMode,
+        heroStyle: heroStyle,
+        showPublicStats: showPublicStats,
+        showAboutSection: showAboutSection,
+        showSocialLinks: showSocialLinks,
+        aboutWorldText: aboutWorldText.trim(),
+        landingBgStyle: landingBgStyle,
+        landingAccentColor: landingAccentColor,
+        visibleFeatures: visibleFeatures,
       });
-      toast.success("Profile configurations updated successfully!");
+      toast.success("Profile & Landing configurations updated successfully!");
     } catch (err) {
       console.error("Failed to save profile:", err);
       toast.error("Failed to update profile settings.");
@@ -910,12 +961,229 @@ export default function ProfilePage() {
               )}
             </div>
 
+            {/* 6. 🌐 Landing Page & Public Identity Customization */}
+            <div
+              className="p-6 rounded-2xl border-adaptive-unique relative overflow-hidden"
+              style={{
+                backgroundColor: isCyber ? "rgba(10,15,44,0.6)" : "#FFFFFF",
+                boxShadow: isCyber ? "none" : "4px 4px 0px 0px #000000",
+              }}
+            >
+              <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+                <div>
+                  <h2 className="text-base font-black uppercase tracking-wider flex items-center gap-2" style={{ color: isCyber ? "#00F5FF" : "#000" }}>
+                    🌐 Landing Page & Public Identity
+                  </h2>
+                  <p className="text-xs opacity-70 mt-0.5 font-mono">
+                    Customize how your personal world appears to visitors on /welcome.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewOpen(true)}
+                  className="px-5 py-2.5 text-xs font-mono font-black uppercase tracking-wider rounded-xl border transition-all hover:scale-105 active:scale-95 flex items-center gap-2 cursor-pointer shadow-lg"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(0,245,255,0.2)" : "#FFE600",
+                    borderColor: isCyber ? "#00F5FF" : "#000000",
+                    color: isCyber ? "#00F5FF" : "#000000",
+                    borderWidth: isCyber ? "1px" : "2.5px",
+                    boxShadow: isCyber ? "0 0 20px rgba(0,245,255,0.3)" : "4px 4px 0 #000000",
+                  }}
+                >
+                  👁️ Preview Landing Page
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                {/* World Name */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">
+                    Dashboard World Name (Leave blank for fallback)
+                  </label>
+                  <input
+                    type="text"
+                    value={dashboardName}
+                    onChange={(e) => setDashboardName(e.target.value)}
+                    placeholder={`e.g. ${name || "Mitsu"}'s World, Elysium, My Archive`}
+                    className={inputClass}
+                    style={inputStyle}
+                  />
+                  <span className="text-[10px] font-mono opacity-60">
+                    Displays as: <strong className="text-cyan-400">{dashboardName.trim() || `${name || "Personal"}'s World`}</strong>
+                  </span>
+                </div>
+
+                {/* Landing Mode */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">
+                    Landing Page Access Mode
+                  </label>
+                  <CustomSelect
+                    value={landingMode}
+                    onChange={(val) => setLandingMode(val as any)}
+                    options={[
+                      { value: "enabled", label: "Enabled (Public Intro Gate on /welcome)", icon: "🟢" },
+                      { value: "disabled", label: "Disabled (Direct Auth/Dashboard Redirect)", icon: "🔴" },
+                      { value: "preview", label: "Public Preview (Testing /welcome Only)", icon: "🧪" },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                {/* Hero Style */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">
+                    Hero Intensity Style
+                  </label>
+                  <CustomSelect
+                    value={heroStyle}
+                    onChange={(val) => setHeroStyle(val as any)}
+                    options={[
+                      { value: "cinematic", label: "Cinematic (Particle Matrix Glow)", icon: "🌌" },
+                      { value: "ambient", label: "Ambient (Soft Glow Accent)", icon: "✨" },
+                      { value: "minimal", label: "Minimal (Clean Personal Archive)", icon: "📄" },
+                    ]}
+                  />
+                </div>
+
+                {/* Background Animation Style */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">
+                    Background Animation
+                  </label>
+                  <CustomSelect
+                    value={landingBgStyle}
+                    onChange={(val) => setLandingBgStyle(val as any)}
+                    options={[
+                      { value: "matrix", label: "Matrix Neon Particles", icon: "⚡" },
+                      { value: "nebula", label: "Nebula Atmosphere", icon: "🔮" },
+                      { value: "grid", label: "Grid Drift Pattern", icon: "🌐" },
+                      { value: "minimal", label: "Minimalist Solid", icon: "⚪" },
+                    ]}
+                  />
+                </div>
+
+                {/* Accent Color */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">
+                    Custom Landing Accent Color
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={landingAccentColor}
+                      onChange={(e) => setLandingAccentColor(e.target.value)}
+                      className="w-10 h-10 rounded cursor-pointer border-none bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={landingAccentColor}
+                      onChange={(e) => setLandingAccentColor(e.target.value)}
+                      className={inputClass}
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Privacy Toggles */}
+              <div className="p-4 rounded-xl border mb-4 bg-black/10 dark:bg-white/5 space-y-3 font-mono">
+                <h4 className="text-xs font-black uppercase tracking-wider text-amber-400">
+                  🔒 Data Privacy Toggles (Off by Default)
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={showPublicStats}
+                      onChange={(e) => setShowPublicStats(e.target.checked)}
+                      className="w-4 h-4 accent-cyan-400 cursor-pointer"
+                    />
+                    <span>Show Public Stats Counters</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={showAboutSection}
+                      onChange={(e) => setShowAboutSection(e.target.checked)}
+                      className="w-4 h-4 accent-cyan-400 cursor-pointer"
+                    />
+                    <span>Show About World Section</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={showSocialLinks}
+                      onChange={(e) => setShowSocialLinks(e.target.checked)}
+                      className="w-4 h-4 accent-cyan-400 cursor-pointer"
+                    />
+                    <span>Show Public Social Links</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* About World Text */}
+              {showAboutSection && (
+                <div className="flex flex-col gap-1 mb-4">
+                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">
+                    About World Custom Text
+                  </label>
+                  <textarea
+                    value={aboutWorldText}
+                    onChange={(e) => setAboutWorldText(e.target.value)}
+                    rows={3}
+                    placeholder="Enter custom description or bio for your digital sanctuary..."
+                    className={inputClass + " resize-none"}
+                    style={inputStyle}
+                  />
+                </div>
+              )}
+
+              {/* Visible Feature Module Allowlist */}
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-wider theme-text-secondary block">
+                  Showcase Module Features (Allowlist Selection)
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs">
+                  {ALL_MODULE_FEATURES.map((feat) => {
+                    const isChecked = visibleFeatures.includes(feat.id);
+                    return (
+                      <button
+                        key={feat.id}
+                        type="button"
+                        onClick={() => toggleFeatureSelect(feat.id)}
+                        className="p-2.5 rounded-xl border flex items-center gap-2 text-left cursor-pointer transition-all"
+                        style={{
+                          backgroundColor: isChecked
+                            ? (isCyber ? "rgba(0,245,255,0.12)" : "#FFE600")
+                            : (isCyber ? "rgba(0,0,0,0.3)" : "#FFFFFF"),
+                          borderColor: isChecked
+                            ? (isCyber ? "#00F5FF" : "#000000")
+                            : (isCyber ? "rgba(255,255,255,0.1)" : "#D1D5DB"),
+                          color: isChecked
+                            ? (isCyber ? "#00F5FF" : "#000000")
+                            : (isCyber ? "#94A3B8" : "#4B5563"),
+                        }}
+                      >
+                        <span className="font-bold">{isChecked ? "✓" : "○"}</span>
+                        <span className="font-bold text-[11px] truncate">{feat.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
             {/* Actions Submit Bar */}
             <div className="flex justify-end gap-3 pt-3">
               <button
                 type="submit"
                 disabled={isSaving || isUploading}
-                className="px-6 py-3 text-sm font-black rounded-lg transition-transform active:scale-95 disabled:opacity-60"
+                className="px-6 py-3 text-sm font-black rounded-lg transition-transform active:scale-95 disabled:opacity-60 cursor-pointer"
                 style={{
                   backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
                   color: isCyber ? "#050816" : "#FFFFFF",
@@ -923,7 +1191,7 @@ export default function ProfilePage() {
                   boxShadow: isCyber ? "0 0 25px rgba(0,245,255,0.4)" : "4px 4px 0px 0px rgba(0,0,0,1)",
                 }}
               >
-                {isSaving ? "Saving Settings..." : "💾 Update Profile Settings"}
+                {isSaving ? "Saving Settings..." : "💾 Update Profile & Landing Settings"}
               </button>
             </div>
 
@@ -943,6 +1211,35 @@ export default function ProfilePage() {
           if (fileInputRef.current) fileInputRef.current.value = "";
         }}
         onCropComplete={handleCropComplete}
+      />
+
+      <LandingPreviewModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        draftProfile={{
+          ...profile,
+          name,
+          tagline,
+          bio,
+          avatar,
+          location,
+          borderStyle,
+          skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
+          socials,
+          phoneNumber,
+          mbti,
+          zodiac,
+          dashboardName: dashboardName.trim() || undefined,
+          landingMode,
+          heroStyle,
+          showPublicStats,
+          showAboutSection,
+          showSocialLinks,
+          aboutWorldText,
+          landingBgStyle,
+          landingAccentColor,
+          visibleFeatures,
+        }}
       />
 
       {/* Relink Email Modal */}

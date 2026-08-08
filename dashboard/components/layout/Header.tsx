@@ -331,14 +331,14 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
         className="flex items-center justify-between px-4 md:px-6 h-16 shrink-0 relative z-30 border-b-2 border-solid"
         animate={{
           backgroundColor: isCyber ? "rgba(5,8,22,0.85)" : "rgba(255,245,228,0.92)",
-          borderBottomColor: isCyber ? "rgba(0,245,255,0.15)" : "#000000",
+        borderBottomColor: isCyber ? "rgba(0,245,255,0.15)" : "#000000",
           backdropFilter: isCyber ? "blur(20px)" : "blur(0px)",
         }}
         transition={{ duration: 0.4 }}
       >
-        {/* Left Section: Hamburger & Page Title */}
-        <div className="flex items-center gap-3 shrink-0">
-          {/* Mobile Menu Hamburger button */}
+        {/* Left Section: Mobile Menu, Optional Search, Title */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
+          {/* Mobile Menu Toggle */}
           <motion.button
             className="md:hidden p-2 rounded-xl flex flex-col items-center justify-center gap-[4px] w-10 h-10 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
             onClick={onMenuToggle}
@@ -454,7 +454,7 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
         </div>
 
         {/* Right Section: Mini Player, Clock, Notifications, Theme, Settings, Profile */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           <TopbarMiniPlayer />
           <HeaderClock />
 
@@ -465,7 +465,9 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
           <ThemeSwitcherToggle />
 
           {/* Settings Gear Dropdown */}
-          <SettingsDropdown onOpenAesthetics={() => setAestheticsOpen(true)} />
+          <div className="hidden sm:block">
+            <SettingsDropdown onOpenAesthetics={() => setAestheticsOpen(true)} />
+          </div>
 
           {/* Customizable Profile Card Popover */}
           <FloatingPopover
@@ -524,7 +526,9 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
           </FloatingPopover>
 
           {/* Interactive Status Selector Popover */}
-          <HeaderStatusBadge />
+          <div className="hidden md:block">
+            <HeaderStatusBadge />
+          </div>
         </div>
       </motion.header>
 

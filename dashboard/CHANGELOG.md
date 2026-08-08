@@ -2,6 +2,45 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [11.0.1] - 2026-08-08
+
+### 🛠️ Prisma Client Proxy Delegation & React Script Hydration Fix
+
+**Database & Server Instance Hygiene**
+- **Dynamic Prisma Proxy Delegation**: Upgraded `lib/prisma.ts` with an ES Proxy wrapper delegating to `getPrismaClient()` on every property access. Guarantees hot-reloaded API routes dynamically access updated PrismaClient models (`profile` fields & `userAccount` delegate) without dev-server caching issues.
+- **Payload Mapping**: Verified explicit server-side upsert mapping for all landing customization fields in `app/api/profile/route.ts`.
+
+**React Hydration & Component Cleanup**
+- **React Script Hydration Fix**: Moved Next.js `<Script id="theme-script">` component out of `<head>` and into root layout level in `app/layout.tsx`, resolving `Encountered a script tag while rendering React component` warnings.
+
+## [11.0.0] - 2026-08-08
+
+### 🌐 Cinematic Public Landing Page & Configurable World Branding Platform
+
+**Public Landing Page Route (`/welcome`)**
+- **Cinematic Hero Section**: Configurable world name, tagline, background animation intensity (`cinematic`, `ambient`, `minimal`, `custom`), avatar presentation, and smart CTAs.
+- **Authenticated Shortcut**: Renders **`Continue as [Name] →`** for logged-in users, routing directly to the dashboard without re-authenticating.
+- **Digital Sanctuary World Status**: Non-SaaS summary bar (*"This world contains Games · Music · Memories · Media · Characters · Life"*).
+- **Feature Showcase**: Strict ID allowlist mapping (`game-database`, `game-characters`, `hall-of-fame`, `music`, `media`, `ai-library`, `hobbies`, `emergency`).
+
+**Profile Customization & World Identity**
+- **Dynamic Fallback Naming**: `dashboardName: null` default resolves dynamically to `${displayName}'s World` (e.g. *"Mitsu's World"*, *"Alex's World"*) or custom names (*"Elysium"*).
+- **Opt-In Privacy Controls**: `showPublicStats`, `showAboutSection`, `showSocialLinks` default to `OFF`, keeping statistics and profile links private until explicitly enabled.
+- **Live Draft Preview Modal**: Real-time modal in Profile Customization rendering unsaved form state in Cyberpunk and Neo-Brutalism modes.
+
+## [10.0.0] - 2026-08-08
+
+### 📱 Comprehensive Application-Wide Mobile & UX Overhaul
+
+**Mobile Architecture & Navigation**
+- **Responsive Drawer & Header**: Transformed sidebar navigation into a slide-out drawer on mobile screens (< 768px) while compacting top header controls without dropping any desktop navigation items.
+- **Mobile Long-Press Engine**: Added touch long-press detection (500ms) to trigger contextual options for touch-based devices without a right-click button.
+
+**Responsive Layouts & Viewport Audits**
+- **Grid Reflowing**: Responsive cards & filters across `/game-characters`, `/heroes`, `/hall-of-fame`, `/drama`, `/anime`, `/tokusatsu`, `/music`, `/profile`, `/login`, and `/ai-library`.
+- **Viewport-Bound Modals**: Applied `max-h-[85vh]` and `overflow-y-auto` across all character preview, edit, image crop, and detail modals.
+- **Global Music Player Reflow**: Added multi-line flex-wrapping for mini-player elements on narrow screens.
+
 ## [9.6.0] - 2026-08-08
 
 ### 🔐 Dual-Identifier Authentication & 2-Step Email Relinking System
