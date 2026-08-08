@@ -2,6 +2,25 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [9.6.0] - 2026-08-08
+
+### 🔐 Dual-Identifier Authentication & 2-Step Email Relinking System
+
+**Email or Username Authentication Engine**
+- **Dual-Identifier Login Input**: Updated the login page (`/login`) input to accept either an account **Email Address** or **Username** in a single unified field without changing the visual design system.
+- **Case-Insensitive Resolution**: Implemented backend username-to-email resolution (`/api/auth/login`) that maps usernames to canonical verified account emails automatically before authenticating against Supabase Auth.
+- **Account & Credential Security**: Preserved single-account identity, rate-limiting, session tokens, and generic invalid credential responses to prevent user enumeration.
+
+**Profile Customization & Account Email Relinking**
+- **Account & Security Subsection**: Introduced a dedicated **🔒 Account & Security** setting panel at the top of Profile Customization (`/profile`) displaying verified email, account username, and relink status.
+- **2-Step Verification Relink Workflow**:
+  - Requires current password reauthentication before requesting email changes.
+  - Enforces email format validation and uniqueness checks against existing accounts.
+  - Generates 6-digit OTP verification codes with 15-minute expiration (`/api/auth/relink-email/request`).
+  - Verifies code (`/api/auth/relink-email/verify`) and atomically updates Supabase Auth and Prisma `UserAccount` records.
+  - Allows canceling pending relink requests at any time without disrupting current sessions or account-owned data.
+- **Dual-Theme Visual Parity**: Polished in both Cyberpunk and Neo-Brutalism design languages across mobile, tablet, and desktop views.
+
 ## [9.5.2] - 2026-08-08
 
 ### 📊 Category Normalization Engine & Chart Separation Refactor

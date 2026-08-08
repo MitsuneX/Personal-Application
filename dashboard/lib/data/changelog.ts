@@ -13,6 +13,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v9.6.0",
+    date: "2026-08-08",
+    title: "Dual-Identifier Authentication & 2-Step Email Relinking System",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Upgraded authentication to accept both Email and Username in a single field, and introduced a secure 2-step email relinking workflow with OTP verification inside Profile Customization.",
+    categories: [
+      {
+        name: "Security & Authentication",
+        items: [
+          "🔑 Dual-Identifier Login: Users can log in using either their account email address or username.",
+          "🛡️ Account & Security Panel: Added a setting section in Profile Customization displaying verified email and username.",
+          "📧 2-Step Email Relink Workflow: Secure OTP verification process requiring current password reauth and 6-digit verification code before updating account email.",
+          "🔒 Data & Session Integrity: Account-owned data (games, characters, music, dramas, Hall of Fame) remain untouched and bound to the same account ID.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v9.5.2",
     date: "2026-08-08",
     title: "Category Normalization Engine & Chart Separation Refactor",

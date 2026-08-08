@@ -45,6 +45,106 @@ export default function ProfilePage() {
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
   const [isCropOpen, setIsCropOpen] = useState(false);
 
+  // ── Account Info & Relink Email state ──
+  const [accountInfo, setAccountInfo] = useState<{
+    email: string;
+    username: string;
+    pendingRelink?: { newEmail: string; expiresAt: string } | null;
+  } | null>(null);
+
+  const [isRelinkModalOpen, setIsRelinkModalOpen] = useState(false);
+  const [relinkStep, setRelinkStep] = useState<"request" | "verify">("request");
+  const [newEmailInput, setNewEmailInput] = useState("");
+  const [currentPasswordInput, setCurrentPasswordInput] = useState("");
+  const [otpCodeInput, setOtpCodeInput] = useState("");
+  const [isRelinkLoading, setIsRelinkLoading] = useState(false);
+
+  const fetchAccountInfo = React.useCallback(async () => {
+    try {
+      const res = await fetch("/api/auth/account-info");
+      if (res.ok) {
+        const data = await res.json();
+        setAccountInfo(data);
+      }
+    } catch (err) {
+      console.error("Failed to load account info:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAccountInfo();
+  }, [fetchAccountInfo]);
+
+  const handleInitiateRelink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsRelinkLoading(true);
+    try {
+      const res = await fetch("/api/auth/relink-email/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newEmail: newEmailInput, currentPassword: currentPasswordInput }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        toast.error(data.error || "Failed to request email relink.");
+      } else {
+        toast.success(data.message || "Verification code dispatched!");
+        if (data.devOtpCode) {
+          toast.info(`[DEV Verification Code]: ${data.devOtpCode}`);
+        }
+        setRelinkStep("verify");
+        fetchAccountInfo();
+      }
+    } catch {
+      toast.error("Error requesting email relink.");
+    } finally {
+      setIsRelinkLoading(false);
+    }
+  };
+
+  const handleVerifyRelink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsRelinkLoading(true);
+    try {
+      const res = await fetch("/api/auth/relink-email/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otpCode: otpCodeInput }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        toast.error(data.error || "Verification failed.");
+      } else {
+        toast.success(data.message || "Email successfully relinked!");
+        setIsRelinkModalOpen(false);
+        setNewEmailInput("");
+        setCurrentPasswordInput("");
+        setOtpCodeInput("");
+        setRelinkStep("request");
+        fetchAccountInfo();
+      }
+    } catch {
+      toast.error("Error verifying relink code.");
+    } finally {
+      setIsRelinkLoading(false);
+    }
+  };
+
+  const handleCancelRelink = async () => {
+    try {
+      const res = await fetch("/api/auth/relink-email/cancel", { method: "POST" });
+      if (res.ok) {
+        toast.success("Pending email relink request cancelled.");
+        setRelinkStep("request");
+        setNewEmailInput("");
+        setOtpCodeInput("");
+        fetchAccountInfo();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   // Sync state with store profile on load or when profile updates
   useEffect(() => {
     setName(profile.name || "");
@@ -266,7 +366,110 @@ export default function ProfilePage() {
         {/* Right Side: Configuration Form */}
         <div className="xl:col-span-3">
           <form onSubmit={handleSubmit} className="space-y-6">
-            
+
+            {/* 0. Account & Security Subsection */}
+            <div
+              className="p-6 rounded-2xl border-adaptive-unique relative overflow-hidden"
+              style={{
+                backgroundColor: isCyber ? "rgba(10,15,44,0.6)" : "#FFFFFF",
+                boxShadow: isCyber ? "none" : "4px 4px 0px 0px #000000",
+              }}
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4 mb-4" style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E5E7EB" }}>
+                <div>
+                  <h2 className="text-base font-black uppercase tracking-wider flex items-center gap-2" style={{ color: isCyber ? "#00F5FF" : "#000" }}>
+                    🔒 Account & Security Settings
+                  </h2>
+                  <p className="text-xs font-mono theme-text-muted mt-0.5">
+                    Manage your primary identity credentials, verified email address, and authentication preferences.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRelinkStep(accountInfo?.pendingRelink ? "verify" : "request");
+                    setNewEmailInput(accountInfo?.pendingRelink?.newEmail || "");
+                    setIsRelinkModalOpen(true);
+                  }}
+                  className="px-4 py-2 text-xs font-black rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(0, 245, 255, 0.12)" : "#FEF3C7",
+                    border: isCyber ? "1px solid rgba(0, 245, 255, 0.4)" : "2px solid #000000",
+                    color: isCyber ? "#00F5FF" : "#B45309",
+                    boxShadow: isCyber ? "none" : "3px 3px 0px #000000",
+                  }}
+                >
+                  <span>📧</span>
+                  <span>{accountInfo?.pendingRelink ? "Verify Pending Email" : "Relink Email Address"}</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Account Username */}
+                <div className="p-3.5 rounded-xl border flex flex-col gap-1" style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.03)" : "#F9FAFB", borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E5E7EB" }}>
+                  <label className="text-[10px] font-black uppercase tracking-wider theme-text-secondary">
+                    Account Username
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">👤</span>
+                    <span className="text-xs font-mono font-bold theme-text-primary">
+                      {accountInfo?.username || "Loading..."}
+                    </span>
+                    <span className="ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">
+                      Primary
+                    </span>
+                  </div>
+                </div>
+
+                {/* Verified Account Email */}
+                <div className="p-3.5 rounded-xl border flex flex-col gap-1" style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.03)" : "#F9FAFB", borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E5E7EB" }}>
+                  <label className="text-[10px] font-black uppercase tracking-wider theme-text-secondary">
+                    Verified Email Address
+                  </label>
+                  <div className="flex items-center gap-2 truncate">
+                    <span className="text-sm">✉️</span>
+                    <span className="text-xs font-mono font-bold theme-text-primary truncate">
+                      {accountInfo?.email || "Loading..."}
+                    </span>
+                    <span className="ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-bold shrink-0">
+                      ✓ Verified
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pending Relink Banner if active */}
+              {accountInfo?.pendingRelink && (
+                <div className="mt-4 p-3 rounded-xl border flex items-center justify-between gap-3 text-xs font-mono" style={{ backgroundColor: isCyber ? "rgba(245,158,11,0.1)" : "#FEF3C7", borderColor: isCyber ? "#F59E0B" : "#D97706" }}>
+                  <div className="flex items-center gap-2">
+                    <span className="animate-pulse">⏳</span>
+                    <span>
+                      Pending relink to <strong>{accountInfo.pendingRelink.newEmail}</strong>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRelinkStep("verify");
+                        setIsRelinkModalOpen(true);
+                      }}
+                      className="text-[10px] font-black px-2.5 py-1 rounded bg-amber-500 text-black hover:brightness-110 cursor-pointer"
+                    >
+                      Enter Code
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelRelink}
+                      className="text-[10px] font-black opacity-60 hover:opacity-100 hover:underline cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* 1. Core Profile Details Card */}
             <div
               className="p-6 rounded-2xl border-adaptive-unique relative overflow-hidden"
@@ -741,6 +944,155 @@ export default function ProfilePage() {
         }}
         onCropComplete={handleCropComplete}
       />
+
+      {/* Relink Email Modal */}
+      {isRelinkModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div
+            className="relative w-full max-w-md p-6 rounded-2xl border shadow-2xl font-mono"
+            style={{
+              backgroundColor: isCyber ? "rgba(8,12,28,0.98)" : "#FFFDF0",
+              borderColor: isCyber ? "rgba(0,245,255,0.4)" : "#000000",
+              borderWidth: isCyber ? "1.5px" : "3px",
+              boxShadow: isCyber
+                ? "0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(0,245,255,0.2)"
+                : "6px 6px 0px #000000",
+            }}
+          >
+            <div className="flex items-center justify-between border-b pb-3 mb-4" style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#000" }}>
+              <h3 className="text-sm font-black uppercase tracking-wider flex items-center gap-2" style={{ color: isCyber ? "#00F5FF" : "#000" }}>
+                📧 {relinkStep === "request" ? "Relink Account Email" : "Verify Email OTP Code"}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsRelinkModalOpen(false)}
+                className="text-xs font-black opacity-60 hover:opacity-100 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {relinkStep === "request" ? (
+              <form onSubmit={handleInitiateRelink} className="space-y-4">
+                <p className="text-xs opacity-75 leading-relaxed">
+                  Enter your target new email address and confirm your current password to request a 2-step verification code.
+                </p>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider mb-1 theme-text-secondary">
+                    New Email Address
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={newEmailInput}
+                    onChange={(e) => setNewEmailInput(e.target.value)}
+                    placeholder="new.email@domain.com"
+                    className={inputClass}
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider mb-1 theme-text-secondary">
+                    Current Account Password (Reauthentication)
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={currentPasswordInput}
+                    onChange={(e) => setCurrentPasswordInput(e.target.value)}
+                    placeholder="••••••••••••"
+                    className={inputClass}
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsRelinkModalOpen(false)}
+                    className="px-4 py-2 text-xs font-bold rounded-lg border opacity-70 hover:opacity-100 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isRelinkLoading}
+                    className="px-4 py-2 text-xs font-black rounded-lg transition-all cursor-pointer"
+                    style={{
+                      backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
+                      color: isCyber ? "#050816" : "#FFFFFF",
+                      border: isCyber ? "none" : "2px solid #000",
+                      boxShadow: isCyber ? "0 0 15px rgba(0,245,255,0.4)" : "3px 3px 0 #000",
+                    }}
+                  >
+                    {isRelinkLoading ? "Dispatching Code..." : "Send Verification Code →"}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyRelink} className="space-y-4">
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs">
+                  <p className="font-bold">✉️ Verification Code Dispatched</p>
+                  <p className="text-[11px] opacity-80 mt-0.5">
+                    Enter the 6-digit code sent to <strong>{newEmailInput || accountInfo?.pendingRelink?.newEmail}</strong> within 15 minutes.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider mb-1 theme-text-secondary">
+                    6-Digit Verification Code
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    value={otpCodeInput}
+                    onChange={(e) => setOtpCodeInput(e.target.value.replace(/[^0-9]/g, ""))}
+                    placeholder="123456"
+                    className={inputClass + " text-center text-lg tracking-[0.3em] font-mono"}
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    type="button"
+                    onClick={handleCancelRelink}
+                    className="text-xs text-red-400 hover:underline font-bold cursor-pointer"
+                  >
+                    Cancel Relink Request
+                  </button>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setRelinkStep("request")}
+                      className="px-3 py-2 text-xs font-bold rounded-lg border opacity-70 hover:opacity-100 cursor-pointer"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isRelinkLoading || otpCodeInput.length < 6}
+                      className="px-4 py-2 text-xs font-black rounded-lg transition-all disabled:opacity-50 cursor-pointer"
+                      style={{
+                        backgroundColor: isCyber ? "#00F5FF" : "#10B981",
+                        color: isCyber ? "#050816" : "#FFFFFF",
+                        border: isCyber ? "none" : "2px solid #000",
+                        boxShadow: isCyber ? "0 0 15px rgba(0,245,255,0.4)" : "3px 3px 0 #000",
+                      }}
+                    >
+                      {isRelinkLoading ? "Verifying..." : "Verify & Complete Relink ✓"}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

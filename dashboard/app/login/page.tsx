@@ -195,22 +195,22 @@ function LoginPageInner() {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
-      addToast("error", "Email and password are required.");
+      addToast("error", "Email or username and password are required.");
       return;
     }
     setLoading(true);
 
     try {
       if (mode === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-          const msg =
-            error.message.includes("Invalid login credentials")
-              ? "Invalid credentials. Check your email & password."
-              : error.message.includes("Email not confirmed")
-              ? "Please confirm your email before signing in."
-              : error.message;
-          addToast("error", msg);
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ identifier: email, password }),
+        });
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          addToast("error", data.error || "Invalid credentials. Check your email/username & password.");
         } else {
           addToast("success", "Access granted. Initializing secure session...");
           const next = searchParams.get("next") ?? "/";
@@ -476,10 +476,10 @@ function LoginPageInner() {
                         className="block text-[10px] font-bold uppercase tracking-widest mb-1.5"
                         style={{ color: "#00F5FF", fontFamily: "var(--font-jetbrains-mono)", opacity: 0.7 }}
                       >
-                        &gt; email_address
+                        &gt; identifier (email or username)
                       </label>
                       <input
-                        type="email"
+                        type="text"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         onKeyDown={(e) => {
@@ -488,8 +488,8 @@ function LoginPageInner() {
                             passwordInputRef.current?.focus();
                           }
                         }}
-                        autoComplete="email"
-                        placeholder="operator@nexus.io"
+                        autoComplete="username"
+                        placeholder="Email or username"
                         className="w-full px-4 py-3 text-sm rounded-lg outline-none transition-all duration-200 focus:ring-1 focus:ring-[rgba(0,245,255,0.5)]"
                         style={{
                           background: "rgba(0,245,255,0.04)",
@@ -794,10 +794,10 @@ function LoginPageInner() {
                   {/* Email */}
                   <div>
                     <label className="block text-xs font-black uppercase tracking-wider mb-1.5 text-black">
-                      Email Address
+                      Email Address or Username
                     </label>
                     <input
-                      type="email"
+                      type="text"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       onKeyDown={(e) => {
@@ -806,8 +806,8 @@ function LoginPageInner() {
                           passwordInputRef.current?.focus();
                         }
                       }}
-                      autoComplete="email"
-                      placeholder="operator@nexus.io"
+                      autoComplete="username"
+                      placeholder="Email or username"
                       className="w-full px-4 py-3 text-sm font-semibold outline-none transition-all duration-100"
                       style={{
                         background: "#FFFFFF",

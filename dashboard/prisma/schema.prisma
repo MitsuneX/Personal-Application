@@ -127,9 +127,8 @@ model GameDossierCharacter {
   tags        Json?
   createdAt   DateTime @default(now())
 
-  @@index([userId])
   @@index([gameId])
-  @@unique([gameId, name])
+  @@index([gameId, name])
 }
 
 model GameCharacter {
@@ -657,3 +656,27 @@ model EmergencyContact {
   @@index([userId, category])
   @@index([userId, priority])
 }
+
+model UserAccount {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  username  String   @unique
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([username])
+  @@index([email])
+}
+
+model PendingEmailRelink {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  newEmail  String
+  otpCode   String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
