@@ -69,1141 +69,1306 @@
           "Main DPS"
         ]
       },
-      {
-        "name": "Denia",
-        "title": "Resonator",
-        "role": "Sub-DPS / Electro",
-        "category": "Electro",
-        "element": "Electro",
-        "weapon": "Broadblade",
-        "rarity": "4-Star",
-        "nation": "Huanglong",
-        "birthday": "August 19",
-        "accentColor": "#BF5FFF",
-        "notes": "A swift blade master guarding the borders of Jinzhou.",
-        "stats": {
-          "gender": "Female",
-          "species": "Human (Resonator)",
-          "affiliation": "Huanglong Guard",
-          "damageType": "Electro",
-          "releaseDate": "2025",
-          "voiceActors": {
-            "jp": "Kana Ueda",
-            "en": "Rachel Wood"
-          }
-        },
-        "tags": [
-          "Wuthering Waves",
-          "Electro",
-          "Broadblade",
-          "4-Star"
-        ]
-      },
-      {
-        "name": "Baizhi",
-        "title": "Researcher of Huaxu Academy",
-        "role": "Support / Healer / Glacio",
-        "category": "Glacio",
-        "element": "Glacio",
-        "weapon": "Rectifier",
-        "rarity": "4-Star",
-        "nation": "Huanglong",
-        "birthday": "September 10",
-        "accentColor": "#38BDF8",
-        "notes": "A researcher at Jinzhou Academy who commands the Remnant creature You'tan to heal allies and analyze Tacet Discords.",
-        "stats": {
-          "gender": "Female",
-          "height": "168 cm",
-          "species": "Human (Resonator)",
-          "affiliation": "Jinzhou Academy",
-          "organization": "Huaxu Academy",
-          "damageType": "Glacio",
-          "releaseDate": "2024-05-22",
-          "voiceActors": {
-            "jp": "Miyuki Sawashiro",
-            "en": "Samantha Cooper"
+      [
+        {
+          "name": "Rover",
+          "title": "Veil of Shadows",
+          "role": "Main DPS / Support / Healer",
+          "category": "Multiple",
+          "element": "Multiple",
+          "weapon": "Sword",
+          "rarity": "5-Star",
+          "nation": "The Black Shores",
+          "birthday": "Player's Choice",
+          "accentColor": "#C7D9FF",
+          "notes": "The protagonist of Wuthering Waves, an amnesiac Arbiter from another world who awakens with no memory of their past. Rover can resonate with multiple attributes and adapt their combat role accordingly.",
+          "stats": {
+            "gender": "Player's Choice",
+            "species": "Unknown",
+            "affiliation": "Black Shores / Startorch Academy",
+            "damageType": "Multiple",
+            "releaseDate": "May 23, 2024",
+            "voiceActors": {
+              "jp": "Minami Tanaka (Female) / Toshiki Masuda (Male)",
+              "en": "Jane Jackson (Female) / Chase Brown (Male)"
+            }
           },
-          "personality": "Analytical, calm, devoted."
+          "tags": [
+            "Wuthering Waves",
+            "Rover",
+            "Multiple Elements",
+            "Sword",
+            "5-Star",
+            "Protagonist",
+            "Black Shores"
+          ]
         },
-        "tags": [
-          "Wuthering Waves",
-          "Glacio",
-          "Rectifier",
-          "Healer",
-          "4-Star"
-        ]
-      },
-      {
-        "name": "Hiyuki",
-        "title": "Resonator",
-        "role": "Sub-DPS / Havoc",
-        "category": "Havoc",
-        "element": "Havoc",
-        "weapon": "Sword",
-        "rarity": "5-Star",
-        "nation": "New Federation",
-        "birthday": "January 28",
-        "accentColor": "#9333EA",
-        "notes": "A covert operative carrying the shadow of Havoc energy.",
-        "stats": {
-          "gender": "Female",
-          "species": "Human (Resonator)",
-          "affiliation": "Black Shores",
-          "damageType": "Havoc",
-          "releaseDate": "2025",
-          "voiceActors": {
-            "jp": "Chiwa Saito",
-            "en": "Chloe Bennett"
-          }
-        },
-        "tags": [
-          "Wuthering Waves",
-          "Havoc",
-          "Sword",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "HSIN",
-        "title": "Resonator",
-        "role": "Main DPS / Aero",
-        "category": "Aero",
-        "element": "Aero",
-        "weapon": "Gauntlets",
-        "rarity": "5-Star",
-        "nation": "Huanglong",
-        "birthday": "June 15",
-        "accentColor": "#10B981",
-        "notes": "A martial arts prodigy channeling tempestuous wind through martial strikes.",
-        "stats": {
-          "gender": "Male",
-          "species": "Human (Resonator)",
-          "affiliation": "Huanglong Martial Order",
-          "damageType": "Aero",
-          "releaseDate": "2025",
-          "voiceActors": {
-            "jp": "Kaito Ishikawa",
-            "en": "David Lee"
-          }
-        },
-        "tags": [
-          "Wuthering Waves",
-          "Aero",
-          "Gauntlets",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Galbrena",
-        "title": "Resonator",
-        "role": "Sub-DPS / Spectro",
-        "category": "Spectro",
-        "element": "Spectro",
-        "weapon": "Pistols",
-        "rarity": "5-Star",
-        "nation": "Rinna",
-        "birthday": "November 11",
-        "accentColor": "#F59E0B",
-        "notes": "A radiant gunslinger seeking secrets embedded within ancient Sonance energy.",
-        "stats": {
-          "gender": "Female",
-          "species": "Human (Resonator)",
-          "affiliation": "Court of Savantae",
-          "damageType": "Spectro",
-          "releaseDate": "2025",
-          "voiceActors": {
-            "jp": "Satomi Sato",
-            "en": "Jessica Miller"
-          }
-        },
-        "tags": [
-          "Wuthering Waves",
-          "Spectro",
-          "Pistols",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Jinhsi",
-        "title": "Magistrate of Jinzhou",
-        "role": "Main DPS / Spectro",
-        "category": "Spectro",
-        "element": "Spectro",
-        "weapon": "Broadblade",
-        "rarity": "5-Star",
-        "nation": "Huanglong",
-        "birthday": "June 6",
-        "accentColor": "#FBBF24",
-        "notes": "The esteemed Magistrate of Jinzhou connected to Jué, wielding divine Spectro broadblade strikes.",
-        "stats": {
-          "gender": "Female",
-          "height": "165 cm",
-          "species": "Human (Resonator)",
-          "affiliation": "Jinzhou Government",
-          "organization": "Magistrate Council",
-          "damageType": "Spectro",
-          "releaseDate": "2024-06-28",
-          "voiceActors": {
-            "jp": "Minase Inori",
-            "en": "Giselle Fernandez"
+        {
+          "name": "Denia",
+          "title": "Bubbles of Nihility",
+          "role": "Support / Sub-DPS",
+          "category": "Fusion",
+          "element": "Fusion",
+          "weapon": "Rectifier",
+          "rarity": "5-Star",
+          "nation": "Lahai-Roi",
+          "birthday": null,
+          "accentColor": "#FF9CBA",
+          "notes": "A Department of Voidmatters student at Startorch Academy and a professional slacker with an observant nature. Denia is known for her gentle smile and witty personality while possessing a deeper connection to the Fractsidus.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Startorch Academy / Fractsidus",
+            "damageType": "Fusion",
+            "releaseDate": "May 21, 2026",
+            "voiceActors": {
+              "jp": "Miku Ito",
+              "en": "Jodie Bell Cortez"
+            }
           },
-          "personality": "Noble, decisive, compassionate ruler."
+          "tags": [
+            "Wuthering Waves",
+            "Denia",
+            "Fusion",
+            "Rectifier",
+            "5-Star",
+            "Lahai-Roi",
+            "Startorch Academy"
+          ]
         },
-        "tags": [
-          "Wuthering Waves",
-          "Spectro",
-          "Broadblade",
-          "Main DPS",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Phoebe",
-        "title": "Resonator",
-        "role": "Support / Spectro",
-        "category": "Spectro",
-        "element": "Spectro",
-        "weapon": "Rectifier",
-        "rarity": "5-Star",
-        "nation": "New Federation",
-        "birthday": "March 21",
-        "accentColor": "#F59E0B",
-        "notes": "A benevolent Spectro weaver channeling starlight harmonics.",
-        "stats": {
-          "gender": "Female",
-          "species": "Human (Resonator)",
-          "affiliation": "Black Shores",
-          "damageType": "Spectro",
-          "releaseDate": "2025",
-          "voiceActors": {
-            "jp": "Rina Hidaka",
-            "en": "Lily Evans"
-          }
-        },
-        "tags": [
-          "Wuthering Waves",
-          "Spectro",
-          "Rectifier",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Suisui",
-        "title": "Resonator",
-        "role": "Sub-DPS / Glacio",
-        "category": "Glacio",
-        "element": "Glacio",
-        "weapon": "Pistols",
-        "rarity": "4-Star",
-        "nation": "Huanglong",
-        "birthday": "February 14",
-        "accentColor": "#38BDF8",
-        "notes": "A lively quick-draw marksman from the Jinzhou night markets.",
-        "stats": {
-          "gender": "Female",
-          "species": "Human (Resonator)",
-          "affiliation": "Jinzhou Market",
-          "damageType": "Glacio",
-          "releaseDate": "2025",
-          "voiceActors": {
-            "jp": "Misaki Kuno",
-            "en": "Chloe Adams"
-          }
-        },
-        "tags": [
-          "Wuthering Waves",
-          "Glacio",
-          "Pistols",
-          "4-Star"
-        ]
-      },
-      {
-        "name": "Shorekeeper",
-        "title": "Guardian of the Black Shores",
-        "role": "Support / Healer / Spectro",
-        "category": "Spectro",
-        "element": "Spectro",
-        "weapon": "Rectifier",
-        "rarity": "5-Star",
-        "nation": "Black Shores",
-        "birthday": "April 2",
-        "accentColor": "#00F5FF",
-        "notes": "The mysterious guardian of the Black Shores who guides the Rover and preserves the equilibrium of the world.",
-        "stats": {
-          "gender": "Female",
-          "height": "167 cm",
-          "species": "Divine Entity / Resonator",
-          "affiliation": "The Black Shores",
-          "damageType": "Spectro",
-          "releaseDate": "2024-09-29",
-          "voiceActors": {
-            "jp": "Yui Ishikawa",
-            "en": "Kirsty Rider"
+        {
+          "name": "Baizhi",
+          "title": "Healing You'tan",
+          "role": "Support / Healer",
+          "category": "Glacio",
+          "element": "Glacio",
+          "weapon": "Rectifier",
+          "rarity": "4-Star",
+          "nation": "Huanglong",
+          "birthday": "September 10",
+          "accentColor": "#B9E8FF",
+          "notes": "A researcher at Huaxu Academy specializing in Remnant Ecoacoustics and Remnant Energy. Her companion You'tan is closely connected to her research and provides her healing abilities.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Huaxu Academy",
+            "damageType": "Glacio",
+            "releaseDate": "May 23, 2024",
+            "voiceActors": {
+              "jp": "Asami Seto",
+              "en": "Samantha Dakin"
+            }
           },
-          "personality": "Serene, devoted, ethereal."
+          "tags": [
+            "Wuthering Waves",
+            "Baizhi",
+            "Glacio",
+            "Rectifier",
+            "4-Star",
+            "Huanglong",
+            "Healer",
+            "Support"
+          ]
         },
-        "tags": [
-          "Wuthering Waves",
-          "Spectro",
-          "Rectifier",
-          "Support",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Yangyang",
-        "title": "Outrider of Midnight Rangers",
-        "role": "Support / Crowd Control / Aero",
-        "category": "Aero",
-        "element": "Aero",
-        "weapon": "Sword",
-        "rarity": "4-Star",
-        "nation": "Huanglong",
-        "birthday": "October 11",
-        "accentColor": "#34D399",
-        "notes": "An Outrider of the Midnight Rangers who perceives wind currents to track Tacet Discords and protect travellers.",
-        "stats": {
-          "gender": "Female",
-          "height": "162 cm",
-          "species": "Human (Resonator)",
-          "affiliation": "Midnight Rangers",
-          "damageType": "Aero",
-          "releaseDate": "2024-05-22",
-          "voiceActors": {
-            "jp": "Yui Horie",
-            "en": "Rebecca Yeo"
+        {
+          "name": "Hiyuki",
+          "title": "Futures' Tithe",
+          "role": "Main DPS",
+          "category": "Glacio",
+          "element": "Glacio",
+          "weapon": "Sword",
+          "rarity": "5-Star",
+          "nation": "Lahai-Roi",
+          "birthday": null,
+          "accentColor": "#BFEAFF",
+          "notes": "A miko of the Flaming Sakura and a member of the Special Response Force. Having served as a miko for over a century, Hiyuki possesses unusual abilities connected to Suzu, one of the Legacy Talismans left behind by the Sentinels.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Special Response Force / Spacetrek Collective / Startorch Academy",
+            "damageType": "Glacio",
+            "releaseDate": "April 30, 2026",
+            "voiceActors": {
+              "jp": "Haruka Tomatsu",
+              "en": "Mei Mac"
+            }
           },
-          "personality": "Gentle, attentive, reliable scout."
+          "tags": [
+            "Wuthering Waves",
+            "Hiyuki",
+            "Glacio",
+            "Sword",
+            "5-Star",
+            "Lahai-Roi",
+            "Miko",
+            "Main DPS"
+          ]
         },
-        "tags": [
-          "Wuthering Waves",
-          "Aero",
-          "Sword",
-          "4-Star"
-        ]
-      },
-      {
-        "name": "Xuan Ling",
-        "title": "Resonator",
-        "role": "Main DPS / Fusion",
-        "category": "Fusion",
-        "element": "Fusion",
-        "weapon": "Broadblade",
-        "rarity": "5-Star",
-        "nation": "Huanglong",
-        "birthday": "May 5",
-        "accentColor": "#EF4444",
-        "notes": "A fearless broadblade commander wielding scorching flames.",
-        "stats": {
-          "gender": "Female",
-          "species": "Human (Resonator)",
-          "affiliation": "Huanglong Guard",
-          "damageType": "Fusion",
-          "releaseDate": "2025",
-          "voiceActors": {
-            "jp": "Ami Koshimizu",
-            "en": "Victoria Cole"
-          }
-        },
-        "tags": [
-          "Wuthering Waves",
-          "Fusion",
-          "Broadblade",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Zhezhi",
-        "title": "Commissioned Painter",
-        "role": "Sub-DPS / Glacio",
-        "category": "Glacio",
-        "element": "Glacio",
-        "weapon": "Rectifier",
-        "rarity": "5-Star",
-        "nation": "Huanglong",
-        "birthday": "August 30",
-        "accentColor": "#60A5FA",
-        "notes": "A timid painter in Jinzhou whose brushstrokes manifest real Glacio phantasms in combat.",
-        "stats": {
-          "gender": "Female",
-          "height": "158 cm",
-          "species": "Human (Resonator)",
-          "affiliation": "Jinzhou Artisans",
-          "damageType": "Glacio",
-          "releaseDate": "2024-08-15",
-          "voiceActors": {
-            "jp": "Aoi Yuuki",
-            "en": "Skylar Busch"
+        {
+          "name": "Galbrena",
+          "title": "Infernal Descent",
+          "role": "Main DPS",
+          "category": "Fusion",
+          "element": "Fusion",
+          "weapon": "Pistols",
+          "rarity": "5-Star",
+          "nation": "The Black Shores",
+          "birthday": null,
+          "accentColor": "#FF6338",
+          "notes": "A formidable Discord Slayer formerly known as Angel. Galbrena hunts Tacet Discords and can consume their frequencies and powers with the aid of Chimera. She now serves as a Consultant of the Black Shores.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Black Shores / Septimont / Fabianum",
+            "damageType": "Fusion",
+            "releaseDate": "October 9, 2025",
+            "voiceActors": {
+              "jp": "Umeka Shoji",
+              "en": "Devora Wilde"
+            }
           },
-          "personality": "Shy, earnest, artistic genius."
+          "tags": [
+            "Wuthering Waves",
+            "Galbrena",
+            "Fusion",
+            "Pistols",
+            "5-Star",
+            "Black Shores",
+            "Discord Slayer",
+            "Main DPS"
+          ]
         },
-        "tags": [
-          "Wuthering Waves",
-          "Glacio",
-          "Rectifier",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Cartethyia",
-        "title": "Resonator",
-        "role": "Sub-DPS / Havoc",
-        "category": "Havoc",
-        "element": "Havoc",
-        "weapon": "Sword",
-        "rarity": "5-Star",
-        "nation": "Rinna",
-        "birthday": "July 7",
-        "accentColor": "#A855F7",
-        "notes": "A noble swordmaster delving into forbidden Havoc research.",
-        "stats": {
-          "gender": "Female",
-          "species": "Human (Resonator)",
-          "affiliation": "Court of Savantae",
-          "damageType": "Havoc",
-          "releaseDate": "2025",
-          "voiceActors": {
-            "jp": "Sora Amamiya",
-            "en": "Hannah White"
-          }
-        },
-        "tags": [
-          "Wuthering Waves",
-          "Havoc",
-          "Sword",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Changli",
-        "title": "Counselor to the Magistrate",
-        "role": "Main DPS / Sub-DPS / Fusion",
-        "category": "Fusion",
-        "element": "Fusion",
-        "weapon": "Sword",
-        "rarity": "5-Star",
-        "nation": "Huanglong",
-        "birthday": "July 22",
-        "accentColor": "#F97316",
-        "notes": "Former Grand Tutor of the Capital and strategist for Magistrate Jinhsi, wielding fiery vermilion sword art.",
-        "stats": {
-          "gender": "Female",
-          "height": "170 cm",
-          "species": "Human (Resonator)",
-          "affiliation": "Jinzhou Government",
-          "damageType": "Fusion",
-          "releaseDate": "2024-07-22",
-          "voiceActors": {
-            "jp": "Chiwa Saito",
-            "en": "Katelyn Barr"
+        {
+          "name": "Jinhsi",
+          "title": "Thawborn Renewal",
+          "role": "Main DPS",
+          "category": "Spectro",
+          "element": "Spectro",
+          "weapon": "Broadblade",
+          "rarity": "5-Star",
+          "nation": "Huanglong",
+          "birthday": "March 6",
+          "accentColor": "#FFE7A8",
+          "notes": "The young Magistrate of Jinzhou and the appointed Resonator of Sentinel Jue. Jinhsi carries the responsibility of protecting Jinzhou and guiding its future while wielding powerful Spectro abilities.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Jinzhou City Hall",
+            "damageType": "Spectro",
+            "releaseDate": "June 28, 2024",
+            "voiceActors": {
+              "jp": "Yoshino Aoyama",
+              "en": "Anna Devlin"
+            }
           },
-          "personality": "Strategic, graceful, master tactician."
+          "tags": [
+            "Wuthering Waves",
+            "Jinhsi",
+            "Spectro",
+            "Broadblade",
+            "5-Star",
+            "Huanglong",
+            "Jinzhou",
+            "Main DPS"
+          ]
         },
-        "tags": [
-          "Wuthering Waves",
-          "Fusion",
-          "Sword",
-          "Main DPS",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Chisa",
-        "title": "Resonator",
-        "role": "Sub-DPS / Electro",
-        "category": "Electro",
-        "element": "Electro",
-        "weapon": "Pistols",
-        "rarity": "4-Star",
-        "nation": "Huanglong",
-        "birthday": "December 19",
-        "accentColor": "#A855F7",
-        "notes": "A nimble gunslinger specializing in lightning traps.",
-        "stats": {
-          "gender": "Female",
-          "species": "Human (Resonator)",
-          "affiliation": "Jinzhou Rangers",
-          "damageType": "Electro",
-          "releaseDate": "2025",
-          "voiceActors": {
-            "jp": "Ai Kakuma",
-            "en": "Mia Thorne"
-          }
+        {
+          "name": "Phoebe",
+          "title": "Graceful Luminescence",
+          "role": "Main DPS",
+          "category": "Spectro",
+          "element": "Spectro",
+          "weapon": "Rectifier",
+          "rarity": "5-Star",
+          "nation": "Rinascita",
+          "birthday": null,
+          "accentColor": "#FFE8B8",
+          "notes": "An Acolyte of the Order of the Deep known for her warmth, grace, devotion, and self-discipline. Phoebe carries out her duties with unwavering faith and offers compassion and comfort to those around her.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Order of the Deep / Ragunna",
+            "damageType": "Spectro",
+            "releaseDate": "February 13, 2025",
+            "voiceActors": {
+              "jp": "Kaede Hondo",
+              "en": "Rebecca LaChance"
+            }
+          },
+          "tags": [
+            "Wuthering Waves",
+            "Phoebe",
+            "Spectro",
+            "Rectifier",
+            "5-Star",
+            "Rinascita",
+            "Order of the Deep",
+            "Main DPS"
+          ]
         },
-        "tags": [
-          "Wuthering Waves",
-          "Electro",
-          "Pistols",
-          "4-Star"
-        ]
-      }
+        {
+          "name": "Shorekeeper",
+          "title": "Euphonic Chrysalis",
+          "role": "Support / Healer",
+          "category": "Spectro",
+          "element": "Spectro",
+          "weapon": "Rectifier",
+          "rarity": "5-Star",
+          "nation": "The Black Shores",
+          "birthday": "February 27",
+          "accentColor": "#A9C7FF",
+          "notes": "The guardian of the Black Shores and a mysterious divine being who has spent eons fulfilling her role. Her encounter with Rover awakens new emotions and desires within her, leading her to form a deeper connection with the world.",
+          "stats": {
+            "gender": "Female",
+            "species": "Divine Being",
+            "affiliation": "Black Shores",
+            "damageType": "Spectro",
+            "releaseDate": "September 29, 2024",
+            "voiceActors": {
+              "jp": "Ayaka Fukuhara",
+              "en": "Stella Bennett"
+            }
+          },
+          "tags": [
+            "Wuthering Waves",
+            "Shorekeeper",
+            "Spectro",
+            "Rectifier",
+            "5-Star",
+            "Black Shores",
+            "Support",
+            "Healer"
+          ]
+        },
+        {
+          "name": "Yangyang",
+          "title": "Breath of Winds",
+          "role": "Support / Sub-DPS",
+          "category": "Aero",
+          "element": "Aero",
+          "weapon": "Sword",
+          "rarity": "4-Star",
+          "nation": "Huanglong",
+          "birthday": "October 11",
+          "accentColor": "#9FE7D4",
+          "notes": "An outrider of the Midnight Rangers who can hear and perceive the sounds of the wind. Yangyang is one of Rover's earliest companions and is known for her gentle, attentive, and considerate personality.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Midnight Rangers",
+            "damageType": "Aero",
+            "releaseDate": "May 23, 2024",
+            "voiceActors": {
+              "jp": "Yui Ishikawa",
+              "en": "Rebecca Yeo"
+            }
+          },
+          "tags": [
+            "Wuthering Waves",
+            "Yangyang",
+            "Aero",
+            "Sword",
+            "4-Star",
+            "Huanglong",
+            "Midnight Rangers",
+            "Support"
+          ]
+        },
+        {
+          "name": "Yangyang: Xuanling",
+          "title": "Voices of Azure Plume",
+          "role": "Main DPS",
+          "category": "Havoc",
+          "element": "Havoc",
+          "weapon": "Sword",
+          "rarity": "5-Star",
+          "nation": "Huanglong",
+          "birthday": "October 11",
+          "accentColor": "#586CFF",
+          "notes": "A 5-Star variant of Yangyang known as Xuanling. This form wields Havoc power and represents a significant evolution of Yangyang's combat capabilities.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Jinzhou",
+            "damageType": "Havoc",
+            "releaseDate": "July 10, 2026",
+            "voiceActors": {
+              "jp": "Yui Ishikawa",
+              "en": "Rebecca Yeo"
+            }
+          },
+          "tags": [
+            "Wuthering Waves",
+            "Yangyang",
+            "Xuanling",
+            "Havoc",
+            "Sword",
+            "5-Star",
+            "Huanglong",
+            "Main DPS"
+          ]
+        },
+        {
+          "name": "Zhezhi",
+          "title": "Enchanted Brush",
+          "role": "Sub-DPS / Support",
+          "category": "Glacio",
+          "element": "Glacio",
+          "weapon": "Rectifier",
+          "rarity": "5-Star",
+          "nation": "Huanglong",
+          "birthday": "December 31",
+          "accentColor": "#8FE3E0",
+          "notes": "A commissioned painter known for her quiet and shy personality. Zhezhi is deeply dedicated to her craft, and her paintings are brought to life through her Resonance abilities.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Jinzhou",
+            "damageType": "Glacio",
+            "releaseDate": "August 15, 2024",
+            "voiceActors": {
+              "jp": "Yui Makino",
+              "en": "Shin-Fei Chen"
+            }
+          },
+          "tags": [
+            "Wuthering Waves",
+            "Zhezhi",
+            "Glacio",
+            "Rectifier",
+            "5-Star",
+            "Huanglong",
+            "Painter",
+            "Sub-DPS",
+            "Support"
+          ]
+        },
+        {
+          "name": "Cartethyia",
+          "title": "Feathered Tempest",
+          "role": "Main DPS",
+          "category": "Aero",
+          "element": "Aero",
+          "weapon": "Sword",
+          "rarity": "5-Star",
+          "nation": "Rinascita",
+          "birthday": null,
+          "accentColor": "#B8E8FF",
+          "notes": "A wandering knight from Rinascita formerly revered as Fleurdelys, the Blessed Maiden. Cartethyia carries the powers of Sentinel Imperator and Threnodian Leviathan and seeks to live freely beyond the titles and expectations placed upon her.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Ragunna / Order of the Deep",
+            "damageType": "Aero",
+            "releaseDate": "June 12, 2025",
+            "voiceActors": {
+              "jp": "Yū Asakawa",
+              "en": "Amanda Elizabeth Rischel"
+            }
+          },
+          "tags": [
+            "Wuthering Waves",
+            "Cartethyia",
+            "Aero",
+            "Sword",
+            "5-Star",
+            "Rinascita",
+            "Fleurdelys",
+            "Main DPS"
+          ]
+        },
+        {
+          "name": "Changli",
+          "title": "Eternal Blaze",
+          "role": "Main DPS",
+          "category": "Fusion",
+          "element": "Fusion",
+          "weapon": "Sword",
+          "rarity": "5-Star",
+          "nation": "Huanglong",
+          "birthday": "June 6",
+          "accentColor": "#FF7043",
+          "notes": "The former Secretary-General of the Central Secretariat in Mingting and the current Counselor to Jinzhou Magistrate Jinhsi. Changli is a patient and calculated strategist who excels at manipulating human nature and planning several steps ahead.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Jinzhou City Hall",
+            "damageType": "Fusion",
+            "releaseDate": "July 22, 2024",
+            "voiceActors": {
+              "jp": "Chiwa Saito",
+              "en": "Ashleigh Haddad"
+            }
+          },
+          "tags": [
+            "Wuthering Waves",
+            "Changli",
+            "Fusion",
+            "Sword",
+            "5-Star",
+            "Huanglong",
+            "Jinzhou",
+            "Main DPS"
+          ]
+        },
+        {
+          "name": "Chisa",
+          "title": "Eye of Unravelling",
+          "role": "Support / Healer",
+          "category": "Havoc",
+          "element": "Havoc",
+          "weapon": "Broadblade",
+          "rarity": "5-Star",
+          "nation": "Lahai-Roi",
+          "birthday": null,
+          "accentColor": "#6F273D",
+          "notes": "A conscientious and level-headed student from Startorch Academy. Chisa approaches problems analytically and believes everything can be broken down and resolved, although human bonds remain the one thing she struggles to understand.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Startorch Academy",
+            "damageType": "Havoc",
+            "releaseDate": "November 20, 2025",
+            "voiceActors": {
+              "jp": "Hisako Kanemoto",
+              "en": "Leader Looi"
+            }
+          },
+          "tags": [
+            "Wuthering Waves",
+            "Chisa",
+            "Havoc",
+            "Broadblade",
+            "5-Star",
+            "Lahai-Roi",
+            "Startorch Academy",
+            "Support",
+            "Healer"
+          ]
+        },
+        {
+          "name": "Hsin",
+          "title": null,
+          "role": null,
+          "category": null,
+          "element": null,
+          "weapon": null,
+          "rarity": "5-Star",
+          "nation": null,
+          "birthday": null,
+          "accentColor": "#D9B7FF",
+          "notes": "A newly revealed Wuthering Waves character. Hsin is confirmed as a 5-Star character, but her detailed combat information, element, weapon, role, birthday, affiliation, release date, and voice actors are not yet available.",
+          "stats": {
+            "gender": "Female",
+            "species": null,
+            "affiliation": null,
+            "damageType": null,
+            "releaseDate": null,
+            "voiceActors": {
+              "jp": null,
+              "en": null
+            }
+          },
+          "tags": ["Wuthering Waves", "Hsin", "5-Star", "Upcoming"]
+        },
+        {
+          "name": "Suisui",
+          "title": "Bubbles of Prosperity",
+          "role": "Support",
+          "category": "Glacio",
+          "element": "Glacio",
+          "weapon": "Rectifier",
+          "rarity": "5-Star",
+          "nation": "Huanglong",
+          "birthday": null,
+          "accentColor": "#8FE7E0",
+          "notes": "Born into a noble family of Mingting, Suisui is the brilliant young director of the Zhaoming Commerce Guild. She wields a water fan and uses her Resonance abilities to manipulate surrounding water and create graceful aquatic phenomena.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Zhaoming Commerce Guild",
+            "damageType": "Glacio",
+            "releaseDate": "July 23, 2026",
+            "voiceActors": {
+              "jp": null,
+              "en": null
+            }
+          },
+          "tags": [
+            "Wuthering Waves",
+            "Suisui",
+            "Glacio",
+            "Rectifier",
+            "5-Star",
+            "Huanglong",
+            "Mingting",
+            "Support"
+          ]
+        },
+        {
+          "name": "Qingxiao",
+          "title": "The Sword Immortal",
+          "role": null,
+          "category": null,
+          "element": "Aero",
+          "weapon": "Sword",
+          "rarity": "5-Star",
+          "nation": "Huanglong",
+          "birthday": null,
+          "accentColor": "#9CCBFF",
+          "notes": "A reclusive sword immortal and nominal Cavalry Officer of the Zhenxuan Division under the Military Strategy Office of Xuanfang City. Qingxiao is renowned for her mastery of both the qin and sword and is surrounded by legends portraying her as an immortal guardian of the region.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Zhenxuan Division / Military Strategy Office",
+            "damageType": "Aero",
+            "releaseDate": null,
+            "voiceActors": {
+              "jp": null,
+              "en": null
+            }
+          },
+          "tags": [
+            "Wuthering Waves",
+            "Qingxiao",
+            "Aero",
+            "Sword",
+            "5-Star",
+            "Huanglong",
+            "Xuanfang",
+            "Xuanfang City"
+          ]
+        },
+        {
+          "name": "Lucilla",
+          "title": "President of Startorch Academy",
+          "role": "Sub-DPS / Main DPS",
+          "category": "Glacio",
+          "element": "Glacio",
+          "weapon": "Rectifier",
+          "rarity": "5-Star",
+          "nation": "Lahai-Roi",
+          "birthday": null,
+          "accentColor": "#B8DFFF",
+          "notes": "The President of Startorch Academy and an idealist with both feet firmly on the ground. Lucilla quietly watches over her students as they strive to reach greater heights. She previously served as the editor-in-chief of an academic journal in the New Federation and worked with Mortefi.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Startorch Academy",
+            "damageType": "Glacio",
+            "releaseDate": "June 18, 2026",
+            "voiceActors": {
+              "jp": "Shizuka Ito",
+              "en": "Luci Fish"
+            }
+          },
+          "tags": [
+            "Wuthering Waves",
+            "Lucilla",
+            "Glacio",
+            "Rectifier",
+            "5-Star",
+            "Lahai-Roi",
+            "Startorch Academy",
+            "Sub-DPS",
+            "Main DPS"
+          ]
+        }
+      ]
     ]
   },
   {
     "gameTitle": "Honkai: Star Rail",
     "characters": [
-      {
-        "name": "Aglaea",
-        "title": "Goldweaver of Amphoreus",
-        "role": "Main DPS / Lightning",
-        "category": "Remembrance",
-        "element": "Lightning",
-        "path": "Remembrance",
-        "weapon": "Garmentmaker Needle / Thread",
-        "rarity": "5-Star",
-        "nation": "Amphoreus",
-        "birthday": "January 16",
-        "accentColor": "#F59E0B",
-        "notes": "The Goldweaver of Okhema on Amphoreus who weaves destiny and summons the Garmentmaker.",
-        "stats": {
-          "gender": "Female",
-          "species": "Demi-God / Human",
-          "affiliation": "Okhema Council",
-          "damageType": "Lightning",
-          "releaseDate": "2025-01-15",
-          "voiceActors": {
-            "jp": "Aya Endo",
-            "en": "Mela Lee"
+      [
+        {
+          "name": "Aglaea",
+          "title": "The Goldweaver",
+          "role": "Main DPS",
+          "category": "Lightning",
+          "element": "Lightning",
+          "weapon": "Time Woven Into Gold",
+          "rarity": "5-Star",
+          "nation": "Amphoreus",
+          "birthday": null,
+          "accentColor": "#FFD86B",
+          "notes": "The Goldweaver and Chrysos Heir bearing the Coreflame of Romance. Aglaea is a powerful Remembrance DPS who fights alongside her memosprite, Garmentmaker.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Amphoreus / Chrysos Heirs",
+            "damageType": "Lightning",
+            "releaseDate": "January 29, 2025",
+            "voiceActors": {
+              "jp": "Endo Aya",
+              "en": null
+            }
           },
-          "personality": "Regal, elegant, authoritative."
+          "tags": [
+            "Honkai: Star Rail",
+            "Aglaea",
+            "Lightning",
+            "Remembrance",
+            "5-Star",
+            "Amphoreus",
+            "Main DPS",
+            "Time Woven Into Gold"
+          ]
         },
-        "tags": [
-          "Honkai: Star Rail",
-          "Lightning",
-          "Remembrance",
-          "Amphoreus",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Castorice",
-        "title": "Chrysos Heir of Death",
-        "role": "Main DPS / Quantum",
-        "category": "Remembrance",
-        "element": "Quantum",
-        "path": "Remembrance",
-        "weapon": "Death Scythe",
-        "rarity": "5-Star",
-        "nation": "Amphoreus",
-        "birthday": "March 8",
-        "accentColor": "#8B5CF6",
-        "notes": "A Chrysos Heir from Amphoreus associated with the god of death.",
-        "stats": {
-          "gender": "Female",
-          "species": "Chrysos Heir",
-          "affiliation": "Okhema",
-          "damageType": "Quantum",
-          "releaseDate": "2025-02-26",
-          "voiceActors": {
-            "jp": "Inori Minase",
-            "en": "Suzie Yeung"
+        {
+          "name": "Castorice",
+          "title": "Servant of Death",
+          "role": "Main DPS",
+          "category": "Quantum",
+          "element": "Quantum",
+          "weapon": "Make Farewells More Beautiful",
+          "rarity": "5-Star",
+          "nation": "Amphoreus",
+          "birthday": null,
+          "accentColor": "#C7B7FF",
+          "notes": "The Chrysos Heir bearing the Coreflame of Death. Castorice is the daughter of the River of Souls and commands the power of life and death alongside her memosprite Netherwing.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Amphoreus / Chrysos Heirs",
+            "damageType": "Quantum",
+            "releaseDate": "April 30, 2025",
+            "voiceActors": {
+              "jp": null,
+              "en": null
+            }
           },
-          "personality": "Enigmatic, quiet, melancholy."
+          "tags": [
+            "Honkai: Star Rail",
+            "Castorice",
+            "Quantum",
+            "Remembrance",
+            "5-Star",
+            "Amphoreus",
+            "Main DPS",
+            "Make Farewells More Beautiful"
+          ]
         },
-        "tags": [
-          "Honkai: Star Rail",
-          "Quantum",
-          "Remembrance",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Cyrene",
-        "title": "Chrysos Heir of Memory",
-        "role": "Support / Ice",
-        "category": "Remembrance",
-        "element": "Ice",
-        "path": "Remembrance",
-        "weapon": "Mirror Wand",
-        "rarity": "5-Star",
-        "nation": "Amphoreus",
-        "birthday": "May 12",
-        "accentColor": "#38BDF8",
-        "notes": "A serene oracle of Amphoreus manipulating memory reflections.",
-        "stats": {
-          "gender": "Female",
-          "species": "Chrysos Heir",
-          "affiliation": "Okhema",
-          "damageType": "Ice",
-          "releaseDate": "2025",
-          "voiceActors": {
-            "jp": "Saori Hayami",
-            "en": "Laura Post"
-          }
-        },
-        "tags": [
-          "Honkai: Star Rail",
-          "Ice",
-          "Remembrance",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Firefly",
-        "title": "SAM (Strategic Assault Mech)",
-        "role": "Main DPS / Fire / Break",
-        "category": "Destruction",
-        "element": "Fire",
-        "path": "Destruction",
-        "weapon": "Fyrefly Type-IV Armor / Dual Blades",
-        "rarity": "5-Star",
-        "nation": "Glamoth / Penacony",
-        "birthday": "May 25",
-        "accentColor": "#34D399",
-        "notes": "A genetically modified member of the Iron Cavalry of Glamoth who pilots the powerful SAM suit as a Stellaron Hunter.",
-        "stats": {
-          "gender": "Female",
-          "height": "156 cm",
-          "species": "Genetically Engineered Human",
-          "affiliation": "Stellaron Hunters",
-          "organization": "Iron Cavalry of Glamoth",
-          "damageType": "Fire",
-          "releaseDate": "2024-06-19",
-          "voiceActors": {
-            "jp": "Tomori Kusunoki",
-            "en": "Analesa Fisher"
+        {
+          "name": "Cyrene",
+          "title": "Daughter of Aedes Elysiae",
+          "role": "Support",
+          "category": "Ice",
+          "element": "Ice",
+          "weapon": "This Love, Forever",
+          "rarity": "5-Star",
+          "nation": "Amphoreus",
+          "birthday": null,
+          "accentColor": "#B9E8FF",
+          "notes": "The Chrysos Heir of Aedes Elysiae and a key figure of the Remembrance. Cyrene supports allies through powerful buffs and her unique Recollection mechanics.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Aedes Elysiae / Chrysos Heirs",
+            "damageType": "Ice",
+            "releaseDate": "June 24, 2026",
+            "voiceActors": {
+              "jp": null,
+              "en": null
+            }
           },
-          "personality": "Determined, gentle, fierce in battle."
+          "tags": [
+            "Honkai: Star Rail",
+            "Cyrene",
+            "Ice",
+            "Remembrance",
+            "5-Star",
+            "Amphoreus",
+            "Support",
+            "This Love, Forever"
+          ]
         },
-        "tags": [
-          "Honkai: Star Rail",
-          "Fire",
-          "Destruction",
-          "Stellaron Hunters",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Evanescia",
-        "title": "Phantom Weaver",
-        "role": "Sub-DPS / Imaginary",
-        "category": "Nihility",
-        "element": "Imaginary",
-        "path": "Nihility",
-        "weapon": "Weaving Shuttle",
-        "rarity": "5-Star",
-        "nation": "Amphoreus",
-        "birthday": "October 30",
-        "accentColor": "#FBBF24",
-        "notes": "A shadowy figure weaving illusions of lost time on Amphoreus.",
-        "stats": {
-          "gender": "Female",
-          "species": "Human",
-          "affiliation": "Amphoreus",
-          "damageType": "Imaginary",
-          "releaseDate": "2025",
-          "voiceActors": {
-            "jp": "Maaya Sakamoto",
-            "en": "Karen Strassman"
-          }
-        },
-        "tags": [
-          "Honkai: Star Rail",
-          "Imaginary",
-          "Nihility",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "The Herta",
-        "title": "Genius Society #83",
-        "role": "Main DPS / Ice",
-        "category": "Erudition",
-        "element": "Ice",
-        "path": "Erudition",
-        "weapon": "Cosmic Key Scepter",
-        "rarity": "5-Star",
-        "nation": "Herta Space Station",
-        "birthday": "February 21",
-        "accentColor": "#818CF8",
-        "notes": "The true original form of Member #83 of the Genius Society and Emanator of Nous who built the Simulated Universe.",
-        "stats": {
-          "gender": "Female",
-          "height": "165 cm",
-          "species": "Human (Emanator of Erudition)",
-          "affiliation": "Genius Society",
-          "organization": "Herta Space Station",
-          "damageType": "Ice",
-          "releaseDate": "2025-01-15",
-          "voiceActors": {
-            "jp": "Haruka Yamazaki",
-            "en": "PJ Mattson"
+        {
+          "name": "Firefly",
+          "title": "The Molten Knight",
+          "role": "Main DPS",
+          "category": "Fire",
+          "element": "Fire",
+          "weapon": "Whereabouts Should Dreams Rest",
+          "rarity": "5-Star",
+          "nation": "Glamoth",
+          "birthday": null,
+          "accentColor": "#FF7A45",
+          "notes": "A young woman afflicted with Entropy Loss Syndrome who fights using the SAM armor. Firefly seeks a meaning for life while repeatedly confronting death through battle.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Stellaron Hunters",
+            "damageType": "Fire",
+            "releaseDate": "June 19, 2024",
+            "voiceActors": {
+              "jp": "Rie Takahashi",
+              "en": "Analesa Fisher"
+            }
           },
-          "personality": "Brilliant, eccentric, perfectionist."
+          "tags": [
+            "Honkai: Star Rail",
+            "Firefly",
+            "Fire",
+            "Destruction",
+            "5-Star",
+            "Stellaron Hunters",
+            "Main DPS",
+            "Whereabouts Should Dreams Rest"
+          ]
         },
-        "tags": [
-          "Honkai: Star Rail",
-          "Ice",
-          "Erudition",
-          "Genius Society",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Himeko",
-        "title": "Navigator of the Astral Express",
-        "role": "Main DPS / Fire",
-        "category": "Erudition",
-        "element": "Fire",
-        "path": "Erudition",
-        "weapon": "Orbital Laser Case",
-        "rarity": "5-Star",
-        "nation": "Astral Express",
-        "birthday": "June 11",
-        "accentColor": "#EF4444",
-        "notes": "An adventurous scientist who repaired the stranded Astral Express and now leads its trailblazing journeys.",
-        "stats": {
-          "gender": "Female",
-          "height": "170 cm",
-          "species": "Human",
-          "affiliation": "Astral Express",
-          "damageType": "Fire",
-          "releaseDate": "2023-04-26",
-          "voiceActors": {
-            "jp": "Rie Tanaka",
-            "en": "Cissy Jones"
+        {
+          "name": "Evanescia",
+          "title": "The Mysterious Lady",
+          "role": "Main DPS",
+          "category": "Physical",
+          "element": "Physical",
+          "weapon": "Until the Flowers Bloom Again",
+          "rarity": "5-Star",
+          "nation": "Planarcadia",
+          "birthday": null,
+          "accentColor": "#F5A9C8",
+          "notes": "A mysterious lady who appears in Planarcadia like a fleeting season. Evanescia follows the Path of Elation and specializes in powerful Elation damage and Punchline mechanics.",
+          "stats": {
+            "gender": "Female",
+            "species": null,
+            "affiliation": "Planarcadia",
+            "damageType": "Physical",
+            "releaseDate": "May 13, 2026",
+            "voiceActors": {
+              "jp": null,
+              "en": null
+            }
           },
-          "personality": "Warm, sophisticated, adventurous."
+          "tags": [
+            "Honkai: Star Rail",
+            "Evanescia",
+            "Physical",
+            "Elation",
+            "5-Star",
+            "Planarcadia",
+            "Main DPS",
+            "Until the Flowers Bloom Again"
+          ]
         },
-        "tags": [
-          "Honkai: Star Rail",
-          "Fire",
-          "Erudition",
-          "Astral Express",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Hysilens",
-        "title": "Songstress of the Deep",
-        "role": "Support / Physical",
-        "category": "Harmony",
-        "element": "Physical",
-        "path": "Harmony",
-        "weapon": "Harp",
-        "rarity": "5-Star",
-        "nation": "Amphoreus",
-        "birthday": "April 18",
-        "accentColor": "#94A3B8",
-        "notes": "A siren singer whose melodies alter battle tides.",
-        "stats": {
-          "gender": "Female",
-          "species": "Siren / Human",
-          "affiliation": "Amphoreus",
-          "damageType": "Physical",
-          "releaseDate": "2025",
-          "voiceActors": {
-            "jp": "Sora Amamiya",
-            "en": "Kira Buckland"
-          }
-        },
-        "tags": [
-          "Honkai: Star Rail",
-          "Physical",
-          "Harmony",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Jade",
-        "title": "Pawnshop Manager & IPC Senior Executive",
-        "role": "Sub-DPS / Quantum",
-        "category": "Erudition",
-        "element": "Quantum",
-        "path": "Erudition",
-        "weapon": "Whip / Pawnshop Orb",
-        "rarity": "5-Star",
-        "nation": "IPC",
-        "birthday": "April 24",
-        "accentColor": "#10B981",
-        "notes": "Senior Executive in the IPC Strategic Investment Department and one of the Ten Stonehearts holding the Cornerstone of Jade.",
-        "stats": {
-          "gender": "Female",
-          "height": "172 cm",
-          "species": "Human",
-          "affiliation": "IPC Strategic Investment Department",
-          "organization": "Ten Stonehearts",
-          "damageType": "Quantum",
-          "releaseDate": "2024-07-10",
-          "voiceActors": {
-            "jp": "Kotono Mitsuishi",
-            "en": "Faye Mata"
+        {
+          "name": "The Herta",
+          "title": "Madam Herta",
+          "role": "Main DPS",
+          "category": "Ice",
+          "element": "Ice",
+          "weapon": "Into the Unreachable Veil",
+          "rarity": "5-Star",
+          "nation": "Genius Society",
+          "birthday": null,
+          "accentColor": "#9CB8FF",
+          "notes": "The true Herta, a member of the Genius Society and the creator of the Herta Space Station. Unlike her puppet avatars, Madam Herta personally takes the field and wields overwhelming Erudition power.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Genius Society / Herta Space Station",
+            "damageType": "Ice",
+            "releaseDate": "January 15, 2025",
+            "voiceActors": {
+              "jp": "Yumiri Hanamori",
+              "en": "Rachael Chau"
+            }
           },
-          "personality": "Calculating, elegant, contract-bound."
+          "tags": [
+            "Honkai: Star Rail",
+            "The Herta",
+            "Ice",
+            "Erudition",
+            "5-Star",
+            "Genius Society",
+            "Main DPS",
+            "Into the Unreachable Veil"
+          ]
         },
-        "tags": [
-          "Honkai: Star Rail",
-          "Quantum",
-          "Erudition",
-          "IPC",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Jingliu",
-        "title": "Transcendent Flash / Former Sword Champion",
-        "role": "Main DPS / Ice",
-        "category": "Destruction",
-        "element": "Ice",
-        "path": "Destruction",
-        "weapon": "Ice Sword",
-        "rarity": "5-Star",
-        "nation": "Xianzhou Luofu",
-        "birthday": "December 17",
-        "accentColor": "#00F5FF",
-        "notes": "Former Sword Champion of the Xianzhou Luofu and leader of the High-Cloud Quintet who succumbed to Mara.",
-        "stats": {
-          "gender": "Female",
-          "height": "168 cm",
-          "species": "High-Cloud Quintet Swordmaster",
-          "affiliation": "High-Cloud Quintet",
-          "damageType": "Ice",
-          "releaseDate": "2023-10-11",
-          "voiceActors": {
-            "jp": "Houko Kuwashima",
-            "en": "AmaLee"
+        {
+          "name": "Himeko Nova",
+          "title": "Navigator of the Astral Express",
+          "role": "Main DPS",
+          "category": "Fire",
+          "element": "Fire",
+          "weapon": "A Star That Lights the Night",
+          "rarity": "5-Star",
+          "nation": "Astral Express",
+          "birthday": null,
+          "accentColor": "#FF6A3D",
+          "notes": "A powerful new form of Himeko who follows the Path of Erudition. Himeko Nova specializes in Assist Skills, powerful follow-up attacks, and devastating Ultimate attacks while retaining her connection to the Astral Express.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Astral Express",
+            "damageType": "Fire",
+            "releaseDate": "July 15, 2026",
+            "voiceActors": {
+              "jp": "Tanaka Rie",
+              "en": "Cia Court"
+            }
           },
-          "personality": "Cold, tragic, solitary."
+          "tags": [
+            "Honkai: Star Rail",
+            "Himeko Nova",
+            "Fire",
+            "Erudition",
+            "5-Star",
+            "Astral Express",
+            "Main DPS",
+            "A Star That Lights the Night"
+          ]
         },
-        "tags": [
-          "Honkai: Star Rail",
-          "Ice",
-          "Destruction",
-          "Xianzhou",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Lingsha",
-        "title": "Cauldron Master of the Alchemy Commission",
-        "role": "Support / Healer / Fire",
-        "category": "Abundance",
-        "element": "Fire",
-        "path": "Abundance",
-        "weapon": "Incense Burner / Fuyuan",
-        "rarity": "5-Star",
-        "nation": "Xianzhou Luofu",
-        "birthday": "August 17",
-        "accentColor": "#F97316",
-        "notes": "The new Cauldron Master of the Xianzhou Luofu Alchemy Commission who uses incense spirits to heal allies.",
-        "stats": {
-          "gender": "Female",
-          "height": "164 cm",
-          "species": "Vidyadhara",
-          "affiliation": "Xianzhou Alchemy Commission",
-          "damageType": "Fire",
-          "releaseDate": "2024-10-02",
-          "voiceActors": {
-            "jp": "Kaori Maeda",
-            "en": "Risa Mei"
+        {
+          "name": "Hysilens",
+          "title": "Daughter of the Sea",
+          "role": "Main DPS / DoT",
+          "category": "Physical",
+          "element": "Physical",
+          "weapon": "Why Does the Ocean Sing",
+          "rarity": "5-Star",
+          "nation": "Amphoreus",
+          "birthday": null,
+          "accentColor": "#6ED6D8",
+          "notes": "The Chrysos Heir of Styxia and a master of oceanic power. Hysilens follows the Path of Nihility and specializes in damage-over-time effects, applying multiple DoT types to enemies.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Styxia / Chrysos Heirs",
+            "damageType": "Physical",
+            "releaseDate": "February 13, 2026",
+            "voiceActors": {
+              "jp": null,
+              "en": null
+            }
           },
-          "personality": "Calm, observant, meticulous."
+          "tags": [
+            "Honkai: Star Rail",
+            "Hysilens",
+            "Physical",
+            "Nihility",
+            "5-Star",
+            "Amphoreus",
+            "DoT",
+            "Main DPS",
+            "Why Does the Ocean Sing"
+          ]
         },
-        "tags": [
-          "Honkai: Star Rail",
-          "Fire",
-          "Abundance",
-          "Xianzhou",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "March 7th Evernight",
-        "title": "Eternity Weaver / Memory Form",
-        "role": "Main DPS / Ice",
-        "category": "Remembrance",
-        "element": "Ice",
-        "path": "Remembrance",
-        "weapon": "Evernight Crystal Blade",
-        "rarity": "5-Star",
-        "nation": "Astral Express",
-        "birthday": "March 7",
-        "accentColor": "#38BDF8",
-        "notes": "The awakened form of March 7th unlocking deeper memories of Six-Phased Ice.",
-        "stats": {
-          "gender": "Female",
-          "height": "160 cm",
-          "species": "Human",
-          "affiliation": "Astral Express",
-          "damageType": "Ice",
-          "releaseDate": "2025",
-          "voiceActors": {
-            "jp": "Yui Ogura",
-            "en": "Skyler Davenport"
+        {
+          "name": "Jade",
+          "title": "The Pave of Debt",
+          "role": "Main DPS / Sub-DPS",
+          "category": "Quantum",
+          "element": "Quantum",
+          "weapon": "Yet Hope Is Priceless",
+          "rarity": "5-Star",
+          "nation": "Interastral Peace Corporation",
+          "birthday": null,
+          "accentColor": "#48D6A3",
+          "notes": "A senior manager of the IPC Strategic Investment Department and one of the Ten Stonehearts. Jade is an elegant and calculating moneylender who specializes in extracting value from seemingly hopeless investments.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Interastral Peace Corporation",
+            "damageType": "Quantum",
+            "releaseDate": "July 10, 2024",
+            "voiceActors": {
+              "jp": "Miki Natsutani",
+              "en": "Sarah Anne Williams"
+            }
           },
-          "personality": "Mysterious, luminous, reflective."
+          "tags": [
+            "Honkai: Star Rail",
+            "Jade",
+            "Quantum",
+            "Erudition",
+            "5-Star",
+            "IPC",
+            "Ten Stonehearts",
+            "Sub-DPS",
+            "Yet Hope Is Priceless"
+          ]
         },
-        "tags": [
-          "Honkai: Star Rail",
-          "Ice",
-          "Remembrance",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Phainon",
-        "title": "Warrior of Amphoreus",
-        "role": "Main DPS / Physical",
-        "category": "Destruction",
-        "element": "Physical",
-        "path": "Destruction",
-        "weapon": "Greatspear",
-        "rarity": "5-Star",
-        "nation": "Amphoreus",
-        "birthday": "September 9",
-        "accentColor": "#64748B",
-        "notes": "A legendary champion of Amphoreus wielding celestial spear strikes.",
-        "stats": {
-          "gender": "Male",
-          "species": "Chrysos Heir",
-          "affiliation": "Okhema",
-          "damageType": "Physical",
-          "releaseDate": "2025",
-          "voiceActors": {
-            "jp": "Yuichi Nakamura",
-            "en": "Matt Mercer"
-          }
-        },
-        "tags": [
-          "Honkai: Star Rail",
-          "Physical",
-          "Destruction",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Robin",
-        "title": "Halovian Singer & Cosmic Superstar",
-        "role": "Support / Physical",
-        "category": "Harmony",
-        "element": "Physical",
-        "path": "Harmony",
-        "weapon": "Microphone / Harmony Wings",
-        "rarity": "5-Star",
-        "nation": "Penacony",
-        "birthday": "March 17",
-        "accentColor": "#EC4899",
-        "notes": "A famous Halovian pop star born in Penacony whose songs harmonize the power of Xipe throughout the cosmos.",
-        "stats": {
-          "gender": "Female",
-          "height": "162 cm",
-          "species": "Halovian",
-          "affiliation": "Family of Penacony",
-          "damageType": "Physical",
-          "releaseDate": "2024-05-08",
-          "voiceActors": {
-            "jp": "Kaori Nazuka",
-            "en": "Alice Himora"
+        {
+          "name": "Jingliu",
+          "title": "Transcendent Flash",
+          "role": "Main DPS",
+          "category": "Ice",
+          "element": "Ice",
+          "weapon": "I Shall Be My Own Sword",
+          "rarity": "5-Star",
+          "nation": "Xianzhou Luofu",
+          "birthday": null,
+          "accentColor": "#B7D8FF",
+          "notes": "The former Sword Champion of the Xianzhou and Jing Yuan's master. Jingliu became mara-struck and now walks the path of the sword while suppressing the madness within her.",
+          "stats": {
+            "gender": "Female",
+            "species": "Long-Life Species",
+            "affiliation": "Xianzhou Luofu",
+            "damageType": "Ice",
+            "releaseDate": "October 11, 2023",
+            "voiceActors": {
+              "jp": "Kuwashima Houko",
+              "en": "Mara Junot"
+            }
           },
-          "personality": "Gentle, inspiring, resolute."
+          "tags": [
+            "Honkai: Star Rail",
+            "Jingliu",
+            "Ice",
+            "Destruction",
+            "5-Star",
+            "Xianzhou Luofu",
+            "Main DPS",
+            "I Shall Be My Own Sword"
+          ]
         },
-        "tags": [
-          "Honkai: Star Rail",
-          "Physical",
-          "Harmony",
-          "Penacony",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Silver Wolf",
-        "title": "Super Hacker",
-        "role": "Sub-DPS / Debuffer / Quantum",
-        "category": "Nihility",
-        "element": "Quantum",
-        "path": "Nihility",
-        "weapon": "Aether Editing Gun",
-        "rarity": "5-Star",
-        "nation": "Punklorde",
-        "birthday": "August 18",
-        "accentColor": "#A855F7",
-        "notes": "A master hacker from Punklorde who sees reality as a game and uses Aether Editing to modify data in real time.",
-        "stats": {
-          "gender": "Female",
-          "height": "152 cm",
-          "species": "Human",
-          "affiliation": "Stellaron Hunters",
-          "damageType": "Quantum",
-          "releaseDate": "2023-06-07",
-          "voiceActors": {
-            "jp": "Kana Asumi",
-            "en": "Melissa Fahn"
+        {
+          "name": "Lingsha",
+          "title": "The Fragrant Smoke",
+          "role": "Healer / Support",
+          "category": "Fire",
+          "element": "Fire",
+          "weapon": "Scent Alone Stays True",
+          "rarity": "5-Star",
+          "nation": "Xianzhou Luofu",
+          "birthday": null,
+          "accentColor": "#FF9B73",
+          "notes": "The Vidyadhara Cauldron Master of the Xianzhou Luofu. Lingsha is a skilled healer who uses incense and her companion Fuyuan to provide healing and follow-up attacks.",
+          "stats": {
+            "gender": "Female",
+            "species": "Vidyadhara",
+            "affiliation": "Xianzhou Luofu / Alchemy Commission",
+            "damageType": "Fire",
+            "releaseDate": "October 2, 2024",
+            "voiceActors": {
+              "jp": "Ami Koshimizu",
+              "en": "Molly Zhang"
+            }
           },
-          "personality": "Gamer, cheeky, brilliant hacker."
+          "tags": [
+            "Honkai: Star Rail",
+            "Lingsha",
+            "Fire",
+            "Abundance",
+            "5-Star",
+            "Xianzhou Luofu",
+            "Healer",
+            "Support",
+            "Scent Alone Stays True"
+          ]
         },
-        "tags": [
-          "Honkai: Star Rail",
-          "Quantum",
-          "Nihility",
-          "Stellaron Hunters",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Sparkle",
-        "title": "Masked Fool & Master of Illusion",
-        "role": "Support / Quantum",
-        "category": "Harmony",
-        "element": "Quantum",
-        "path": "Harmony",
-        "weapon": "Mask / Theater Puppets",
-        "rarity": "5-Star",
-        "nation": "Penacony",
-        "birthday": "November 30",
-        "accentColor": "#F43F5E",
-        "notes": "A dangerous master of theatrical impersonation and member of the Masked Fools who revels in pure amusement.",
-        "stats": {
-          "gender": "Female",
-          "height": "155 cm",
-          "species": "Human",
-          "affiliation": "Masked Fools",
-          "damageType": "Quantum",
-          "releaseDate": "2024-02-29",
-          "voiceActors": {
-            "jp": "Reina Ueda",
-            "en": "Lizzie Freeman"
+        {
+          "name": "March 7th • Evernight",
+          "title": "Evernight",
+          "role": "Main DPS / Sub-DPS",
+          "category": "Ice",
+          "element": "Ice",
+          "weapon": "To Evernight's Stars",
+          "rarity": "5-Star",
+          "nation": "Amphoreus",
+          "birthday": null,
+          "accentColor": "#A9C8FF",
+          "notes": "An alternate Remembrance form of March 7th encountered during the Amphoreus journey. Evernight is a powerful HP-scaling Remembrance damage dealer who fights alongside her memosprite.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Astral Express / Remembrance",
+            "damageType": "Ice",
+            "releaseDate": "February 13, 2026",
+            "voiceActors": {
+              "jp": null,
+              "en": null
+            }
           },
-          "personality": "Unpredictable, theatrical, chaotic."
+          "tags": [
+            "Honkai: Star Rail",
+            "March 7th",
+            "Evernight",
+            "Ice",
+            "Remembrance",
+            "5-Star",
+            "Main DPS",
+            "To Evernight's Stars"
+          ]
         },
-        "tags": [
-          "Honkai: Star Rail",
-          "Quantum",
-          "Harmony",
-          "Masked Fools",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Dahlia",
-        "title": "Flower of the Abyss",
-        "role": "Main DPS / Wind",
-        "category": "Nihility",
-        "element": "Wind",
-        "path": "Nihility",
-        "weapon": "Thorn Whip",
-        "rarity": "5-Star",
-        "nation": "Amphoreus",
-        "birthday": "June 29",
-        "accentColor": "#10B981",
-        "notes": "A thorn-wielding assassin of Amphoreus.",
-        "stats": {
-          "gender": "Female",
-          "species": "Human",
-          "affiliation": "Amphoreus",
-          "damageType": "Wind",
-          "releaseDate": "2025",
-          "voiceActors": {
-            "jp": "Shizuka Ito",
-            "en": "Megan Shipman"
-          }
-        },
-        "tags": [
-          "Honkai: Star Rail",
-          "Wind",
-          "Nihility",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Tingyun Fugue",
-        "title": "Fugue / Reborn Nine-Tailed Fox",
-        "role": "Support / Sub-DPS / Fire",
-        "category": "Nihility",
-        "element": "Fire",
-        "path": "Nihility",
-        "weapon": "Nine-Tailed Fan",
-        "rarity": "5-Star",
-        "nation": "Xianzhou Luofu",
-        "birthday": "June 1",
-        "accentColor": "#F97316",
-        "notes": "The true form of Tingyun saved from Destruction and reborn with fiery nine-tailed spiritual flames.",
-        "stats": {
-          "gender": "Female",
-          "height": "163 cm",
-          "species": "Foxian",
-          "affiliation": "Xianzhou Whistling Flames",
-          "damageType": "Fire",
-          "releaseDate": "2024-12-04",
-          "voiceActors": {
-            "jp": "Yuki Takada",
-            "en": "Laci Morgan"
+        {
+          "name": "Phainon",
+          "title": "Worldbearing",
+          "role": "Main DPS",
+          "category": "Physical",
+          "element": "Physical",
+          "weapon": "Thus Burns the Dawn",
+          "rarity": "5-Star",
+          "nation": "Amphoreus",
+          "birthday": null,
+          "accentColor": "#FFB84D",
+          "notes": "The Chrysos Heir carrying the Coreflame of Worldbearing. Phainon is a powerful Destruction character whose Ultimate transforms the battlefield and isolates him as the primary combatant.",
+          "stats": {
+            "gender": "Male",
+            "species": "Human",
+            "affiliation": "Amphoreus / Chrysos Heirs",
+            "damageType": "Physical",
+            "releaseDate": "June 25, 2025",
+            "voiceActors": {
+              "jp": null,
+              "en": null
+            }
           },
-          "personality": "Graceful, clever, resilient."
+          "tags": [
+            "Honkai: Star Rail",
+            "Phainon",
+            "Physical",
+            "Destruction",
+            "5-Star",
+            "Amphoreus",
+            "Main DPS",
+            "Thus Burns the Dawn"
+          ]
         },
-        "tags": [
-          "Honkai: Star Rail",
-          "Fire",
-          "Nihility",
-          "Xianzhou",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Yaoguang",
-        "title": "Starlight Oracle",
-        "role": "Support / Imaginary",
-        "category": "Abundance",
-        "element": "Imaginary",
-        "path": "Abundance",
-        "weapon": "Celestial Lantern",
-        "rarity": "5-Star",
-        "nation": "Xianzhou",
-        "birthday": "July 7",
-        "accentColor": "#FBBF24",
-        "notes": "A high priestess of the Xianzhou Alliance reading cosmic constellations.",
-        "stats": {
-          "gender": "Female",
-          "species": "Foxian / Vidyadhara",
-          "affiliation": "Xianzhou Alliance",
-          "damageType": "Imaginary",
-          "releaseDate": "2025",
-          "voiceActors": {
-            "jp": "Mamiko Noto",
-            "en": "Stephanie Sheh"
-          }
-        },
-        "tags": [
-          "Honkai: Star Rail",
-          "Imaginary",
-          "Abundance",
-          "5-Star"
-        ]
-      },
-      {
-        "name": "Welt",
-        "title": "Former Sovereign of Anti-Entropy",
-        "role": "Sub-DPS / Control / Imaginary",
-        "category": "Nihility",
-        "element": "Imaginary",
-        "path": "Nihility",
-        "weapon": "Star of Eden (Cane)",
-        "rarity": "5-Star",
-        "nation": "Astral Express",
-        "birthday": "April 16",
-        "accentColor": "#F59E0B",
-        "notes": "The former 2nd Sovereign of Anti-Entropy who saved Earth multiple times and now travels aboard the Astral Express.",
-        "stats": {
-          "gender": "Male",
-          "height": "180 cm",
-          "species": "Human (Herrscher of Reason)",
-          "affiliation": "Astral Express",
-          "organization": "Anti-Entropy",
-          "damageType": "Imaginary",
-          "releaseDate": "2023-04-26",
-          "voiceActors": {
-            "jp": "Yoshimasa Hosoya",
-            "en": "Corey Landis"
+        {
+          "name": "Robin",
+          "title": "The Halovian Singer",
+          "role": "Support",
+          "category": "Physical",
+          "element": "Physical",
+          "weapon": "Flowing Nightglow",
+          "rarity": "5-Star",
+          "nation": "Penacony",
+          "birthday": null,
+          "accentColor": "#F5D0E8",
+          "notes": "A Halovian singer born in Penacony who achieved cosmic fame. Robin follows the Path of Harmony and provides powerful teamwide buffs and action advancement through her music.",
+          "stats": {
+            "gender": "Female",
+            "species": "Halovian",
+            "affiliation": "The Family",
+            "damageType": "Physical",
+            "releaseDate": "May 8, 2024",
+            "voiceActors": {
+              "jp": "Kina Sato",
+              "en": "Emily Sun"
+            }
           },
-          "personality": "Wise, calm, heroic mentor."
+          "tags": [
+            "Honkai: Star Rail",
+            "Robin",
+            "Physical",
+            "Harmony",
+            "5-Star",
+            "Penacony",
+            "Support",
+            "Flowing Nightglow"
+          ]
         },
-        "tags": [
-          "Honkai: Star Rail",
-          "Imaginary",
-          "Nihility",
-          "Astral Express",
-          "5-Star"
-        ]
-      }
+        {
+          "name": "Silver Wolf • LV.999",
+          "title": "The Invincible Player",
+          "role": "Main DPS",
+          "category": "Imaginary",
+          "element": "Imaginary",
+          "weapon": "Welcome to the Cosmic City",
+          "rarity": "5-Star",
+          "nation": "Punklorde",
+          "birthday": null,
+          "accentColor": "#9B7CFF",
+          "notes": "A new Elation form of Silver Wolf, presented as an invincible player who has conquered every level and Cosmic Achievement. Unlike her original Nihility form, LV.999 follows the Path of Elation and focuses on high-speed Elation damage.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Stellaron Hunters",
+            "damageType": "Imaginary",
+            "releaseDate": "April 22, 2026",
+            "voiceActors": {
+              "jp": "Asumi Kana",
+              "en": "Melissa Fahn"
+            }
+          },
+          "tags": [
+            "Honkai: Star Rail",
+            "Silver Wolf",
+            "LV.999",
+            "Imaginary",
+            "Elation",
+            "5-Star",
+            "Stellaron Hunters",
+            "Main DPS",
+            "Welcome to the Cosmic City"
+          ]
+        },
+        {
+          "name": "Sparkle",
+          "title": "Masked Fool",
+          "role": "Support",
+          "category": "Quantum",
+          "element": "Quantum",
+          "weapon": "Earthly Escapade",
+          "rarity": "5-Star",
+          "nation": "Penacony",
+          "birthday": null,
+          "accentColor": "#FF6BB5",
+          "notes": "A dangerous and unpredictable member of the Masked Fools. Sparkle is a master of deception and theatrics who follows the Path of Harmony and manipulates the battlefield through powerful buffs and Skill Point mechanics.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Masked Fools",
+            "damageType": "Quantum",
+            "releaseDate": "February 29, 2024",
+            "voiceActors": {
+              "jp": "Ueda Reina",
+              "en": "Lizzie Freeman"
+            }
+          },
+          "tags": [
+            "Honkai: Star Rail",
+            "Sparkle",
+            "Quantum",
+            "Harmony",
+            "5-Star",
+            "Masked Fools",
+            "Support",
+            "Earthly Escapade"
+          ]
+        },
+        {
+          "name": "The Dahlia",
+          "title": "Constance",
+          "role": "Support",
+          "category": "Fire",
+          "element": "Fire",
+          "weapon": "Never Forget Her Flame",
+          "rarity": "5-Star",
+          "nation": "Ever-Flame Mansion",
+          "birthday": null,
+          "accentColor": "#FF6248",
+          "notes": "Known as Constance, The Dahlia is a powerful Nihility support focused on Break and Super Break teams. She can convert Toughness Reduction into Super Break damage and provide powerful Break-oriented debuffs.",
+          "stats": {
+            "gender": "Female",
+            "species": null,
+            "affiliation": "Ever-Flame Mansion",
+            "damageType": "Fire",
+            "releaseDate": "April 22, 2026",
+            "voiceActors": {
+              "jp": null,
+              "en": null
+            }
+          },
+          "tags": [
+            "Honkai: Star Rail",
+            "The Dahlia",
+            "Constance",
+            "Fire",
+            "Nihility",
+            "5-Star",
+            "Ever-Flame Mansion",
+            "Support",
+            "Never Forget Her Flame"
+          ]
+        },
+        {
+          "name": "Tingyun • Fugue",
+          "title": "Fugue",
+          "role": "Support / Sub-DPS",
+          "category": "Fire",
+          "element": "Fire",
+          "weapon": "Long Road Leads Home",
+          "rarity": "5-Star",
+          "nation": "Xianzhou Luofu",
+          "birthday": null,
+          "accentColor": "#FF8A5B",
+          "notes": "A new form of Tingyun following the Path of Nihility. Fugue specializes in Break teams, providing Weakness manipulation, Break Effect support, and powerful debuffs against enemies.",
+          "stats": {
+            "gender": "Female",
+            "species": "Foxian",
+            "affiliation": "Xianzhou Luofu",
+            "damageType": "Fire",
+            "releaseDate": "January 1, 2025",
+            "voiceActors": {
+              "jp": "Yuki Aoi",
+              "en": "Lacey Morgan"
+            }
+          },
+          "tags": [
+            "Honkai: Star Rail",
+            "Tingyun",
+            "Fugue",
+            "Fire",
+            "Nihility",
+            "5-Star",
+            "Xianzhou Luofu",
+            "Break",
+            "Long Road Leads Home"
+          ]
+        },
+        {
+          "name": "Yao Guang",
+          "title": "Seer Strategist",
+          "role": "Support",
+          "category": "Physical",
+          "element": "Physical",
+          "weapon": "When She Decided to See",
+          "rarity": "5-Star",
+          "nation": "Xianzhou Yaoqing",
+          "birthday": null,
+          "accentColor": "#E5D5B5",
+          "notes": "A mysterious and radical Seer Strategist associated with the Path of the Hunt. Yao Guang follows the Path of Elation and specializes in amplifying Elation teams through Zones, Punchline generation, and powerful team buffs.",
+          "stats": {
+            "gender": "Female",
+            "species": "Long-Life Species",
+            "affiliation": "Xianzhou Alliance",
+            "damageType": "Physical",
+            "releaseDate": "June 1, 2026",
+            "voiceActors": {
+              "jp": null,
+              "en": null
+            }
+          },
+          "tags": [
+            "Honkai: Star Rail",
+            "Yao Guang",
+            "Physical",
+            "Elation",
+            "5-Star",
+            "Xianzhou",
+            "Support",
+            "When She Decided to See"
+          ]
+        },
+        {
+          "name": "Welt",
+          "title": "Yang",
+          "role": "Sub-DPS / Debuffer",
+          "category": "Imaginary",
+          "element": "Imaginary",
+          "weapon": "In the Name of the World",
+          "rarity": "5-Star",
+          "nation": "Earth",
+          "birthday": null,
+          "accentColor": "#B58CFF",
+          "notes": "The former Anti-Entropy Sovereign and a veteran who has repeatedly saved Earth from destruction. Welt joined the Astral Express and continues his journey across worlds while wielding powerful Imaginary abilities.",
+          "stats": {
+            "gender": "Male",
+            "species": "Human",
+            "affiliation": "Astral Express / Anti-Entropy",
+            "damageType": "Imaginary",
+            "releaseDate": "April 26, 2023",
+            "voiceActors": {
+              "jp": "Hosoya Yoshimasa",
+              "en": "Corey Landis"
+            }
+          },
+          "tags": [
+            "Honkai: Star Rail",
+            "Welt",
+            "Imaginary",
+            "Nihility",
+            "5-Star",
+            "Astral Express",
+            "Anti-Entropy",
+            "Sub-DPS",
+            "In the Name of the World"
+          ]
+        }
+      ]
     ]
   },
   {
@@ -1231,12 +1396,7 @@
             "en": "Brianna Knickerbocker"
           }
         },
-        "tags": [
-          "NIKKE",
-          "Wind",
-          "RL",
-          "SSR"
-        ]
+        "tags": ["NIKKE", "Wind", "RL", "SSR"]
       },
       {
         "name": "Dorothy",
@@ -1260,13 +1420,7 @@
             "en": "Megan Shipman"
           }
         },
-        "tags": [
-          "NIKKE",
-          "Water",
-          "AR",
-          "Pioneer",
-          "SSR"
-        ]
+        "tags": ["NIKKE", "Water", "AR", "Pioneer", "SSR"]
       },
       {
         "name": "Flora",
@@ -1290,12 +1444,7 @@
             "en": "Kayli Mills"
           }
         },
-        "tags": [
-          "NIKKE",
-          "Electric",
-          "MG",
-          "SSR"
-        ]
+        "tags": ["NIKKE", "Electric", "MG", "SSR"]
       },
       {
         "name": "Moran",
@@ -1319,12 +1468,7 @@
             "en": "Laura Post"
           }
         },
-        "tags": [
-          "NIKKE",
-          "Iron",
-          "AR",
-          "SSR"
-        ]
+        "tags": ["NIKKE", "Iron", "AR", "SSR"]
       },
       {
         "name": "Snow White: Innocent Days",
@@ -1348,13 +1492,7 @@
             "en": "Laura Stahl"
           }
         },
-        "tags": [
-          "NIKKE",
-          "Fire",
-          "AR",
-          "Pioneer",
-          "SSR"
-        ]
+        "tags": ["NIKKE", "Fire", "AR", "Pioneer", "SSR"]
       },
       {
         "name": "Takina Inoue",
@@ -1378,13 +1516,7 @@
             "en": "Xanthe Huynh"
           }
         },
-        "tags": [
-          "NIKKE",
-          "Fire",
-          "AR",
-          "Collab",
-          "SSR"
-        ]
+        "tags": ["NIKKE", "Fire", "AR", "Collab", "SSR"]
       }
     ]
   },
@@ -1413,12 +1545,7 @@
             "en": "Laura Bailey"
           }
         },
-        "tags": [
-          "Arknights",
-          "Caster",
-          "Arts",
-          "6-Star"
-        ]
+        "tags": ["Arknights", "Caster", "Arts", "6-Star"]
       },
       {
         "name": "Laevatain",
@@ -1442,12 +1569,7 @@
             "en": "Claire Morgan"
           }
         },
-        "tags": [
-          "Arknights",
-          "Guard",
-          "Fire",
-          "6-Star"
-        ]
+        "tags": ["Arknights", "Guard", "Fire", "6-Star"]
       },
       {
         "name": "Last Rite",
@@ -1471,12 +1593,7 @@
             "en": "Erica Mendez"
           }
         },
-        "tags": [
-          "Arknights",
-          "Sniper",
-          "Sankta",
-          "6-Star"
-        ]
+        "tags": ["Arknights", "Sniper", "Sankta", "6-Star"]
       },
       {
         "name": "Perlica",
@@ -1500,12 +1617,7 @@
             "en": "Cherami Leigh"
           }
         },
-        "tags": [
-          "Arknights",
-          "Endfield",
-          "Caster",
-          "6-Star"
-        ]
+        "tags": ["Arknights", "Endfield", "Caster", "6-Star"]
       },
       {
         "name": "Zhuang Fangyi",
@@ -1529,12 +1641,7 @@
             "en": "Suzy Myers"
           }
         },
-        "tags": [
-          "Arknights",
-          "Vanguard",
-          "Yan",
-          "5-Star"
-        ]
+        "tags": ["Arknights", "Vanguard", "Yan", "5-Star"]
       },
       {
         "name": "Xaihi",
@@ -1558,12 +1665,7 @@
             "en": "Cristina Vee"
           }
         },
-        "tags": [
-          "Arknights",
-          "Supporter",
-          "Sami",
-          "5-Star"
-        ]
+        "tags": ["Arknights", "Supporter", "Sami", "5-Star"]
       }
     ]
   },
@@ -1592,12 +1694,7 @@
             "en": "Lizzie Freeman"
           }
         },
-        "tags": [
-          "Zenless Zone Zero",
-          "Ice",
-          "Anomaly",
-          "S-Rank"
-        ]
+        "tags": ["Zenless Zone Zero", "Ice", "Anomaly", "S-Rank"]
       },
       {
         "name": "Astra Yao",
@@ -1621,12 +1718,7 @@
             "en": "AmaLee"
           }
         },
-        "tags": [
-          "Zenless Zone Zero",
-          "Ether",
-          "Support",
-          "S-Rank"
-        ]
+        "tags": ["Zenless Zone Zero", "Ether", "Support", "S-Rank"]
       },
       {
         "name": "Evelyn",
@@ -1650,12 +1742,7 @@
             "en": "Allegra Clark"
           }
         },
-        "tags": [
-          "Zenless Zone Zero",
-          "Fire",
-          "Attack",
-          "S-Rank"
-        ]
+        "tags": ["Zenless Zone Zero", "Fire", "Attack", "S-Rank"]
       },
       {
         "name": "Grace",
@@ -1681,12 +1768,7 @@
           },
           "personality": "Obsessive mechanic, passionate, brilliant."
         },
-        "tags": [
-          "Zenless Zone Zero",
-          "Electric",
-          "Anomaly",
-          "S-Rank"
-        ]
+        "tags": ["Zenless Zone Zero", "Electric", "Anomaly", "S-Rank"]
       },
       {
         "name": "Miyabi",
@@ -1712,12 +1794,7 @@
           },
           "personality": "Disciplined, stern, noble swordmaster."
         },
-        "tags": [
-          "Zenless Zone Zero",
-          "Ice",
-          "Anomaly",
-          "S-Rank"
-        ]
+        "tags": ["Zenless Zone Zero", "Ice", "Anomaly", "S-Rank"]
       },
       {
         "name": "Remielle",
@@ -1741,12 +1818,7 @@
             "en": "Kayli Mills"
           }
         },
-        "tags": [
-          "Zenless Zone Zero",
-          "Physical",
-          "Support",
-          "S-Rank"
-        ]
+        "tags": ["Zenless Zone Zero", "Physical", "Support", "S-Rank"]
       },
       {
         "name": "Rina",
@@ -1772,12 +1844,7 @@
           },
           "personality": "Polite, elegant, terrifying cook."
         },
-        "tags": [
-          "Zenless Zone Zero",
-          "Electric",
-          "Support",
-          "S-Rank"
-        ]
+        "tags": ["Zenless Zone Zero", "Electric", "Support", "S-Rank"]
       },
       {
         "name": "Vivian",
@@ -1801,12 +1868,7 @@
             "en": "Erica Lindbeck"
           }
         },
-        "tags": [
-          "Zenless Zone Zero",
-          "Ether",
-          "Attack",
-          "S-Rank"
-        ]
+        "tags": ["Zenless Zone Zero", "Ether", "Attack", "S-Rank"]
       },
       {
         "name": "Velina",
@@ -1830,12 +1892,7 @@
             "en": "Amber Lee Connors"
           }
         },
-        "tags": [
-          "Zenless Zone Zero",
-          "Physical",
-          "Stun",
-          "A-Rank"
-        ]
+        "tags": ["Zenless Zone Zero", "Physical", "Stun", "A-Rank"]
       },
       {
         "name": "Ye Shuangguang",
@@ -1859,12 +1916,7 @@
             "en": "Kira Buckland"
           }
         },
-        "tags": [
-          "Zenless Zone Zero",
-          "Fire",
-          "Attack",
-          "S-Rank"
-        ]
+        "tags": ["Zenless Zone Zero", "Fire", "Attack", "S-Rank"]
       },
       {
         "name": "Yixuan",
@@ -1888,12 +1940,7 @@
             "en": "Suzie Yeung"
           }
         },
-        "tags": [
-          "Zenless Zone Zero",
-          "Ice",
-          "Defense",
-          "S-Rank"
-        ]
+        "tags": ["Zenless Zone Zero", "Ice", "Defense", "S-Rank"]
       }
     ]
   },
@@ -1921,11 +1968,7 @@
             "en": "Sarah Wiedenheft"
           }
         },
-        "tags": [
-          "Reverse: 1999",
-          "Mineral",
-          "6-Star"
-        ]
+        "tags": ["Reverse: 1999", "Mineral", "6-Star"]
       },
       {
         "name": "Bkornblume",
@@ -1948,11 +1991,7 @@
             "en": "Florence Kasumba"
           }
         },
-        "tags": [
-          "Reverse: 1999",
-          "Beast",
-          "5-Star"
-        ]
+        "tags": ["Reverse: 1999", "Beast", "5-Star"]
       },
       {
         "name": "Druvis III",
@@ -1975,11 +2014,7 @@
             "en": "Emma Ballantine"
           }
         },
-        "tags": [
-          "Reverse: 1999",
-          "Plant",
-          "6-Star"
-        ]
+        "tags": ["Reverse: 1999", "Plant", "6-Star"]
       },
       {
         "name": "Eternity",
@@ -2002,11 +2037,7 @@
             "en": "Bex Castle"
           }
         },
-        "tags": [
-          "Reverse: 1999",
-          "Mineral",
-          "6-Star"
-        ]
+        "tags": ["Reverse: 1999", "Mineral", "6-Star"]
       },
       {
         "name": "Hissabeth",
@@ -2029,11 +2060,7 @@
             "en": "Allegra Clark"
           }
         },
-        "tags": [
-          "Reverse: 1999",
-          "Star",
-          "6-Star"
-        ]
+        "tags": ["Reverse: 1999", "Star", "6-Star"]
       },
       {
         "name": "Lorentz Butterfly",
@@ -2056,11 +2083,7 @@
             "en": "Suzie Yeung"
           }
         },
-        "tags": [
-          "Reverse: 1999",
-          "Intellectual",
-          "6-Star"
-        ]
+        "tags": ["Reverse: 1999", "Intellectual", "6-Star"]
       },
       {
         "name": "Semmelweis",
@@ -2083,11 +2106,7 @@
             "en": "Katrina Salisbury"
           }
         },
-        "tags": [
-          "Reverse: 1999",
-          "Mineral",
-          "6-Star"
-        ]
+        "tags": ["Reverse: 1999", "Mineral", "6-Star"]
       },
       {
         "name": "Voyager",
@@ -2110,11 +2129,7 @@
             "en": "Jenny Yokobori"
           }
         },
-        "tags": [
-          "Reverse: 1999",
-          "Star",
-          "6-Star"
-        ]
+        "tags": ["Reverse: 1999", "Star", "6-Star"]
       },
       {
         "name": "Nautika",
@@ -2137,11 +2152,7 @@
             "en": "Anairis Quinones"
           }
         },
-        "tags": [
-          "Reverse: 1999",
-          "Star",
-          "5-Star"
-        ]
+        "tags": ["Reverse: 1999", "Star", "5-Star"]
       }
     ]
   },
@@ -2169,11 +2180,7 @@
             "en": "Kira Buckland"
           }
         },
-        "tags": [
-          "Solo Leveling: ARISE",
-          "Water",
-          "SSR"
-        ]
+        "tags": ["Solo Leveling: ARISE", "Water", "SSR"]
       },
       {
         "name": "Amamiya Mirei",
@@ -2196,11 +2203,7 @@
             "en": "Xanthe Huynh"
           }
         },
-        "tags": [
-          "Solo Leveling: ARISE",
-          "Wind",
-          "SSR"
-        ]
+        "tags": ["Solo Leveling: ARISE", "Wind", "SSR"]
       },
       {
         "name": "Cha Hae-In (Pure Sword Princess)",
@@ -2225,11 +2228,7 @@
           },
           "personality": "Dedicated, polite, unmatched sword master."
         },
-        "tags": [
-          "Solo Leveling: ARISE",
-          "Light",
-          "SSR"
-        ]
+        "tags": ["Solo Leveling: ARISE", "Light", "SSR"]
       },
       {
         "name": "Han Se-Mi",
@@ -2252,11 +2251,7 @@
             "en": "Kayli Mills"
           }
         },
-        "tags": [
-          "Solo Leveling: ARISE",
-          "Wind",
-          "SSR"
-        ]
+        "tags": ["Solo Leveling: ARISE", "Wind", "SSR"]
       },
       {
         "name": "Isla Wright",
@@ -2279,11 +2274,7 @@
             "en": "Laura Post"
           }
         },
-        "tags": [
-          "Solo Leveling: ARISE",
-          "Dark",
-          "SSR"
-        ]
+        "tags": ["Solo Leveling: ARISE", "Dark", "SSR"]
       },
       {
         "name": "Meilin Fisher",
@@ -2306,11 +2297,7 @@
             "en": "Anairis Quinones"
           }
         },
-        "tags": [
-          "Solo Leveling: ARISE",
-          "Water",
-          "SSR"
-        ]
+        "tags": ["Solo Leveling: ARISE", "Water", "SSR"]
       },
       {
         "name": "Minnie",
@@ -2333,11 +2320,7 @@
             "en": "Lily Evans"
           }
         },
-        "tags": [
-          "Solo Leveling: ARISE",
-          "Fire",
-          "SR"
-        ]
+        "tags": ["Solo Leveling: ARISE", "Fire", "SR"]
       },
       {
         "name": "Miyeon",
@@ -2360,11 +2343,7 @@
             "en": "Erica Mendez"
           }
         },
-        "tags": [
-          "Solo Leveling: ARISE",
-          "Wind",
-          "SR"
-        ]
+        "tags": ["Solo Leveling: ARISE", "Wind", "SR"]
       },
       {
         "name": "Sung Jinah",
@@ -2387,11 +2366,7 @@
             "en": "Risa Mei"
           }
         },
-        "tags": [
-          "Solo Leveling: ARISE",
-          "Light",
-          "SR"
-        ]
+        "tags": ["Solo Leveling: ARISE", "Light", "SR"]
       },
       {
         "name": "Tawata Kanae",
@@ -2414,11 +2389,7 @@
             "en": "Faye Mata"
           }
         },
-        "tags": [
-          "Solo Leveling: ARISE",
-          "Dark",
-          "SSR"
-        ]
+        "tags": ["Solo Leveling: ARISE", "Dark", "SSR"]
       },
       {
         "name": "Yoo Soohyun",
@@ -2441,11 +2412,7 @@
             "en": "Amber Lee Connors"
           }
         },
-        "tags": [
-          "Solo Leveling: ARISE",
-          "Fire",
-          "SSR"
-        ]
+        "tags": ["Solo Leveling: ARISE", "Fire", "SSR"]
       },
       {
         "name": "Yuqi",
@@ -2468,11 +2435,7 @@
             "en": "Suzie Yeung"
           }
         },
-        "tags": [
-          "Solo Leveling: ARISE",
-          "Light",
-          "SR"
-        ]
+        "tags": ["Solo Leveling: ARISE", "Light", "SR"]
       },
       {
         "name": "Laura Walker",
@@ -2495,11 +2458,7 @@
             "en": "Laura Bailey"
           }
         },
-        "tags": [
-          "Solo Leveling: ARISE",
-          "Dark",
-          "SR"
-        ]
+        "tags": ["Solo Leveling: ARISE", "Dark", "SR"]
       },
       {
         "name": "Elena Renault",
@@ -2522,11 +2481,7 @@
             "en": "Cherami Leigh"
           }
         },
-        "tags": [
-          "Solo Leveling: ARISE",
-          "Water",
-          "SSR"
-        ]
+        "tags": ["Solo Leveling: ARISE", "Water", "SSR"]
       },
       {
         "name": "Meri Laine",
@@ -2549,11 +2504,7 @@
             "en": "Sarah Wiedenheft"
           }
         },
-        "tags": [
-          "Solo Leveling: ARISE",
-          "Water",
-          "SR"
-        ]
+        "tags": ["Solo Leveling: ARISE", "Water", "SR"]
       }
     ]
   },
@@ -2581,12 +2532,7 @@
             "en": "Alejandro Saab"
           }
         },
-        "tags": [
-          "Dragon Ball Legends",
-          "Saiyan",
-          "God Ki",
-          "LR"
-        ]
+        "tags": ["Dragon Ball Legends", "Saiyan", "God Ki", "LR"]
       },
       {
         "name": "Ultra Gogeta Blue",
@@ -2609,12 +2555,7 @@
             "en": "Sean Schemmel / Christopher Sabat"
           }
         },
-        "tags": [
-          "Dragon Ball Legends",
-          "Fusion",
-          "ULTRA",
-          "God Ki"
-        ]
+        "tags": ["Dragon Ball Legends", "Fusion", "ULTRA", "God Ki"]
       },
       {
         "name": "Ultra Vegito Blue",
@@ -2637,12 +2578,7 @@
             "en": "Sean Schemmel / Christopher Sabat"
           }
         },
-        "tags": [
-          "Dragon Ball Legends",
-          "Fusion",
-          "ULTRA",
-          "Potara"
-        ]
+        "tags": ["Dragon Ball Legends", "Fusion", "ULTRA", "Potara"]
       },
       {
         "name": "Ultra SSJ4 Gogeta",
@@ -2665,12 +2601,7 @@
             "en": "Sean Schemmel / Christopher Sabat"
           }
         },
-        "tags": [
-          "Dragon Ball Legends",
-          "GT",
-          "ULTRA",
-          "Fusion"
-        ]
+        "tags": ["Dragon Ball Legends", "GT", "ULTRA", "Fusion"]
       },
       {
         "name": "LR Super Saiyan Rosé Ultra Supervillain Goku Black",
@@ -2693,12 +2624,7 @@
             "en": "Sean Schemmel"
           }
         },
-        "tags": [
-          "Dragon Ball Legends",
-          "God Ki",
-          "Rosé",
-          "LR"
-        ]
+        "tags": ["Dragon Ball Legends", "God Ki", "Rosé", "LR"]
       }
     ]
   },
@@ -2726,12 +2652,7 @@
             "en": "Brianna Knickerbocker"
           }
         },
-        "tags": [
-          "PGR",
-          "Physical",
-          "Support",
-          "Omniframe"
-        ]
+        "tags": ["PGR", "Physical", "Support", "Omniframe"]
       },
       {
         "name": "Liv: Luminance",
@@ -2754,12 +2675,7 @@
             "en": "Brianna Knickerbocker"
           }
         },
-        "tags": [
-          "PGR",
-          "Physical",
-          "Support",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Physical", "Support", "S-Rank"]
       },
       {
         "name": "Liv: Empyrea",
@@ -2783,12 +2699,7 @@
             "en": "Brianna Knickerbocker"
           }
         },
-        "tags": [
-          "PGR",
-          "Fire",
-          "Amplifier",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Fire", "Amplifier", "S-Rank"]
       },
       {
         "name": "Selena: Tempest",
@@ -2811,12 +2722,7 @@
             "en": "Erica Lindbeck"
           }
         },
-        "tags": [
-          "PGR",
-          "Lightning",
-          "Uniframe",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Lightning", "Uniframe", "S-Rank"]
       },
       {
         "name": "Selena: Capriccio",
@@ -2839,12 +2745,7 @@
             "en": "Erica Lindbeck"
           }
         },
-        "tags": [
-          "PGR",
-          "Dark",
-          "Amplifier",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Dark", "Amplifier", "S-Rank"]
       },
       {
         "name": "Qu: Shukra",
@@ -2868,12 +2769,7 @@
             "en": "Allegra Clark"
           }
         },
-        "tags": [
-          "PGR",
-          "Ice",
-          "Attacker",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Ice", "Attacker", "S-Rank"]
       },
       {
         "name": "Hanying: Solacetune",
@@ -2897,12 +2793,7 @@
             "en": "Suzie Yeung"
           }
         },
-        "tags": [
-          "PGR",
-          "Physical",
-          "Amplifier",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Physical", "Amplifier", "S-Rank"]
       },
       {
         "name": "Selena: Pianissimo",
@@ -2925,12 +2816,7 @@
             "en": "Erica Lindbeck"
           }
         },
-        "tags": [
-          "PGR",
-          "Ice",
-          "Amplifier",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Ice", "Amplifier", "S-Rank"]
       },
       {
         "name": "Jetavie: Daybreak",
@@ -2953,12 +2839,7 @@
             "en": "Kira Buckland"
           }
         },
-        "tags": [
-          "PGR",
-          "Fire",
-          "Attacker",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Fire", "Attacker", "S-Rank"]
       },
       {
         "name": "Bianca: Crepuscule",
@@ -2982,12 +2863,7 @@
             "en": "Laura Post"
           }
         },
-        "tags": [
-          "PGR",
-          "Dark",
-          "Attacker",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Dark", "Attacker", "S-Rank"]
       },
       {
         "name": "Liv: Limpidity",
@@ -3010,12 +2886,7 @@
             "en": "Brianna Knickerbocker"
           }
         },
-        "tags": [
-          "PGR",
-          "Ice",
-          "Amplifier",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Ice", "Amplifier", "S-Rank"]
       }
     ]
   },
@@ -3043,12 +2914,7 @@
             "en": "Xanthe Huynh"
           }
         },
-        "tags": [
-          "Stella Sora",
-          "Light",
-          "Katana",
-          "5-Star"
-        ]
+        "tags": ["Stella Sora", "Light", "Katana", "5-Star"]
       },
       {
         "name": "Wraith",
@@ -3071,11 +2937,7 @@
             "en": "Laura Post"
           }
         },
-        "tags": [
-          "Stella Sora",
-          "Dark",
-          "5-Star"
-        ]
+        "tags": ["Stella Sora", "Dark", "5-Star"]
       },
       {
         "name": "Gerie",
@@ -3098,11 +2960,7 @@
             "en": "Risa Mei"
           }
         },
-        "tags": [
-          "Stella Sora",
-          "Electric",
-          "4-Star"
-        ]
+        "tags": ["Stella Sora", "Electric", "4-Star"]
       },
       {
         "name": "Suntide Willow",
@@ -3125,12 +2983,7 @@
             "en": "Kira Buckland"
           }
         },
-        "tags": [
-          "Stella Sora",
-          "Nature",
-          "Healer",
-          "5-Star"
-        ]
+        "tags": ["Stella Sora", "Nature", "Healer", "5-Star"]
       },
       {
         "name": "Otoha",
@@ -3153,11 +3006,7 @@
             "en": "Lily Evans"
           }
         },
-        "tags": [
-          "Stella Sora",
-          "Sonic",
-          "4-Star"
-        ]
+        "tags": ["Stella Sora", "Sonic", "4-Star"]
       }
     ]
   },
@@ -3185,11 +3034,7 @@
             "en": "Suzie Yeung"
           }
         },
-        "tags": [
-          "Outerplane",
-          "Wind",
-          "3-Star"
-        ]
+        "tags": ["Outerplane", "Wind", "3-Star"]
       },
       {
         "name": "Astei Demiurge",
@@ -3212,12 +3057,7 @@
             "en": "Kira Buckland"
           }
         },
-        "tags": [
-          "Outerplane",
-          "Light",
-          "Demiurge",
-          "3-Star"
-        ]
+        "tags": ["Outerplane", "Light", "Demiurge", "3-Star"]
       },
       {
         "name": "Caren",
@@ -3240,12 +3080,7 @@
             "en": "Laura Post"
           }
         },
-        "tags": [
-          "Outerplane",
-          "Water",
-          "Defender",
-          "3-Star"
-        ]
+        "tags": ["Outerplane", "Water", "Defender", "3-Star"]
       },
       {
         "name": "Delta Heatwave Cop",
@@ -3268,12 +3103,7 @@
             "en": "Faye Mata"
           }
         },
-        "tags": [
-          "Outerplane",
-          "Fire",
-          "Striker",
-          "3-Star"
-        ]
+        "tags": ["Outerplane", "Fire", "Striker", "3-Star"]
       },
       {
         "name": "Liselotte",
@@ -3296,12 +3126,7 @@
             "en": "Anairis Quinones"
           }
         },
-        "tags": [
-          "Outerplane",
-          "Dark",
-          "Striker",
-          "3-Star"
-        ]
+        "tags": ["Outerplane", "Dark", "Striker", "3-Star"]
       },
       {
         "name": "Nadja",
@@ -3324,12 +3149,7 @@
             "en": "Amber Lee Connors"
           }
         },
-        "tags": [
-          "Outerplane",
-          "Earth",
-          "Ranger",
-          "3-Star"
-        ]
+        "tags": ["Outerplane", "Earth", "Ranger", "3-Star"]
       }
     ]
   },
@@ -3362,13 +3182,7 @@
           },
           "personality": "Arrogant, supreme, cold ruler."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Kiana",
-          "BIO",
-          "Herrscher",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Kiana", "BIO", "Herrscher", "S-Rank"]
       },
       {
         "name": "Void Drifter",
@@ -3396,13 +3210,7 @@
           },
           "personality": "Resolute, brooding, heroic."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Kiana",
-          "MECH",
-          "Augment",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Kiana", "MECH", "Augment", "S-Rank"]
       },
       {
         "name": "Herrscher of Finality",
@@ -3430,13 +3238,7 @@
           },
           "personality": "Hopeful, cosmic, compassionate savior."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Kiana",
-          "IMG",
-          "Herrscher",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Kiana", "IMG", "Herrscher", "S-Rank"]
       },
       {
         "name": "Ba-Dum! Fiery Wishing Star",
@@ -3462,12 +3264,7 @@
             "en": "Stephanie Sheh"
           }
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Kiana",
-          "PSY",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Kiana", "PSY", "S-Rank"]
       },
       {
         "name": "Xentinel Dawnbearing Crescent",
@@ -3493,12 +3290,7 @@
             "en": "Allegra Clark"
           }
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Raiden Mei",
-          "MECH",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Raiden Mei", "MECH", "S-Rank"]
       },
       {
         "name": "Herrscher of Origin",
@@ -3558,13 +3350,7 @@
           },
           "personality": "Logical, caring, fearless."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Bronya",
-          "MECH",
-          "Herrscher",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Bronya", "MECH", "Herrscher", "S-Rank"]
       },
       {
         "name": "Silverwing: N-EX",
@@ -3591,13 +3377,7 @@
           },
           "personality": "Mature, professional, caring leader."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Bronya",
-          "BIO",
-          "APHO",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Bronya", "BIO", "APHO", "S-Rank"]
       },
       {
         "name": "Darkbolt Jonin",
@@ -3623,13 +3403,7 @@
             "en": "Erica Mendez"
           }
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Yae Sakura",
-          "BIO",
-          "SP",
-          "Ninja"
-        ]
+        "tags": ["Honkai Impact 3rd", "Yae Sakura", "BIO", "SP", "Ninja"]
       },
       {
         "name": "Lunar Vow: Crimson Love",
@@ -3656,13 +3430,7 @@
           },
           "personality": "Devoted, loving, fierce protector."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Theresa",
-          "SD",
-          "Chainsaw",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Theresa", "SD", "Chainsaw", "S-Rank"]
       },
       {
         "name": "Stygian Nymph",
@@ -3688,12 +3456,7 @@
             "en": "Mela Lee"
           }
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Seele",
-          "QUANTUM",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Seele", "QUANTUM", "S-Rank"]
       },
       {
         "name": "Starchasm Nyx",
@@ -3719,13 +3482,7 @@
             "en": "Mela Lee"
           }
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Seele",
-          "QUANTUM",
-          "Ice",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Seele", "QUANTUM", "Ice", "S-Rank"]
       },
       {
         "name": "Herrscher of Rebirth",
@@ -3752,13 +3509,7 @@
           },
           "personality": "Gentle, radiant, life-giving."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Seele",
-          "PSY",
-          "Herrscher",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Seele", "PSY", "Herrscher", "S-Rank"]
       },
       {
         "name": "Wings of Panacea",
@@ -3784,13 +3535,7 @@
             "en": "Mela Lee"
           }
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Seele",
-          "BIO",
-          "Support",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Seele", "BIO", "Support", "S-Rank"]
       },
       {
         "name": "Infinite Ouroboros",
@@ -3850,13 +3595,7 @@
           },
           "personality": "Cute, magical, vengeful yet pure."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Sirin",
-          "MECH",
-          "Magical Girl",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Sirin", "MECH", "Magical Girl", "S-Rank"]
       },
       {
         "name": "Mad Pleasure: Shadowbringer",
@@ -3884,13 +3623,7 @@
           },
           "personality": "Dominant, lavish, hedonistic."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Thelema",
-          "MECH",
-          "Mars",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Thelema", "MECH", "Mars", "S-Rank"]
       },
       {
         "name": "Lone Planetfarer",
@@ -3918,13 +3651,7 @@
           },
           "personality": "Playful, unpredictable, cosmic traveler."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Vita",
-          "MECH",
-          "Cosmic",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Vita", "MECH", "Cosmic", "S-Rank"]
       }
     ]
   },
