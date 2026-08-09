@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 import type { HallOfFameEntry, MediaStatus } from "@/lib/store/dashboardStore";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { searchArtistPresets, ArtistPreset } from "@/lib/data/artistDataHelper";
+import { CharacterImageUploader, GalleryUploader } from "@/components/ui/CharacterImageUploader";
 
 interface HofEditorModalProps {
   isOpen: boolean;
@@ -17,7 +18,19 @@ interface HofEditorModalProps {
   entryToEdit?: HallOfFameEntry | null;
 }
 
-type FormTab = "basic" | "identity" | "profile" | "appearances" | "gallery" | "autofill";
+type FormTab = "basic" | "identity" | "profile" | "appearances" | "gallery" | "links" | "autofill";
+
+const TABS_LIST: FormTab[] = ["basic", "identity", "profile", "appearances", "gallery", "links", "autofill"];
+
+const TABS_LIST_ITEMS = [
+  { id: "basic", label: "Basic", icon: "⚙️" },
+  { id: "identity", label: "Identity & Origin", icon: "🏛️" },
+  { id: "profile", label: "Profile & Lore", icon: "📖" },
+  { id: "appearances", label: "Appearances", icon: "🎬" },
+  { id: "gallery", label: "Gallery & Images", icon: "🖼️" },
+  { id: "links", label: "Links & Social", icon: "🔗" },
+  { id: "autofill", label: "Artist Preset / Auto-Fill", icon: "⚡" },
+];
 
 export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalProps) {
   const { theme } = useTheme();
@@ -27,6 +40,10 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
 
   const [activeFormTab, setActiveFormTab] = useState<FormTab>("basic");
 
+  // Tab Strip Scroll Refs
+  const tabListRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
   // Basic Card Image fields
   const [name, setName] = useState("");
   const [type, setType] = useState<"actor" | "actress" | "anime" | "singer" | "tokusatsu">("actress");
@@ -35,7 +52,6 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   const [nationality, setNationality] = useState("");
   const [singerType, setSingerType] = useState("Solo Artist");
   const [imageUrl, setImageUrl] = useState("");
-  const [imageSource, setImageSource] = useState<"upload" | "url">("upload");
   const [note, setNote] = useState("");
   const [rank, setRank] = useState<number | null>(null);
   const [isChampion, setIsChampion] = useState(false);
@@ -82,6 +98,12 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const [galleryInput, setGalleryInput] = useState("");
 
+  // Extended Social Links fields
+  const [socialLinks, setSocialLinks] = useState<Array<{ platform: string; url: string }>>([]);
+  const [linkPlatform, setLinkPlatform] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
+  const [editingLinkIndex, setEditingLinkIndex] = useState<number | null>(null);
+
   // Artist Data Preset Autofill State
   const [artistSearchQuery, setArtistSearchQuery] = useState("");
   const [selectedPreset, setSelectedPreset] = useState<ArtistPreset | null>(null);
@@ -91,12 +113,36 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   const [isUploading, setIsUploading] = useState(false);
   const [imgError, setImgError] = useState(false);
 
-  // Crop State
-  const [cropTarget, setCropTarget] = useState<"card" | "portrait" | "gallery" | null>(null);
-  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const portraitFileInputRef = useRef<HTMLInputElement>(null);
-  const galleryFileInputRef = useRef<HTMLInputElement>(null);
+  const currentStepIndex = TABS_LIST.indexOf(activeFormTab);
+
+  const scrollToTab = (tabId: FormTab) => {
+    setActiveFormTab(tabId);
+    setTimeout(() => {
+      const container = tabListRef.current;
+      const tabEl = tabRefs.current[tabId];
+      if (container && tabEl) {
+        const containerRect = container.getBoundingClientRect();
+        const tabRect = tabEl.getBoundingClientRect();
+
+        if (tabRect.left < containerRect.left || tabRect.right > containerRect.right) {
+          const targetScrollLeft = tabEl.offsetLeft - container.offsetWidth / 2 + tabEl.offsetWidth / 2;
+          container.scrollTo({ left: Math.max(0, targetScrollLeft), behavior: "smooth" });
+        }
+      }
+    }, 20);
+  };
+
+  const handlePrevTab = () => {
+    if (currentStepIndex > 0) {
+      scrollToTab(TABS_LIST[currentStepIndex - 1]);
+    }
+  };
+
+  const handleNextTab = () => {
+    if (currentStepIndex < TABS_LIST.length - 1) {
+      scrollToTab(TABS_LIST[currentStepIndex + 1]);
+    }
+  };
 
   const artistSearchResults = useMemo(() => {
     return searchArtistPresets(artistSearchQuery);
@@ -163,13 +209,8 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       setRelatedWorks(entryToEdit.works || entryToEdit.relatedWorks ? (entryToEdit.works || entryToEdit.relatedWorks)!.join(", ") : details.relatedWorks || "");
       setGalleryUrls(entryToEdit.gallery || []);
 
-      if (entryToEdit.imageUrl && entryToEdit.imageUrl.startsWith("/uploads/")) {
-        setImageSource("upload");
-      } else if (entryToEdit.imageUrl) {
-        setImageSource("url");
-      } else {
-        setImageSource("upload");
-      }
+      // Social Links
+      setSocialLinks(entryToEdit.socialLinks || details.socialLinks || []);
     } else {
       setName("");
       setType("actress");
@@ -178,7 +219,6 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       setNationality("");
       setSingerType("Solo Artist");
       setImageUrl("");
-      setImageSource("upload");
       setNote("");
       setRank(null);
       setIsChampion(false);
@@ -219,11 +259,13 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       setCameos("");
       setRelatedWorks("");
       setGalleryUrls([]);
+      setSocialLinks([]);
     }
 
+    setLinkPlatform("");
+    setLinkUrl("");
+    setEditingLinkIndex(null);
     setImgError(false);
-    setCropImageSrc(null);
-    setCropTarget(null);
     setActiveFormTab("basic");
     setSelectedPreset(null);
     setArtistSearchQuery("");
@@ -264,55 +306,55 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       setOccupation((prev) => fillArrStr(prev, selectedPreset.occupation));
     }
 
-    toastSuccess(`✓ Autofilled compatible metadata from "${selectedPreset.name}".`);
-    setActiveFormTab("basic");
-  };
-
-  const handleFileSelect = (target: "card" | "portrait" | "gallery") => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setCropTarget(target);
-    const reader = new FileReader();
-    reader.onload = () => {
-      setCropImageSrc(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleCropComplete = async (croppedBlob: Blob) => {
-    setIsUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", croppedBlob, `hof-${cropTarget || "image"}-${Date.now()}.png`);
-
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.url) {
-        if (cropTarget === "portrait") {
-          setPortraitUrl(data.url);
-          setPortraitSource("upload");
-        } else if (cropTarget === "gallery") {
-          if (!galleryUrls.includes(data.url)) {
-            setGalleryUrls((prev) => [...prev, data.url]);
-          }
-        } else {
-          setImageUrl(data.url);
-          setImgError(false);
+    if (selectedPreset.socialLinks && selectedPreset.socialLinks.length > 0) {
+      setSocialLinks((prev) => {
+        if (overwriteNonEmpty || prev.length === 0) {
+          return selectedPreset.socialLinks!;
         }
-      } else {
-        toastError("Upload failed: " + (data.error || "Unknown error"));
-      }
-    } catch (err) {
-      console.error("Upload error:", err);
-      toastError("Error uploading image");
-    } finally {
-      setIsUploading(false);
-      setCropImageSrc(null);
-      setCropTarget(null);
+        const existingUrls = new Set(prev.map((l) => l.url));
+        const toAdd = selectedPreset.socialLinks!.filter((l) => !existingUrls.has(l.url));
+        return [...prev, ...toAdd];
+      });
+    }
+
+    toastSuccess(`✓ Autofilled compatible metadata from "${selectedPreset.name}".`);
+    scrollToTab("basic");
+  };
+
+  const handleAddSocialLink = () => {
+    if (!linkPlatform.trim() || !linkUrl.trim()) {
+      toastError("Enter both platform name and URL.");
+      return;
+    }
+    const cleanUrl = linkUrl.trim();
+    const cleanPlatform = linkPlatform.trim();
+
+    if (editingLinkIndex !== null) {
+      const updated = [...socialLinks];
+      updated[editingLinkIndex] = { platform: cleanPlatform, url: cleanUrl };
+      setSocialLinks(updated);
+      setEditingLinkIndex(null);
+    } else {
+      setSocialLinks([...socialLinks, { platform: cleanPlatform, url: cleanUrl }]);
+    }
+    setLinkPlatform("");
+    setLinkUrl("");
+  };
+
+  const handleEditSocialLink = (index: number) => {
+    const item = socialLinks[index];
+    if (!item) return;
+    setLinkPlatform(item.platform);
+    setLinkUrl(item.url);
+    setEditingLinkIndex(index);
+  };
+
+  const handleRemoveSocialLink = (index: number) => {
+    setSocialLinks(socialLinks.filter((_, i) => i !== index));
+    if (editingLinkIndex === index) {
+      setLinkPlatform("");
+      setLinkUrl("");
+      setEditingLinkIndex(null);
     }
   };
 
@@ -322,20 +364,6 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       setGalleryUrls([...galleryUrls, galleryInput.trim()]);
     }
     setGalleryInput("");
-  };
-
-  const handleRemoveGalleryUrl = (url: string) => {
-    setGalleryUrls(galleryUrls.filter((u) => u !== url));
-  };
-
-  const handleMoveGalleryItem = (index: number, direction: "up" | "down") => {
-    const newArr = [...galleryUrls];
-    const targetIdx = direction === "up" ? index - 1 : index + 1;
-    if (targetIdx < 0 || targetIdx >= newArr.length) return;
-    const temp = newArr[index];
-    newArr[index] = newArr[targetIdx];
-    newArr[targetIdx] = temp;
-    setGalleryUrls(newArr);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -348,6 +376,8 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       const splitCsv = (val: string) => val.split(",").map((s) => s.trim()).filter(Boolean);
 
       const resolvedPortrait = portraitSource === "card" ? undefined : portraitUrl.trim() || undefined;
+
+      const validSocialLinks = socialLinks.filter((l) => l.platform.trim() && l.url.trim());
 
       const detailsObj: Record<string, any> = {
         fullName: fullName.trim() || undefined,
@@ -376,6 +406,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
         spinOffs: splitCsv(spinOffs),
         cameos: splitCsv(cameos),
         relatedWorks: splitCsv(relatedWorks),
+        socialLinks: validSocialLinks,
       };
 
       await updateHof(id, {
@@ -428,6 +459,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
         works: splitCsv(relatedWorks),
         relatedWorks: splitCsv(relatedWorks),
         gallery: galleryUrls,
+        socialLinks: validSocialLinks,
         accentColor,
         details: detailsObj,
       });
@@ -450,30 +482,33 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-4xl">
+    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-3xl">
       {/* Cyber corner brackets */}
       {isCyber && (
         <>
-          <div className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-[#00F5FF]" />
-          <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-[#BF5FFF]" />
+          <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#00F5FF]" />
+          <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#BF5FFF]" />
         </>
       )}
 
-      <div className="overflow-y-auto overscroll-contain flex-1 p-4 sm:p-6 scrollbar-thin max-h-[85vh]">
+      <div className="overflow-y-auto overscroll-contain flex-1 p-4 sm:p-5 scrollbar-thin max-h-[85vh]">
         {/* Compact Header */}
         <div
-          className="flex justify-between items-center mb-4 pb-3"
+          className="flex justify-between items-center mb-3 pb-2.5"
           style={{ borderBottom: isCyber ? "1px solid rgba(255,255,255,0.08)" : "2px dashed #000" }}
         >
-          <div>
+          <div className="min-w-0 flex-1 pr-2">
             <h2
-              className="text-base sm:text-lg font-black tracking-wide flex items-center gap-2"
+              className="text-sm sm:text-base font-black tracking-wide flex items-center gap-2 truncate"
               style={{ fontFamily: isCyber ? "var(--font-orbitron)" : "inherit", color: isCyber ? "#00F5FF" : "#000" }}
             >
-              {entryToEdit ? "✏️ Edit Character Dossier" : "✨ Enshrine Character Dossier"}
+              <span className="shrink-0">{entryToEdit ? "✏️" : "✨"}</span>
+              <span className="truncate">
+                {entryToEdit ? "Edit Character Dossier" : "New Character Dictionary Entry"}
+              </span>
               {name && (
                 <span
-                  className="text-xs px-2 py-0.5 rounded font-mono font-bold"
+                  className="text-[10px] px-2 py-0.5 rounded font-mono font-bold shrink-0 truncate max-w-[120px]"
                   style={{
                     backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#FEF08A",
                     color: isCyber ? "#00F5FF" : "#854D0E",
@@ -483,15 +518,15 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                 </span>
               )}
             </h2>
-            <p className="text-[10px] font-mono theme-text-muted">
+            <p className="text-[10px] font-mono theme-text-muted truncate">
               Encyclopedia knowledge dossier editor & artist preset importer
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={() => setActiveFormTab("autofill")}
+              onClick={() => scrollToTab("autofill")}
               className="px-2.5 py-1 text-xs font-bold font-mono rounded-lg transition-all cursor-pointer flex items-center gap-1 border"
               style={{
                 backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#FEF08A",
@@ -512,20 +547,17 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
           </div>
         </div>
 
-        {/* Clear Scannable Tabs Navigation */}
-        <div className="flex items-center gap-1.5 mb-5 overflow-x-auto scrollbar-none pb-1 border-b border-white/10 text-xs font-mono font-bold whitespace-nowrap">
-          {[
-            { id: "basic", label: "Basic", icon: "⚙️" },
-            { id: "identity", label: "Identity & Origin", icon: "🏛️" },
-            { id: "profile", label: "Profile & Lore", icon: "📖" },
-            { id: "appearances", label: "Appearances", icon: "🎬" },
-            { id: "gallery", label: "Gallery & Images", icon: "🖼️" },
-            { id: "autofill", label: "Artist Preset / Auto-Fill", icon: "⚡" },
-          ].map((tab) => (
+        {/* Clear Scannable Tabs Navigation (Horizontal Scrollable with Auto-Scroll to Active Tab) */}
+        <div
+          ref={tabListRef}
+          className="flex items-center gap-1 mb-4 overflow-x-auto scrollbar-none pb-1 border-b border-white/10 text-xs font-mono font-bold whitespace-nowrap scroll-smooth"
+        >
+          {TABS_LIST_ITEMS.map((tab) => (
             <button
               key={tab.id}
+              ref={(el) => { tabRefs.current[tab.id] = el; }}
               type="button"
-              onClick={() => setActiveFormTab(tab.id as FormTab)}
+              onClick={() => scrollToTab(tab.id as FormTab)}
               className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0 cursor-pointer transition-all ${
                 activeFormTab === tab.id
                   ? isCyber
@@ -912,226 +944,144 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
             </div>
           )}
 
-          {/* TAB 5: GALLERY & IMAGES (Organized Asset Manager) */}
+          {/* TAB 5: GALLERY & IMAGES (Adapted from GameCharacterEditorModal Images Architecture) */}
           {activeFormTab === "gallery" && (
-            <div className="space-y-5">
-              {/* 1. Card Image Section */}
-              <div className="p-4 rounded-2xl border bg-black/5 dark:bg-white/5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#00F5FF" : "#000" }}>
-                    📇 Card Image (Dictionary Roster Thumbnail)
-                  </label>
-                  <span className="text-[10px] font-mono opacity-60">Primary list thumbnail</span>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* 1. Card Image (Dictionary Roster Thumbnail) */}
+                <div className="space-y-2">
+                  <CharacterImageUploader
+                    label="Card Image (3:4 Thumbnail)"
+                    value={imageUrl}
+                    onChange={(url) => {
+                      setImageUrl(url);
+                      setImgError(false);
+                    }}
+                    onClear={() => setImageUrl("")}
+                    aspect={3 / 4}
+                    hint="Used for roster list thumbnail."
+                    previewClass="h-44 w-full"
+                  />
+                  <input
+                    type="text"
+                    value={imageUrl.startsWith("data:") ? "" : imageUrl}
+                    onChange={(e) => {
+                      setImageUrl(e.target.value);
+                      setImgError(false);
+                    }}
+                    placeholder="Or paste image URL…"
+                    className="w-full p-2 rounded-lg border text-xs font-mono theme-text-primary focus:outline-none"
+                    style={{
+                      backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "#F9FAFB",
+                      borderColor: isCyber ? "rgba(255,255,255,0.12)" : "#E5E7EB",
+                    }}
+                  />
                 </div>
 
-                <div className="flex gap-4 items-center flex-wrap sm:flex-nowrap">
-                  <div
-                    className="w-16 h-20 aspect-[3/4] rounded-xl overflow-hidden shrink-0 flex items-center justify-center font-black text-lg border-2 shadow-md relative"
-                    style={{
-                      borderColor: isCyber ? "rgba(0,245,255,0.4)" : "#000",
-                      backgroundColor: isCyber ? "rgba(0,245,255,0.05)" : "#F0F0F0",
-                    }}
-                  >
-                    {imageUrl && !imgError ? (
-                      <img src={imageUrl} alt="card" className="w-full h-full object-cover object-top" onError={() => setImgError(true)} />
-                    ) : (
-                      <span style={{ color: isCyber ? "#00F5FF" : "#999" }}>{name ? name.charAt(0).toUpperCase() : "?"}</span>
-                    )}
+                {/* 2. Portrait (3:4 Profile Modal Image) */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label
+                      className="text-xs font-mono font-bold uppercase tracking-wider block"
+                      style={{ color: isCyber ? "rgba(0,245,255,0.7)" : "#6B7280" }}
+                    >
+                      Portrait (3:4 Profile Modal Image)
+                    </label>
                   </div>
 
-                  <div className="flex-1 flex flex-col gap-2 min-w-0">
-                    <div className="flex gap-1 p-0.5 rounded-lg border text-xs font-black self-start">
-                      <button
-                        type="button"
-                        onClick={() => setImageSource("upload")}
-                        className="px-3 py-1 rounded transition-colors"
-                        style={{
-                          backgroundColor: imageSource === "upload" ? (isCyber ? "#00F5FF" : "#FFFFFF") : "transparent",
-                          color: imageSource === "upload" ? (isCyber ? "#050816" : "#000000") : (isCyber ? "#94A3B8" : "#4B5563"),
-                        }}
-                      >
-                        📁 Upload
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setImageSource("url")}
-                        className="px-3 py-1 rounded transition-colors"
-                        style={{
-                          backgroundColor: imageSource === "url" ? (isCyber ? "#00F5FF" : "#FFFFFF") : "transparent",
-                          color: imageSource === "url" ? (isCyber ? "#050816" : "#000000") : (isCyber ? "#94A3B8" : "#4B5563"),
-                        }}
-                      >
-                        🔗 Image Link
-                      </button>
-                    </div>
+                  {/* Mode selector buttons: 1. Sync, 2. Custom URL, 3. Upload */}
+                  <div className="flex gap-1 p-0.5 rounded-lg border text-[10px] font-mono font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setPortraitSource("card")}
+                      className="px-2 py-1 rounded transition-colors cursor-pointer flex-1 text-center truncate"
+                      style={{
+                        backgroundColor: portraitSource === "card" ? (isCyber ? "#00F5FF" : "#FFFFFF") : "transparent",
+                        color: portraitSource === "card" ? (isCyber ? "#050816" : "#000000") : (isCyber ? "#94A3B8" : "#4B5563"),
+                      }}
+                    >
+                      1. Sync Card
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPortraitSource("url")}
+                      className="px-2 py-1 rounded transition-colors cursor-pointer flex-1 text-center truncate"
+                      style={{
+                        backgroundColor: portraitSource === "url" ? (isCyber ? "#00F5FF" : "#FFFFFF") : "transparent",
+                        color: portraitSource === "url" ? (isCyber ? "#050816" : "#000000") : (isCyber ? "#94A3B8" : "#4B5563"),
+                      }}
+                    >
+                      2. Custom Link
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPortraitSource("upload")}
+                      className="px-2 py-1 rounded transition-colors cursor-pointer flex-1 text-center truncate"
+                      style={{
+                        backgroundColor: portraitSource === "upload" ? (isCyber ? "#00F5FF" : "#FFFFFF") : "transparent",
+                        color: portraitSource === "upload" ? (isCyber ? "#050816" : "#000000") : (isCyber ? "#94A3B8" : "#4B5563"),
+                      }}
+                    >
+                      3. Upload
+                    </button>
+                  </div>
 
-                    {imageSource === "url" ? (
-                      <input
-                        type="url"
-                        value={imageUrl}
-                        onChange={(e) => { setImageUrl(e.target.value); setImgError(false); }}
-                        placeholder="Paste card image URL (https://...)"
-                        className={inputClass}
-                        style={inputStyle}
-                      />
-                    ) : (
-                      <div className="flex gap-2 items-center">
-                        <input type="file" ref={fileInputRef} onChange={handleFileSelect("card")} accept="image/*" className="hidden" />
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={isUploading}
-                          className="px-3 py-1.5 text-xs font-black rounded border transition-all hover:scale-[1.02] cursor-pointer"
-                          style={{
-                            backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#E5E7EB",
-                            borderColor: isCyber ? "#00F5FF" : "#9CA3AF",
-                            color: isCyber ? "#00F5FF" : "#374151",
-                          }}
-                        >
-                          📁 {isUploading ? "Uploading..." : "Upload Card Image"}
-                        </button>
-                        {imageUrl && (
-                          <button
-                            type="button"
-                            onClick={() => setImageUrl("")}
-                            className="text-[10px] font-bold text-red-400 hover:underline cursor-pointer"
-                          >
-                            Remove
-                          </button>
+                  {portraitSource === "card" ? (
+                    <div className="space-y-2">
+                      <div className="h-44 w-full rounded-xl overflow-hidden border flex flex-col items-center justify-center relative bg-black/10">
+                        {imageUrl ? (
+                          <img src={imageUrl} alt="synced portrait" className="w-full h-full object-cover object-top" />
+                        ) : (
+                          <span className="text-xs font-mono opacity-60">No Card Image Set</span>
                         )}
                       </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* 2. Portrait / Modal Image Section */}
-              <div className="p-4 rounded-2xl border bg-black/5 dark:bg-white/5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#00F5FF" : "#000" }}>
-                    🖼️ Portrait (3:4 Profile Modal Image)
-                  </label>
-                  <span className="text-[10px] font-mono opacity-60">Independent vertical portrait</span>
-                </div>
-
-                <div className="flex gap-4 items-center flex-wrap sm:flex-nowrap">
-                  <div
-                    className="w-16 h-20 aspect-[3/4] rounded-xl overflow-hidden shrink-0 flex items-center justify-center font-black text-xs border-2 shadow-md relative"
-                    style={{
-                      borderColor: isCyber ? "#00F5FF" : "#000",
-                      backgroundColor: isCyber ? "rgba(0,245,255,0.05)" : "#F0F0F0",
-                    }}
-                  >
-                    {portraitSource === "card" ? (
-                      imageUrl ? (
-                        <img src={imageUrl} alt="portrait" className="w-full h-full object-cover object-top" />
-                      ) : (
-                        <span className="text-[10px] text-center opacity-60">Card Image</span>
-                      )
-                    ) : portraitUrl ? (
-                      <img src={portraitUrl} alt="portrait" className="w-full h-full object-cover object-top" />
-                    ) : (
-                      <span className="text-[10px] text-center opacity-60">No Custom</span>
-                    )}
-                  </div>
-
-                  <div className="flex-1 flex flex-col gap-2 min-w-0">
-                    <div className="flex gap-1 p-0.5 rounded-lg border text-[11px] font-bold self-start flex-wrap">
-                      <button
-                        type="button"
-                        onClick={() => setPortraitSource("card")}
-                        className="px-2.5 py-1 rounded transition-colors cursor-pointer"
-                        style={{
-                          backgroundColor: portraitSource === "card" ? (isCyber ? "#00F5FF" : "#FFFFFF") : "transparent",
-                          color: portraitSource === "card" ? (isCyber ? "#050816" : "#000000") : (isCyber ? "#94A3B8" : "#4B5563"),
-                        }}
-                      >
-                        1. Sync with Card Image
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPortraitSource("url")}
-                        className="px-2.5 py-1 rounded transition-colors cursor-pointer"
-                        style={{
-                          backgroundColor: portraitSource === "url" ? (isCyber ? "#00F5FF" : "#FFFFFF") : "transparent",
-                          color: portraitSource === "url" ? (isCyber ? "#050816" : "#000000") : (isCyber ? "#94A3B8" : "#4B5563"),
-                        }}
-                      >
-                        2. Custom Link
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPortraitSource("upload")}
-                        className="px-2.5 py-1 rounded transition-colors cursor-pointer"
-                        style={{
-                          backgroundColor: portraitSource === "upload" ? (isCyber ? "#00F5FF" : "#FFFFFF") : "transparent",
-                          color: portraitSource === "upload" ? (isCyber ? "#050816" : "#000000") : (isCyber ? "#94A3B8" : "#4B5563"),
-                        }}
-                      >
-                        3. Upload Custom Portrait
-                      </button>
-                    </div>
-
-                    {portraitSource === "card" && (
-                      <p className="text-[11px] font-mono theme-text-muted">
+                      <p className="text-[10px] font-mono theme-text-muted">
                         ✓ Currently synced with Card Image.
                       </p>
-                    )}
-
-                    {portraitSource === "url" && (
-                      <input
-                        type="url"
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <CharacterImageUploader
+                        label="Custom 3:4 Portrait"
                         value={portraitUrl}
-                        onChange={(e) => setPortraitUrl(e.target.value)}
-                        placeholder="Paste dedicated 3:4 portrait image URL (https://...)"
-                        className={inputClass}
-                        style={inputStyle}
+                        onChange={(url) => {
+                          setPortraitUrl(url);
+                          setPortraitSource("upload");
+                        }}
+                        onClear={() => setPortraitUrl("")}
+                        aspect={3 / 4}
+                        hint="Dedicated profile portrait image."
+                        previewClass="h-44 w-full"
                       />
-                    )}
-
-                    {portraitSource === "upload" && (
-                      <div className="flex gap-2 items-center">
+                      {portraitSource === "url" && (
                         <input
-                          type="file"
-                          ref={portraitFileInputRef}
-                          onChange={handleFileSelect("portrait")}
-                          accept="image/*"
-                          className="hidden"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => portraitFileInputRef.current?.click()}
-                          disabled={isUploading}
-                          className="px-3 py-1.5 text-xs font-black rounded border transition-all hover:scale-[1.02] cursor-pointer"
+                          type="text"
+                          value={portraitUrl.startsWith("data:") ? "" : portraitUrl}
+                          onChange={(e) => setPortraitUrl(e.target.value)}
+                          placeholder="Or paste portrait URL…"
+                          className="w-full p-2 rounded-lg border text-xs font-mono theme-text-primary focus:outline-none"
                           style={{
-                            backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#E5E7EB",
-                            borderColor: isCyber ? "#00F5FF" : "#9CA3AF",
-                            color: isCyber ? "#00F5FF" : "#374151",
+                            backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "#F9FAFB",
+                            borderColor: isCyber ? "rgba(255,255,255,0.12)" : "#E5E7EB",
                           }}
-                        >
-                          📁 {isUploading ? "Uploading..." : "Upload 3:4 Custom Portrait"}
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                        />
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* 3. Personal Gallery Collection Section */}
-              <div className="p-4 rounded-2xl border bg-black/5 dark:bg-white/5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#00F5FF" : "#000" }}>
-                    📚 Personal Gallery Collection ({galleryUrls.length} items)
-                  </label>
-                  <span className="text-[10px] font-mono opacity-60">Manual photo collection</span>
-                </div>
+              {/* 3. Personal Gallery Collection */}
+              <div className="pt-2 border-t border-white/10 space-y-3">
+                <GalleryUploader images={galleryUrls} onChange={setGalleryUrls} />
 
-                <div className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
+                {/* Quick Paste URL for Gallery */}
+                <div className="flex gap-2 items-center">
                   <input
                     type="url"
                     value={galleryInput}
                     onChange={(e) => setGalleryInput(e.target.value)}
-                    placeholder="Paste artwork URL (https://...)"
+                    placeholder="Or paste artwork URL directly (https://...)"
                     className={inputClass}
                     style={inputStyle}
                   />
@@ -1142,73 +1092,114 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                   >
                     + Add URL
                   </button>
+                </div>
+              </div>
+            </div>
+          )}
 
-                  <input
-                    type="file"
-                    ref={galleryFileInputRef}
-                    onChange={handleFileSelect("gallery")}
-                    accept="image/*"
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => galleryFileInputRef.current?.click()}
-                    disabled={isUploading}
-                    className="px-3 py-2 text-xs font-bold rounded-lg border shrink-0 cursor-pointer transition-all hover:scale-105"
-                    style={{
-                      backgroundColor: isCyber ? "rgba(255,255,255,0.08)" : "#E5E7EB",
-                      borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#9CA3AF",
-                      color: isCyber ? "#FFF" : "#000",
-                    }}
-                  >
-                    📁 Upload File
-                  </button>
+          {/* TAB 6: LINKS & SOCIAL */}
+          {activeFormTab === "links" && (
+            <div className="space-y-4">
+              <div className="p-3.5 rounded-xl border bg-black/5 dark:bg-white/5 space-y-3">
+                <span className="text-xs font-black uppercase tracking-wider block" style={{ color: isCyber ? "#00F5FF" : "#000" }}>
+                  🔗 External Links & Social Profiles
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider opacity-60">Platform Name</label>
+                    <input
+                      type="text"
+                      value={linkPlatform}
+                      onChange={(e) => setLinkPlatform(e.target.value)}
+                      placeholder="e.g. Twitter / X, YouTube, Official Website, Wiki"
+                      className={inputClass}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider opacity-60">URL</label>
+                    <input
+                      type="url"
+                      value={linkUrl}
+                      onChange={(e) => setLinkUrl(e.target.value)}
+                      placeholder="https://..."
+                      className={inputClass}
+                      style={inputStyle}
+                    />
+                  </div>
                 </div>
 
-                {galleryUrls.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-3">
-                    {galleryUrls.map((url, i) => (
-                      <div key={i} className="relative aspect-[3/4] rounded-xl overflow-hidden border group bg-black/40 shadow-sm">
-                        <img src={url} alt={`gallery-${i}`} className="w-full h-full object-cover" />
-                        <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {i > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => handleMoveGalleryItem(i, "up")}
-                              className="w-5 h-5 rounded bg-black/80 text-white text-[10px] font-bold flex items-center justify-center cursor-pointer"
-                              title="Move Left"
-                            >
-                              ←
-                            </button>
-                          )}
-                          {i < galleryUrls.length - 1 && (
-                            <button
-                              type="button"
-                              onClick={() => handleMoveGalleryItem(i, "down")}
-                              className="w-5 h-5 rounded bg-black/80 text-white text-[10px] font-bold flex items-center justify-center cursor-pointer"
-                              title="Move Right"
-                            >
-                              →
-                            </button>
-                          )}
+                <button
+                  type="button"
+                  onClick={handleAddSocialLink}
+                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-cyan-500 text-black cursor-pointer transition-all hover:scale-105"
+                >
+                  {editingLinkIndex !== null ? "✓ Update Link" : "+ Add Social Link"}
+                </button>
+
+                {editingLinkIndex !== null && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingLinkIndex(null);
+                      setLinkPlatform("");
+                      setLinkUrl("");
+                    }}
+                    className="ml-2 text-xs font-bold text-gray-400 hover:underline"
+                  >
+                    Cancel Editing
+                  </button>
+                )}
+              </div>
+
+              {/* Added Links List */}
+              {socialLinks.length > 0 ? (
+                <div className="space-y-2">
+                  <span className="text-xs font-mono font-bold opacity-60 block">Configured Links ({socialLinks.length})</span>
+                  <div className="space-y-2">
+                    {socialLinks.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="p-2.5 rounded-xl border flex items-center justify-between gap-3 text-xs"
+                        style={{
+                          backgroundColor: isCyber ? "rgba(255,255,255,0.03)" : "#F9FAFB",
+                          borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E5E7EB",
+                        }}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <span className="font-bold theme-text-primary block">{item.platform}</span>
+                          <span className="text-[10px] font-mono theme-text-muted truncate block">{item.url}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
                           <button
                             type="button"
-                            onClick={() => handleRemoveGalleryUrl(url)}
-                            className="w-5 h-5 rounded bg-red-600 text-white text-xs font-bold flex items-center justify-center cursor-pointer"
-                            title="Remove Image"
+                            onClick={() => handleEditSocialLink(idx)}
+                            className="px-2 py-1 text-[10px] font-bold rounded bg-amber-400/20 text-amber-300 border border-amber-400/30 cursor-pointer"
                           >
-                            ✕
+                            ✏️ Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSocialLink(idx)}
+                            className="px-2 py-1 text-[10px] font-bold rounded bg-red-500/20 text-red-400 border border-red-500/30 cursor-pointer"
+                          >
+                            🗑️
                           </button>
                         </div>
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="p-4 text-center text-xs font-mono opacity-50 border border-dashed rounded-xl">
+                  No external social links added yet.
+                </div>
+              )}
             </div>
           )}
 
-          {/* TAB 6: ARTIST PRESET / AUTO-FILL */}
+          {/* TAB 7: ARTIST PRESET / AUTO-FILL */}
           {activeFormTab === "autofill" && (
             <div className="space-y-4 p-4 rounded-2xl border bg-black/5 dark:bg-white/5">
               <div>
@@ -1301,51 +1292,73 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
           )}
 
           {/* Form Action Footer */}
-          <div className="flex justify-end gap-3 pt-3 border-t border-white/10">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-xs font-bold rounded-lg border transition-colors cursor-pointer"
-              style={{
-                borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB",
-                color: isCyber ? "#94A3B8" : "#6B7280",
-                backgroundColor: "transparent",
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSaving || isUploading}
-              className="px-5 py-2 text-xs font-black rounded-lg transition-transform active:scale-95 disabled:opacity-60 cursor-pointer shadow-lg"
-              style={{
-                backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
-                color: isCyber ? "#050816" : "#fff",
-              }}
-            >
-              {isSaving ? "Saving..." : entryToEdit ? "Save Changes" : "✨ Enshrine"}
-            </button>
+          <div
+            className="flex items-center justify-between gap-3 pt-3 mt-4 border-t"
+            style={{ borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#000" }}
+          >
+            {/* Step navigation left */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handlePrevTab}
+                disabled={currentStepIndex === 0}
+                className="px-3 py-1.5 text-xs font-bold font-mono rounded-lg border transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                style={{
+                  backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#E5E7EB",
+                  borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB",
+                  color: isCyber ? "#FFF" : "#000",
+                }}
+              >
+                ← Prev
+              </button>
+              <span className="text-[11px] font-mono font-bold opacity-40 theme-text-muted px-1">
+                {currentStepIndex + 1} / {TABS_LIST.length}
+              </span>
+              <button
+                type="button"
+                onClick={handleNextTab}
+                disabled={currentStepIndex === TABS_LIST.length - 1}
+                className="px-3 py-1.5 text-xs font-bold font-mono rounded-lg border transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                style={{
+                  backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#E5E7EB",
+                  borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB",
+                  color: isCyber ? "#FFF" : "#000",
+                }}
+              >
+                Next →
+              </button>
+            </div>
+
+            {/* Submit & Cancel right */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3.5 py-1.5 text-xs font-bold rounded-lg border transition-colors cursor-pointer"
+                style={{
+                  borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB",
+                  color: isCyber ? "#94A3B8" : "#6B7280",
+                  backgroundColor: "transparent",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving || isUploading}
+                className="px-4 py-1.5 text-xs font-black rounded-lg transition-transform active:scale-95 disabled:opacity-60 cursor-pointer shadow-md"
+                style={{
+                  backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
+                  color: isCyber ? "#050816" : "#fff",
+                }}
+              >
+                {isSaving ? "Saving..." : entryToEdit ? "Save Changes" : "✨ Enshrine"}
+              </button>
+            </div>
           </div>
         </form>
       </div>
 
-      <ImageCropModal
-        isOpen={Boolean(cropImageSrc)}
-        imageSrc={cropImageSrc}
-        aspect={cropTarget === "portrait" ? 3 / 4 : 3 / 4}
-        title={
-          cropTarget === "portrait"
-            ? "Position & Crop 3:4 Custom Portrait"
-            : cropTarget === "gallery"
-            ? "Position & Crop Gallery Image"
-            : "Position & Crop Card Image"
-        }
-        onClose={() => {
-          setCropImageSrc(null);
-          setCropTarget(null);
-        }}
-        onCropComplete={handleCropComplete}
-      />
     </Modal>
   );
 }

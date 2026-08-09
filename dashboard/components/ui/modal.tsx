@@ -16,7 +16,7 @@ export interface ModalProps {
   children: React.ReactNode;
   /** Extra Tailwind classes applied to the inner content card */
   className?: string;
-  /** Max width of the content card. Defaults to "max-w-2xl" */
+  /** Max width variant or string key: "compact" (720px), "max-w-xs", "max-w-sm", "max-w-md", "max-w-lg", "max-w-xl", "max-w-2xl", "max-w-3xl", "max-w-4xl" */
   maxWidth?: string;
   /** Whether clicking the backdrop closes the modal. Defaults to true */
   closeOnBackdrop?: boolean;
@@ -47,6 +47,26 @@ const cardVariants = {
     y: 14,
     transition: { duration: 0.16 },
   },
+};
+
+const MAX_WIDTH_MAP: Record<string, string> = {
+  "max-w-xs": "min(320px, calc(100vw - 32px))",
+  "max-w-sm": "min(384px, calc(100vw - 32px))",
+  "max-w-md": "min(448px, calc(100vw - 32px))",
+  "max-w-lg": "min(512px, calc(100vw - 32px))",
+  "max-w-xl": "min(576px, calc(100vw - 32px))",
+  "max-w-2xl": "min(672px, calc(100vw - 32px))",
+  "max-w-3xl": "min(720px, calc(100vw - 32px))",
+  "max-w-4xl": "min(840px, calc(100vw - 32px))",
+  "max-w-5xl": "min(960px, calc(100vw - 32px))",
+  compact: "min(720px, calc(100vw - 32px))",
+  xs: "min(320px, calc(100vw - 32px))",
+  sm: "min(384px, calc(100vw - 32px))",
+  md: "min(448px, calc(100vw - 32px))",
+  lg: "min(512px, calc(100vw - 32px))",
+  xl: "min(576px, calc(100vw - 32px))",
+  "2xl": "min(672px, calc(100vw - 32px))",
+  "3xl": "min(720px, calc(100vw - 32px))",
 };
 
 export function Modal({
@@ -91,6 +111,8 @@ export function Modal({
     }
   };
 
+  const resolvedWidth = MAX_WIDTH_MAP[maxWidth] || MAX_WIDTH_MAP["max-w-2xl"];
+
   return (
     <OverlayPortal>
       <AnimatePresence>
@@ -112,8 +134,11 @@ export function Modal({
           >
             {/* Inner modal content card */}
             <motion.div
-              className={`w-full max-w-[calc(100vw-32px)] sm:${maxWidth} max-h-[calc(100vh-32px)] sm:max-h-[calc(100vh-48px)] flex flex-col rounded-2xl overflow-y-auto overflow-x-hidden ${className}`.trim()}
+              className={`w-full flex flex-col rounded-2xl overflow-y-auto overflow-x-hidden ${className}`.trim()}
               style={{
+                width: resolvedWidth,
+                maxWidth: resolvedWidth,
+                maxHeight: "min(85vh, 760px)",
                 background: isCyber
                   ? "rgba(5, 8, 22, 0.97)"
                   : "#FFFBF5",

@@ -575,6 +575,7 @@ export interface HallOfFameEntry {
   gameCharacterId?: string;
   gameCharacterName?: string;
 
+  socialLinks?: { platform: string; url: string }[];
   details?: Record<string, any>;
 }
 

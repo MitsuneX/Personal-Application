@@ -709,6 +709,31 @@ export function CharacterDictProfileModal({
                         )}
                       </div>
                     </InformationSection>
+
+                    {/* LINKS & SOCIAL PROFILES Section */}
+                    {((entry.socialLinks && entry.socialLinks.length > 0) || (details.socialLinks && details.socialLinks.length > 0)) && (
+                      <InformationSection title="LINKS & SOCIAL PROFILES" isCyber={isCyber} hasData={true}>
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {(entry.socialLinks || details.socialLinks || []).map((link: { platform: string; url: string }, idx: number) => (
+                            <a
+                              key={idx}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold flex items-center gap-2 transition-all hover:scale-105 ${
+                                isCyber
+                                  ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 shadow-[0_0_10px_rgba(0,245,255,0.15)]"
+                                  : "bg-amber-100 border-black text-gray-900 shadow-[2px_2px_0_#000]"
+                              }`}
+                            >
+                              <span>🔗</span>
+                              <span>{link.platform || "Link"}</span>
+                              <span className="text-[10px] opacity-60">↗</span>
+                            </a>
+                          ))}
+                        </div>
+                      </InformationSection>
+                    )}
                   </div>
                 </div>
               )}
