@@ -127,7 +127,9 @@ export const getTypeLabel = (entry: HallOfFameEntry) => {
   }
   if (entry.type === "actor") return "🎭 Actor";
   if (entry.type === "actress") return "💫 Actress";
+  if (entry.type === "singer") return "🎤 Singer";
   if (entry.type === "anime") return "⛩️ Anime";
+  if (entry.type === "tokusatsu") return "🦸 Tokusatsu";
   return "👤 Entity";
 };
 
@@ -173,11 +175,10 @@ export function HofEntryCard({
 }: CardProps) {
   const [imgError, setImgError] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
-  const { likeHof, dramas = [], dramaLog = [], animeList = [] } = useDashboardStore();
+  const { likeHof } = useDashboardStore();
   const { openContextMenu } = useContextMenu();
   const router = useRouter();
 
-  // Clean Double tap and Click handlers
   const lastTapRef = useRef<number>(0);
 
   const handleDoubleClick = (e: React.MouseEvent) => {
@@ -193,13 +194,11 @@ export function HofEntryCard({
       e.preventDefault();
       if (onDoubleTap) onDoubleTap(e, entry.id);
       likeHof(entry.id);
-      lastTapRef.current = 0; // Reset
+      lastTapRef.current = 0;
     } else {
       lastTapRef.current = now;
     }
   };
-
-  const badges = getBadgesForEntry(entry, podiumRank !== null ? podiumRank - 1 : idx);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -208,15 +207,15 @@ export function HofEntryCard({
       [
         {
           id: "profile",
-          label: `Open ${entry.name} Profile`,
-          icon: "👑",
+          label: `Open ${entry.name} Dossier`,
+          icon: "📖",
           onClick: () => {
             if (onOpenProfile) onOpenProfile(entry);
           },
         },
         {
           id: "compare",
-          label: "Compare Legend",
+          label: "Compare Entry",
           icon: "⚔️",
           onClick: () => {
             if (onCompare) onCompare(entry);
@@ -235,14 +234,8 @@ export function HofEntryCard({
           onClick: () => onEdit(entry),
         },
         {
-          id: "chars",
-          label: "Open Character Directory",
-          icon: "📚",
-          onClick: () => router.push(`/characters?id=${entry.id}`),
-        },
-        {
           id: "delete",
-          label: "Remove from Hall of Fame",
+          label: "Remove Entry",
           icon: "🗑️",
           danger: true,
           divider: true,
@@ -260,18 +253,9 @@ export function HofEntryCard({
     .join("")
     .toUpperCase();
 
-  const hasImage = !!entry.imageUrl && !imgError;
+  const cardImg = entry.imageUrl || entry.portraitUrl;
+  const hasImage = !!cardImg && !imgError;
 
-  // Normal stylings
-  let borderStyle = isCyber ? `1px solid ${group.accentBorder}` : `2.5px solid ${group.brutalBorder}`;
-  let shadowStyle = isCyber ? `0 0 20px ${group.accentBg}, 0 4px 20px rgba(0,0,0,0.4)` : `4px 4px 0px 0px #000`;
-  let bgStyle = isCyber ? "linear-gradient(160deg, rgba(10,15,44,0.98), rgba(10,15,44,0.9))" : "#FFFFFF";
-
-  // Dynamic badge highlights for name (border outline)
-  let nameBorderStyle = "transparent";
-  if (podiumRank === 1) nameBorderStyle = "#EAB308";
-  else if (podiumRank === 2) nameBorderStyle = "#94A3B8";
-  else if (podiumRank === 3) nameBorderStyle = "#B45309";
   const cyberStyle = STATUS_STYLE[entry.status] || STATUS_STYLE["GOAT Status"];
   const brutalStyle = BRUTAL_STATUS_STYLE[entry.status] || BRUTAL_STATUS_STYLE["GOAT Status"];
 
@@ -280,9 +264,10 @@ export function HofEntryCard({
       variants={cardVariants}
       initial="hidden"
       animate="visible"
+      whileHover="hover"
       custom={idx}
       id={`entry-${entry.id}`}
-      className="group relative cursor-pointer cursor-context-menu select-none w-full max-w-[280px]"
+      className="group relative cursor-pointer select-none overflow-hidden rounded-2xl w-full max-w-[280px]"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => {
@@ -295,333 +280,181 @@ export function HofEntryCard({
       onDoubleClick={handleDoubleClick}
       onTouchEnd={handleTouchEnd}
       onContextMenu={handleContextMenu}
+      style={{
+        aspectRatio: "3/4",
+        border: podiumRank === 1
+          ? (isCyber ? `2px solid #FFD700` : `3.5px solid #000000`)
+          : (isCyber ? `1.5px solid ${group.accentBorder || "rgba(0,245,255,0.2)"}` : `3px solid #000000`),
+        boxShadow: podiumRank === 1
+          ? (isCyber ? `0 0 25px rgba(255,215,0,0.35)` : "6px 6px 0 #000000")
+          : (isCyber ? `0 4px 24px rgba(0,0,0,0.6), 0 0 15px ${group.accentBg}` : "5px 5px 0 #000000"),
+        backgroundColor: isCyber ? "#090d1c" : "#1A1A1A",
+      }}
     >
-      <div
-        className="rounded-2xl overflow-hidden h-full flex flex-col relative transition-all"
-        style={{
-          background: bgStyle,
-          border: borderStyle,
-          boxShadow: shadowStyle,
-        }}
+      {/* ── Layer 0: Full Card Background Artwork ── */}
+      <motion.div
+        className="absolute inset-0 z-0"
+        variants={{ hover: { scale: 1.07 } }}
+        transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
       >
-        {/* ── Photo / Avatar Section ── */}
-        <div
-          className="relative w-full overflow-hidden flex items-center justify-center"
-          style={{
-            height: "230px",
-            background: hasImage
-              ? "transparent"
-              : isCyber
-                ? `linear-gradient(135deg, rgba(10,15,44,0.9), ${group.accentBg})`
-                : group.brutalBg ?? "#F5F5F5",
-          }}
-        >
-          {hasImage ? (
-            <Image
-              src={entry.imageUrl!}
-              alt={entry.name}
-              fill
-              priority={idx < 4}
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 250px"
-              className="object-cover object-[center_30%]"
-              onError={() => setImgError(true)}
-            />
-          ) : (
-            <div className="flex flex-col items-center gap-2">
-              <span
-                className="text-5xl font-black"
-                style={{ color: isCyber ? group.accentColor : group.brutalBorder }}
-              >
-                {initials}
-              </span>
-              <span className="text-xs font-semibold opacity-40">No Photo</span>
-            </div>
-          )}
-
-          {/* Gradient overlay at bottom of photo */}
+        {hasImage ? (
+          <Image
+            src={cardImg!}
+            alt={entry.name}
+            fill
+            priority={idx < 4}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 280px"
+            className="object-cover object-[center_25%]"
+            onError={() => setImgError(true)}
+          />
+        ) : (
           <div
-            className="absolute inset-x-0 bottom-0 h-10"
+            className="w-full h-full flex flex-col items-center justify-center"
             style={{
               background: isCyber
-                ? "linear-gradient(to top, rgba(10,15,44,0.98), transparent)"
-                : "linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0))",
+                ? `radial-gradient(ellipse at 50% 40%, ${group.accentColor}30 0%, transparent 70%), linear-gradient(to bottom, #090d1c 0%, #0d132a 100%)`
+                : `radial-gradient(ellipse at 50% 40%, ${group.accentColor}40 0%, transparent 70%), linear-gradient(to bottom, #1f2937 0%, #111827 100%)`,
             }}
-          />
+          >
+            <span className="text-6xl font-black opacity-30 select-none" style={{ color: group.accentColor }}>
+              {initials}
+            </span>
+          </div>
+        )}
+      </motion.div>
 
-          {/* Status pill overlay (bottom left of photo) */}
-          <div className="absolute bottom-2 left-3">
+      {/* ── Layer 1: Layered Transparent-to-Dark Gradient ── */}
+      <motion.div
+        className="absolute inset-0 z-10 pointer-events-none"
+        style={{
+          background: isCyber
+            ? "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.1) 25%, rgba(0,0,0,0.65) 60%, rgba(0,0,0,0.95) 100%)"
+            : "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.15) 25%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.96) 100%)",
+        }}
+      />
+
+      {/* ── Layer 2: Top Bar Controls (Status / Rank + Interactive Heart Button) ── */}
+      <div className="absolute top-3 left-3 right-3 z-20 flex items-center justify-between pointer-events-auto">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {podiumRank ? (
             <span
-              className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full"
+              className="px-2.5 py-0.5 rounded-full text-[10px] font-black font-mono shadow-md border"
               style={{
-                backgroundColor: isCyber ? `${cyberStyle.bg}` : "rgba(255,255,255,0.9)",
+                backgroundColor: isCyber ? "rgba(255,215,0,0.2)" : "#FEF08A",
+                color: isCyber ? "#FFD700" : "#854D0E",
+                borderColor: isCyber ? "#FFD700" : "#000",
+                borderWidth: isCyber ? "1px" : "2px",
+                backdropFilter: "blur(8px)",
+              }}
+            >
+              👑 #{podiumRank}
+            </span>
+          ) : (
+            <span
+              className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full backdrop-blur-md border shadow-sm"
+              style={{
+                backgroundColor: isCyber ? `${cyberStyle.bg}` : "rgba(255,255,255,0.95)",
                 color: isCyber ? cyberStyle.color : brutalStyle.color,
-                border: isCyber ? `1px solid ${cyberStyle.color}40` : `1px solid ${brutalStyle.border}`,
-                backdropFilter: "blur(4px)",
+                border: isCyber ? `1px solid ${cyberStyle.color}50` : `1.5px solid ${brutalStyle.border}`,
               }}
             >
               {entry.status}
             </span>
-          </div>
+          )}
         </div>
 
-        {/* ── Info Section ── */}
-        <div className="p-4 flex flex-col gap-2 flex-1">
-          {/* Type badge */}
-          {showType && (
+        {/* Interactive Heart Button */}
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={(e) => {
+            e.stopPropagation();
+            likeHof(entry.id);
+          }}
+          className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-black flex items-center gap-1 transition-all cursor-pointer shadow-md ${
+            isCyber
+              ? "bg-black/60 text-pink-400 border border-pink-500/40 backdrop-blur-md hover:bg-pink-500/30"
+              : "bg-amber-200 text-black border-2 border-black shadow-[2px_2px_0_#000] hover:bg-amber-300"
+          }`}
+        >
+          <span>❤️</span>
+          <span>{entry.likes || 0}</span>
+        </motion.button>
+      </div>
+
+      {/* ── Layer 3: Bottom Content Overlay ── */}
+      <div className="absolute bottom-0 left-0 right-0 z-30 p-3.5 flex flex-col gap-1.5 pointer-events-none">
+        {/* Type / Profession Badge */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span
+            className={`text-[9px] font-mono font-black uppercase tracking-wider px-2 py-0.5 rounded-full border backdrop-blur-md ${
+              isCyber
+                ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
+                : "bg-white/95 text-black border-1.5 border-black shadow-[1.5px_1.5px_0_#000]"
+            }`}
+          >
+            {getTypeLabel(entry)}
+          </span>
+
+          {entry.nationality && (
             <span
-              className="self-start text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full"
-              style={{
-                backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.06)",
-                color: isCyber ? "#94A3B8" : "#555",
-              }}
+              className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full border opacity-90 backdrop-blur-sm ${
+                isCyber
+                  ? "bg-white/10 text-white/90 border-white/20"
+                  : "bg-black/50 text-white border-white/30"
+              }`}
             >
-              {getTypeLabel(entry)}
+              {entry.nationality}
             </span>
           )}
+        </div>
 
-          {/* Name with Dynamic Micro-border Highlight */}
-          <div className="flex items-center">
-            <h3 
-              className="font-black text-sm leading-tight theme-text-primary px-1.5 py-0.5 rounded"
-              style={{ border: `1px solid ${nameBorderStyle}` }}
-            >
-              {entry.name}
-            </h3>
-          </div>
+        {/* Character / Artist Name */}
+        <h3
+          className="font-black text-sm sm:text-base leading-tight tracking-wide text-white drop-shadow-md truncate"
+          style={{
+            fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
+          }}
+        >
+          {entry.name}
+        </h3>
 
-          {/* Likes score inline */}
-          <div className="text-[10px] theme-text-secondary flex items-center gap-1 font-mono">
-            <span>❤️</span>
-            <span className="font-bold">{entry.likes || 0} Likes</span>
-          </div>
+        {/* Quote or Enshrinement Note */}
+        {entry.note && (
+          <p className="text-[10px] text-white/85 italic leading-snug line-clamp-1 drop-shadow">
+            &ldquo;{entry.note}&rdquo;
+          </p>
+        )}
 
-          {/* Note */}
-          {entry.note && (
-            <p className="text-[10px] theme-text-muted italic leading-relaxed line-clamp-2">
-              &quot;{entry.note}&quot;
-            </p>
-          )}
-
-          {/* Tokusatsu Show Tag */}
-          {entry.tokusatsuShow && (
-            <p className="text-[10px] font-bold text-[#00F5FF] flex items-center gap-1">
-              <span>🎭 Show:</span>
-              <span className="opacity-90">{entry.tokusatsuShow}</span>
-            </p>
-          )}
-
-          {/* Associated J-Dramas */}
-          {entry.associatedDramas && entry.associatedDramas.length > 0 && (
-            <div className="flex flex-col gap-1 mt-1">
-              <span className="text-[9px] font-black uppercase tracking-wider theme-text-muted">Associated J-Dramas</span>
-              <div className="flex flex-wrap gap-1">
-                {entry.associatedDramas.map((drama) => {
-                  const matchedDrama = dramas.find(d => d.title.toLowerCase() === drama.toLowerCase()) ||
-                                       dramaLog.find(d => d.title.toLowerCase() === drama.toLowerCase());
-                  const matchedAnime = animeList.find(a => a.title.toLowerCase() === drama.toLowerCase());
-                  
-                  if (matchedDrama) {
-                    return (
-                      <button
-                        key={drama}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/drama/${matchedDrama.country}?id=${matchedDrama.id}`);
-                        }}
-                        className="text-[9px] font-bold px-1.5 py-0.5 rounded border cursor-pointer hover:underline flex items-center gap-0.5"
-                        style={{
-                          backgroundColor: isCyber ? "rgba(0,245,255,0.08)" : "#E8F7F7",
-                          borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#2EC4B6",
-                          color: isCyber ? "#00F5FF" : "#0d6e65",
-                        }}
-                      >
-                        🎬 {drama}
-                      </button>
-                    );
-                  }
-                  
-                  if (matchedAnime) {
-                    return (
-                      <button
-                        key={drama}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/anime?id=${matchedAnime.id}`);
-                        }}
-                        className="text-[9px] font-bold px-1.5 py-0.5 rounded border cursor-pointer hover:underline flex items-center gap-0.5"
-                        style={{
-                          backgroundColor: isCyber ? "rgba(191,95,255,0.08)" : "#FFF5EE",
-                          borderColor: isCyber ? "rgba(191,95,255,0.25)" : "#FF6B35",
-                          color: isCyber ? "#BF5FFF" : "#b24013",
-                        }}
-                      >
-                        ⛩️ {drama}
-                      </button>
-                    );
-                  }
-
-                  return (
-                    <span
-                      key={drama}
-                      className="text-[9px] font-bold px-1.5 py-0.5 rounded border opacity-75"
-                      style={{
-                        backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#F5F5F5",
-                        borderColor: isCyber ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)",
-                        color: isCyber ? "#94A3B8" : "#666",
-                      }}
-                    >
-                      📺 {drama}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Known For tags */}
-          <div className="flex flex-wrap gap-1.5 mt-auto pt-1">
-            {entry.knownFor.slice(0, 3).map((work) => (
+        {/* Famous Works / KnownFor Tags */}
+        {entry.knownFor && entry.knownFor.length > 0 && (
+          <div className="flex flex-wrap gap-1 pt-0.5">
+            {entry.knownFor.slice(0, 2).map((work) => (
               <span
                 key={work}
-                className="text-[9px] font-semibold px-2 py-0.5 rounded-md border"
-                style={{
-                  backgroundColor: isCyber ? "rgba(255,255,255,0.03)" : "#F8F8F8",
-                  borderColor: isCyber ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)",
-                  color: isCyber ? "#94A3B8" : "#555",
-                }}
+                className={`text-[8px] font-mono font-semibold px-1.5 py-0.5 rounded border truncate max-w-[120px] backdrop-blur-sm ${
+                  isCyber
+                    ? "bg-white/10 text-cyan-200 border-white/15"
+                    : "bg-white/20 text-white border-white/30"
+                }`}
               >
                 {work}
               </span>
             ))}
           </div>
-        </div>
-
-        {/* ── Hover Action Buttons ── */}
-        <div
-          className="absolute top-2 left-2 flex gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-200 z-40"
-        >
-          <button
-            onClick={(e) => { e.stopPropagation(); onEdit(entry); }}
-            className="px-2 py-1 text-[10px] font-black rounded-lg backdrop-blur-sm transition-colors"
-            style={{
-              backgroundColor: isCyber ? "rgba(0,245,255,0.2)" : "rgba(255,255,255,0.9)",
-              color: isCyber ? "#00F5FF" : "#333",
-              border: isCyber ? "1px solid rgba(0,245,255,0.4)" : "1.5px solid #000",
-            }}
-          >
-            ✏️ Edit
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete(entry.id, entry.name); }}
-            className="px-2 py-1 text-[10px] font-black rounded-lg backdrop-blur-sm transition-colors"
-            style={{
-              backgroundColor: "rgba(239,68,68,0.2)",
-              color: "#EF4444",
-              border: "1px solid rgba(239,68,68,0.4)",
-            }}
-          >
-            🗑️
-          </button>
-        </div>
+        )}
       </div>
 
-      {/* ── Framer Motion Hover details micro-card ── */}
-      <AnimatePresence>
-        {hovered && (
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 15 }}
-            transition={{ type: "spring", stiffness: 350, damping: 25 }}
-            className="absolute inset-0 z-30 p-4 flex flex-col justify-between backdrop-blur-md rounded-2xl border cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (onOpenProfile) {
-                onOpenProfile(entry);
-              } else {
-                router.push(`/hall-of-fame?id=${entry.id}`);
-              }
-            }}
-            style={{
-              backgroundColor: isCyber ? "rgba(10, 15, 30, 0.96)" : "rgba(255, 255, 255, 0.98)",
-              borderColor: isCyber ? "#00F5FF" : "#000",
-              borderWidth: isCyber ? "1.5px" : "2.5px",
-              boxShadow: isCyber ? "0 0 25px rgba(0, 245, 255, 0.3)" : "none",
-            }}
-          >
-            {/* Hover details content */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-start">
-                <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full"
-                  style={{
-                    backgroundColor: isCyber ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
-                    color: isCyber ? "#94A3B8" : "#555",
-                  }}
-                >
-                  {entry.nationality || "Unknown"}
-                </span>
-                <span className="text-[10px] font-black text-amber-500 font-mono">
-                  {podiumRank ? `👑 Podium Rank #${podiumRank}` : "Legend"}
-                </span>
-              </div>
-
-              <div>
-                <h4 className="font-black text-sm theme-text-primary leading-tight px-1 py-0.5 rounded border border-transparent hover:border-adaptive-unique inline-block">{entry.name}</h4>
-                <p className="text-[8px] theme-text-muted mt-0.5 uppercase tracking-widest font-mono">
-                  {getTypeLabel(entry)}
-                </p>
-              </div>
-
-              {entry.note && (
-                <p className="text-[10px] theme-text-secondary leading-relaxed italic max-h-[50px] overflow-y-auto pr-1">
-                  &quot;{entry.note}&quot;
-                </p>
-              )}
-
-              {entry.knownFor && entry.knownFor.length > 0 && (
-                <div>
-                  <p className="text-[8px] font-black uppercase tracking-wider theme-text-muted mb-1">Famous Works</p>
-                  <div className="flex flex-wrap gap-1">
-                    {entry.knownFor.map((w) => (
-                      <span key={w} className="text-[8px] px-1.5 py-0.5 rounded border border-adaptive-unique bg-black/5 dark:bg-white/5 theme-text-primary">
-                        {w}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Like Counter & Endless Spammer Button */}
-            <div className="pt-2 border-t border-adaptive-unique flex items-center justify-between gap-2">
-              <div className="flex flex-col">
-                <span className="text-[8px] font-black uppercase tracking-wider theme-text-muted">Total Score</span>
-                <span className="text-xs font-black theme-text-primary font-mono">{entry.likes || 0} Likes</span>
-              </div>
-              <motion.button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  if (onDoubleTap) onDoubleTap(e, entry.id);
-                  likeHof(entry.id);
-                }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 1.35 }}
-                transition={{ type: "spring", stiffness: 500, damping: 8 }}
-                className="px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all select-none border-adaptive-unique"
-                style={{
-                  backgroundColor: isCyber ? "rgba(255,20,147,0.2)" : "#FF4444",
-                  color: isCyber ? "#FF1493" : "#FFF",
-                  boxShadow: isCyber ? "0 0 10px rgba(255,20,147,0.3)" : "2px 2px 0 #000",
-                }}
-              >
-                <span>❤️</span>
-                <span>LIKE</span>
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Edit Quick Action Hover Control (Top Left) */}
+      <div className="absolute top-2 left-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-40">
+        <button
+          onClick={(e) => { e.stopPropagation(); onEdit(entry); }}
+          className="px-2 py-0.5 text-[9px] font-black rounded-md bg-black/80 text-cyan-300 border border-cyan-500/40 backdrop-blur-md cursor-pointer hover:bg-black"
+        >
+          ✏️ Edit
+        </button>
+      </div>
     </motion.div>
   );
 }

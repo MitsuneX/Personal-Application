@@ -13,6 +13,93 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v11.2.3",
+    date: "2026-08-09",
+    title: "Read-Only Hall of Fame Profile Context Enforcement",
+    badge: "PATCH",
+    type: "patch",
+    summary: "Enforced context-aware read-only modal behavior for all profile views opened from Hall of Fame, hiding the Edit button while preserving editing functionality when opened from primary owner sections.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🔒 Read-Only Hall of Fame Context (HofProfileModal.tsx): Enforced onEdit={undefined} for profile modals launched from Hall of Fame context, eliminating the Edit button on Game Character, Character Dictionary, Drama, Anime, Movie, and Tokusatsu rank profile views.",
+          "✏️ Owner Section Editing Integrity: Preserved full edit capability in native owner sections (/game-characters and /characters) by conditionally rendering the Edit button only when onEdit callback is provided.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v11.2.2",
+    date: "2026-08-09",
+    title: "Hall of Fame Category-Specific Modal Routing Fix",
+    badge: "PATCH",
+    type: "patch",
+    summary: "Fixed Hall of Fame profile modal routing so clicking Game Character rank entries opens the existing Game Character profile modal (CharacterProfileModal.tsx), while clicking Character Dictionary, Drama, Anime, Movie, and Tokusatsu entries opens the Character Dictionary profile modal (CharacterDictProfileModal.tsx).",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🧭 Category-Specific Modal Routing (HofProfileModal.tsx): Dynamically resolves clicked entry type to route Game Characters to CharacterProfileModal while routing Character Dictionary, Drama, Anime, Movie, and Tokusatsu entries to CharacterDictProfileModal.",
+          "⚡ Game Character Reference Tracking: Attached explicit gameCharacterId and isGameCharacterEntry metadata onto gameHofEntries in app/hall-of-fame/page.tsx for 100% accurate modal resolution.",
+          "🧹 Category Switch State Hygiene: Automatically clears active profile modal state upon switching category filters, eliminating stale modal state transitions.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v11.2.1",
+    date: "2026-08-09",
+    title: "Immersive Full-Canvas Character Dictionary Roster Cards",
+    badge: "PATCH",
+    type: "patch",
+    summary: "Upgraded Character Dictionary roster cards to a full-canvas background artwork presentation with transparent-to-dark gradient overlays, matching GameCharacterCard's visual architecture while retaining Character Dictionary metadata.",
+    categories: [
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🖼️ Full-Canvas Background Artwork (HofEntryCard.tsx): Converted Character Dictionary roster cards from opaque split boxes to full 3:4 aspect ratio background artwork canvases with layered dark gradients.",
+          "✨ Layered Bottom Gradient Overlay: Integrated a smooth transparent-to-dark gradient overlay ensuring high-contrast readability for white typography and badges across both Cyberpunk and Neo-Brutalism themes.",
+          "❤️ Top Bar Interactive Like Button: Embedded a top-right interactive heart counter button (❤️ Likes) with hover scaling, preserving double-click/double-tap hearting behavior.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v11.2.0",
+    date: "2026-08-09",
+    title: "Character Dictionary Dossier Modal, Reusable Artist Dataset & Social Links Engine",
+    badge: "FEATURE",
+    type: "minor",
+    summary: "Introduced a cinematic Character Dictionary Information Pop-out Dossier modal, integrated an offline Artist Metadata Dataset (ArtistData.json) with auto-fill capabilities, built an external Links & Social profiles engine, re-architected the Gallery & Images editor tab, and introduced active tab auto-scrolling for compact editor dialogs.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "📖 Character Dictionary Dossier Modal (CharacterDictProfileModal.tsx): Created a dedicated encyclopedia pop-out modal for fictional characters featuring hero headers, identity metadata, lore tabs, appearances, personal image collection, and theme support.",
+          "⚡ Reusable Artist Metadata Dataset (ArtistData.json & artistDataHelper.ts): Integrated pre-configured artist dataset containing Japanese & international creator metadata, aliases, biographies, works, and social links with search and non-destructive form field auto-filling.",
+          "🔗 Links & Social Profiles Engine: Added external link profile support (socialLinks) across store models, Prisma details, dedicated editor form tab, and dossier view rendering with clickable platform badges.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🖼️ Re-Architected Gallery & Images Tab (HofEditorModal.tsx): Re-architected editor image controls using CharacterImageUploader and GalleryUploader primitives—featuring side-by-side Card Image and 3:4 Portrait columns, 3 portrait sync modes, and personal gallery collection management.",
+          "↔️ Tab Navigation Auto-Scrolling: Integrated horizontal auto-scrolling (scrollToTab) for the 7-tab editor navigation bar, smoothly bringing active tab buttons into view when selected.",
+          "📐 Compact Centered Editor Architecture: Standardized HofEditorModal as a centered, responsive ~720px editor dialog with fixed outer modal border rules in modal.tsx.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🗄️ Prisma Database Schema Synchronization: Resolved HallOfFame schema field mismatch (P2022) by restoring details, gallery, splashArt, portraitUrl, accentColor, and gameCharacterId fields in schema.prisma.",
+          "🧭 Character Dictionary Navigation Fix: Corrected card click navigation in HofEntryCard.tsx to open the dedicated Character Dictionary Dossier modal instead of redirecting to the Hall of Fame roster.",
+          "🧹 Duplicate UI Removal: Removed redundant embedded Artist Preset panels from the Gallery tab, centralizing all preset autofill operations into the dedicated Artist Preset / Auto-Fill tab.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v11.1.0",
     date: "2026-08-08",
     title: "Official Logo System, Mobile Intro Startup Flow & Workspace Loading Gate",

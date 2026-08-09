@@ -2,6 +2,53 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [11.2.3] - 2026-08-09
+
+### 🔒 Read-Only Hall of Fame Profile Context Enforcement
+
+**Context-Aware Read-Only Profile Modals**
+- **Read-Only Hall of Fame Context (`HofProfileModal.tsx`)**: Enforced `onEdit={undefined}` for profile views opened from Hall of Fame context. Hides the Edit button on Game Character, Character Dictionary, Drama, Anime, Movie, and Tokusatsu rank profile modals.
+- **Primary Owner Section Editing Integrity**: Maintained full edit capability in primary owner sections (`/game-characters` and `/characters`) by rendering the Edit button conditionally only when `onEdit` callback is provided.
+
+## [11.2.2] - 2026-08-09
+
+### 🧭 Hall of Fame Category-Specific Modal Routing Fix
+
+**Category-Specific Modal Routing Engine**
+- **Game Character Profile Modal Routing (`HofProfileModal.tsx`)**: Re-routed Game Character rank entries in Hall of Fame to open the existing `CharacterProfileModal.tsx` experience, matching the exact modal presentation when clicking from the Game Character section.
+- **Character Dictionary & Entertainment Categories Routing**: Character Dictionary, Drama, Anime, Movie, and Tokusatsu rank entries continue opening the `CharacterDictProfileModal.tsx` encyclopedia dossier.
+- **Reference Tracking (`app/hall-of-fame/page.tsx`)**: Attached explicit `gameCharacterId` and `isGameCharacterEntry` flags onto `gameHofEntries` to guarantee 100% reliable modal resolution without data structure ambiguity.
+- **Category Switch Hygiene**: Automatically clears active modal state (`setProfileModalEntry(null)`) when switching category filters to prevent stale modal transitions.
+
+## [11.2.1] - 2026-08-09
+
+### 🖼️ Immersive Full-Canvas Character Dictionary Roster Cards
+
+**Immersive Artwork Presentation & Overlay Architecture**
+- **Full-Canvas Background Artwork (`HofEntryCard.tsx`)**: Re-architected Character Dictionary roster cards from split opaque boxes into full `3:4` aspect-ratio background artwork cards matching `GameCharacterCard`'s visual presentation.
+- **Layered Bottom Gradient Overlay**: Applied a smooth transparent-to-dark gradient overlay (`rgba(0,0,0,0.05)` to `rgba(0,0,0,0.95)`), ensuring white character names, profession badges, and quote notes maintain strong contrast.
+- **Top Bar Control Rail**: Integrated top-left status tier / rank badges and top-right interactive heart counter buttons (`❤️ Likes`) with hover scaling.
+- **Dual-Theme Support**: Preserved Cyberpunk glowing cyan borders and Neo-Brutalism heavy 3px borders with drop shadow (`shadow-[5px_5px_0_#000]`).
+
+## [11.2.0] - 2026-08-09
+
+### 📖 Character Dictionary Dossier Modal, Reusable Artist Dataset & Social Links Engine
+
+**Character Dictionary Dossier Modal & Navigation**
+- **Character Information Pop-Out Dossier (`CharacterDictProfileModal.tsx`)**: Created a dedicated encyclopedia pop-out modal for fictional/entertainment characters featuring hero headers, identity metadata, lore tabs, appearances, personal image collection, and dual-theme (Cyberpunk & Neo-Brutalism) support.
+- **Card Click Navigation Fix (`HofEntryCard.tsx`)**: Corrected card click action in Character Dictionary section to launch the dedicated Character Dictionary Dossier modal instead of navigating to the Hall of Fame roster.
+
+**Reusable Artist Dataset & Social Links Engine**
+- **Offline Artist Dataset (`ArtistData.json` & `artistDataHelper.ts`)**: Integrated a pre-configured artist metadata dataset containing Japanese & international creator metadata, aliases, pronunciations, biographies, works, and social links with search and non-destructive form field auto-filling.
+- **Dedicated Auto-Fill Tab (`HofEditorModal.tsx`)**: Centralized preset autofill operations into a dedicated `⚡ Artist Preset / Auto-Fill` tab with header shortcut button navigation. Removed redundant duplicate preset search panels from the Gallery tab.
+- **Links & Social Profiles Engine**: Added external link profile support (`socialLinks`) across store models, Prisma `details` JSON payload, a dedicated editor form tab, and dossier view rendering with clickable platform badges (`target="_blank"`).
+
+**Editor Image Architecture & Responsive UX**
+- **Re-Architected Gallery & Images Tab**: Adapted `CharacterImageUploader` and `GalleryUploader` primitives for side-by-side Card Image (3:4 thumbnail) and Portrait (3:4 modal image) columns, 3 portrait sync modes, and personal gallery collection management.
+- **Active Tab Auto-Scrolling (`scrollToTab`)**: Added horizontal auto-scrolling for the 7-tab editor navigation bar, smoothly centering active tab buttons when clicked without moving the modal form body.
+- **Compact Centered Modal Sizing (`modal.tsx`)**: Standardized `HofEditorModal` as a centered, responsive ~720px editor dialog with fixed outer border sizing rules.
+- **Prisma Database Schema Restoration (`schema.prisma`)**: Fixed `HallOfFame` schema field mismatch (P2022) by restoring `details`, `gallery`, `splashArt`, `portraitUrl`, `accentColor`, and `gameCharacterId` columns.
+
 ## [11.1.0] - 2026-08-08
 
 ### 🛡️ Official Logo System, Mobile Intro Startup Flow & Workspace Loading Gate

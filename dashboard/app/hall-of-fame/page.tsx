@@ -118,6 +118,7 @@ export default function HallOfFamePage() {
   const gameHofEntries = useMemo(() => {
     return gameCharacters.map((gc) => ({
       id: `gc-${gc.id}`,
+      gameCharacterId: gc.id,
       name: gc.name,
       type: "none" as const,
       status: "Completed" as any,
@@ -133,6 +134,7 @@ export default function HallOfFamePage() {
       badges: gc.isFeatured ? ["⭐ FEATURED"] : [],
       gameName: gc.gameName,
       isFeatured: gc.isFeatured,
+      isGameCharacterEntry: true,
     }));
   }, [gameCharacters]);
 
@@ -390,7 +392,10 @@ export default function HallOfFamePage() {
         <HofFilterToolbar
           isCyber={isCyber}
           categoryFilter={categoryFilter}
-          setCategoryFilter={setCategoryFilter}
+          setCategoryFilter={(cat) => {
+            setProfileModalEntry(null);
+            setCategoryFilter(cat);
+          }}
           selectedGames={selectedGames}
           setSelectedGames={setSelectedGames}
           featuredOnly={featuredOnly}

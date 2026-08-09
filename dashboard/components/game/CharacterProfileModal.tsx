@@ -12,8 +12,8 @@ interface Props {
   isOpen: boolean;
   character: GameCharacterEntry | null;
   onClose: () => void;
-  onEdit: (character: GameCharacterEntry) => void;
-  onDelete: (character: GameCharacterEntry) => void;
+  onEdit?: (character: GameCharacterEntry) => void;
+  onDelete?: (character: GameCharacterEntry) => void;
 }
 
 const TABS = [
@@ -476,7 +476,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
               <div className={`text-center py-20 font-mono text-sm space-y-3 ${isCyber ? "text-white/30" : "text-gray-400"}`}>
                 <div className="text-4xl opacity-50">🖼️</div>
                 <p>No images uploaded yet.</p>
-                <button onClick={() => onEdit(character)} className="text-xs underline opacity-70 hover:opacity-100 cursor-pointer">
+                <button onClick={() => onEdit?.(character)} className="text-xs underline opacity-70 hover:opacity-100 cursor-pointer">
                   Upload images in Editor →
                 </button>
               </div>
@@ -748,22 +748,24 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
               >
                 {/* ── Floating Controls Top-Right ──────────────────────────── */}
                 <div className="absolute top-4 right-4 flex items-center gap-2 z-30">
-                  <motion.button
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => onEdit(character)}
-                    className="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-lg cursor-pointer"
-                    style={{
-                      backgroundColor: isCyber ? `${accent}30` : "#FFE600",
-                      borderColor: isCyber ? `${accent}70` : "#000000",
-                      borderWidth: isCyber ? "1.5px" : "2px",
-                      color: isCyber ? "#FFF" : "#000",
-                      boxShadow: isCyber ? `0 0 16px ${accent}40` : "3px 3px 0 #000",
-                      backdropFilter: "blur(12px)",
-                    }}
-                  >
-                    ✏️ Edit
-                  </motion.button>
+                  {onEdit && (
+                    <motion.button
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => onEdit?.(character)}
+                      className="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-lg cursor-pointer"
+                      style={{
+                        backgroundColor: isCyber ? `${accent}30` : "#FFE600",
+                        borderColor: isCyber ? `${accent}70` : "#000000",
+                        borderWidth: isCyber ? "1.5px" : "2px",
+                        color: isCyber ? "#FFF" : "#000",
+                        boxShadow: isCyber ? `0 0 16px ${accent}40` : "3px 3px 0 #000",
+                        backdropFilter: "blur(12px)",
+                      }}
+                    >
+                      ✏️ Edit
+                    </motion.button>
+                  )}
                   <button
                     onClick={onClose}
                     className="w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all cursor-pointer font-bold"
@@ -1122,7 +1124,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                     {character.rank && character.rank > 0 ? `Ranked #${character.rank} in personal roster` : "Character Encyclopedia"}
                   </span>
                   <button
-                    onClick={() => { if (confirm(`Remove ${character.name} from your roster?`)) { onDelete(character); onClose(); } }}
+                    onClick={() => { if (confirm(`Remove ${character.name} from your roster?`)) { onDelete?.(character); onClose(); } }}
                     className={`text-xs font-mono font-bold transition-colors flex items-center gap-1 cursor-pointer ${
                       isCyber ? "text-red-400/70 hover:text-red-400" : "text-red-600 hover:text-red-700"
                     }`}
