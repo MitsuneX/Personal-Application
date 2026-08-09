@@ -260,6 +260,12 @@ model HallOfFame {
   tokusatsuFranchise String?
   tokusatsuShow      String?
   associatedDramas   String[]
+  details            Json?
+  gallery            String[] @default([])
+  splashArt          String?
+  portraitUrl        String?
+  accentColor        String?
+  gameCharacterId    String?
   createdAt          DateTime @default(now())
 
   @@index([userId])

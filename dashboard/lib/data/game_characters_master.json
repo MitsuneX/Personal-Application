@@ -568,12 +568,7 @@
             "en": null
           }
         },
-        "tags": [
-          "Wuthering Waves",
-          "Hsin",
-          "5-Star",
-          "Upcoming"
-        ]
+        "tags": ["Wuthering Waves", "Hsin", "5-Star", "Upcoming"]
       },
       {
         "name": "Suisui",
@@ -3135,9 +3130,9 @@
         "title": "Sapphire Protector of the Future",
         "role": "Melee",
         "category": "Fusion Warrior",
-        "element": "Blue",
+        "element": "Red",
         "weapon": "None (Martial Arts)",
-        "rarity": "LEGENDS LIMITED",
+        "rarity": "Ultra",
         "nation": "Universe 7",
         "birthday": null,
         "accentColor": "#4EA3FF",
@@ -3147,7 +3142,7 @@
           "species": "Saiyan",
           "affiliation": "Future Trunks Saga",
           "damageType": "Strike",
-          "releaseDate": "May 2020",
+          "releaseDate": "May 2023",
           "voiceActors": {
             "jp": null,
             "en": null
@@ -3165,7 +3160,7 @@
         ]
       },
       {
-        "name": "Super Saiyan God SS Gogeta",
+        "name": "Super Saiyan God SS Gogeta PUR",
         "title": "Ultimate Warrior",
         "role": "Melee",
         "category": "Fusion Warrior",
@@ -3233,7 +3228,7 @@
         ]
       },
       {
-        "name": "Super Saiyan God SS Gogeta",
+        "name": "Super Saiyan God SS Gogeta RED",
         "title": "Angel-Born Warrior",
         "role": "Melee",
         "category": "Fusion Warrior",
@@ -3301,7 +3296,7 @@
         ]
       },
       {
-        "name": "Goku & Vegeta → Super Saiyan God SS Gogeta",
+        "name": "Blue Goku & Vegeta → Super Saiyan God SS Gogeta",
         "title": "Fateful Fusion",
         "role": "Melee / Tag",
         "category": "Fusion Warrior",
@@ -3434,12 +3429,7 @@
             "en": "Brianna Knickerbocker"
           }
         },
-        "tags": [
-          "PGR",
-          "Physical",
-          "Support",
-          "Omniframe"
-        ]
+        "tags": ["PGR", "Physical", "Support", "Omniframe"]
       },
       {
         "name": "Liv: Luminance",
@@ -3462,12 +3452,7 @@
             "en": "Brianna Knickerbocker"
           }
         },
-        "tags": [
-          "PGR",
-          "Physical",
-          "Support",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Physical", "Support", "S-Rank"]
       },
       {
         "name": "Liv: Empyrea",
@@ -3491,12 +3476,7 @@
             "en": "Brianna Knickerbocker"
           }
         },
-        "tags": [
-          "PGR",
-          "Fire",
-          "Amplifier",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Fire", "Amplifier", "S-Rank"]
       },
       {
         "name": "Selena: Tempest",
@@ -3519,12 +3499,7 @@
             "en": "Erica Lindbeck"
           }
         },
-        "tags": [
-          "PGR",
-          "Lightning",
-          "Uniframe",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Lightning", "Uniframe", "S-Rank"]
       },
       {
         "name": "Selena: Capriccio",
@@ -3547,12 +3522,7 @@
             "en": "Erica Lindbeck"
           }
         },
-        "tags": [
-          "PGR",
-          "Dark",
-          "Amplifier",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Dark", "Amplifier", "S-Rank"]
       },
       {
         "name": "Qu: Shukra",
@@ -3576,12 +3546,7 @@
             "en": "Allegra Clark"
           }
         },
-        "tags": [
-          "PGR",
-          "Ice",
-          "Attacker",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Ice", "Attacker", "S-Rank"]
       },
       {
         "name": "Hanying: Solacetune",
@@ -3605,12 +3570,7 @@
             "en": "Suzie Yeung"
           }
         },
-        "tags": [
-          "PGR",
-          "Physical",
-          "Amplifier",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Physical", "Amplifier", "S-Rank"]
       },
       {
         "name": "Selena: Pianissimo",
@@ -3633,12 +3593,7 @@
             "en": "Erica Lindbeck"
           }
         },
-        "tags": [
-          "PGR",
-          "Ice",
-          "Amplifier",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Ice", "Amplifier", "S-Rank"]
       },
       {
         "name": "Jetavie: Daybreak",
@@ -3661,12 +3616,7 @@
             "en": "Kira Buckland"
           }
         },
-        "tags": [
-          "PGR",
-          "Fire",
-          "Attacker",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Fire", "Attacker", "S-Rank"]
       },
       {
         "name": "Bianca: Crepuscule",
@@ -3690,12 +3640,7 @@
             "en": "Laura Post"
           }
         },
-        "tags": [
-          "PGR",
-          "Dark",
-          "Attacker",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Dark", "Attacker", "S-Rank"]
       },
       {
         "name": "Liv: Limpidity",
@@ -3718,12 +3663,7 @@
             "en": "Brianna Knickerbocker"
           }
         },
-        "tags": [
-          "PGR",
-          "Ice",
-          "Amplifier",
-          "S-Rank"
-        ]
+        "tags": ["PGR", "Ice", "Amplifier", "S-Rank"]
       }
     ]
   },
@@ -3751,12 +3691,7 @@
             "en": "Xanthe Huynh"
           }
         },
-        "tags": [
-          "Stella Sora",
-          "Light",
-          "Katana",
-          "5-Star"
-        ]
+        "tags": ["Stella Sora", "Light", "Katana", "5-Star"]
       },
       {
         "name": "Wraith",
@@ -3779,11 +3714,7 @@
             "en": "Laura Post"
           }
         },
-        "tags": [
-          "Stella Sora",
-          "Dark",
-          "5-Star"
-        ]
+        "tags": ["Stella Sora", "Dark", "5-Star"]
       },
       {
         "name": "Gerie",
@@ -3806,11 +3737,7 @@
             "en": "Risa Mei"
           }
         },
-        "tags": [
-          "Stella Sora",
-          "Electric",
-          "4-Star"
-        ]
+        "tags": ["Stella Sora", "Electric", "4-Star"]
       },
       {
         "name": "Suntide Willow",
@@ -3833,12 +3760,7 @@
             "en": "Kira Buckland"
           }
         },
-        "tags": [
-          "Stella Sora",
-          "Nature",
-          "Healer",
-          "5-Star"
-        ]
+        "tags": ["Stella Sora", "Nature", "Healer", "5-Star"]
       },
       {
         "name": "Otoha",
@@ -3861,11 +3783,7 @@
             "en": "Lily Evans"
           }
         },
-        "tags": [
-          "Stella Sora",
-          "Sonic",
-          "4-Star"
-        ]
+        "tags": ["Stella Sora", "Sonic", "4-Star"]
       }
     ]
   },
@@ -3893,11 +3811,7 @@
             "en": "Suzie Yeung"
           }
         },
-        "tags": [
-          "Outerplane",
-          "Wind",
-          "3-Star"
-        ]
+        "tags": ["Outerplane", "Wind", "3-Star"]
       },
       {
         "name": "Astei Demiurge",
@@ -3920,12 +3834,7 @@
             "en": "Kira Buckland"
           }
         },
-        "tags": [
-          "Outerplane",
-          "Light",
-          "Demiurge",
-          "3-Star"
-        ]
+        "tags": ["Outerplane", "Light", "Demiurge", "3-Star"]
       },
       {
         "name": "Caren",
@@ -3948,12 +3857,7 @@
             "en": "Laura Post"
           }
         },
-        "tags": [
-          "Outerplane",
-          "Water",
-          "Defender",
-          "3-Star"
-        ]
+        "tags": ["Outerplane", "Water", "Defender", "3-Star"]
       },
       {
         "name": "Delta Heatwave Cop",
@@ -3976,12 +3880,7 @@
             "en": "Faye Mata"
           }
         },
-        "tags": [
-          "Outerplane",
-          "Fire",
-          "Striker",
-          "3-Star"
-        ]
+        "tags": ["Outerplane", "Fire", "Striker", "3-Star"]
       },
       {
         "name": "Liselotte",
@@ -4004,12 +3903,7 @@
             "en": "Anairis Quinones"
           }
         },
-        "tags": [
-          "Outerplane",
-          "Dark",
-          "Striker",
-          "3-Star"
-        ]
+        "tags": ["Outerplane", "Dark", "Striker", "3-Star"]
       },
       {
         "name": "Nadja",
@@ -4032,12 +3926,7 @@
             "en": "Amber Lee Connors"
           }
         },
-        "tags": [
-          "Outerplane",
-          "Earth",
-          "Ranger",
-          "3-Star"
-        ]
+        "tags": ["Outerplane", "Earth", "Ranger", "3-Star"]
       }
     ]
   },
@@ -4070,13 +3959,7 @@
           },
           "personality": "Arrogant, supreme, cold ruler."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Kiana",
-          "BIO",
-          "Herrscher",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Kiana", "BIO", "Herrscher", "S-Rank"]
       },
       {
         "name": "Void Drifter",
@@ -4104,13 +3987,7 @@
           },
           "personality": "Resolute, brooding, heroic."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Kiana",
-          "MECH",
-          "Augment",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Kiana", "MECH", "Augment", "S-Rank"]
       },
       {
         "name": "Herrscher of Finality",
@@ -4138,13 +4015,7 @@
           },
           "personality": "Hopeful, cosmic, compassionate savior."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Kiana",
-          "IMG",
-          "Herrscher",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Kiana", "IMG", "Herrscher", "S-Rank"]
       },
       {
         "name": "Ba-Dum! Fiery Wishing Star",
@@ -4170,12 +4041,7 @@
             "en": "Stephanie Sheh"
           }
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Kiana",
-          "PSY",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Kiana", "PSY", "S-Rank"]
       },
       {
         "name": "Xentinel Dawnbearing Crescent",
@@ -4201,12 +4067,7 @@
             "en": "Allegra Clark"
           }
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Raiden Mei",
-          "MECH",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Raiden Mei", "MECH", "S-Rank"]
       },
       {
         "name": "Herrscher of Origin",
@@ -4266,13 +4127,7 @@
           },
           "personality": "Logical, caring, fearless."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Bronya",
-          "MECH",
-          "Herrscher",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Bronya", "MECH", "Herrscher", "S-Rank"]
       },
       {
         "name": "Silverwing: N-EX",
@@ -4299,13 +4154,7 @@
           },
           "personality": "Mature, professional, caring leader."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Bronya",
-          "BIO",
-          "APHO",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Bronya", "BIO", "APHO", "S-Rank"]
       },
       {
         "name": "Darkbolt Jonin",
@@ -4331,13 +4180,7 @@
             "en": "Erica Mendez"
           }
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Yae Sakura",
-          "BIO",
-          "SP",
-          "Ninja"
-        ]
+        "tags": ["Honkai Impact 3rd", "Yae Sakura", "BIO", "SP", "Ninja"]
       },
       {
         "name": "Lunar Vow: Crimson Love",
@@ -4364,13 +4207,7 @@
           },
           "personality": "Devoted, loving, fierce protector."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Theresa",
-          "SD",
-          "Chainsaw",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Theresa", "SD", "Chainsaw", "S-Rank"]
       },
       {
         "name": "Stygian Nymph",
@@ -4396,12 +4233,7 @@
             "en": "Mela Lee"
           }
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Seele",
-          "QUANTUM",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Seele", "QUANTUM", "S-Rank"]
       },
       {
         "name": "Starchasm Nyx",
@@ -4427,13 +4259,7 @@
             "en": "Mela Lee"
           }
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Seele",
-          "QUANTUM",
-          "Ice",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Seele", "QUANTUM", "Ice", "S-Rank"]
       },
       {
         "name": "Herrscher of Rebirth",
@@ -4460,13 +4286,7 @@
           },
           "personality": "Gentle, radiant, life-giving."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Seele",
-          "PSY",
-          "Herrscher",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Seele", "PSY", "Herrscher", "S-Rank"]
       },
       {
         "name": "Wings of Panacea",
@@ -4492,13 +4312,7 @@
             "en": "Mela Lee"
           }
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Seele",
-          "BIO",
-          "Support",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Seele", "BIO", "Support", "S-Rank"]
       },
       {
         "name": "Infinite Ouroboros",
@@ -4558,13 +4372,7 @@
           },
           "personality": "Cute, magical, vengeful yet pure."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Sirin",
-          "MECH",
-          "Magical Girl",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Sirin", "MECH", "Magical Girl", "S-Rank"]
       },
       {
         "name": "Mad Pleasure: Shadowbringer",
@@ -4592,13 +4400,7 @@
           },
           "personality": "Dominant, lavish, hedonistic."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Thelema",
-          "MECH",
-          "Mars",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Thelema", "MECH", "Mars", "S-Rank"]
       },
       {
         "name": "Lone Planetfarer",
@@ -4626,13 +4428,7 @@
           },
           "personality": "Playful, unpredictable, cosmic traveler."
         },
-        "tags": [
-          "Honkai Impact 3rd",
-          "Vita",
-          "MECH",
-          "Cosmic",
-          "S-Rank"
-        ]
+        "tags": ["Honkai Impact 3rd", "Vita", "MECH", "Cosmic", "S-Rank"]
       }
     ]
   },

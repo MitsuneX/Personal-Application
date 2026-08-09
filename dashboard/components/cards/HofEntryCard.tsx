@@ -285,6 +285,13 @@ export function HofEntryCard({
       className="group relative cursor-pointer cursor-context-menu select-none w-full max-w-[280px]"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={() => {
+        if (onOpenProfile) {
+          onOpenProfile(entry);
+        } else {
+          router.push(`/hall-of-fame?id=${entry.id}`);
+        }
+      }}
       onDoubleClick={handleDoubleClick}
       onTouchEnd={handleTouchEnd}
       onContextMenu={handleContextMenu}
@@ -527,7 +534,14 @@ export function HofEntryCard({
             exit={{ opacity: 0, y: 15 }}
             transition={{ type: "spring", stiffness: 350, damping: 25 }}
             className="absolute inset-0 z-30 p-4 flex flex-col justify-between backdrop-blur-md rounded-2xl border cursor-pointer"
-            onClick={() => router.push(`/hall-of-fame?id=${entry.id}`)}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onOpenProfile) {
+                onOpenProfile(entry);
+              } else {
+                router.push(`/hall-of-fame?id=${entry.id}`);
+              }
+            }}
             style={{
               backgroundColor: isCyber ? "rgba(10, 15, 30, 0.96)" : "rgba(255, 255, 255, 0.98)",
               borderColor: isCyber ? "#00F5FF" : "#000",

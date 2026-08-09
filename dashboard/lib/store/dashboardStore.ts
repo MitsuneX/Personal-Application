@@ -523,6 +523,59 @@ export interface HallOfFameEntry {
   tokusatsuFranchise?: string | null;
   tokusatsuShow?: string | null;
   associatedDramas?: string[];
+
+  // ── Character Dictionary Extended Fields ──
+  fullName?: string;
+  officialName?: string;
+  alias?: string;
+  aliases?: string[];
+  nickname?: string;
+  originalLanguage?: string;
+  nativeName?: string;
+  pronunciation?: string;
+  gender?: string;
+  age?: string;
+  species?: string;
+
+  universe?: string;
+  work?: string;
+  series?: string;
+  franchise?: string;
+  country?: string;
+  region?: string;
+  creator?: string;
+  firstAppearance?: string;
+  debutYear?: string | number;
+
+  personality?: string;
+  archetype?: string;
+  occupation?: string;
+  role?: string;
+  profession?: string;
+  alignment?: string;
+  traits?: string[];
+  motivation?: string;
+  background?: string;
+  bio?: string;
+  characterDevelopment?: string;
+
+  mainSeries?: string[];
+  movies?: string[];
+  episodes?: string[];
+  spinOffs?: string[];
+  cameos?: string[];
+  works?: string[];
+  relatedWorks?: string[];
+
+  gallery?: string[];
+  splashArt?: string;
+  portraitUrl?: string;
+  accentColor?: string;
+
+  gameCharacterId?: string;
+  gameCharacterName?: string;
+
+  details?: Record<string, any>;
 }
 
 export interface HallEventEntry {

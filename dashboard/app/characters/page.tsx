@@ -9,6 +9,7 @@ import { HofEditorModal } from "@/components/ui/HofEditorModal";
 import { HofEntryCard, getGroupForEntry, getGroupDetails } from "@/components/cards/HofEntryCard";
 import { DossierCharacterCard } from "@/components/cards/DossierCharacterCard";
 import { CharacterPreviewModal } from "@/components/ui/CharacterPreviewModal";
+import { CharacterDictProfileModal } from "@/components/ui/CharacterDictProfileModal";
 import { useSearchParams } from "next/navigation";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 import { FilterDropdown } from "@/components/ui/FilterDropdown";
@@ -60,6 +61,7 @@ function CharactersContent() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [selectedHofEntry, setSelectedHofEntry] = useState<HallOfFameEntry | null>(null);
   const [previewCharacter, setPreviewCharacter] = useState<DossierCharacterEntry | null>(null);
+  const [dictProfileEntry, setDictProfileEntry] = useState<HallOfFameEntry | null>(null);
 
   const targetSearch = searchParams?.get("search") || null;
   const targetId = searchParams?.get("id") || null;
@@ -419,6 +421,7 @@ function CharactersContent() {
                       group={groupDetails}
                       onEdit={handleEditHof}
                       onDelete={(id, name) => handleDeleteHof(id, name)}
+                      onOpenProfile={(item) => setDictProfileEntry(item)}
                       showType={selectedCategory === "all"}
                     />
                   );
@@ -433,6 +436,13 @@ function CharactersContent() {
           isOpen={editorOpen}
           onClose={() => setEditorOpen(false)}
           entryToEdit={selectedHofEntry}
+        />
+
+        <CharacterDictProfileModal
+          isOpen={!!dictProfileEntry}
+          entry={dictProfileEntry}
+          onClose={() => setDictProfileEntry(null)}
+          onEdit={handleEditHof}
         />
 
         <CharacterPreviewModal

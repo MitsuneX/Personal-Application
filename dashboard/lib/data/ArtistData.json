@@ -1,0 +1,81 @@
+{
+  "artists": [
+    {
+      "id": "artist-takahashi-rie",
+      "name": "Takahashi Rie",
+      "fullName": "Rie Takahashi (高橋 李依)",
+      "aliases": ["Rieri", "Rie Takahashi"],
+      "originalLanguage": "Japanese",
+      "pronunciation": "Takahashi Rie",
+      "gender": "Female",
+      "age": "30",
+      "nationality": "Japan",
+      "occupation": ["Voice Actress", "Singer"],
+      "bio": "Japanese voice actress and singer affiliated with 81 Produce. Famous for expressing vibrant, expressive anime and video game characters with iconic vocal performances.",
+      "personality": "Energetic, passionate, dedicated, cheerful.",
+      "traits": ["Vocal Mastery", "Expressive Acting", "Stage Performance", "Musicality"],
+      "works": [
+        "Re:Zero − Starting Life in Another World (Emilia)",
+        "Konosuba: God's Blessing on this Wonderful World! (Megumin)",
+        "Genshin Impact (Hu Tao)",
+        "Honkai: Star Rail (Firefly)",
+        "Fate/Grand Order (Mash Kyrielight)",
+        "Oshi no Ko (Ai Hoshino)"
+      ],
+      "socialLinks": [
+        { "platform": "Twitter / X", "url": "https://twitter.com/taka84_rie" },
+        { "platform": "Official Website", "url": "https://ririmom.jp" }
+      ]
+    },
+    {
+      "id": "artist-yuuki-aoi",
+      "name": "Yuuki Aoi",
+      "fullName": "Aoi Yabubusaku (八武崎 碧 / 悠木 碧)",
+      "aliases": ["Ao-chan", "Yuuki Aoi"],
+      "originalLanguage": "Japanese",
+      "pronunciation": "Yūki Aoi",
+      "gender": "Female",
+      "age": "32",
+      "nationality": "Japan",
+      "occupation": ["Voice Actress", "Singer", "Illustrator"],
+      "bio": "Acclaimed Japanese voice actress and singer celebrated for her wide vocal range spanning cheerful heroines to dark villainesses.",
+      "personality": "Witty, creative, gaming enthusiast, eccentric artist.",
+      "traits": ["Chameleon Voice Range", "Gaming Passion", "Artistic Talent"],
+      "works": [
+        "Puella Magi Madoka Magica (Madoka Kaname)",
+        "Saga of Tanya the Evil (Tanya von Degurechaff)",
+        "Genshin Impact (Lumine)",
+        "Persona 5 (Futaba Sakura)",
+        "My Hero Academia (Tsuyu Asui)"
+      ],
+      "socialLinks": [
+        { "platform": "Twitter / X", "url": "https://twitter.com/staff_aoi" }
+      ]
+    },
+    {
+      "id": "artist-makoto-shinkai",
+      "name": "Makoto Shinkai",
+      "fullName": "Makoto Niitsu (新海 誠)",
+      "aliases": ["Makoto Shinkai"],
+      "originalLanguage": "Japanese",
+      "pronunciation": "Shinkai Makoto",
+      "gender": "Male",
+      "age": "51",
+      "nationality": "Japan",
+      "occupation": ["Director", "Animator", "Screenwriter", "Author"],
+      "bio": "Visionary Japanese filmmaker and animator known for photorealistic sky visual styles, emotional soundtracks, and stories exploring distance and connection.",
+      "personality": "Philosophical, introspective, meticulous visual storyteller.",
+      "traits": ["Cinematic Realism", "Atmospheric Lighting", "Emotional Storytelling"],
+      "works": [
+        "Your Name. (Kimi no Na wa.)",
+        "Weathering With You (Tenki no Ko)",
+        "Suzume (Suzume no Tojimari)",
+        "5 Centimeters per Second",
+        "The Garden of Words"
+      ],
+      "socialLinks": [
+        { "platform": "Twitter / X", "url": "https://twitter.com/shinkaimakoto" }
+      ]
+    }
+  ]
+}
