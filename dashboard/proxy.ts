@@ -51,10 +51,14 @@ export async function proxy(request: NextRequest) {
     const allCookies = request.cookies.getAll();
     const hasAuthCookie = allCookies.some(c => c.name.includes("auth-token"));
     if (!hasAuthCookie) {
-      const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = "/login";
-      loginUrl.searchParams.set("next", pathname);
-      return NextResponse.redirect(loginUrl);
+      const redirectUrl = request.nextUrl.clone();
+      if (pathname === "/") {
+        redirectUrl.pathname = "/welcome";
+        return NextResponse.redirect(redirectUrl);
+      }
+      redirectUrl.pathname = "/login";
+      redirectUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(redirectUrl);
     }
   }
 
@@ -65,10 +69,14 @@ export async function proxy(request: NextRequest) {
 
   // Redirect unauthenticated users trying to access protected routes
   if (!user && !isPublicRoute(pathname)) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/login";
-    loginUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(loginUrl);
+    const redirectUrl = request.nextUrl.clone();
+    if (pathname === "/") {
+      redirectUrl.pathname = "/welcome";
+      return NextResponse.redirect(redirectUrl);
+    }
+    redirectUrl.pathname = "/login";
+    redirectUrl.searchParams.set("next", pathname);
+    return NextResponse.redirect(redirectUrl);
   }
 
   // Redirect logged-in users away from /login back to dashboard

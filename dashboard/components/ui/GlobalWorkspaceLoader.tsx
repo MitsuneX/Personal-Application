@@ -6,14 +6,14 @@ import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { RefreshCw, AlertTriangle } from "lucide-react";
 
-export function GlobalWorkspaceLoader() {
+export function GlobalWorkspaceLoader({ forceShow }: { forceShow?: boolean } = {}) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
 
   const { isHydrated, isLoading, fetchError, fetchDashboard } = useDashboardStore();
 
   // Reveal dashboard ONLY when workspace data is completely hydrated and not fetching initial load
-  const isVisible = !isHydrated || (isLoading && !isHydrated);
+  const isVisible = forceShow || !isHydrated || (isLoading && !isHydrated);
 
   return (
     <AnimatePresence mode="wait">

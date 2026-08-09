@@ -1374,150 +1374,287 @@
   {
     "gameTitle": "Goddess of Victory: NIKKE",
     "characters": [
-      {
-        "name": "Diesel Winter Sweets",
-        "title": "AZX Train Conductor",
-        "role": "Supporter / Wind",
-        "category": "Supporter",
-        "element": "Wind",
-        "weapon": "RL (Rocket Launcher)",
-        "rarity": "SSR",
-        "nation": "The Ark",
-        "accentColor": "#EF4444",
-        "notes": "Diesel in her adorable Winter Sweets festive outfit, spreading joy and strawberry candy aboard the AZX train.",
-        "stats": {
-          "gender": "Female",
-          "species": "Nikke",
-          "affiliation": "Ultimate Weapon Squad / AZX",
-          "damageType": "Wind",
-          "releaseDate": "2023-12-07",
-          "voiceActors": {
-            "jp": "Takahashi Rie",
-            "en": "Brianna Knickerbocker"
-          }
+      [
+        {
+          "name": "Scarlet",
+          "title": "Black Blade",
+          "role": "Main DPS",
+          "category": "Electric",
+          "element": "Electric",
+          "weapon": "Blood and Sword",
+          "rarity": "SSR",
+          "nation": "Ark",
+          "birthday": null,
+          "accentColor": "#C91F3D",
+          "notes": "A member of the Pioneer squad and one of the legendary Grimms Models. Scarlet is a swordswoman who fights with her signature blade while sacrificing HP to greatly increase her offensive power.",
+          "stats": {
+            "gender": "Female",
+            "species": "Nikke",
+            "affiliation": "Pioneer",
+            "damageType": "Electric",
+            "releaseDate": "November 4, 2022",
+            "voiceActors": {
+              "jp": "Saito Chiwa",
+              "en": "Kira Buckland"
+            }
+          },
+          "tags": [
+            "GODDESS OF VICTORY: NIKKE",
+            "Scarlet",
+            "Electric",
+            "Blood and Sword",
+            "SSR",
+            "Pilgrim",
+            "Pioneer",
+            "Main DPS"
+          ]
         },
-        "tags": ["NIKKE", "Wind", "RL", "SSR"]
-      },
-      {
-        "name": "Dorothy",
-        "title": "Leader of Inheritor",
-        "role": "Supporter / Water",
-        "category": "Supporter",
-        "element": "Water",
-        "weapon": "AR (Assault Rifle)",
-        "rarity": "SSR",
-        "nation": "Eden",
-        "accentColor": "#EC4899",
-        "notes": "The graceful yet vengeance-driven leader of Eden and member of the legendary Goddess Squad.",
-        "stats": {
-          "gender": "Female",
-          "species": "Nikke (Pioneer)",
-          "affiliation": "Inheritor / Eden",
-          "damageType": "Water",
-          "releaseDate": "2023-04-27",
-          "voiceActors": {
-            "jp": "Saito Chiwa",
-            "en": "Megan Shipman"
-          }
+        {
+          "name": "Diesel: Winter Sweets",
+          "title": "Sweet Songstress",
+          "role": "Main DPS",
+          "category": "Fire",
+          "element": "Fire",
+          "weapon": "Candy Line",
+          "rarity": "SSR",
+          "nation": "Ark",
+          "birthday": null,
+          "accentColor": "#FF7A45",
+          "notes": "A winter-themed version of Diesel, the AZX attendant. Diesel: Winter Sweets is an Attacker who uses her singing and sustained damage abilities to overwhelm enemies.",
+          "stats": {
+            "gender": "Female",
+            "species": "Nikke",
+            "affiliation": "Infinity Rail",
+            "damageType": "Fire",
+            "releaseDate": "December 4, 2025",
+            "voiceActors": {
+              "jp": "Kurosawa Tomoyo",
+              "en": "Brittany Cox"
+            }
+          },
+          "tags": [
+            "GODDESS OF VICTORY: NIKKE",
+            "Diesel",
+            "Winter Sweets",
+            "Fire",
+            "Candy Line",
+            "SSR",
+            "Elysion",
+            "Infinity Rail",
+            "Main DPS"
+          ]
         },
-        "tags": ["NIKKE", "Water", "AR", "Pioneer", "SSR"]
-      },
-      {
-        "name": "Flora",
-        "title": "Garden Keeper",
-        "role": "Supporter / Electric",
-        "category": "Supporter",
-        "element": "Electric",
-        "weapon": "MG (Machine Gun)",
-        "rarity": "SSR",
-        "nation": "The Ark",
-        "accentColor": "#10B981",
-        "notes": "A passionate botanist Nikke dedicated to preserving flora in the Ark.",
-        "stats": {
-          "gender": "Female",
-          "species": "Nikke",
-          "affiliation": "Botanist Squad",
-          "damageType": "Electric",
-          "releaseDate": "2024",
-          "voiceActors": {
-            "jp": "Miyori Shimabukuro",
-            "en": "Kayli Mills"
-          }
+        {
+          "name": "Dorothy",
+          "title": "Goddess of Victory",
+          "role": "Support / Sub-DPS",
+          "category": "Water",
+          "element": "Water",
+          "weapon": "In the Mirror",
+          "rarity": "SSR",
+          "nation": "Ark",
+          "birthday": null,
+          "accentColor": "#F5C7D9",
+          "notes": "The leader of the Goddess squad and a Grimms Model who once fought alongside the original Goddess of Victory. Dorothy possesses immense power and carries deep resentment toward humanity after the events surrounding the Ark.",
+          "stats": {
+            "gender": "Female",
+            "species": "Nikke",
+            "affiliation": "Pioneer / Goddess",
+            "damageType": "Water",
+            "releaseDate": "April 20, 2023",
+            "voiceActors": {
+              "jp": "Amamiya Sora",
+              "en": "Dani Chambers"
+            }
+          },
+          "tags": [
+            "GODDESS OF VICTORY: NIKKE",
+            "Dorothy",
+            "Water",
+            "In the Mirror",
+            "SSR",
+            "Pilgrim",
+            "Pioneer",
+            "Support",
+            "Sub-DPS"
+          ]
         },
-        "tags": ["NIKKE", "Electric", "MG", "SSR"]
-      },
-      {
-        "name": "Moran",
-        "title": "Underworld Queen Boss",
-        "role": "Defender / Iron",
-        "category": "Defender",
-        "element": "Iron",
-        "weapon": "AR (Assault Rifle)",
-        "rarity": "SSR",
-        "nation": "The Ark",
-        "accentColor": "#F59E0B",
-        "notes": "The fiercely loyal boss of Peony Association within Underworld Queen.",
-        "stats": {
-          "gender": "Female",
-          "species": "Nikke",
-          "affiliation": "Underworld Queen",
-          "damageType": "Iron",
-          "releaseDate": "2024-01-25",
-          "voiceActors": {
-            "jp": "Shizuka Ito",
-            "en": "Laura Post"
-          }
+        {
+          "name": "Flora",
+          "title": "Botanic Gardener",
+          "role": "Support / Healer",
+          "category": "Electric",
+          "element": "Electric",
+          "weapon": "Natural Garden",
+          "rarity": "SSR",
+          "nation": "Ark",
+          "birthday": null,
+          "accentColor": "#83D9A5",
+          "notes": "A member of the Botanic Garden squad who specializes in plant cultivation and support. Flora continuously heals herself and nearby allies and can provide shields and True Damage support.",
+          "stats": {
+            "gender": "Female",
+            "species": "Nikke",
+            "affiliation": "Botanic Garden",
+            "damageType": "Electric",
+            "releaseDate": "December 5, 2024",
+            "voiceActors": {
+              "jp": null,
+              "en": null
+            }
+          },
+          "tags": [
+            "GODDESS OF VICTORY: NIKKE",
+            "Flora",
+            "Electric",
+            "Natural Garden",
+            "SSR",
+            "Missilis",
+            "Botanic Garden",
+            "Support",
+            "Healer"
+          ]
         },
-        "tags": ["NIKKE", "Iron", "AR", "SSR"]
-      },
-      {
-        "name": "Snow White: Innocent Days",
-        "title": "Pioneer of the Past",
-        "role": "Attacker / Fire",
-        "category": "Attacker",
-        "element": "Fire",
-        "weapon": "AR (Assault Rifle)",
-        "rarity": "SSR",
-        "nation": "Surface",
-        "accentColor": "#38BDF8",
-        "notes": "Snow White in her youthful past before Mind Switch, fighting bravely in the 1st Surface Reclamation War.",
-        "stats": {
-          "gender": "Female",
-          "species": "Nikke (Pioneer)",
-          "affiliation": "Goddess Squad",
-          "damageType": "Fire",
-          "releaseDate": "2023-11-02",
-          "voiceActors": {
-            "jp": "Miyuki Sawashiro",
-            "en": "Laura Stahl"
-          }
+        {
+          "name": "Moran",
+          "title": "The Tiger",
+          "role": "Tank / Defender",
+          "category": "Electric",
+          "element": "Electric",
+          "weapon": "Dragon Head",
+          "rarity": "SSR",
+          "nation": "Ark",
+          "birthday": null,
+          "accentColor": "#D83B4B",
+          "notes": "The leader of the Underworld Queen squad. Moran is a straightforward and fiercely loyal fighter who specializes in surviving heavy damage, taunting enemies, and protecting her allies.",
+          "stats": {
+            "gender": "Female",
+            "species": "Nikke",
+            "affiliation": "Underworld Queen",
+            "damageType": "Electric",
+            "releaseDate": "February 1, 2024",
+            "voiceActors": {
+              "jp": "Sayaka Ohara",
+              "en": "Megan Shipman"
+            }
+          },
+          "tags": [
+            "GODDESS OF VICTORY: NIKKE",
+            "Moran",
+            "Electric",
+            "Dragon Head",
+            "SSR",
+            "Tetra",
+            "Underworld Queen",
+            "Defender",
+            "Tank"
+          ]
         },
-        "tags": ["NIKKE", "Fire", "AR", "Pioneer", "SSR"]
-      },
-      {
-        "name": "Takina Inoue",
-        "title": "Lycoris Agent",
-        "role": "Attacker / Fire",
-        "category": "Attacker",
-        "element": "Fire",
-        "weapon": "AR (Assault Rifle)",
-        "rarity": "SSR",
-        "nation": "Collab (Lycoris Recoil)",
-        "accentColor": "#3B82F6",
-        "notes": "The skilled, pragmatic Lycoris agent visiting the Nikke universe.",
-        "stats": {
-          "gender": "Female",
-          "species": "Human (Lycoris)",
-          "affiliation": "DA (Direct Attack)",
-          "damageType": "Fire",
-          "releaseDate": "2024",
-          "voiceActors": {
-            "jp": "Shion Wakayama",
-            "en": "Xanthe Huynh"
-          }
+        {
+          "name": "Snow White: Innocent Days",
+          "title": "Innocent Days",
+          "role": "Main DPS",
+          "category": "Iron",
+          "element": "Iron",
+          "weapon": "Seven Dwarves II",
+          "rarity": "SSR",
+          "nation": "Ark",
+          "birthday": null,
+          "accentColor": "#E9E9E9",
+          "notes": "Snow White in her younger days, before becoming the hardened warrior of Pioneer. Innocent Days is a Pilgrim Attacker who fights with the Seven Dwarves weapon system.",
+          "stats": {
+            "gender": "Female",
+            "species": "Nikke",
+            "affiliation": "Goddess",
+            "damageType": "Iron",
+            "releaseDate": "November 4, 2022",
+            "voiceActors": {
+              "jp": "Mikako Komatsu",
+              "en": "Kira Buckland"
+            }
+          },
+          "tags": [
+            "GODDESS OF VICTORY: NIKKE",
+            "Snow White",
+            "Innocent Days",
+            "Iron",
+            "Seven Dwarves II",
+            "SSR",
+            "Pilgrim",
+            "Goddess",
+            "Main DPS"
+          ]
         },
-        "tags": ["NIKKE", "Fire", "AR", "Collab", "SSR"]
-      }
+        {
+          "name": "Takina Inoue",
+          "title": "Lycoris",
+          "role": "Support / Sub-DPS",
+          "category": "Iron",
+          "element": "Iron",
+          "weapon": "Tactical Sniper Rifle",
+          "rarity": "SSR",
+          "nation": "Japan",
+          "birthday": null,
+          "accentColor": "#6A91C9",
+          "notes": "An outstanding Lycoris from Café LycoReco who joins NIKKE through the Lycoris Recoil collaboration. Takina is a Supporter who boosts allies, weakens enemies, and can deal True Damage during Burst.",
+          "stats": {
+            "gender": "Female",
+            "species": "Human",
+            "affiliation": "Café LycoReco / DA",
+            "damageType": "Iron",
+            "releaseDate": "February 19, 2026",
+            "voiceActors": {
+              "jp": "Shion Wakayama",
+              "en": "Xanthe Huynh"
+            }
+          },
+          "tags": [
+            "GODDESS OF VICTORY: NIKKE",
+            "Takina Inoue",
+            "Lycoris Recoil",
+            "Iron",
+            "Tactical Sniper Rifle",
+            "SSR",
+            "Abnormal",
+            "Support",
+            "Sub-DPS"
+          ]
+        },
+        {
+          "name": "Scarlet: Black Shadow",
+          "title": "Black Shadow",
+          "role": "Main DPS",
+          "category": "Wind",
+          "element": "Wind",
+          "weapon": "Fleetly Fading",
+          "rarity": "SSR",
+          "nation": "Ark",
+          "birthday": null,
+          "accentColor": "#6B243A",
+          "notes": "A younger and more ruthless incarnation of Scarlet. Black Shadow uses a Rocket Launcher and specializes in extremely high single-target damage, charge attacks, and distributed damage.",
+          "stats": {
+            "gender": "Female",
+            "species": "Nikke",
+            "affiliation": "Goddess",
+            "damageType": "Wind",
+            "releaseDate": "December 7, 2023",
+            "voiceActors": {
+              "jp": "Saito Chiwa",
+              "en": "Kira Buckland"
+            }
+          },
+          "tags": [
+            "GODDESS OF VICTORY: NIKKE",
+            "Scarlet",
+            "Black Shadow",
+            "Wind",
+            "Fleetly Fading",
+            "SSR",
+            "Pilgrim",
+            "Goddess",
+            "Main DPS"
+          ]
+        }
+      ]
     ]
   },
   {

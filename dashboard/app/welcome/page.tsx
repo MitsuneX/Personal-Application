@@ -11,19 +11,33 @@ import { LandingAbout } from "@/components/landing/LandingAbout";
 import { Sun, Moon, LogIn, Compass, Sparkles } from "lucide-react";
 import Link from "next/link";
 
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { GlobalWorkspaceLoader } from "@/components/ui/GlobalWorkspaceLoader";
+
 export default function WelcomePage() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const isCyber = theme === "cyber";
+  const { isLoading: authLoading, isAuthenticated } = useAuth();
 
   const { profile, games, animeList, dramas, dramaLog, hallOfFame } = useDashboardStore();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    const isGuest = document.cookie.includes("is_guest=true");
-    const hasAuthCookie = document.cookie.includes("auth-token");
-    setIsLoggedIn(isGuest || hasAuthCookie);
-  }, []);
+    if (authLoading) return;
+
+    const isMobile =
+      typeof window !== "undefined" &&
+      (window.innerWidth < 768 ||
+        /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        window.matchMedia("(display-mode: standalone)").matches);
+
+    // Authenticated mobile users (APK / PWA startup) automatically navigate to Dashboard "/"
+    if (isAuthenticated && isMobile) {
+      router.replace("/");
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  const isLoggedIn = isAuthenticated;
 
   const totalDramas = dramas.length + dramaLog.length;
   const totalMedia = animeList.length + totalDramas;
@@ -41,6 +55,10 @@ export default function WelcomePage() {
     }
     router.push("/");
   };
+
+  if (authLoading) {
+    return <GlobalWorkspaceLoader forceShow={true} />;
+  }
 
   return (
     <div
