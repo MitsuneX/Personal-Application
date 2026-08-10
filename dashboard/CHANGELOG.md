@@ -2,6 +2,52 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [11.3.4] - 2026-08-10
+
+### ↔️ Refined Intelligent Horizontal Tab Auto-Scrolling in HofEditorModal
+
+- **Intelligent Boundary Inspection**: Re-architected `scrollToTab` in `HofEditorModal.tsx` to inspect `container.getBoundingClientRect()` vs `tabEl.getBoundingClientRect()` backed by `requestAnimationFrame`.
+- **Direction-Aware 16px Safety Padding**: Smoothly auto-scrolls the horizontal tab container right or left with 16px safety padding when tabs are clipped on the right or left edge.
+- **Container-Scoped**: Scrolling is strictly scoped to `tabListRef.current`, preserving outer modal and window scroll stability.
+- **All Tabs Preserved**: All 7 tabs (`Basic`, `Identity & Origin`, `Profile & Lore`, `Appearances`, `Gallery & Images`, `Links & Social`, `Artist Preset / Auto-Fill`) remain in single-row horizontal format.
+
+## [11.3.3] - 2026-08-10
+
+### 🏛️ Character Dictionary Profile Header Revert & Tab Auto-Scroll Retention
+
+- **Profile Header Reverted (`CharacterDictProfileModal.tsx`)**: Reverted profile modal header strictly to its clean compact layout per user command.
+- **Tab Auto-Scroll Retained (`HofEditorModal.tsx`)**: Retained direction-aware horizontal tab auto-scrolling in the editor modal without window scroll jumps.
+
+## [11.3.2] - 2026-08-10
+
+### 📊 Data-Driven Quick Profile Rail & Direction-Aware Tab Auto-Scroll
+
+- **Data-Driven Quick Profile Rail (`CharacterDictProfileModal.tsx`)**: Added a compact statistics block on the right side of the compact header utilizing real stored values (`ROSTER #`, `LIKES`, `WORKS`, `GALLERY`). Gracefully omits rows when underlying data is absent.
+- **Intelligent Direction-Aware Tab Auto-Scroll (`HofEditorModal.tsx`)**: Re-architected `scrollToTab` to measure container and tab bounding rectangles. Smoothly auto-scrolls horizontally when tabs are clipped on left or right, while remaining stationary when tabs are already fully visible. Zero window scroll jumps.
+
+## [11.3.1] - 2026-08-10
+
+### 🏛️ Compact Premium Character Dictionary Profile Header Layout
+
+- **Compact Header (~200–230px Desktop Height)**: Redesigned `CharacterDictProfileModal.tsx` header layout from an oversized hero into a sleek, compact profile header with controlled padding (`py-3.5 sm:py-4`) and capped avatar proportions (capped at max ~155px).
+- **Identity Metadata Row**: Added a dedicated inline metadata row (Occupation, Country, Age, Type/Species) to fill horizontal space beside avatar without inflating vertical modal height.
+- **Preserved Systems & Responsive Integrity**: Kept all existing image settings (Card Image 3:4, Portrait 3:4, Personal Gallery, Profile Avatar 1:1), read-only Hall of Fame routing rules, tab navigation bar, and dark futuristic theme styling across desktop, tablet, and mobile.
+
+## [11.3.0] - 2026-08-10
+
+### 🏛️ Character Dictionary Identity Hero Header, Customizable 1:1 Avatar, Gallery Persistence & Live Activity Feed
+
+**Identity Hero Profile Header & Customizable 1:1 Avatar**
+- **Identity Hero Header (`CharacterDictProfileModal.tsx`)**: Re-architected the Character Dictionary profile modal header with a 1:1 aspect ratio Avatar container (constrained to max ~160px on desktop with responsive mobile scaling), significantly larger name typography, and vibrant colorful semantic badges (Gold Status, Cyan Profession, Purple Country, Rose Favorite, Emerald Series).
+- **Customizable 1:1 Profile Avatar (`HofEditorModal.tsx`)**: Added a dedicated `Profile Avatar (1:1 Square)` section under Gallery & Images supporting Card Image fallback and custom image link/upload syncing without affecting existing Card Image or 3:4 Portrait settings.
+
+**Prisma Database Persistence & Real-Time Event Pipeline**
+- **Prisma Upsert Mutation Fix (`app/api/action/route.ts`)**: Added `details`, `gallery`, `splashArt`, `portraitUrl`, `accentColor`, and `gameCharacterId` to the Prisma `UPDATE_HOF` upsert mutation. Fixes the issue where gallery images and extended character details disappeared after page reloads.
+- **Live Activity Feed Stream (`lib/utils/hofEngine.ts` & `dashboardStore.ts`)**: Connected live `hallEvents` to `generateActivityFeed` and Zustand store actions, automatically streaming real-time event cards when entries are added, updated, or hearted.
+
+**Artist Data Inventory & Preset Audit**
+- **Artist Presets Expansion (`ArtistData.json`)**: Audited existing Character Dictionary entries and added complete presets for Tao Tsuchiya, Song Joong-ki, and YOASOBI to `ArtistData.json`.
+
 ## [11.2.3] - 2026-08-09
 
 ### 🔒 Read-Only Hall of Fame Profile Context Enforcement

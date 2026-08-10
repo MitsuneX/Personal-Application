@@ -731,49 +731,74 @@ export function computeHallAnalytics(hallList: HallOfFameEntry[]): HallAnalytics
 
 // ─── Activity Feed Generator (100% DB-Derived Event Feed) ─────────────────────
 /** Generates an activity feed. */
-export function generateActivityFeed(hallList: HallOfFameEntry[], _hallEvents?: any[]): HallActivityItem[] {
-  const sorted = sortByRank(hallList);
+export function generateActivityFeed(hallList: HallOfFameEntry[], hallEvents: any[] = []): HallActivityItem[] {
   const feed: HallActivityItem[] = [];
 
+  // 1. Process actual logged hall events first (most recent first)
+  if (Array.isArray(hallEvents) && hallEvents.length > 0) {
+    hallEvents.forEach((evt) => {
+      const matchItem = hallList.find((h) => h.id === evt.characterId || h.name === evt.characterName);
+      
+      let type: "champion" | "goat" | "vote" | "milestone" = "milestone";
+      let title = "Museum Event Logged";
+      let description = `${evt.characterName} was updated in the database.`;
+
+      if (evt.type === "ADD_CHARACTER") {
+        title = "New Legend Enshrined";
+        description = `Added "${evt.characterName}" to Master Character Directory.`;
+        type = "milestone";
+      } else if (evt.type === "LIKES_CHANGED" || evt.type === "LIKE") {
+        title = "Community Vote Cast";
+        description = `Hearted "${evt.characterName}", reaching ${evt.newVotes || (matchItem?.likes || 1)} total likes.`;
+        type = "vote";
+      } else if (evt.type === "UPDATE_CHARACTER") {
+        title = "Legend Profile Updated";
+        description = `Updated lore, gallery, or identity details for "${evt.characterName}".`;
+        type = "milestone";
+      } else if (evt.type === "CHAMPION_CHANGED" || evt.type === "RANK_CHANGED") {
+        title = "Leaderboard Rank Shift";
+        description = `"${evt.characterName}" shifted to Rank #${evt.newRank || 1}.`;
+        type = "champion";
+      }
+
+      feed.push({
+        id: evt.id || `evt_${Math.random()}`,
+        timestamp: evt.timestamp ? "Just now" : "Recently",
+        legendName: evt.characterName || matchItem?.name || "Legend",
+        legendImage: matchItem?.imageUrl || matchItem?.portraitUrl,
+        type,
+        title,
+        description,
+      });
+    });
+  }
+
+  // 2. Add current roster status milestones
+  const sorted = sortByRank(hallList);
   sorted.forEach((item, index) => {
     const timeAgo = `${Math.min(24, index + 1)}h ago`;
 
-    // 1. Champion Activity
-    if (index === 0) {
+    if (index === 0 && !feed.some((f) => f.legendName === item.name && f.type === "champion")) {
       feed.push({
         id: `act_champ_${item.id}`,
-        timestamp: "Just now",
+        timestamp: "Live",
         legendName: item.name,
-        legendImage: item.imageUrl,
+        legendImage: item.imageUrl || item.portraitUrl,
         type: "champion",
         title: "Reigning Champion Leads Roster",
         description: `Holds #1 overall position in the Nexus Xenon Hall of Fame with ${item.likes || 0} user votes.`,
       });
     }
 
-    // 2. GOAT Status Activity
-    if (item.status === "GOAT Status") {
+    if (item.status === "GOAT Status" && !feed.some((f) => f.legendName === item.name && f.type === "goat")) {
       feed.push({
         id: `act_goat_${item.id}`,
         timestamp: timeAgo,
         legendName: item.name,
-        legendImage: item.imageUrl,
+        legendImage: item.imageUrl || item.portraitUrl,
         type: "goat",
         title: "GOAT Status Verified",
         description: `Recognized in the elite GOAT status tier with permanent community recognition.`,
-      });
-    }
-
-    // 3. User Likes Activity
-    if ((item.likes || 0) > 0) {
-      feed.push({
-        id: `act_like_${item.id}`,
-        timestamp: `${(index % 5) + 1}d ago`,
-        legendName: item.name,
-        legendImage: item.imageUrl,
-        type: "vote",
-        title: "Community Vote Cast",
-        description: `Received support from authenticated users, reaching ${item.likes} permanent likes.`,
       });
     }
   });

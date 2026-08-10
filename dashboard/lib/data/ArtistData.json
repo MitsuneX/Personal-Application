@@ -1,81 +1,2357 @@
 {
   "artists": [
     {
-      "id": "artist-takahashi-rie",
-      "name": "Takahashi Rie",
-      "fullName": "Rie Takahashi (高橋 李依)",
-      "aliases": ["Rieri", "Rie Takahashi"],
-      "originalLanguage": "Japanese",
-      "pronunciation": "Takahashi Rie",
-      "gender": "Female",
-      "age": "30",
-      "nationality": "Japan",
-      "occupation": ["Voice Actress", "Singer"],
-      "bio": "Japanese voice actress and singer affiliated with 81 Produce. Famous for expressing vibrant, expressive anime and video game characters with iconic vocal performances.",
-      "personality": "Energetic, passionate, dedicated, cheerful.",
-      "traits": ["Vocal Mastery", "Expressive Acting", "Stage Performance", "Musicality"],
-      "works": [
-        "Re:Zero − Starting Life in Another World (Emilia)",
-        "Konosuba: God's Blessing on this Wonderful World! (Megumin)",
-        "Genshin Impact (Hu Tao)",
-        "Honkai: Star Rail (Firefly)",
-        "Fate/Grand Order (Mash Kyrielight)",
-        "Oshi no Ko (Ai Hoshino)"
-      ],
-      "socialLinks": [
-        { "platform": "Twitter / X", "url": "https://twitter.com/taka84_rie" },
-        { "platform": "Official Website", "url": "https://ririmom.jp" }
+      "id": "artist-cha-woo-min",
+      "basic": {
+        "character_name": "Cha Woo-min",
+        "type": "Actor",
+        "status_tier": "Rising Star",
+        "country_nationality": "South Korea",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#00F5FF",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Kim Min-woo (김민우)",
+        "alias_nickname": ["Cha Woo-min"],
+        "original_language_native": "Korean",
+        "pronunciation": "Cha Woo-min",
+        "gender": "Male",
+        "age_age_range": "25",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "South Korea",
+        "creator_studio": "Just Entertainment",
+        "debut_year_date": "2021"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Charismatic, intense, versatile, determined.",
+        "occupation_role": ["Actor"],
+        "alignment": "",
+        "traits": [
+          "Screen Presence",
+          "Expressive Acting",
+          "Versatility",
+          "Intense Performance"
+        ],
+        "character_motivation": "",
+        "background_biography": "South Korean actor born in Busan and educated at Seoul Institute of the Arts. He made his acting debut in 2021 and gained wider recognition through Night Has Come and Study Group.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "Night Has Come (2023)",
+          "Study Group (2025)",
+          "Buried Hearts (2025)",
+          "Spirit Fingers (2025)"
+        ]
+      },
+      "social_links": []
+    },
+    {
+      "id": "artist-byeon-woo-seok",
+      "basic": {
+        "character_name": "Byeon Woo-seok",
+        "type": "Actor",
+        "status_tier": "GOAT Status",
+        "country_nationality": "South Korea",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#6C5CE7",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Byeon Woo-seok (변우석)",
+        "alias_nickname": ["Byeon Woo-seok"],
+        "original_language_native": "Korean",
+        "pronunciation": "Byeon Woo-seok",
+        "gender": "Male",
+        "age_age_range": "35",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "South Korea",
+        "creator_studio": "",
+        "debut_year_date": "2016"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Warm, charismatic, gentle, emotionally expressive.",
+        "occupation_role": ["Actor", "Model"],
+        "alignment": "",
+        "traits": [
+          "Romantic Acting",
+          "Emotional Expression",
+          "Screen Presence",
+          "Modeling"
+        ],
+        "character_motivation": "",
+        "background_biography": "South Korean actor and model who began his entertainment career as a model before moving into acting. He gained major international recognition through Lovely Runner and has continued expanding his leading-man roles.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "Dear My Friends (2016)",
+          "Moon Lovers: Scarlet Heart Ryeo (2016)",
+          "Search: WWW (2019)",
+          "Record of Youth (2020)",
+          "Strong Girl Nam-soon (2023)",
+          "Lovely Runner (2024)",
+          "20th Century Girl (2022)",
+          "Perfect Crown (2026)"
+        ]
+      },
+      "social_links": []
+    },
+    {
+      "id": "artist-lee-do-hyun",
+      "basic": {
+        "character_name": "Lee Do-hyun",
+        "type": "Actor",
+        "status_tier": "GOAT Status",
+        "country_nationality": "South Korea",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#FF6B6B",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Lim Dong-hyun (임동현)",
+        "alias_nickname": ["Lee Do-hyun"],
+        "original_language_native": "Korean",
+        "pronunciation": "Lee Do-hyun",
+        "gender": "Male",
+        "age_age_range": "31",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "South Korea",
+        "creator_studio": "YH Entertainment",
+        "debut_year_date": "2017"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Versatile, emotionally intense, dedicated, charismatic.",
+        "occupation_role": ["Actor"],
+        "alignment": "",
+        "traits": [
+          "Emotional Acting",
+          "Character Immersion",
+          "Versatility",
+          "Screen Presence"
+        ],
+        "character_motivation": "",
+        "background_biography": "South Korean actor known for emotionally demanding roles across television and film. He rose to prominence through Hotel del Luna, 18 Again, Youth of May, The Glory and Sweet Home before making his major film debut in Exhuma.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "Prison Playbook (2017)",
+          "Hotel del Luna (2019)",
+          "18 Again (2020)",
+          "Sweet Home (2020)",
+          "Youth of May (2021)",
+          "The Glory (2022)",
+          "Death's Game (2023)",
+          "Exhuma (2024)",
+          "Sweet Home 2 (2023)",
+          "Sweet Home 3 (2024)"
+        ]
+      },
+      "social_links": []
+    },
+    {
+      "id": "artist-kang-mi-na",
+      "basic": {
+        "character_name": "Kang Mi-na",
+        "type": "Actress",
+        "status_tier": "Rising Star",
+        "country_nationality": "South Korea",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#FF8FAB",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Kang Mi-na (강미나)",
+        "alias_nickname": ["Mina", "Kang Mina"],
+        "original_language_native": "Korean",
+        "pronunciation": "Kang Mi-na",
+        "gender": "Female",
+        "age_age_range": "26",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "South Korea",
+        "creator_studio": "",
+        "debut_year_date": "2016"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Bright, energetic, charming, adaptable.",
+        "occupation_role": ["Actress", "Singer"],
+        "alignment": "",
+        "traits": ["Expressive Acting", "Musicality", "Charm", "Versatility"],
+        "character_motivation": "",
+        "background_biography": "South Korean actress and singer who began her entertainment career as a member of I.O.I and later gugudan before developing a career in acting. She is known for roles in Hotel Del Luna, Moonshine, Cafe Minamdang and Welcome to Samdal-ri.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "Hotel Del Luna (2019)",
+          "Moonshine (2021–2022)",
+          "Cafe Minamdang (2022)",
+          "Welcome to Samdal-ri (2023–2024)",
+          "If Wishes Could Kill (2026)"
+        ]
+      },
+      "social_links": []
+    },
+    {
+      "id": "artist-cho-yi-hyun",
+      "basic": {
+        "character_name": "Cho Yi-hyun",
+        "type": "Actress",
+        "status_tier": "GOAT Status",
+        "country_nationality": "South Korea",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#00D4FF",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Cho Yi-hyun (조이현)",
+        "alias_nickname": ["Cho Yi-hyun"],
+        "original_language_native": "Korean",
+        "pronunciation": "Cho Yi-hyun",
+        "gender": "Female",
+        "age_age_range": "26",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "South Korea",
+        "creator_studio": "",
+        "debut_year_date": "2017"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Calm, expressive, intelligent, emotionally grounded.",
+        "occupation_role": ["Actress"],
+        "alignment": "",
+        "traits": [
+          "Emotional Acting",
+          "Expressiveness",
+          "Character Depth",
+          "Versatility"
+        ],
+        "character_motivation": "",
+        "background_biography": "South Korean actress known for roles in School 2021 and All of Us Are Dead, where her performance as Choi Nam-ra brought her international recognition.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "Bad Papa (2018)",
+          "How to Buy a Friend (2020)",
+          "Hospital Playlist (2020)",
+          "School 2021 (2021)",
+          "All of Us Are Dead (2022)",
+          "The Matchmakers (2023)",
+          "Head Over Heels (2025)"
+        ]
+      },
+      "social_links": []
+    },
+    {
+      "id": "artist-go-youn-jung",
+      "basic": {
+        "character_name": "Go Youn-jung",
+        "type": "Actress",
+        "status_tier": "GOAT Status",
+        "country_nationality": "South Korea",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#A78BFA",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Go Youn-jung (고윤정)",
+        "alias_nickname": ["Go Youn-jung"],
+        "original_language_native": "Korean",
+        "pronunciation": "Go Youn-jung",
+        "gender": "Female",
+        "age_age_range": "30",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "South Korea",
+        "creator_studio": "",
+        "debut_year_date": "2019"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Elegant, composed, intelligent, emotionally nuanced.",
+        "occupation_role": ["Actress", "Model"],
+        "alignment": "",
+        "traits": [
+          "Visual Presence",
+          "Emotional Acting",
+          "Versatility",
+          "Elegance"
+        ],
+        "character_motivation": "",
+        "background_biography": "South Korean actress and model who gained attention through Law School before establishing herself through Alchemy of Souls, Moving and Resident Playbook.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "He Is Psychometric (2019)",
+          "Sweet Home (2020)",
+          "Law School (2021)",
+          "Alchemy of Souls (2022)",
+          "Moving (2023)",
+          "Death's Game (2023)",
+          "Resident Playbook (2025)"
+        ]
+      },
+      "social_links": []
+    },
+    {
+      "id": "artist-jeon-so-young",
+      "basic": {
+        "character_name": "Jeon So-young",
+        "type": "Actress",
+        "status_tier": "Rising Star",
+        "country_nationality": "South Korea",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#FFB6C1",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Jeon So-young (전소영)",
+        "alias_nickname": ["Jeon So-young"],
+        "original_language_native": "Korean",
+        "pronunciation": "Jeon So-young",
+        "gender": "Female",
+        "age_age_range": "24",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "South Korea",
+        "creator_studio": "BH Entertainment",
+        "debut_year_date": "2025"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Fresh, expressive, youthful, promising.",
+        "occupation_role": ["Actress"],
+        "alignment": "",
+        "traits": [
+          "Youthful Energy",
+          "Expressive Acting",
+          "Versatility",
+          "Rising Talent"
+        ],
+        "character_motivation": "",
+        "background_biography": "South Korean actress born in Seoul in 2002. She signed with BH Entertainment in 2024 and began her on-screen acting career in 2025, appearing in projects including Kick Kick Kick Kick, Melo Movie and Crushology 101.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "Kick Kick Kick Kick (2025)",
+          "Melo Movie (2025)",
+          "Crushology 101 (2025)",
+          "Beyond the Bar (2025)",
+          "If Wishes Could Kill (2026)",
+          "Yumi's Cells Season 3 (2026)",
+          "Honour (2026)",
+          "The Legend of Kitchen Soldier (2026)"
+        ]
+      },
+      "social_links": [
+        {
+          "platform": "Instagram",
+          "url": "https://www.instagram.com/soyngxo/"
+        }
       ]
     },
     {
-      "id": "artist-yuuki-aoi",
-      "name": "Yuuki Aoi",
-      "fullName": "Aoi Yabubusaku (八武崎 碧 / 悠木 碧)",
-      "aliases": ["Ao-chan", "Yuuki Aoi"],
-      "originalLanguage": "Japanese",
-      "pronunciation": "Yūki Aoi",
-      "gender": "Female",
-      "age": "32",
-      "nationality": "Japan",
-      "occupation": ["Voice Actress", "Singer", "Illustrator"],
-      "bio": "Acclaimed Japanese voice actress and singer celebrated for her wide vocal range spanning cheerful heroines to dark villainesses.",
-      "personality": "Witty, creative, gaming enthusiast, eccentric artist.",
-      "traits": ["Chameleon Voice Range", "Gaming Passion", "Artistic Talent"],
-      "works": [
-        "Puella Magi Madoka Magica (Madoka Kaname)",
-        "Saga of Tanya the Evil (Tanya von Degurechaff)",
-        "Genshin Impact (Lumine)",
-        "Persona 5 (Futaba Sakura)",
-        "My Hero Academia (Tsuyu Asui)"
-      ],
-      "socialLinks": [
-        { "platform": "Twitter / X", "url": "https://twitter.com/staff_aoi" }
+      "id": "artist-kim-ji-won",
+      "basic": {
+        "character_name": "Kim Ji-won",
+        "type": "Actress",
+        "status_tier": "GOAT Status",
+        "country_nationality": "South Korea",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#FFD166",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Kim Ji-won (김지원)",
+        "alias_nickname": ["Kim Ji-won"],
+        "original_language_native": "Korean",
+        "pronunciation": "Kim Ji-won",
+        "gender": "Female",
+        "age_age_range": "33",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "South Korea",
+        "creator_studio": "HighZium Studio",
+        "debut_year_date": "2010"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Composed, charismatic, intelligent, emotionally nuanced.",
+        "occupation_role": ["Actress"],
+        "alignment": "",
+        "traits": [
+          "Emotional Acting",
+          "Screen Presence",
+          "Romantic Acting",
+          "Character Depth"
+        ],
+        "character_motivation": "",
+        "background_biography": "South Korean actress who gained recognition through The Heirs and Descendants of the Sun before becoming a leading actress through Fight for My Way, Arthdal Chronicles, My Liberation Notes and Queen of Tears.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "The Heirs (2013)",
+          "Descendants of the Sun (2016)",
+          "Fight for My Way (2017)",
+          "Arthdal Chronicles (2019)",
+          "My Liberation Notes (2022)",
+          "Queen of Tears (2024)"
+        ]
+      },
+      "social_links": []
+    },
+    {
+      "id": "artist-han-hyo-joo",
+      "basic": {
+        "character_name": "Han Hyo-joo",
+        "type": "Actress",
+        "status_tier": "GOAT Status",
+        "country_nationality": "South Korea",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#F8C8DC",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Han Hyo-joo (한효주)",
+        "alias_nickname": ["Han Hyo-joo"],
+        "original_language_native": "Korean",
+        "pronunciation": "Han Hyo-joo",
+        "gender": "Female",
+        "age_age_range": "39",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "South Korea",
+        "creator_studio": "",
+        "debut_year_date": "2005"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Warm, graceful, versatile, emotionally expressive.",
+        "occupation_role": ["Actress"],
+        "alignment": "",
+        "traits": [
+          "Emotional Acting",
+          "Versatility",
+          "Screen Presence",
+          "Elegance"
+        ],
+        "character_motivation": "",
+        "background_biography": "South Korean actress known for leading roles in Spring Waltz, Shining Inheritance, Dong Yi and W. She has also received major recognition for film performances including Cold Eyes.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "Spring Waltz (2006)",
+          "Shining Inheritance (2009)",
+          "Dong Yi (2010)",
+          "Cold Eyes (2013)",
+          "W (2016)",
+          "Happiness (2021)",
+          "Moving (2023)"
+        ]
+      },
+      "social_links": []
+    },
+    {
+      "id": "artist-shin-eun-soo",
+      "basic": {
+        "character_name": "Shin Eun-soo",
+        "type": "Actress",
+        "status_tier": "Rising Star",
+        "country_nationality": "South Korea",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#B8E0D2",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Shin Eun-soo (신은수)",
+        "alias_nickname": ["Shin Eun-soo"],
+        "original_language_native": "Korean",
+        "pronunciation": "Shin Eun-soo",
+        "gender": "Female",
+        "age_age_range": "24",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "South Korea",
+        "creator_studio": "Management SOOP",
+        "debut_year_date": "2016"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Sensitive, natural, expressive, quietly charismatic.",
+        "occupation_role": ["Actress"],
+        "alignment": "",
+        "traits": [
+          "Natural Acting",
+          "Emotional Depth",
+          "Expressiveness",
+          "Youthful Charm"
+        ],
+        "character_motivation": "",
+        "background_biography": "South Korean actress who debuted in the 2016 film Vanishing Time: A Boy Who Returned and later appeared in works including Twinkling Watermelon, Light Shop and other film and television projects.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "Vanishing Time: A Boy Who Returned (2016)",
+          "Bad Papa (2018)",
+          "Do You Like Brahms? (2020)",
+          "Twinkling Watermelon (2023)",
+          "Light Shop (2024)",
+          "A History of Love (2025)"
+        ]
+      },
+      "social_links": []
+    },
+    {
+      "id": "artist-iu",
+      "basic": {
+        "character_name": "IU",
+        "type": "Actress / Singer",
+        "status_tier": "GOAT Status",
+        "country_nationality": "South Korea",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#A78BFA",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Lee Ji-eun (이지은)",
+        "alias_nickname": [
+          "IU",
+          "Lee Ji-eun",
+          "Nation's Little Sister",
+          "Nation's Sweetheart"
+        ],
+        "original_language_native": "Korean",
+        "pronunciation": "IU",
+        "gender": "Female",
+        "age_age_range": "33",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "South Korea",
+        "creator_studio": "EDAM Entertainment",
+        "debut_year_date": "2008"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Warm, thoughtful, ambitious, emotionally expressive.",
+        "occupation_role": [
+          "Actress",
+          "Singer",
+          "Songwriter",
+          "Composer",
+          "Producer"
+        ],
+        "alignment": "",
+        "traits": [
+          "Vocal Mastery",
+          "Songwriting",
+          "Emotional Acting",
+          "Musicality",
+          "Stage Performance"
+        ],
+        "character_motivation": "",
+        "background_biography": "South Korean singer-songwriter and actress whose career began with her music debut in 2008. She became one of Korea's most prominent solo artists while also establishing herself as an acclaimed actress through projects such as My Mister, Hotel del Luna, Broker and When Life Gives You Tangerines.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "Dream High (2011)",
+          "You're the Best, Lee Soon-shin (2013)",
+          "My Mister (2018)",
+          "Hotel del Luna (2019)",
+          "Persona (2019)",
+          "Broker (2022)",
+          "Dream (2023)",
+          "When Life Gives You Tangerines (2025)",
+          "Perfect Crown (2026)"
+        ]
+      },
+      "social_links": [
+        {
+          "platform": "Instagram",
+          "url": "https://www.instagram.com/dlwlrma/"
+        }
       ]
     },
     {
-      "id": "artist-makoto-shinkai",
-      "name": "Makoto Shinkai",
-      "fullName": "Makoto Niitsu (新海 誠)",
-      "aliases": ["Makoto Shinkai"],
-      "originalLanguage": "Japanese",
-      "pronunciation": "Shinkai Makoto",
-      "gender": "Male",
-      "age": "51",
-      "nationality": "Japan",
-      "occupation": ["Director", "Animator", "Screenwriter", "Author"],
-      "bio": "Visionary Japanese filmmaker and animator known for photorealistic sky visual styles, emotional soundtracks, and stories exploring distance and connection.",
-      "personality": "Philosophical, introspective, meticulous visual storyteller.",
-      "traits": ["Cinematic Realism", "Atmospheric Lighting", "Emotional Storytelling"],
-      "works": [
-        "Your Name. (Kimi no Na wa.)",
-        "Weathering With You (Tenki no Ko)",
-        "Suzume (Suzume no Tojimari)",
-        "5 Centimeters per Second",
-        "The Garden of Words"
-      ],
-      "socialLinks": [
-        { "platform": "Twitter / X", "url": "https://twitter.com/shinkaimakoto" }
-      ]
+      "id": "artist-park-bo-young",
+      "basic": {
+        "character_name": "Park Bo-young",
+        "type": "Actress",
+        "status_tier": "GOAT Status",
+        "country_nationality": "South Korea",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#FF9F68",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Park Bo-young (박보영)",
+        "alias_nickname": ["Park Bo-young"],
+        "original_language_native": "Korean",
+        "pronunciation": "Park Bo-young",
+        "gender": "Female",
+        "age_age_range": "36",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "South Korea",
+        "creator_studio": "BH Entertainment",
+        "debut_year_date": "2006"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Warm, lovable, energetic, emotionally versatile.",
+        "occupation_role": ["Actress"],
+        "alignment": "",
+        "traits": [
+          "Comedy",
+          "Emotional Acting",
+          "Romantic Acting",
+          "Expressiveness"
+        ],
+        "character_motivation": "",
+        "background_biography": "South Korean actress who rose to prominence through Scandal Makers and later became known for films and dramas including A Werewolf Boy, Oh My Ghost, Strong Girl Bong-soon and Daily Dose of Sunshine.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "Scandal Makers (2008)",
+          "A Werewolf Boy (2012)",
+          "Oh My Ghost (2015)",
+          "Strong Girl Bong-soon (2017)",
+          "Abyss (2019)",
+          "Daily Dose of Sunshine (2023)",
+          "Melo Movie (2025)",
+          "Our Unwritten Seoul (2025)",
+          "Gold Land (2026)"
+        ]
+      },
+      "social_links": []
+    },
+    {
+      "id": "artist-hong-hwa-yeon",
+      "basic": {
+        "character_name": "Hong Hwa-yeon",
+        "type": "Actress",
+        "status_tier": "Rising Star",
+        "country_nationality": "South Korea",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#F6A6C1",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Hong Hwa-yeon (홍화연)",
+        "alias_nickname": ["Hong Hwa-yeon"],
+        "original_language_native": "Korean",
+        "pronunciation": "Hong Hwa-yeon",
+        "gender": "Female",
+        "age_age_range": "28",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "South Korea",
+        "creator_studio": "",
+        "debut_year_date": "2022"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Elegant, youthful, expressive, promising.",
+        "occupation_role": ["Actress"],
+        "alignment": "",
+        "traits": [
+          "Expressive Acting",
+          "Screen Presence",
+          "Versatility",
+          "Rising Talent"
+        ],
+        "character_motivation": "",
+        "background_biography": "South Korean actress known for Mental Coach Jegal and Buried Hearts. Her more recent work includes Filing for Love, expanding her profile in Korean television.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "Mental Coach Jegal (2022)",
+          "True to Love (2023)",
+          "Buried Hearts (2025)",
+          "Filing for Love (2026)"
+        ]
+      },
+      "social_links": []
+    },
+    {
+      "id": "artist-bae-suzy",
+      "basic": {
+        "character_name": "Bae Suzy",
+        "type": "Actress / Singer",
+        "status_tier": "GOAT Status",
+        "country_nationality": "South Korea",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#7DD3FC",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Bae Su-ji (배수지)",
+        "alias_nickname": ["Suzy", "Bae Suzy", "Bae Su-ji"],
+        "original_language_native": "Korean",
+        "pronunciation": "Bae Suzy",
+        "gender": "Female",
+        "age_age_range": "31",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "South Korea",
+        "creator_studio": "",
+        "debut_year_date": "2010"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Warm, charismatic, versatile, composed.",
+        "occupation_role": ["Actress", "Singer", "Model"],
+        "alignment": "",
+        "traits": [
+          "Stage Performance",
+          "Emotional Acting",
+          "Screen Presence",
+          "Versatility"
+        ],
+        "character_motivation": "",
+        "background_biography": "South Korean actress, singer and former member of Miss A. She transitioned from idol activities into a successful acting career, becoming known for roles in Dream High, While You Were Sleeping, Vagabond, Start-Up and Anna.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "Dream High (2011)",
+          "Architecture 101 (2012)",
+          "While You Were Sleeping (2017)",
+          "Vagabond (2019)",
+          "Start-Up (2020)",
+          "Anna (2022)",
+          "Doona! (2023)"
+        ]
+      },
+      "social_links": []
+    },
+    {
+      "id": "artist-kim-hye-yoon",
+      "basic": {
+        "character_name": "Kim Hye-yoon",
+        "type": "Actress",
+        "status_tier": "GOAT Status",
+        "country_nationality": "South Korea",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#FFB4A2",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Kim Hye-yoon (김혜윤)",
+        "alias_nickname": ["Kim Hye-yoon"],
+        "original_language_native": "Korean",
+        "pronunciation": "Kim Hye-yoon",
+        "gender": "Female",
+        "age_age_range": "29",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "South Korea",
+        "creator_studio": "",
+        "debut_year_date": "2013"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Energetic, expressive, passionate, emotionally versatile.",
+        "occupation_role": ["Actress"],
+        "alignment": "",
+        "traits": [
+          "Expressive Acting",
+          "Comedy",
+          "Emotional Range",
+          "Romantic Acting"
+        ],
+        "character_motivation": "",
+        "background_biography": "South Korean actress who gained widespread recognition through Extraordinary You and later became internationally known for her leading performance in Lovely Runner.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "Sky Castle (2018–2019)",
+          "Extraordinary You (2019)",
+          "Snowdrop (2021–2022)",
+          "The Girl on a Bulldozer (2022)",
+          "Lovely Runner (2024)",
+          "No Gain No Love (2024)"
+        ]
+      },
+      "social_links": []
+    },
+    {
+      "id": "artist-jeong-min-jeong",
+      "basic": {
+        "character_name": "Jeong Min-jeong",
+        "type": "Actress",
+        "status_tier": "Rising Star",
+        "country_nationality": "South Korea",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#C4B5FD",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Jeong Min-jeong (정민정)",
+        "alias_nickname": ["Jeong Min-jeong"],
+        "original_language_native": "Korean",
+        "pronunciation": "Jeong Min-jeong",
+        "gender": "Female",
+        "age_age_range": "25",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "South Korea",
+        "creator_studio": "",
+        "debut_year_date": ""
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Natural, youthful, expressive, developing.",
+        "occupation_role": ["Actress"],
+        "alignment": "",
+        "traits": ["Natural Acting", "Expressiveness", "Youthful Energy"],
+        "character_motivation": "",
+        "background_biography": "South Korean actress born in Busan in 2000. She studied film at Sangmyung University and has appeared in Korean screen productions including the Netflix series Karma.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": ["Karma (2025)"]
+      },
+      "social_links": []
+    },
+    {
+      "id": "artist-jay-han",
+      "basic": {
+        "character_name": "Jay Han",
+        "type": "Actress",
+        "status_tier": "Unverified",
+        "country_nationality": "South Korea",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#94A3B8",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Jay Han",
+        "alias_nickname": [],
+        "original_language_native": "Korean",
+        "pronunciation": "Jay Han",
+        "gender": "Female",
+        "age_age_range": "",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "South Korea",
+        "creator_studio": "",
+        "debut_year_date": ""
+      },
+      "profile_and_lore": {
+        "personality_archetype": "",
+        "occupation_role": ["Actress"],
+        "alignment": "",
+        "traits": [],
+        "character_motivation": "",
+        "background_biography": "",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": []
+      },
+      "social_links": []
+    },
+    {
+      "id": "artist-seo-su-min",
+      "basic": {
+        "character_name": "Seo Su-min",
+        "type": "Actress",
+        "status_tier": "Unverified",
+        "country_nationality": "South Korea",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#94A3B8",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Seo Su-min (서수민)",
+        "alias_nickname": [],
+        "original_language_native": "Korean",
+        "pronunciation": "Seo Su-min",
+        "gender": "Female",
+        "age_age_range": "",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "South Korea",
+        "creator_studio": "",
+        "debut_year_date": ""
+      },
+      "profile_and_lore": {
+        "personality_archetype": "",
+        "occupation_role": ["Actress"],
+        "alignment": "",
+        "traits": [],
+        "character_motivation": "",
+        "background_biography": "",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": []
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "character-kaoruko-waguri",
+      "basic": {
+        "character_name": "Kaoruko Waguri",
+        "type": "Character",
+        "status_tier": "GOAT Status",
+        "country_nationality": "Japan",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#FFB6C1",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Kaoruko Waguri (和栗薫子)",
+        "alias_nickname": ["Waguri Kaoruko"],
+        "original_language_native": "Japanese",
+        "pronunciation": "Waguri Kaoruko",
+        "gender": "Female",
+        "age_age_range": "15",
+        "species_type": "Human",
+        "universe_work": "The Shiunji Family Children",
+        "series_franchise": "The Shiunji Family Children",
+        "country_region": "Japan",
+        "creator_studio": "",
+        "debut_year_date": "2025"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Gentle, intelligent, reserved, sincere.",
+        "occupation_role": ["High School Student"],
+        "alignment": "",
+        "traits": [
+          "Kindness",
+          "Intelligence",
+          "Reserved Nature",
+          "Emotional Sensitivity"
+        ],
+        "character_motivation": "",
+        "background_biography": "A character from The Shiunji Family Children.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": ["The Shiunji Family Children"],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": []
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "character-zarc",
+      "basic": {
+        "character_name": "Zarc",
+        "type": "Character",
+        "status_tier": "GOAT Status",
+        "country_nationality": "",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#8B00FF",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Zarc (ズァーク)",
+        "alias_nickname": ["Z-ARC", "Supreme King Z-ARC"],
+        "original_language_native": "Japanese",
+        "pronunciation": "Zarc",
+        "gender": "Male",
+        "age_age_range": "",
+        "species_type": "Human / Dragon Entity",
+        "universe_work": "Yu-Gi-Oh! ARC-V",
+        "series_franchise": "Yu-Gi-Oh!",
+        "country_region": "",
+        "creator_studio": "Studio Gallop",
+        "debut_year_date": "2017"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Power-hungry, destructive, obsessive, theatrical.",
+        "occupation_role": ["Professional Duelist", "Supreme King"],
+        "alignment": "Antagonist",
+        "traits": [
+          "Dueling Mastery",
+          "Destruction",
+          "Dragon Mastery",
+          "Obsession",
+          "Overwhelming Power"
+        ],
+        "character_motivation": "To become the strongest duelist and dominate every opponent.",
+        "background_biography": "Zarc is the central antagonist of Yu-Gi-Oh! ARC-V and the original incarnation of Yuya Sakaki, Yuto, Yugo and Yuri. His soul was divided into four counterparts after his defeat by Ray Akaba.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": ["Yu-Gi-Oh! ARC-V"],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": ["Supreme King Dragon Zarc"]
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "character-hiyori-shiina",
+      "basic": {
+        "character_name": "Hiyori Shiina",
+        "type": "Character",
+        "status_tier": "Rising Star",
+        "country_nationality": "Japan",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#87CEEB",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Hiyori Shiina",
+        "alias_nickname": [],
+        "original_language_native": "Japanese",
+        "pronunciation": "Shiina Hiyori",
+        "gender": "Female",
+        "age_age_range": "",
+        "species_type": "Human",
+        "universe_work": "Classroom of the Elite",
+        "series_franchise": "Classroom of the Elite",
+        "country_region": "Japan",
+        "creator_studio": "",
+        "debut_year_date": ""
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Quiet, intelligent, gentle, book-loving.",
+        "occupation_role": ["Student"],
+        "alignment": "",
+        "traits": [
+          "Intelligence",
+          "Calmness",
+          "Reading",
+          "Observation",
+          "Kindness"
+        ],
+        "character_motivation": "",
+        "background_biography": "A quiet and intelligent student from Classroom of the Elite known for her love of books and calm personality.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": ["Classroom of the Elite"],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": []
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "character-shikimori",
+      "basic": {
+        "character_name": "Shikimori",
+        "type": "Character",
+        "status_tier": "GOAT Status",
+        "country_nationality": "Japan",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#FF8FB1",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Shikimori (式守)",
+        "alias_nickname": ["Micchon Shikimori"],
+        "original_language_native": "Japanese",
+        "pronunciation": "Shikimori",
+        "gender": "Female",
+        "age_age_range": "16",
+        "species_type": "Human",
+        "universe_work": "Shikimori's Not Just a Cutie",
+        "series_franchise": "Shikimori's Not Just a Cutie",
+        "country_region": "Japan",
+        "creator_studio": "Doga Kobo",
+        "debut_year_date": "2022"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Sweet, caring, athletic, cool under pressure.",
+        "occupation_role": ["High School Student"],
+        "alignment": "",
+        "traits": [
+          "Kindness",
+          "Athleticism",
+          "Protectiveness",
+          "Romance",
+          "Cool Personality"
+        ],
+        "character_motivation": "",
+        "background_biography": "The female protagonist of Shikimori's Not Just a Cutie. She is known for being cute and affectionate while also having an unexpectedly cool and protective side.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": ["Shikimori's Not Just a Cutie"],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": []
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "character-umaru-doma",
+      "basic": {
+        "character_name": "Umaru Doma",
+        "type": "Character",
+        "status_tier": "GOAT Status",
+        "country_nationality": "Japan",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#FFD166",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Umaru Doma (土間埋)",
+        "alias_nickname": ["Umaru", "Komaru", "Umaru Taisou"],
+        "original_language_native": "Japanese",
+        "pronunciation": "Doma Umaru",
+        "gender": "Female",
+        "age_age_range": "16",
+        "species_type": "Human",
+        "universe_work": "Himouto! Umaru-chan",
+        "series_franchise": "Himouto! Umaru-chan",
+        "country_region": "Japan",
+        "creator_studio": "Doga Kobo",
+        "debut_year_date": "2015"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Cheerful, clever, lazy, competitive, comedic.",
+        "occupation_role": ["High School Student"],
+        "alignment": "",
+        "traits": [
+          "Intelligence",
+          "Gaming",
+          "Comedy",
+          "Competitiveness",
+          "Laziness"
+        ],
+        "character_motivation": "",
+        "background_biography": "The protagonist of Himouto! Umaru-chan. At school she appears as a perfect student, while at home she transforms into a lazy, gaming-loving chibi version of herself.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": ["Himouto! Umaru-chan", "Himouto! Umaru-chan R"],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": ["Umaru Taisou"]
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "character-miku-nakano",
+      "basic": {
+        "character_name": "Miku Nakano",
+        "type": "Character",
+        "status_tier": "GOAT Status",
+        "country_nationality": "Japan",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#6C8EBF",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Miku Nakano (中野 三玖)",
+        "alias_nickname": ["Miku"],
+        "original_language_native": "Japanese",
+        "pronunciation": "Nakano Miku",
+        "gender": "Female",
+        "age_age_range": "17",
+        "species_type": "Human",
+        "universe_work": "The Quintessential Quintuplets",
+        "series_franchise": "The Quintessential Quintuplets",
+        "country_region": "Japan",
+        "creator_studio": "Bibury Animation Studios",
+        "debut_year_date": "2019"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Quiet, shy, thoughtful, determined.",
+        "occupation_role": ["High School Student"],
+        "alignment": "",
+        "traits": [
+          "Shyness",
+          "Historical Knowledge",
+          "Determination",
+          "Kindness",
+          "Romantic Feelings"
+        ],
+        "character_motivation": "",
+        "background_biography": "The third Nakano quintuplet. Miku is quiet and reserved and has a strong interest in Japanese history, particularly historical warlords.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [
+          "The Quintessential Quintuplets",
+          "The Quintessential Quintuplets ∬",
+          "The Quintessential Quintuplets Movie"
+        ],
+        "movies_filmography": ["The Quintessential Quintuplets Movie"],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": []
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "character-itsuki-nakano",
+      "basic": {
+        "character_name": "Itsuki Nakano",
+        "type": "Character",
+        "status_tier": "GOAT Status",
+        "country_nationality": "Japan",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#E53935",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Itsuki Nakano (中野 五月)",
+        "alias_nickname": ["Itsuki"],
+        "original_language_native": "Japanese",
+        "pronunciation": "Nakano Itsuki",
+        "gender": "Female",
+        "age_age_range": "17",
+        "species_type": "Human",
+        "universe_work": "The Quintessential Quintuplets",
+        "series_franchise": "The Quintessential Quintuplets",
+        "country_region": "Japan",
+        "creator_studio": "Bibury Animation Studios",
+        "debut_year_date": "2019"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Serious, responsible, hardworking, honest.",
+        "occupation_role": ["High School Student"],
+        "alignment": "",
+        "traits": [
+          "Discipline",
+          "Responsibility",
+          "Academic Drive",
+          "Honesty",
+          "Determination"
+        ],
+        "character_motivation": "",
+        "background_biography": "The fifth Nakano quintuplet. Itsuki is serious and responsible and initially struggles academically despite her strong desire to become a teacher like her late mother.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [
+          "The Quintessential Quintuplets",
+          "The Quintessential Quintuplets ∬",
+          "The Quintessential Quintuplets Movie"
+        ],
+        "movies_filmography": ["The Quintessential Quintuplets Movie"],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": []
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "character-yuya-sakaki",
+      "basic": {
+        "character_name": "Yuya Sakaki",
+        "type": "Character",
+        "status_tier": "GOAT Status",
+        "country_nationality": "",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#FF3B30",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Yuya Sakaki (榊 遊矢)",
+        "alias_nickname": ["Yuya", "The Entertainment Duelist"],
+        "original_language_native": "Japanese",
+        "pronunciation": "Sakaki Yuya",
+        "gender": "Male",
+        "age_age_range": "14",
+        "species_type": "Human",
+        "universe_work": "Yu-Gi-Oh! ARC-V",
+        "series_franchise": "Yu-Gi-Oh!",
+        "country_region": "",
+        "creator_studio": "Studio Gallop",
+        "debut_year_date": "2014"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Energetic, theatrical, compassionate, determined.",
+        "occupation_role": ["Duelist", "Entertainment Duelist", "Student"],
+        "alignment": "Hero",
+        "traits": [
+          "Entertainment",
+          "Dueling",
+          "Compassion",
+          "Determination",
+          "Pendulum Summoning"
+        ],
+        "character_motivation": "To make people smile through entertaining Action Duels while becoming a great duelist like his father.",
+        "background_biography": "The protagonist of Yu-Gi-Oh! ARC-V and the Standard Dimension counterpart of Zarc.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": ["Yu-Gi-Oh! ARC-V"],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": []
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "character-yuto",
+      "basic": {
+        "character_name": "Yuto",
+        "type": "Character",
+        "status_tier": "GOAT Status",
+        "country_nationality": "",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#455A64",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Yuto (ユート)",
+        "alias_nickname": [],
+        "original_language_native": "Japanese",
+        "pronunciation": "Yūto",
+        "gender": "Male",
+        "age_age_range": "14",
+        "species_type": "Human",
+        "universe_work": "Yu-Gi-Oh! ARC-V",
+        "series_franchise": "Yu-Gi-Oh!",
+        "country_region": "",
+        "creator_studio": "Studio Gallop",
+        "debut_year_date": "2014"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Serious, protective, determined, courageous.",
+        "occupation_role": ["Duelist"],
+        "alignment": "Hero",
+        "traits": [
+          "Dueling",
+          "Protection",
+          "Determination",
+          "Courage",
+          "Xyz Summoning"
+        ],
+        "character_motivation": "To protect the Xyz Dimension and rescue Ruri Kurosaki.",
+        "background_biography": "The Xyz Dimension counterpart of Yuya Sakaki and one of Zarc's four reincarnated counterparts.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": ["Yu-Gi-Oh! ARC-V"],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": []
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "character-yugo",
+      "basic": {
+        "character_name": "Yugo",
+        "type": "Character",
+        "status_tier": "GOAT Status",
+        "country_nationality": "",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#00BFFF",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Yugo (ユーゴ)",
+        "alias_nickname": [],
+        "original_language_native": "Japanese",
+        "pronunciation": "Yūgo",
+        "gender": "Male",
+        "age_age_range": "14",
+        "species_type": "Human",
+        "universe_work": "Yu-Gi-Oh! ARC-V",
+        "series_franchise": "Yu-Gi-Oh!",
+        "country_region": "",
+        "creator_studio": "Studio Gallop",
+        "debut_year_date": "2014"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Hot-headed, energetic, loyal, impulsive.",
+        "occupation_role": ["Duelist"],
+        "alignment": "Hero",
+        "traits": [
+          "Speed",
+          "Dueling",
+          "Loyalty",
+          "Impulsiveness",
+          "Synchro Summoning"
+        ],
+        "character_motivation": "To find Rin and protect his friends.",
+        "background_biography": "The Synchro Dimension counterpart of Yuya Sakaki and one of Zarc's four reincarnated counterparts.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": ["Yu-Gi-Oh! ARC-V"],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": []
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "character-yuri",
+      "basic": {
+        "character_name": "Yuri",
+        "type": "Character",
+        "status_tier": "GOAT Status",
+        "country_nationality": "",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#8E44AD",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Yuri (ユーリ)",
+        "alias_nickname": [],
+        "original_language_native": "Japanese",
+        "pronunciation": "Yūri",
+        "gender": "Male",
+        "age_age_range": "14",
+        "species_type": "Human",
+        "universe_work": "Yu-Gi-Oh! ARC-V",
+        "series_franchise": "Yu-Gi-Oh!",
+        "country_region": "",
+        "creator_studio": "Studio Gallop",
+        "debut_year_date": "2014"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Sadistic, manipulative, intelligent, dangerous.",
+        "occupation_role": ["Duelist", "Fusion Duelist"],
+        "alignment": "Antagonist",
+        "traits": [
+          "Manipulation",
+          "Intelligence",
+          "Dueling",
+          "Sadism",
+          "Fusion Summoning"
+        ],
+        "character_motivation": "",
+        "background_biography": "The Fusion Dimension counterpart of Yuya Sakaki and one of Zarc's four reincarnated counterparts.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": ["Yu-Gi-Oh! ARC-V"],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": []
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "character-yuzu-hiiragi",
+      "basic": {
+        "character_name": "Yuzu Hiiragi",
+        "type": "Character",
+        "status_tier": "GOAT Status",
+        "country_nationality": "",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#FF69B4",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Yuzu Hiiragi (柊 柚子)",
+        "alias_nickname": ["Yuzu"],
+        "original_language_native": "Japanese",
+        "pronunciation": "Hiiragi Yuzu",
+        "gender": "Female",
+        "age_age_range": "14",
+        "species_type": "Human",
+        "universe_work": "Yu-Gi-Oh! ARC-V",
+        "series_franchise": "Yu-Gi-Oh!",
+        "country_region": "",
+        "creator_studio": "Studio Gallop",
+        "debut_year_date": "2014"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Energetic, confident, caring, determined.",
+        "occupation_role": ["Duelist", "Student"],
+        "alignment": "Hero",
+        "traits": [
+          "Determination",
+          "Courage",
+          "Friendship",
+          "Dueling",
+          "Pendulum Summoning"
+        ],
+        "character_motivation": "",
+        "background_biography": "Yuya Sakaki's childhood friend and one of the four girls connected to the dimensional counterparts of Zarc and Ray.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": ["Yu-Gi-Oh! ARC-V"],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": []
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "character-serena",
+      "basic": {
+        "character_name": "Serena",
+        "type": "Character",
+        "status_tier": "GOAT Status",
+        "country_nationality": "",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#D8B4FE",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Serena (セレナ)",
+        "alias_nickname": [],
+        "original_language_native": "Japanese",
+        "pronunciation": "Serena",
+        "gender": "Female",
+        "age_age_range": "14",
+        "species_type": "Human",
+        "universe_work": "Yu-Gi-Oh! ARC-V",
+        "series_franchise": "Yu-Gi-Oh!",
+        "country_region": "",
+        "creator_studio": "Studio Gallop",
+        "debut_year_date": "2014"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Independent, aggressive, courageous, competitive.",
+        "occupation_role": ["Duelist", "Fusion Duelist"],
+        "alignment": "Hero",
+        "traits": [
+          "Independence",
+          "Combativeness",
+          "Courage",
+          "Fusion Summoning",
+          "Determination"
+        ],
+        "character_motivation": "",
+        "background_biography": "The Fusion Dimension counterpart of Yuzu Hiiragi and one of the four girls connected to the dimensional lore of Yu-Gi-Oh! ARC-V.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": ["Yu-Gi-Oh! ARC-V"],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": []
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "character-ruri-kurosaki",
+      "basic": {
+        "character_name": "Ruri Kurosaki",
+        "type": "Character",
+        "status_tier": "GOAT Status",
+        "country_nationality": "",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#7C4DFF",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Ruri Kurosaki (黒咲 瑠璃)",
+        "alias_nickname": ["Ruri"],
+        "original_language_native": "Japanese",
+        "pronunciation": "Kurosaki Ruri",
+        "gender": "Female",
+        "age_age_range": "14",
+        "species_type": "Human",
+        "universe_work": "Yu-Gi-Oh! ARC-V",
+        "series_franchise": "Yu-Gi-Oh!",
+        "country_region": "",
+        "creator_studio": "Studio Gallop",
+        "debut_year_date": "2014"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Gentle, courageous, determined, compassionate.",
+        "occupation_role": ["Duelist"],
+        "alignment": "Hero",
+        "traits": ["Courage", "Compassion", "Determination", "Xyz Summoning"],
+        "character_motivation": "",
+        "background_biography": "The Xyz Dimension counterpart of Yuzu Hiiragi and the younger sister of Shun Kurosaki. Yuto seeks to rescue her after she is taken to the Fusion Dimension.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": ["Yu-Gi-Oh! ARC-V"],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": []
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "character-rin-yugioh-arc-v",
+      "basic": {
+        "character_name": "Rin",
+        "type": "Character",
+        "status_tier": "GOAT Status",
+        "country_nationality": "",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#00BCD4",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Rin (リン)",
+        "alias_nickname": ["Rin"],
+        "original_language_native": "Japanese",
+        "pronunciation": "Rin",
+        "gender": "Female",
+        "age_age_range": "14",
+        "species_type": "Human",
+        "universe_work": "Yu-Gi-Oh! ARC-V",
+        "series_franchise": "Yu-Gi-Oh!",
+        "country_region": "",
+        "creator_studio": "Studio Gallop",
+        "debut_year_date": "2014"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Kind, strong-willed, compassionate, determined.",
+        "occupation_role": ["Duelist"],
+        "alignment": "Hero",
+        "traits": ["Determination", "Kindness", "Courage", "Synchro Summoning"],
+        "character_motivation": "",
+        "background_biography": "The Synchro Dimension counterpart of Yuzu Hiiragi and Yugo's childhood friend.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": ["Yu-Gi-Oh! ARC-V"],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": []
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "character-ray-akaba",
+      "basic": {
+        "character_name": "Ray Akaba",
+        "type": "Character",
+        "status_tier": "GOAT Status",
+        "country_nationality": "",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#FFD54F",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Ray Akaba (赤馬 零羅)",
+        "alias_nickname": ["Ray"],
+        "original_language_native": "Japanese",
+        "pronunciation": "Akaba Rei",
+        "gender": "Female",
+        "age_age_range": "",
+        "species_type": "Human",
+        "universe_work": "Yu-Gi-Oh! ARC-V",
+        "series_franchise": "Yu-Gi-Oh!",
+        "country_region": "",
+        "creator_studio": "Studio Gallop",
+        "debut_year_date": "2014"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Courageous, selfless, powerful, determined.",
+        "occupation_role": ["Duelist", "Dimensional Guardian"],
+        "alignment": "Hero",
+        "traits": [
+          "Courage",
+          "Sacrifice",
+          "Power",
+          "Determination",
+          "Dimensional Power"
+        ],
+        "character_motivation": "To stop Zarc and protect the world from his destructive power.",
+        "background_biography": "A central figure in the original dimension's history and the counterpart origin behind the four girls Yuzu, Serena, Ruri and Rin. Ray played a decisive role in defeating Zarc.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": ["Yu-Gi-Oh! ARC-V"],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": []
+      },
+      "social_links": []
+    },
+    {
+      "id": "artist-lin-yi",
+      "basic": {
+        "character_name": "Lin Yi",
+        "type": "Actor",
+        "status_tier": "GOAT Status",
+        "country_nationality": "China",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#4FC3F7",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Lin Yi (林一)",
+        "alias_nickname": ["Lin Yi"],
+        "original_language_native": "Chinese",
+        "pronunciation": "Lín Yī",
+        "gender": "Male",
+        "age_age_range": "27",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "China",
+        "creator_studio": "",
+        "debut_year_date": "2019"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Calm, gentle, intelligent, charismatic.",
+        "occupation_role": ["Actor", "Model"],
+        "alignment": "",
+        "traits": [
+          "Romantic Acting",
+          "Screen Presence",
+          "Modeling",
+          "Emotional Expression"
+        ],
+        "character_motivation": "",
+        "background_biography": "Chinese actor and model best known internationally for his leading role as Gu Wei in Put Your Head on My Shoulder. He has continued to build a career in modern romance and youth dramas.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "Put Your Head on My Shoulder (2019)",
+          "The Blessed Girl (2021)",
+          "Love Scenery (2021)",
+          "Derailment (2023)",
+          "Everyone Loves Me (2024)",
+          "Follow Your Heart (2024)"
+        ]
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "artist-zhou-yi-ran",
+      "basic": {
+        "character_name": "Zhou Yi Ran",
+        "type": "Actor",
+        "status_tier": "Rising Star",
+        "country_nationality": "China",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#81D4FA",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Zhou Yi Ran (周翊然)",
+        "alias_nickname": ["Fang Xiang Rui"],
+        "original_language_native": "Chinese",
+        "pronunciation": "Zhōu Yìrán",
+        "gender": "Male",
+        "age_age_range": "21",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "China",
+        "creator_studio": "",
+        "debut_year_date": "2018"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Youthful, gentle, expressive, reserved.",
+        "occupation_role": ["Actor", "Singer"],
+        "alignment": "",
+        "traits": [
+          "Youthful Charm",
+          "Emotional Acting",
+          "Musicality",
+          "Romantic Acting"
+        ],
+        "character_motivation": "",
+        "background_biography": "Chinese actor and singer who gained widespread attention through youth and romance dramas including When I Fly Towards You and You Are Desire.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "When I Fly Towards You (2023)",
+          "You Are Desire (2023)",
+          "The Double (2024)",
+          "The Best Thing (2025)"
+        ]
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "artist-zhang-ling-he",
+      "basic": {
+        "character_name": "Zhang Ling He",
+        "type": "Actor",
+        "status_tier": "GOAT Status",
+        "country_nationality": "China",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#7E57C2",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Zhang Ling He (张凌赫)",
+        "alias_nickname": ["Zhang Linghe"],
+        "original_language_native": "Chinese",
+        "pronunciation": "Zhāng Línghè",
+        "gender": "Male",
+        "age_age_range": "29",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "China",
+        "creator_studio": "",
+        "debut_year_date": "2019"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Elegant, composed, intelligent, charismatic.",
+        "occupation_role": ["Actor"],
+        "alignment": "",
+        "traits": [
+          "Screen Presence",
+          "Emotional Acting",
+          "Historical Drama",
+          "Romantic Acting",
+          "Charisma"
+        ],
+        "character_motivation": "",
+        "background_biography": "Chinese actor who rose to prominence through historical and romantic dramas. He gained major attention through My Journey to You and Story of Kunning Palace.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "Maiden Holmes (2020)",
+          "Love Between Fairy and Devil (2022)",
+          "My Journey to You (2023)",
+          "Story of Kunning Palace (2023)",
+          "The Best Thing (2025)"
+        ]
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "artist-song-wei-long",
+      "basic": {
+        "character_name": "Song Wei Long",
+        "type": "Actor",
+        "status_tier": "GOAT Status",
+        "country_nationality": "China",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#90CAF9",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Song Wei Long (宋威龙)",
+        "alias_nickname": ["Song Weilong"],
+        "original_language_native": "Chinese",
+        "pronunciation": "Sòng Wēilóng",
+        "gender": "Male",
+        "age_age_range": "27",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "China",
+        "creator_studio": "",
+        "debut_year_date": "2016"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Calm, charismatic, youthful, emotionally expressive.",
+        "occupation_role": ["Actor", "Model"],
+        "alignment": "",
+        "traits": [
+          "Screen Presence",
+          "Romantic Acting",
+          "Modeling",
+          "Youthful Charm"
+        ],
+        "character_motivation": "",
+        "background_biography": "Chinese actor and model known for his work in youth, romance and historical dramas. He gained international popularity through Find Yourself and the family drama Go Ahead.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "Long For You (2017)",
+          "Find Yourself (2020)",
+          "Go Ahead (2020)",
+          "Love the Way You Are (2019)",
+          "Bionic (2024)",
+          "The Rise of Ning (2024)"
+        ]
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "artist-miles-wei",
+      "basic": {
+        "character_name": "Miles Wei",
+        "type": "Actor",
+        "status_tier": "GOAT Status",
+        "country_nationality": "China",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#5C6BC0",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Wei Zhe Ming (魏哲鸣)",
+        "alias_nickname": ["Miles Wei", "Wei Zhe Ming"],
+        "original_language_native": "Chinese",
+        "pronunciation": "Wèi Zhé Míng",
+        "gender": "Male",
+        "age_age_range": "36",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "China",
+        "creator_studio": "",
+        "debut_year_date": "2012"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Mature, composed, intelligent, charismatic.",
+        "occupation_role": ["Actor", "Singer"],
+        "alignment": "",
+        "traits": [
+          "Romantic Acting",
+          "Emotional Expression",
+          "Musicality",
+          "Screen Presence",
+          "Maturity"
+        ],
+        "character_motivation": "",
+        "background_biography": "Chinese actor and singer widely known internationally as Miles Wei. He has become particularly recognized for mature romantic roles in dramas such as Perfect and Casual, Unforgettable Love and Hello, I'm At Your Service.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "Perfect and Casual (2020)",
+          "Unforgettable Love (2021)",
+          "Why Women Love (2022)",
+          "Hello, I'm At Your Service (2023)",
+          "Love Me, Love My Voice (2023)",
+          "My Special Girl (2024)"
+        ]
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "artist-qi-yu-chen",
+      "basic": {
+        "character_name": "Qi Yu Chen",
+        "type": "Actress",
+        "status_tier": "Unverified",
+        "country_nationality": "China",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#94A3B8",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Qi Yu Chen",
+        "alias_nickname": [],
+        "original_language_native": "Chinese",
+        "pronunciation": "Qí Yǔ Chén",
+        "gender": "Female",
+        "age_age_range": "",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "China",
+        "creator_studio": "",
+        "debut_year_date": ""
+      },
+      "profile_and_lore": {
+        "personality_archetype": "",
+        "occupation_role": ["Actress"],
+        "alignment": "",
+        "traits": [],
+        "character_motivation": "",
+        "background_biography": "",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": []
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "artist-bao-shang-en",
+      "basic": {
+        "character_name": "Bao Shang En",
+        "type": "Actress",
+        "status_tier": "Rising Star",
+        "country_nationality": "China",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#F48FB1",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Bao Shang En (包上恩)",
+        "alias_nickname": ["Bao Shang'en"],
+        "original_language_native": "Chinese",
+        "pronunciation": "Bāo Shàng'ēn",
+        "gender": "Female",
+        "age_age_range": "23",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "China",
+        "creator_studio": "",
+        "debut_year_date": "2021"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Youthful, lively, expressive, charming.",
+        "occupation_role": ["Actress"],
+        "alignment": "",
+        "traits": [
+          "Youthful Charm",
+          "Expressive Acting",
+          "Romantic Acting",
+          "Versatility"
+        ],
+        "character_motivation": "",
+        "background_biography": "Chinese actress who has gained attention through youth and historical dramas, including The Legend of Shen Li, The Double and The Best Thing.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "The Legend of Shen Li (2024)",
+          "The Double (2024)",
+          "A Dream Within a Dream (2025)",
+          "The Best Thing (2025)"
+        ]
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "artist-lu-yu-xiao",
+      "basic": {
+        "character_name": "Lu Yu Xiao",
+        "type": "Actress",
+        "status_tier": "Rising Star",
+        "country_nationality": "China",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#CE93D8",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Lu Yu Xiao (卢昱晓)",
+        "alias_nickname": ["Lulu", "Lu Yuxiao"],
+        "original_language_native": "Chinese",
+        "pronunciation": "Lú Yùxiǎo",
+        "gender": "Female",
+        "age_age_range": "27",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "China",
+        "creator_studio": "",
+        "debut_year_date": "2019"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Bright, playful, expressive, versatile.",
+        "occupation_role": ["Actress", "Model"],
+        "alignment": "",
+        "traits": [
+          "Expressive Acting",
+          "Youthful Charm",
+          "Modeling",
+          "Versatility"
+        ],
+        "character_motivation": "",
+        "background_biography": "Chinese actress and model known for performances in romantic and historical dramas. She gained significant attention through My Journey to You and later starred in projects such as Love Me, Love My Voice and Moonlit Reunion.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "My Journey to You (2023)",
+          "Love Me, Love My Voice (2023)",
+          "Moonlit Reunion (2024)",
+          "The Princess Royal (2024)",
+          "Love's Ambition (2024)"
+        ]
+      },
+      "social_links": []
+    },
+
+    {
+      "id": "artist-tian-xi-wei",
+      "basic": {
+        "character_name": "Tian Xi Wei",
+        "type": "Actress",
+        "status_tier": "GOAT Status",
+        "country_nationality": "China",
+        "roster_rank_order": "Unranked (Standard)",
+        "accent_theme_color": "#FFB74D",
+        "enshrinement_note_quote": "",
+        "make_overall_champion_leader": false
+      },
+      "identity_and_origin": {
+        "full_official_name": "Tian Xi Wei (田曦薇)",
+        "alias_nickname": ["Tian Xiwei"],
+        "original_language_native": "Chinese",
+        "pronunciation": "Tián Xīwēi",
+        "gender": "Female",
+        "age_age_range": "27",
+        "species_type": "Human",
+        "universe_work": "",
+        "series_franchise": "",
+        "country_region": "China",
+        "creator_studio": "",
+        "debut_year_date": "2018"
+      },
+      "profile_and_lore": {
+        "personality_archetype": "Cheerful, energetic, playful, charismatic.",
+        "occupation_role": ["Actress"],
+        "alignment": "",
+        "traits": [
+          "Comedy",
+          "Expressive Acting",
+          "Romantic Acting",
+          "Youthful Charm",
+          "Charisma"
+        ],
+        "character_motivation": "",
+        "background_biography": "Chinese actress known for her lively performances in youth, romance and historical dramas. She gained major popularity through New Life Begins and My Calorie Boy, and continued to rise with projects such as Romance on the Farm and Love of Nirvana.",
+        "character_development_arc": ""
+      },
+      "appearances": {
+        "main_series": [],
+        "movies_filmography": [],
+        "featured_episodes": [],
+        "spin_offs": [],
+        "cameos_guest_roles": [],
+        "related_works_credits": [
+          "My Calorie Boy (2022)",
+          "New Life Begins (2022)",
+          "Romance on the Farm (2023)",
+          "Love of Nirvana (2024)",
+          "The Legend of Taotao (2025)",
+          "In the Name of the Brother (2024)"
+        ]
+      },
+      "social_links": []
     }
   ]
 }

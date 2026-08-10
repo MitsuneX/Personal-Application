@@ -352,139 +352,230 @@ export function CharacterDictProfileModal({
             }}
           >
             {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                CHARACTER HEADER
+                COMPACT CHARACTER DICTIONARY HEADER (~200–230px Desktop Target)
                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
             <div
-              className="relative p-4 sm:p-5 border-b shrink-0 transition-colors"
+              className="relative px-4 py-3.5 sm:px-6 sm:py-4 border-b shrink-0 transition-colors"
               style={{
                 borderColor: isCyber ? "rgba(0, 245, 255, 0.2)" : "#000000",
                 borderWidth: isCyber ? "1px" : "2px",
-                backgroundColor: isCyber ? "rgba(10, 15, 44, 0.7)" : "#F8FAFC",
+                backgroundColor: isCyber ? "rgba(10, 15, 44, 0.9)" : "#F8FAFC",
               }}
             >
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4 min-w-0">
-                  {/* Header 3:4 Thumbnail */}
-                  <div
-                    className="w-16 h-20 aspect-[3/4] rounded-xl overflow-hidden border shrink-0 flex items-center justify-center font-black text-xl shadow-lg relative"
-                    style={{
-                      borderColor: accent,
-                      borderWidth: isCyber ? "1.5px" : "2px",
-                      boxShadow: isCyber ? `0 0 15px ${accent}40` : "3px 3px 0 #000",
-                      backgroundColor: isCyber ? "#0A0F2C" : "#E2E8F0",
-                    }}
-                  >
-                    {portraitImage ? (
-                      <img
-                        src={portraitImage}
-                        alt={entry.name}
-                        className="w-full h-full object-cover object-top"
-                      />
-                    ) : (
-                      <span>{entry.name.charAt(0)}</span>
-                    )}
-                  </div>
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5 min-w-0">
+                {/* ── 1:1 AVATAR CONTAINER (Capped at 150-160px) ── */}
+                <div
+                  className="w-28 h-28 sm:w-36 sm:h-36 md:w-38 md:h-38 max-w-[155px] max-h-[155px] aspect-square rounded-2xl overflow-hidden border shrink-0 flex items-center justify-center font-black text-3xl sm:text-4xl shadow-md relative group"
+                  style={{
+                    borderColor: accent,
+                    borderWidth: isCyber ? "2px" : "3px",
+                    boxShadow: isCyber ? `0 0 20px ${accent}35` : "4px 4px 0 #000000",
+                    backgroundColor: isCyber ? "#0A0F2C" : "#E2E8F0",
+                  }}
+                >
+                  {(() => {
+                    const customAv = entry.avatarUrl || details.avatarUrl;
+                    const avSrc = entry.avatarSource || details.avatarSource || "card";
+                    const displayAv = avSrc === "custom" && customAv ? customAv : entry.imageUrl || entry.portraitUrl || details.imageUrl;
 
-                  {/* Name, Status & Franchise */}
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      {/* Rating Stars / Status Tier Badge */}
+                    if (displayAv) {
+                      return (
+                        <img
+                          src={displayAv}
+                          alt={entry.name}
+                          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                        />
+                      );
+                    }
+                    return (
+                      <span className="opacity-40 font-mono select-none text-4xl" style={{ color: accent }}>
+                        {entry.name.charAt(0)}
+                      </span>
+                    );
+                  })()}
+                </div>
+
+                {/* ── IDENTITY CONTENT BLOCK ── */}
+                <div className="flex-1 min-w-0 space-y-1.5 text-center sm:text-left w-full">
+                  {/* Row 1: Badges & Controls Header Bar */}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center justify-center sm:justify-start gap-1.5 flex-wrap">
+                      {/* Status Badge (Gold) */}
                       <span
-                        className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider"
-                        style={{
-                          backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#FEF08A",
-                          color: isCyber ? "#00F5FF" : "#854D0E",
-                          border: isCyber ? "1px solid rgba(0,245,255,0.3)" : "1.5px solid #000",
-                        }}
+                        className={`px-2.5 py-0.5 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider border shadow-sm ${
+                          isCyber
+                            ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                            : "bg-amber-300 text-black border border-black shadow-[1px_1px_0_#000]"
+                        }`}
                       >
                         👑 {entry.status || "GOAT Status"}
                       </span>
 
-                      {(entry.series || entry.franchise || details.series) && (
-                        <span className="text-xs font-mono theme-text-muted truncate">
-                          📺 {entry.series || entry.franchise || details.series}
+                      {/* Profession / Type Badge (Cyan) */}
+                      <span
+                        className={`px-2.5 py-0.5 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider border shadow-sm ${
+                          isCyber
+                            ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
+                            : "bg-cyan-200 text-black border border-black shadow-[1px_1px_0_#000]"
+                        }`}
+                      >
+                        {entry.type === "actor" ? "🎭 Actor" : entry.type === "actress" ? "💫 Actress" : entry.type === "singer" ? "🎤 Singer" : entry.type === "anime" ? "⛩️ Anime" : entry.type === "tokusatsu" ? "🦸 Tokusatsu" : "👤 Entity"}
+                      </span>
+
+                      {/* Nationality / Country Badge (Purple) */}
+                      {(entry.nationality || entry.country || details.country) && (
+                        <span
+                          className={`px-2.5 py-0.5 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider border shadow-sm ${
+                            isCyber
+                              ? "bg-purple-500/20 text-purple-300 border-purple-500/40"
+                              : "bg-purple-200 text-black border border-black shadow-[1px_1px_0_#000]"
+                          }`}
+                        >
+                          🌐 {entry.nationality || entry.country || details.country}
+                        </span>
+                      )}
+
+                      {/* Favorite Badge (Rose) */}
+                      {entry.isFavorite && (
+                        <span
+                          className={`px-2.5 py-0.5 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider border shadow-sm ${
+                            isCyber
+                              ? "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                              : "bg-rose-300 text-black border border-black shadow-[1px_1px_0_#000]"
+                          }`}
+                        >
+                          💖 Favorite
+                        </span>
+                      )}
+
+                      {/* Series / Universe (Emerald) */}
+                      {(entry.series || entry.universe || entry.franchise || details.series) && (
+                        <span
+                          className={`px-2.5 py-0.5 rounded-lg text-[10px] font-mono font-bold border shadow-sm ${
+                            isCyber
+                              ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                              : "bg-emerald-200 text-black border border-black shadow-[1px_1px_0_#000]"
+                          }`}
+                        >
+                          📺 {entry.series || entry.universe || entry.franchise || details.series}
                         </span>
                       )}
                     </div>
 
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-black theme-text-primary tracking-tight truncate">
-                      {entry.name}
-                    </h1>
+                    {/* Action Controls Rail (Top Right) */}
+                    <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                      {relatedGameCharacter && (
+                        <button
+                          onClick={() => {
+                            setTargetGameChar(relatedGameCharacter);
+                            setGameCharModalOpen(true);
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold font-mono transition-all cursor-pointer flex items-center gap-1 border ${
+                            isCyber
+                              ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30"
+                              : "bg-emerald-300 text-black border-black shadow-[1.5px_1.5px_0_#000] hover:scale-105"
+                          }`}
+                          title="View corresponding Game Roster Profile"
+                        >
+                          <span>🎮</span>
+                          <span className="hidden sm:inline">Game Profile →</span>
+                        </button>
+                      )}
 
-                    {(entry.fullName || entry.officialName || details.fullName || entry.alias) && (
-                      <p className="text-xs font-mono theme-text-muted mt-0.5 truncate">
-                        {entry.fullName || entry.officialName || details.fullName}
-                        {(entry.alias || details.alias) && ` • "${entry.alias || details.alias}"`}
-                      </p>
+                      {onLike && (
+                        <button
+                          onClick={() => {
+                            if (onLike) onLike(entry.id);
+                            else likeHof(entry.id);
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold font-mono transition-all cursor-pointer flex items-center gap-1 border ${
+                            isCyber
+                              ? "bg-pink-500/20 text-pink-300 border-pink-500/40 hover:bg-pink-500/30"
+                              : "bg-pink-300 text-black border-black shadow-[1.5px_1.5px_0_#000] hover:scale-105"
+                          }`}
+                        >
+                          <span>❤️</span>
+                          <span>{entry.likes || 0}</span>
+                        </button>
+                      )}
+
+                      {onEdit && (
+                        <button
+                          onClick={() => {
+                            onClose();
+                            onEdit(entry);
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold font-mono transition-all cursor-pointer border ${
+                            isCyber
+                              ? "bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30"
+                              : "bg-amber-400 text-black border-black shadow-[1.5px_1.5px_0_#000] hover:scale-105"
+                          }`}
+                        >
+                          ✏️ Edit
+                        </button>
+                      )}
+
+                      <button
+                        onClick={onClose}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs bg-black/10 dark:bg-white/10 theme-text-primary hover:bg-red-500 hover:text-white transition-colors cursor-pointer"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Row 2: Character Name */}
+                  <h1
+                    className="text-xl sm:text-2xl md:text-3xl font-black theme-text-primary tracking-tight leading-tight truncate"
+                    style={{ fontFamily: isCyber ? "var(--font-orbitron)" : "inherit" }}
+                  >
+                    {entry.name}
+                  </h1>
+
+                  {/* Row 3: Sub-line (Full/Official Name & Alias/Nickname) */}
+                  {(entry.fullName || entry.officialName || details.fullName || entry.alias || details.alias) && (
+                    <p className="text-xs font-mono theme-text-muted truncate leading-snug">
+                      {entry.fullName || entry.officialName || details.fullName}
+                      {(entry.alias || details.alias) && <span className="opacity-80"> • &ldquo;{entry.alias || details.alias}&rdquo;</span>}
+                      {(entry.nativeName || details.nativeName) && <span className="opacity-80"> ({entry.nativeName || details.nativeName})</span>}
+                    </p>
+                  )}
+
+                  {/* Row 4: Compact Identity Metadata Row */}
+                  <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap pt-0.5 text-[11px] font-mono theme-text-muted">
+                    {(entry.occupation || entry.role || details.occupation) && (
+                      <span className="px-2 py-0.5 rounded bg-black/10 dark:bg-white/10 truncate max-w-[180px]">
+                        💼 {entry.occupation || entry.role || details.occupation}
+                      </span>
+                    )}
+                    {(entry.nationality || entry.country || details.country) && (
+                      <span className="px-2 py-0.5 rounded bg-black/10 dark:bg-white/10 truncate">
+                        📍 {entry.nationality || entry.country || details.country}
+                      </span>
+                    )}
+                    {(entry.age || details.age) && (
+                      <span className="px-2 py-0.5 rounded bg-black/10 dark:bg-white/10 truncate">
+                        🎂 {entry.age || details.age} yrs
+                      </span>
+                    )}
+                    {(entry.species || entry.type || details.species) && (
+                      <span className="px-2 py-0.5 rounded bg-black/10 dark:bg-white/10 truncate">
+                        🏷️ {entry.species || entry.type || details.species}
+                      </span>
                     )}
                   </div>
-                </div>
 
-                {/* Header Action Controls */}
-                <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
-                  {/* Cross-Navigation Link to Game Roster Profile */}
-                  {relatedGameCharacter && (
-                    <button
-                      onClick={() => {
-                        setTargetGameChar(relatedGameCharacter);
-                        setGameCharModalOpen(true);
-                      }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all cursor-pointer flex items-center gap-1.5 border ${
-                        isCyber
-                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30"
-                          : "bg-emerald-300 text-black border-black shadow-[2px_2px_0_#000] hover:scale-105"
-                      }`}
-                      title="View corresponding Game Roster Profile"
-                    >
-                      <span>🎮</span>
-                      <span className="hidden sm:inline">Game Profile →</span>
-                    </button>
+                  {/* Row 5: Compact Quote/Tagline */}
+                  {entry.note && (
+                    <p className="text-[11px] italic theme-text-muted truncate max-w-2xl leading-snug pt-0.5" style={{ color: isCyber ? "rgba(0,245,255,0.75)" : "inherit" }}>
+                      &ldquo;{entry.note}&rdquo;
+                    </p>
                   )}
-
-                  {onLike && (
-                    <button
-                      onClick={() => {
-                        if (onLike) onLike(entry.id);
-                        else likeHof(entry.id);
-                      }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all cursor-pointer flex items-center gap-1.5 border ${
-                        isCyber
-                          ? "bg-pink-500/20 text-pink-300 border-pink-500/40 hover:bg-pink-500/30"
-                          : "bg-pink-300 text-black border-black shadow-[2px_2px_0_#000] hover:scale-105"
-                      }`}
-                    >
-                      <span>❤️</span>
-                      <span>{entry.likes || 0}</span>
-                    </button>
-                  )}
-
-                  {onEdit && (
-                    <button
-                      onClick={() => {
-                        onClose();
-                        onEdit(entry);
-                      }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all cursor-pointer border ${
-                        isCyber
-                          ? "bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30"
-                          : "bg-amber-400 text-black border-black shadow-[2px_2px_0_#000] hover:scale-105"
-                      }`}
-                    >
-                      ✏️ Edit
-                    </button>
-                  )}
-
-                  <button
-                    onClick={onClose}
-                    className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm bg-black/10 dark:bg-white/10 theme-text-primary hover:bg-red-500 hover:text-white transition-colors cursor-pointer"
-                  >
-                    ✕
-                  </button>
                 </div>
               </div>
 
               {/* Navigation Tabs Bar */}
-              <div className="flex items-center gap-2 mt-4 pt-2 border-t border-white/10 overflow-x-auto scrollbar-none text-xs font-mono font-bold">
+              <div className="flex items-center gap-2 mt-3 pt-2.5 border-t border-white/10 overflow-x-auto scrollbar-none text-xs font-mono font-bold">
                 {TABS.map((t) => {
                   const isActive = activeTab === t.id;
                   return (

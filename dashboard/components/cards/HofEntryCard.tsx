@@ -274,7 +274,21 @@ export function HofEntryCard({
         if (onOpenProfile) {
           onOpenProfile(entry);
         } else {
-          router.push(`/hall-of-fame?id=${entry.id}`);
+          // Explicit Entity Routing based on type/category
+          const type = (entry.type || "").toLowerCase();
+          
+          if ((entry as any).isGameCharacterEntry) {
+            router.push(`/game-characters?id=${entry.id}`);
+          } else if (type === "tokusatsu" || !!entry.tokusatsuFranchise) {
+            router.push(`/tokusatsu?id=${entry.id}`);
+          } else if (type === "anime") {
+            router.push(`/characters?id=${entry.id}`);
+          } else if (type === "actor" || type === "actress" || type === "singer") {
+            router.push(`/hall-of-fame?id=${entry.id}`);
+          } else {
+            // Default explicit fallback if entity type is unmatched but exists in HOF ecosystem
+            router.push(`/hall-of-fame?id=${entry.id}`);
+          }
         }
       }}
       onDoubleClick={handleDoubleClick}

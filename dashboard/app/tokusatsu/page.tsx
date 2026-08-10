@@ -11,8 +11,10 @@ import { useDashboardStore, DossierCharacterEntry, HallOfFameEntry } from "@/lib
 import { DossierCharacterCard } from "@/components/cards/DossierCharacterCard";
 import { HofEntryCard, getGroupForEntry, getGroupDetails } from "@/components/cards/HofEntryCard";
 import { CharacterPreviewModal } from "@/components/ui/CharacterPreviewModal";
-import { HofEditorModal } from "@/components/ui/HofEditorModal";
+import { TokusatsuEditorModal } from "@/components/ui/TokusatsuEditorModal";
+import { HofProfileModal } from "@/components/ui/HofProfileModal";
 import { useConfirm } from "@/lib/context/ConfirmContext";
+import { useSearchParams } from "next/navigation";
 
 const TOKUSATSU_SUBCATEGORIES = [
   { id: "all", label: "All Franchises", icon: "🎬" },
@@ -30,11 +32,38 @@ export default function TokusatsuPage() {
   const { dossierCharacters = [], hallOfFame = [], removeDossierCharacter, deleteHof } = useDashboardStore();
   const { confirm } = useConfirm();
 
+  const searchParams = useSearchParams();
+  const targetId = searchParams?.get("id") || null;
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubcategory, setSelectedSubcategory] = useState("all");
   const [previewCharacter, setPreviewCharacter] = useState<DossierCharacterEntry | null>(null);
+  const [profileModalEntry, setProfileModalEntry] = useState<HallOfFameEntry | null>(null);
   const [editingHofEntry, setEditingHofEntry] = useState<HallOfFameEntry | null>(null);
   const [isHofEditorOpen, setIsHofEditorOpen] = useState(false);
+
+  React.useEffect(() => {
+    if (targetId) {
+      const entry = hallOfFame.find((h) => h.id === targetId);
+      if (entry) {
+        setProfileModalEntry(entry);
+        const timer = setTimeout(() => {
+          const el = document.getElementById(`entry-${targetId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            el.animate(
+              [
+                { filter: "brightness(1.5)", transform: "scale(1.05)" },
+                { filter: "brightness(1)", transform: "scale(1)" },
+              ],
+              { duration: 800, easing: "ease-out" }
+            );
+          }
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [targetId, hallOfFame]);
 
   // Combine Tokusatsu entries from master dossier & hall of fame (filtered view over master database)
   const tokusatsuDossierItems = useMemo(() => {
@@ -151,6 +180,16 @@ export default function TokusatsuPage() {
               </div>
 
               <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    setEditingHofEntry(null);
+                    setIsHofEditorOpen(true);
+                  }}
+                  className="px-4 py-2.5 rounded-xl font-bold text-xs bg-red-500 text-white border-2 border-black shadow-[3px_3px_0_#000] hover:translate-y-[-2px] transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>⚡</span>
+                  <span>Add Tokusatsu Hero</span>
+                </button>
                 <Link
                   href="/characters"
                   className="px-4 py-2.5 rounded-xl font-bold text-xs bg-amber-500 text-black border-2 border-black shadow-[3px_3px_0_#000] hover:translate-y-[-2px] transition-all cursor-pointer"
@@ -296,6 +335,7 @@ export default function TokusatsuPage() {
                           },
                         });
                       }}
+                      onOpenProfile={(e) => setProfileModalEntry(e)}
                     />
                   ))}
 
@@ -329,8 +369,20 @@ export default function TokusatsuPage() {
           character={previewCharacter}
         />
 
-        {/* HOF Editor Modal */}
-        <HofEditorModal
+        {/* Tokusatsu Detail Profile Modal */}
+        <HofProfileModal
+          isOpen={!!profileModalEntry}
+          onClose={() => setProfileModalEntry(null)}
+          entry={profileModalEntry}
+          onEdit={(entry) => {
+            setEditingHofEntry(entry);
+            setIsHofEditorOpen(true);
+            setProfileModalEntry(null);
+          }}
+        />
+
+        {/* Tokusatsu Dedicated Editor Modal */}
+        <TokusatsuEditorModal
           isOpen={isHofEditorOpen}
           onClose={() => setIsHofEditorOpen(false)}
           entryToEdit={editingHofEntry}

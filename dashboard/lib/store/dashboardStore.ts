@@ -570,6 +570,8 @@ export interface HallOfFameEntry {
   gallery?: string[];
   splashArt?: string;
   portraitUrl?: string;
+  avatarUrl?: string;
+  avatarSource?: "card" | "custom";
   accentColor?: string;
 
   gameCharacterId?: string;
@@ -2061,7 +2063,17 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         if (aRank !== bRank) return aRank - bRank;
         return (b.likes || 0) - (a.likes || 0);
       });
-      return { hallOfFame: sorted };
+
+      const eventItem = {
+        id: "evt-" + Math.random().toString(36).substr(2, 9),
+        type: exists ? "UPDATE_CHARACTER" : "ADD_CHARACTER",
+        characterId: id,
+        characterName: data.name || "Legend",
+        timestamp: new Date().toISOString(),
+        metadata: { type: data.type, status: data.status },
+      };
+
+      return { hallOfFame: sorted, hallEvents: [eventItem, ...(s.hallEvents || [])] };
     });
     try {
       const item = get().hallOfFame.find((h) => h.id === id);
@@ -2086,8 +2098,10 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
 
     set((s) => {
+      const match = s.hallOfFame.find((h) => h.id === id);
+      const newLikes = (match?.likes || 0) + 1;
       const newHof = s.hallOfFame.map((h) =>
-        h.id === id ? { ...h, likes: (h.likes || 0) + 1 } : h
+        h.id === id ? { ...h, likes: newLikes } : h
       );
       // Re-sort: rank asc, likes desc
       const sorted = newHof.sort((a, b) => {
@@ -2096,7 +2110,18 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         if (aRank !== bRank) return aRank - bRank;
         return (b.likes || 0) - (a.likes || 0);
       });
-      return { hallOfFame: sorted };
+
+      const eventItem = {
+        id: "evt-like-" + Math.random().toString(36).substr(2, 9),
+        type: "LIKES_CHANGED",
+        characterId: id,
+        characterName: match?.name || "Legend",
+        newVotes: newLikes,
+        timestamp: new Date().toISOString(),
+        metadata: { increment: 1 },
+      };
+
+      return { hallOfFame: sorted, hallEvents: [eventItem, ...(s.hallEvents || [])] };
     });
     try {
       await fetch("/api/action", {

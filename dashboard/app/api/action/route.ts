@@ -471,6 +471,12 @@ export async function POST(req: Request) {
             tokusatsuFranchise: payload.tokusatsuFranchise ?? null,
             tokusatsuShow: payload.tokusatsuShow ?? null,
             associatedDramas: payload.associatedDramas ?? [],
+            details: payload.details ?? null,
+            gallery: payload.gallery ?? [],
+            splashArt: payload.splashArt ?? null,
+            portraitUrl: payload.portraitUrl ?? null,
+            accentColor: payload.accentColor ?? null,
+            gameCharacterId: payload.gameCharacterId ?? null,
           },
           create: {
             id: payload.id,
@@ -488,6 +494,12 @@ export async function POST(req: Request) {
             tokusatsuFranchise: payload.tokusatsuFranchise || null,
             tokusatsuShow: payload.tokusatsuShow || null,
             associatedDramas: payload.associatedDramas || [],
+            details: payload.details || null,
+            gallery: payload.gallery || [],
+            splashArt: payload.splashArt || null,
+            portraitUrl: payload.portraitUrl || null,
+            accentColor: payload.accentColor || null,
+            gameCharacterId: payload.gameCharacterId || null,
           },
         });
 

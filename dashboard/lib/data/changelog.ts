@@ -13,6 +13,100 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v11.3.4",
+    date: "2026-08-10",
+    title: "Refined Intelligent Horizontal Tab Auto-Scrolling in HofEditorModal",
+    badge: "PATCH",
+    type: "patch",
+    summary: "Updated scrollToTab in HofEditorModal.tsx with requestAnimationFrame scheduling, precise bounding rectangle inspection, and container-scoped 16px safety padding for smooth left-to-right and right-to-left scrolling.",
+    categories: [
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "↔️ Intelligent Boundary Inspection (HofEditorModal.tsx): Re-architected scrollToTab to inspect container.getBoundingClientRect() vs tabEl.getBoundingClientRect() with RAF scheduling.",
+          "🛡️ Container-Scoped Smooth Scroll: Ensures smooth 16px safety padding scrolling for clipped left and right tabs without affecting outer modal or window scroll.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v11.3.3",
+    date: "2026-08-10",
+    title: "Character Dictionary Profile Header Revert & Tab Auto-Scroll Retention",
+    badge: "PATCH",
+    type: "patch",
+    summary: "Reverted CharacterDictProfileModal.tsx header to its clean compact layout per user directive, while retaining the direction-aware horizontal tab auto-scroll fix in HofEditorModal.tsx.",
+    categories: [
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🏛️ Clean Compact Header Restored (CharacterDictProfileModal.tsx): Reverted profile header to its clean compact 200–230px layout without the Quick Profile side rail.",
+          "↔️ Tab Auto-Scroll Retained (HofEditorModal.tsx): Preserved intelligent, direction-aware horizontal tab scrolling without window scroll jumps.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v11.3.2",
+    date: "2026-08-10",
+    title: "Data-Driven Profile Quick Profile Rail & Direction-Aware Tab Auto-Scroll",
+    badge: "PATCH",
+    type: "patch",
+    summary: "Added a data-driven Quick Profile statistics block to the Character Dictionary profile modal header utilizing existing rank, likes, works count, and gallery items. Implemented direction-aware horizontal tab auto-scrolling in the editor modal without page jumping.",
+    categories: [
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "📊 Data-Driven Quick Profile Rail (CharacterDictProfileModal.tsx): Extended compact profile header with a right-aligned statistics block displaying real rank, likes, works, and gallery counts.",
+          "↔️ Intelligent Horizontal Tab Scrolling (HofEditorModal.tsx): Updated scrollToTab to inspect exact bounding rectangles and smoothly auto-scroll horizontally only when tabs are clipped on left or right, preventing page-level scroll jumps.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v11.3.1",
+    date: "2026-08-10",
+    title: "Compact Premium Character Dictionary Profile Header Layout",
+    badge: "PATCH",
+    type: "patch",
+    summary: "Redesigned Character Dictionary profile modal header into a compact premium header (~200–230px height) featuring a capped 1:1 avatar container (max 155px), side-by-side identity block, compact semantic badges, sub-line full name & alias, and a dedicated identity metadata row (Occupation, Country, Age, Type).",
+    categories: [
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🏛️ Compact Profile Header (~200–230px Height): Re-architected CharacterDictProfileModal.tsx header layout from an oversized hero into a sleek, compact profile header with controlled padding and capped avatar proportions.",
+          "📊 Identity Metadata Row: Added a dedicated inline metadata row (Occupation, Country, Age, Type/Species) to fill horizontal space beside avatar without inflating vertical modal height.",
+          "📱 Responsive Stacking: Preserved side-by-side desktop layout with smooth stacking on narrow mobile viewports.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v11.3.0",
+    date: "2026-08-10",
+    title: "Character Dictionary Identity Hero Header, Customizable 1:1 Avatar, Gallery Persistence & Live Activity Feed",
+    badge: "FEATURE",
+    type: "minor",
+    summary: "Upgraded Character Dictionary profile modal with a 1:1 Identity Hero header, added a customizable 1:1 Profile Avatar field across the database pipeline while preserving all existing image settings, fixed Prisma gallery & extended details persistence, added real-time event logging to the Live Museum Activity feed, and audited ArtistData presets.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🏛️ Character Dictionary Identity Hero Header (CharacterDictProfileModal.tsx): Upgraded profile modal header with a 1:1 aspect ratio Avatar container, significantly larger name typography, and vibrant colorful semantic badges (Gold Status, Cyan Profession, Purple Country, Rose Favorite, Emerald Series).",
+          "🖼️ Customizable 1:1 Profile Avatar (HofEditorModal.tsx): Added a dedicated Profile Avatar (1:1 Square) section under Gallery & Images supporting Card Image fallback and custom image link/upload syncing without affecting existing Card Image or 3:4 Portrait settings.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "💾 Database Persistence Fix (app/api/action/route.ts): Added details, gallery, splashArt, portraitUrl, accentColor, and gameCharacterId to Prisma UPDATE_HOF upsert mutation, ensuring gallery images and extended details survive page reloads.",
+          "⚡ Live Museum Activity Stream (lib/utils/hofEngine.ts & dashboardStore.ts): Connected live hallEvents to generateActivityFeed and Zustand store actions, automatically streaming real-time event cards when entries are added, updated, or hearted.",
+          "🎭 Artist Data Inventory & Presets (ArtistData.json): Generated categorized inventory of Character Dictionary legends and added complete presets for Tao Tsuchiya, Song Joong-ki, and YOASOBI.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v11.2.3",
     date: "2026-08-09",
     title: "Read-Only Hall of Fame Profile Context Enforcement",

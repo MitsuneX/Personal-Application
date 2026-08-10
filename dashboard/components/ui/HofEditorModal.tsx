@@ -11,6 +11,9 @@ import type { HallOfFameEntry, MediaStatus } from "@/lib/store/dashboardStore";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { searchArtistPresets, ArtistPreset } from "@/lib/data/artistDataHelper";
 import { CharacterImageUploader, GalleryUploader } from "@/components/ui/CharacterImageUploader";
+import { TokusatsuEditorModal } from "@/components/ui/TokusatsuEditorModal";
+import { isTokusatsuEntry } from "@/lib/data/tokusatsuDataHelper";
+import { HofJsonEditor } from "@/components/ui/HofJsonEditor";
 
 interface HofEditorModalProps {
   isOpen: boolean;
@@ -33,12 +36,17 @@ const TABS_LIST_ITEMS = [
 ];
 
 export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalProps) {
+  // Delegate Tokusatsu entries to the dedicated Tokusatsu Editor
+  if (isTokusatsuEntry(entryToEdit)) {
+    return <TokusatsuEditorModal isOpen={isOpen} onClose={onClose} entryToEdit={entryToEdit} />;
+  }
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { updateHof } = useDashboardStore();
   const { success: toastSuccess, error: toastError } = useToast();
 
   const [activeFormTab, setActiveFormTab] = useState<FormTab>("basic");
+  const [editorMode, setEditorMode] = useState<"visual" | "json">("visual");
 
   // Tab Strip Scroll Refs
   const tabListRef = useRef<HTMLDivElement>(null);
@@ -63,6 +71,10 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   // Dedicated 3:4 Portrait fields (Independent of Card Image)
   const [portraitUrl, setPortraitUrl] = useState("");
   const [portraitSource, setPortraitSource] = useState<"card" | "upload" | "url">("card");
+
+  // Dedicated 1:1 Profile Avatar fields (Independent of Card Image & Portrait)
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarSource, setAvatarSource] = useState<"card" | "custom">("card");
 
   // Extended Identity & Origin fields
   const [fullName, setFullName] = useState("");
@@ -117,19 +129,36 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
 
   const scrollToTab = (tabId: FormTab) => {
     setActiveFormTab(tabId);
-    setTimeout(() => {
-      const container = tabListRef.current;
-      const tabEl = tabRefs.current[tabId];
-      if (container && tabEl) {
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        const container = tabListRef.current;
+        const tabEl = tabRefs.current[tabId];
+        if (!container || !tabEl) return;
+
         const containerRect = container.getBoundingClientRect();
         const tabRect = tabEl.getBoundingClientRect();
 
-        if (tabRect.left < containerRect.left || tabRect.right > containerRect.right) {
-          const targetScrollLeft = tabEl.offsetLeft - container.offsetWidth / 2 + tabEl.offsetWidth / 2;
-          container.scrollTo({ left: Math.max(0, targetScrollLeft), behavior: "smooth" });
+        // 1. Intelligent Boundary Inspection
+        const isClippedLeft = tabRect.left < containerRect.left + 4;
+        const isClippedRight = tabRect.right > containerRect.right - 4;
+
+        // 2. Right-to-Left & Left-to-Right Scrolling (16px safety padding)
+        if (isClippedLeft) {
+          const scrollDelta = tabRect.left - containerRect.left - 16;
+          container.scrollTo({
+            left: Math.max(0, container.scrollLeft + scrollDelta),
+            behavior: "smooth",
+          });
+        } else if (isClippedRight) {
+          const scrollDelta = tabRect.right - containerRect.right + 16;
+          container.scrollTo({
+            left: container.scrollLeft + scrollDelta,
+            behavior: "smooth",
+          });
         }
-      }
-    }, 20);
+        // 3. Container-Scoped: Only container.scrollTo is called, page/window scroll is unaffected.
+      }, 15);
+    });
   };
 
   const handlePrevTab = () => {
@@ -175,6 +204,12 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
         setPortraitUrl("");
         setPortraitSource("card");
       }
+
+      // Profile Avatar (1:1)
+      const customAv = entryToEdit.avatarUrl || details.avatarUrl;
+      const avSrc = entryToEdit.avatarSource || details.avatarSource || (customAv ? "custom" : "card");
+      setAvatarUrl(customAv || "");
+      setAvatarSource(avSrc as "card" | "custom");
 
       // Identity & Origin
       setFullName(entryToEdit.fullName || entryToEdit.officialName || details.fullName || "");
@@ -230,6 +265,9 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       setPortraitUrl("");
       setPortraitSource("card");
 
+      setAvatarUrl("");
+      setAvatarSource("card");
+
       setFullName("");
       setAlias("");
       setOriginalLanguage("");
@@ -275,50 +313,232 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   const handleApplyPreset = () => {
     if (!selectedPreset) return;
 
-    const fillStr = (current: string, next?: string) => {
+    // All fields on ArtistPreset are guaranteed non-null strings or string[]
+    // by normalizeArtistPreset() in artistDataHelper.ts. No defensive checks needed.
+    const fillStr = (current: string, next: string) => {
       if (!next) return current;
       if (overwriteNonEmpty || !current.trim()) return next;
       return current;
     };
 
-    const fillArrStr = (current: string, nextArr?: string[]) => {
-      if (!nextArr || nextArr.length === 0) return current;
+    const fillArrStr = (current: string, nextArr: string[]) => {
+      if (nextArr.length === 0) return current;
       const joined = nextArr.join(", ");
       if (overwriteNonEmpty || !current.trim()) return joined;
       return current;
     };
 
+    // ── Basic fields ──────────────────────────────────────────────────────────
     setName((prev) => fillStr(prev, selectedPreset.name));
+    setNationality((prev) => fillStr(prev, selectedPreset.nationality));
+    setKnownFor((prev) => fillArrStr(prev, selectedPreset.works));
+
+    // ── Identity & Origin fields ──────────────────────────────────────────────
     setFullName((prev) => fillStr(prev, selectedPreset.fullName));
     setAlias((prev) => fillArrStr(prev, selectedPreset.aliases));
     setOriginalLanguage((prev) => fillStr(prev, selectedPreset.originalLanguage));
     setPronunciation((prev) => fillStr(prev, selectedPreset.pronunciation));
     setGender((prev) => fillStr(prev, selectedPreset.gender));
     setAge((prev) => fillStr(prev, selectedPreset.age));
-    setNationality((prev) => fillStr(prev, selectedPreset.nationality));
+    setSpecies((prev) => fillStr(prev, selectedPreset.species));
+    setUniverse((prev) => fillStr(prev, selectedPreset.universe));
+    setSeries((prev) => fillStr(prev, selectedPreset.series));
+    setCreator((prev) => fillStr(prev, selectedPreset.creator));
+    setDebutYear((prev) => fillStr(prev, selectedPreset.debutYear));
+
+    // ── Profile & Lore fields ─────────────────────────────────────────────────
     setBio((prev) => fillStr(prev, selectedPreset.bio));
     setPersonality((prev) => fillStr(prev, selectedPreset.personality));
     setTraitsInput((prev) => fillArrStr(prev, selectedPreset.traits));
-    setKnownFor((prev) => fillArrStr(prev, selectedPreset.works));
-    setRelatedWorks((prev) => fillArrStr(prev, selectedPreset.works));
-
-    if (selectedPreset.occupation && selectedPreset.occupation.length > 0) {
+    setAlignment((prev) => fillStr(prev, selectedPreset.alignment));
+    setMotivation((prev) => fillStr(prev, selectedPreset.motivation));
+    setCharacterDevelopment((prev) => fillStr(prev, selectedPreset.characterDevelopment));
+    if (selectedPreset.occupation.length > 0) {
       setOccupation((prev) => fillArrStr(prev, selectedPreset.occupation));
     }
 
-    if (selectedPreset.socialLinks && selectedPreset.socialLinks.length > 0) {
+    // ── Appearances fields ────────────────────────────────────────────────────
+    setMainSeries((prev) => fillArrStr(prev, selectedPreset.mainSeries));
+    setMovies((prev) => fillArrStr(prev, selectedPreset.movies));
+    setEpisodes((prev) => fillArrStr(prev, selectedPreset.episodes));
+    setSpinOffs((prev) => fillArrStr(prev, selectedPreset.spinOffs));
+    setCameos((prev) => fillArrStr(prev, selectedPreset.cameos));
+    setRelatedWorks((prev) => fillArrStr(prev, selectedPreset.relatedWorks));
+
+    // ── Social Links (merge, deduplicate by URL) ──────────────────────────────
+    if (selectedPreset.socialLinks.length > 0) {
       setSocialLinks((prev) => {
         if (overwriteNonEmpty || prev.length === 0) {
-          return selectedPreset.socialLinks!;
+          return selectedPreset.socialLinks;
         }
         const existingUrls = new Set(prev.map((l) => l.url));
-        const toAdd = selectedPreset.socialLinks!.filter((l) => !existingUrls.has(l.url));
+        const toAdd = selectedPreset.socialLinks.filter((l) => !existingUrls.has(l.url));
         return [...prev, ...toAdd];
       });
     }
 
     toastSuccess(`✓ Autofilled compatible metadata from "${selectedPreset.name}".`);
     scrollToTab("basic");
+  };
+
+  // ── JSON live payload helper ──
+  const getLivePayload = (): Partial<HallOfFameEntry> => {
+    const str = (val: unknown) => (val === undefined || val === null ? "" : String(val).trim());
+    const splitCsv = (val: unknown): string[] => {
+      if (!val) return [];
+      if (Array.isArray(val)) return val.map((s) => String(s).trim()).filter(Boolean);
+      if (typeof val === "string") return val.split(",").map((s) => s.trim()).filter(Boolean);
+      return [String(val).trim()].filter(Boolean);
+    };
+
+    const resolvedPortrait = portraitSource === "card" ? undefined : str(portraitUrl) || undefined;
+    const resolvedAvatar = avatarSource === "card" ? undefined : str(avatarUrl) || undefined;
+    const validSocialLinks = (Array.isArray(socialLinks) ? socialLinks : []).filter(
+      (l) => l && str(l.platform) && str(l.url)
+    );
+
+    return {
+      id: entryToEdit?.id || `hof-${Date.now()}`,
+      name: str(name) || "New Character",
+      type,
+      status,
+      knownFor: type === "singer" ? [] : splitCsv(knownFor),
+      nationality: type === "singer" ? "Singer" : str(nationality) || undefined,
+      singerType: type === "singer" ? singerType : undefined,
+      imageUrl: str(imageUrl) || undefined,
+      portraitUrl: resolvedPortrait,
+      avatarUrl: resolvedAvatar,
+      avatarSource,
+      note: str(note) || undefined,
+      rank: rank === null ? null : Number(rank),
+      isChampion,
+      tokusatsuFranchise: type === "tokusatsu" ? tokusatsuFranchise || null : null,
+      tokusatsuShow: type === "tokusatsu" ? str(tokusatsuShow) || null : null,
+      associatedDramas: type === "tokusatsu" ? splitCsv(associatedDramas) : [],
+      fullName: str(fullName) || undefined,
+      officialName: str(fullName) || undefined,
+      alias: str(alias) || undefined,
+      originalLanguage: str(originalLanguage) || undefined,
+      nativeName: str(originalLanguage) || undefined,
+      pronunciation: str(pronunciation) || undefined,
+      gender: str(gender) || undefined,
+      age: str(age) || undefined,
+      species: str(species) || undefined,
+      universe: str(universe) || undefined,
+      work: str(universe) || undefined,
+      series: str(series) || undefined,
+      franchise: str(series) || undefined,
+      creator: str(creator) || undefined,
+      firstAppearance: str(firstAppearance) || undefined,
+      debutYear: str(debutYear) || undefined,
+      personality: str(personality) || undefined,
+      archetype: str(archetype) || undefined,
+      occupation: str(occupation) || undefined,
+      role: str(occupation) || undefined,
+      alignment: str(alignment) || undefined,
+      traits: splitCsv(traitsInput),
+      motivation: str(motivation) || undefined,
+      background: str(bio) || undefined,
+      bio: str(bio) || undefined,
+      characterDevelopment: str(characterDevelopment) || undefined,
+      mainSeries: splitCsv(mainSeries),
+      movies: splitCsv(movies),
+      episodes: splitCsv(episodes),
+      spinOffs: splitCsv(spinOffs),
+      cameos: splitCsv(cameos),
+      works: splitCsv(relatedWorks),
+      relatedWorks: splitCsv(relatedWorks),
+      gallery: Array.isArray(galleryUrls) ? galleryUrls : [],
+      socialLinks: validSocialLinks,
+      accentColor,
+    };
+  };
+
+  // ── JSON Apply handler ──
+  const handleJsonApply = (updated: Partial<HallOfFameEntry>, mode: "replace" | "merge") => {
+    const toCsvStr = (val: unknown): string => {
+      if (!val) return "";
+      if (Array.isArray(val)) return val.map((s) => String(s).trim()).filter(Boolean).join(", ");
+      return String(val);
+    };
+
+    if (updated.name !== undefined) setName(updated.name || "");
+    if (updated.type !== undefined) setType(updated.type || "actress");
+    if (updated.status !== undefined) setStatus(updated.status || "GOAT Status");
+    if (updated.knownFor !== undefined) setKnownFor(toCsvStr(updated.knownFor));
+    if (updated.nationality !== undefined) setNationality(updated.nationality || "");
+    if (updated.singerType !== undefined) setSingerType(updated.singerType || "Solo Artist");
+    if (updated.imageUrl !== undefined) setImageUrl(updated.imageUrl || "");
+    if (updated.portraitUrl !== undefined) {
+      setPortraitUrl(updated.portraitUrl || "");
+      setPortraitSource(updated.portraitUrl ? "url" : "card");
+    }
+    if (updated.avatarUrl !== undefined) {
+      setAvatarUrl(updated.avatarUrl || "");
+      setAvatarSource(updated.avatarUrl ? "custom" : "card");
+    }
+    if (updated.note !== undefined) setNote(updated.note || "");
+    if (updated.rank !== undefined) setRank(updated.rank !== undefined ? updated.rank : null);
+    if (updated.isChampion !== undefined) setIsChampion(Boolean(updated.isChampion));
+    if (updated.tokusatsuFranchise !== undefined) setTokusatsuFranchise(updated.tokusatsuFranchise || "");
+    if (updated.tokusatsuShow !== undefined) setTokusatsuShow(updated.tokusatsuShow || "");
+    if (updated.associatedDramas !== undefined) setAssociatedDramas(toCsvStr(updated.associatedDramas));
+    if (updated.accentColor !== undefined) setAccentColor(updated.accentColor || "#00F5FF");
+
+    // Identity
+    if (updated.fullName !== undefined || updated.officialName !== undefined) setFullName(updated.fullName || updated.officialName || "");
+    if (updated.alias !== undefined) setAlias(updated.alias || "");
+    if (updated.originalLanguage !== undefined || updated.nativeName !== undefined) setOriginalLanguage(updated.originalLanguage || updated.nativeName || "");
+    if (updated.pronunciation !== undefined) setPronunciation(updated.pronunciation || "");
+    if (updated.gender !== undefined) setGender(updated.gender || "");
+    if (updated.age !== undefined) setAge(updated.age !== undefined ? String(updated.age) : "");
+    if (updated.species !== undefined) setSpecies(updated.species || "");
+    if (updated.universe !== undefined || updated.work !== undefined) setUniverse(updated.universe || updated.work || "");
+    if (updated.series !== undefined || updated.franchise !== undefined) setSeries(updated.series || updated.franchise || "");
+    if (updated.creator !== undefined) setCreator(updated.creator || "");
+    if (updated.firstAppearance !== undefined) setFirstAppearance(updated.firstAppearance || "");
+    if (updated.debutYear !== undefined) setDebutYear(updated.debutYear !== undefined ? String(updated.debutYear) : "");
+
+    // Lore
+    if (updated.personality !== undefined) setPersonality(updated.personality || "");
+    if (updated.archetype !== undefined) setArchetype(updated.archetype || "");
+    if (updated.occupation !== undefined || updated.role !== undefined) setOccupation(updated.occupation || updated.role || "");
+    if (updated.alignment !== undefined) setAlignment(updated.alignment || "");
+    if (updated.traits !== undefined) setTraitsInput(toCsvStr(updated.traits));
+    if (updated.motivation !== undefined) setMotivation(updated.motivation || "");
+    if (updated.bio !== undefined || updated.background !== undefined) setBio(updated.bio || updated.background || "");
+    if (updated.characterDevelopment !== undefined) setCharacterDevelopment(updated.characterDevelopment || "");
+
+    // Media / Appearances
+    if (updated.mainSeries !== undefined) setMainSeries(toCsvStr(updated.mainSeries));
+    if (updated.movies !== undefined) setMovies(toCsvStr(updated.movies));
+    if (updated.episodes !== undefined) setEpisodes(toCsvStr(updated.episodes));
+    if (updated.spinOffs !== undefined) setSpinOffs(toCsvStr(updated.spinOffs));
+    if (updated.cameos !== undefined) setCameos(toCsvStr(updated.cameos));
+    if (updated.works !== undefined || updated.relatedWorks !== undefined) setRelatedWorks(toCsvStr(updated.works || updated.relatedWorks));
+    if (updated.gallery !== undefined) setGalleryUrls(Array.isArray(updated.gallery) ? updated.gallery : []);
+    if (updated.socialLinks !== undefined) setSocialLinks(Array.isArray(updated.socialLinks) ? updated.socialLinks : []);
+
+    setEditorMode("visual");
+    toastSuccess(`✓ Applied JSON data (${mode} mode).`);
+  };
+
+  // ── JSON Export handler ──
+  const handleExportJson = () => {
+    try {
+      const payload = getLivePayload();
+      const json = JSON.stringify(payload, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(name || "character").replace(/\s+/g, "_").toLowerCase()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toastSuccess(`✓ Exported ${name || "character"}.json`);
+    } catch {
+      toastError("Failed to export JSON.");
+    }
   };
 
   const handleAddSocialLink = () => {
@@ -368,38 +588,47 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    const str = (val: unknown) => (val === undefined || val === null ? "" : String(val).trim());
+    if (!str(name)) return;
     setIsSaving(true);
     try {
       const id = entryToEdit?.id || "hof-" + Math.random().toString(36).substr(2, 9);
 
-      const splitCsv = (val: string) => val.split(",").map((s) => s.trim()).filter(Boolean);
+      const splitCsv = (val: unknown): string[] => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val.map((s) => String(s).trim()).filter(Boolean);
+        if (typeof val === "string") return val.split(",").map((s) => s.trim()).filter(Boolean);
+        return [String(val).trim()].filter(Boolean);
+      };
 
-      const resolvedPortrait = portraitSource === "card" ? undefined : portraitUrl.trim() || undefined;
+      const resolvedPortrait = portraitSource === "card" ? undefined : str(portraitUrl) || undefined;
+      const resolvedAvatar = avatarSource === "card" ? undefined : str(avatarUrl) || undefined;
 
-      const validSocialLinks = socialLinks.filter((l) => l.platform.trim() && l.url.trim());
+      const validSocialLinks = (Array.isArray(socialLinks) ? socialLinks : []).filter(
+        (l) => l && str(l.platform) && str(l.url)
+      );
 
       const detailsObj: Record<string, any> = {
-        fullName: fullName.trim() || undefined,
-        alias: alias.trim() || undefined,
-        originalLanguage: originalLanguage.trim() || undefined,
-        pronunciation: pronunciation.trim() || undefined,
-        gender: gender.trim() || undefined,
-        age: age.trim() || undefined,
-        species: species.trim() || undefined,
-        universe: universe.trim() || undefined,
-        series: series.trim() || undefined,
-        creator: creator.trim() || undefined,
-        firstAppearance: firstAppearance.trim() || undefined,
-        debutYear: debutYear.trim() || undefined,
-        personality: personality.trim() || undefined,
-        archetype: archetype.trim() || undefined,
-        occupation: occupation.trim() || undefined,
-        alignment: alignment.trim() || undefined,
+        fullName: str(fullName) || undefined,
+        alias: str(alias) || undefined,
+        originalLanguage: str(originalLanguage) || undefined,
+        pronunciation: str(pronunciation) || undefined,
+        gender: str(gender) || undefined,
+        age: str(age) || undefined,
+        species: str(species) || undefined,
+        universe: str(universe) || undefined,
+        series: str(series) || undefined,
+        creator: str(creator) || undefined,
+        firstAppearance: str(firstAppearance) || undefined,
+        debutYear: str(debutYear) || undefined,
+        personality: str(personality) || undefined,
+        archetype: str(archetype) || undefined,
+        occupation: str(occupation) || undefined,
+        alignment: str(alignment) || undefined,
         traits: splitCsv(traitsInput),
-        motivation: motivation.trim() || undefined,
-        background: bio.trim() || undefined,
-        characterDevelopment: characterDevelopment.trim() || undefined,
+        motivation: str(motivation) || undefined,
+        background: str(bio) || undefined,
+        characterDevelopment: str(characterDevelopment) || undefined,
         mainSeries: splitCsv(mainSeries),
         movies: splitCsv(movies),
         episodes: splitCsv(episodes),
@@ -407,50 +636,54 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
         cameos: splitCsv(cameos),
         relatedWorks: splitCsv(relatedWorks),
         socialLinks: validSocialLinks,
+        avatarUrl: resolvedAvatar,
+        avatarSource,
       };
 
       await updateHof(id, {
         id,
-        name: name.trim(),
+        name: str(name),
         type,
         status,
         knownFor: type === "singer" ? [] : splitCsv(knownFor),
-        nationality: type === "singer" ? "Singer" : nationality.trim() || undefined,
+        nationality: type === "singer" ? "Singer" : str(nationality) || undefined,
         singerType: type === "singer" ? singerType : undefined,
-        imageUrl: imageUrl.trim() || undefined,
+        imageUrl: str(imageUrl) || undefined,
         portraitUrl: resolvedPortrait,
-        note: note.trim() || undefined,
+        avatarUrl: resolvedAvatar,
+        avatarSource,
+        note: str(note) || undefined,
         rank: rank === null ? null : Number(rank),
         isChampion,
         tokusatsuFranchise: type === "tokusatsu" ? tokusatsuFranchise || null : null,
-        tokusatsuShow: type === "tokusatsu" ? tokusatsuShow.trim() || null : null,
+        tokusatsuShow: type === "tokusatsu" ? str(tokusatsuShow) || null : null,
         associatedDramas: type === "tokusatsu" ? splitCsv(associatedDramas) : [],
         // Extended Fields
-        fullName: fullName.trim() || undefined,
-        officialName: fullName.trim() || undefined,
-        alias: alias.trim() || undefined,
-        originalLanguage: originalLanguage.trim() || undefined,
-        nativeName: originalLanguage.trim() || undefined,
-        pronunciation: pronunciation.trim() || undefined,
-        gender: gender.trim() || undefined,
-        age: age.trim() || undefined,
-        species: species.trim() || undefined,
-        universe: universe.trim() || undefined,
-        work: universe.trim() || undefined,
-        series: series.trim() || undefined,
-        franchise: series.trim() || undefined,
-        creator: creator.trim() || undefined,
-        firstAppearance: firstAppearance.trim() || undefined,
-        debutYear: debutYear.trim() || undefined,
-        personality: personality.trim() || undefined,
-        archetype: archetype.trim() || undefined,
-        occupation: occupation.trim() || undefined,
-        role: occupation.trim() || undefined,
-        alignment: alignment.trim() || undefined,
+        fullName: str(fullName) || undefined,
+        officialName: str(fullName) || undefined,
+        alias: str(alias) || undefined,
+        originalLanguage: str(originalLanguage) || undefined,
+        nativeName: str(originalLanguage) || undefined,
+        pronunciation: str(pronunciation) || undefined,
+        gender: str(gender) || undefined,
+        age: str(age) || undefined,
+        species: str(species) || undefined,
+        universe: str(universe) || undefined,
+        work: str(universe) || undefined,
+        series: str(series) || undefined,
+        franchise: str(series) || undefined,
+        creator: str(creator) || undefined,
+        firstAppearance: str(firstAppearance) || undefined,
+        debutYear: str(debutYear) || undefined,
+        personality: str(personality) || undefined,
+        archetype: str(archetype) || undefined,
+        occupation: str(occupation) || undefined,
+        role: str(occupation) || undefined,
+        alignment: str(alignment) || undefined,
         traits: splitCsv(traitsInput),
-        motivation: motivation.trim() || undefined,
-        background: bio.trim() || undefined,
-        characterDevelopment: characterDevelopment.trim() || undefined,
+        motivation: str(motivation) || undefined,
+        background: str(bio) || undefined,
+        characterDevelopment: str(characterDevelopment) || undefined,
         mainSeries: splitCsv(mainSeries),
         movies: splitCsv(movies),
         episodes: splitCsv(episodes),
@@ -524,6 +757,58 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {/* Visual / JSON mode toggle */}
+            <div
+              className="flex items-center rounded-lg border overflow-hidden shrink-0"
+              style={{ borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB" }}
+            >
+              <button
+                type="button"
+                onClick={() => setEditorMode("visual")}
+                className="px-2.5 py-1 text-[10px] font-bold font-mono transition-all cursor-pointer"
+                style={{
+                  backgroundColor: editorMode === "visual"
+                    ? isCyber ? "#00F5FF" : "#1E293B"
+                    : isCyber ? "rgba(255,255,255,0.04)" : "#F1F5F9",
+                  color: editorMode === "visual"
+                    ? isCyber ? "#000" : "#FFF"
+                    : isCyber ? "#94A3B8" : "#64748B",
+                }}
+              >
+                🖊 Visual
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditorMode("json")}
+                className="px-2.5 py-1 text-[10px] font-bold font-mono transition-all cursor-pointer"
+                style={{
+                  backgroundColor: editorMode === "json"
+                    ? isCyber ? "#00F5FF" : "#1E293B"
+                    : isCyber ? "rgba(255,255,255,0.04)" : "#F1F5F9",
+                  color: editorMode === "json"
+                    ? isCyber ? "#000" : "#FFF"
+                    : isCyber ? "#94A3B8" : "#64748B",
+                }}
+              >
+                {"{ }"} JSON
+              </button>
+            </div>
+
+            {/* Export JSON quick-action */}
+            <button
+              type="button"
+              onClick={handleExportJson}
+              className="px-2.5 py-1 text-[10px] font-bold font-mono rounded-lg border transition-all cursor-pointer shrink-0"
+              style={{
+                backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#F8FAFC",
+                borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB",
+                color: isCyber ? "#94A3B8" : "#475569",
+              }}
+              title="Export entry data as .json file"
+            >
+              ⬇ Export
+            </button>
+
             <button
               type="button"
               onClick={() => scrollToTab("autofill")}
@@ -547,34 +832,44 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
           </div>
         </div>
 
-        {/* Clear Scannable Tabs Navigation (Horizontal Scrollable with Auto-Scroll to Active Tab) */}
-        <div
-          ref={tabListRef}
-          className="flex items-center gap-1 mb-4 overflow-x-auto scrollbar-none pb-1 border-b border-white/10 text-xs font-mono font-bold whitespace-nowrap scroll-smooth"
-        >
-          {TABS_LIST_ITEMS.map((tab) => (
-            <button
-              key={tab.id}
-              ref={(el) => { tabRefs.current[tab.id] = el; }}
-              type="button"
-              onClick={() => scrollToTab(tab.id as FormTab)}
-              className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0 cursor-pointer transition-all ${
-                activeFormTab === tab.id
-                  ? isCyber
-                    ? "bg-[#00F5FF]/20 text-[#00F5FF] border border-[#00F5FF]/40"
-                    : "bg-amber-300 text-black border-2 border-black shadow-[2px_2px_0_#000]"
-                  : isCyber
-                  ? "text-white/40 hover:text-white/80"
-                  : "text-gray-600 hover:text-black"
-              }`}
+        {/* Mode Content Switch */}
+        {editorMode === "json" ? (
+          <div className="py-2">
+            <HofJsonEditor
+              profile={getLivePayload()}
+              onApply={handleJsonApply}
+            />
+          </div>
+        ) : (
+          <>
+            {/* Clear Scannable Tabs Navigation (Horizontal Scrollable with Auto-Scroll to Active Tab) */}
+            <div
+              ref={tabListRef}
+              className="flex items-center gap-1 mb-4 overflow-x-auto scrollbar-none pb-1 border-b border-white/10 text-xs font-mono font-bold whitespace-nowrap scroll-smooth"
             >
-              <span>{tab.icon}</span>
-              <span>{tab.label}</span>
-            </button>
-          ))}
-        </div>
+              {TABS_LIST_ITEMS.map((tab) => (
+                <button
+                  key={tab.id}
+                  ref={(el) => { tabRefs.current[tab.id] = el; }}
+                  type="button"
+                  onClick={() => scrollToTab(tab.id as FormTab)}
+                  className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0 cursor-pointer transition-all ${
+                    activeFormTab === tab.id
+                      ? isCyber
+                        ? "bg-[#00F5FF]/20 text-[#00F5FF] border border-[#00F5FF]/40"
+                        : "bg-amber-300 text-black border-2 border-black shadow-[2px_2px_0_#000]"
+                      : isCyber
+                      ? "text-white/40 hover:text-white/80"
+                      : "text-gray-600 hover:text-black"
+                  }`}
+                >
+                  <span>{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
 
-        <form onSubmit={handleSave} className="space-y-4">
+            <form onSubmit={handleSave} className="space-y-4">
           {/* TAB 1: BASIC */}
           {activeFormTab === "basic" && (
             <div className="space-y-4">
@@ -947,7 +1242,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
           {/* TAB 5: GALLERY & IMAGES (Adapted from GameCharacterEditorModal Images Architecture) */}
           {activeFormTab === "gallery" && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* 1. Card Image (Dictionary Roster Thumbnail) */}
                 <div className="space-y-2">
                   <CharacterImageUploader
@@ -976,6 +1271,82 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                       borderColor: isCyber ? "rgba(255,255,255,0.12)" : "#E5E7EB",
                     }}
                   />
+                </div>
+
+                {/* 2. Profile Avatar (1:1 Square - NEW Field) */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label
+                      className="text-xs font-mono font-bold uppercase tracking-wider block"
+                      style={{ color: isCyber ? "rgba(0,245,255,0.7)" : "#6B7280" }}
+                    >
+                      Profile Avatar (1:1 Square)
+                    </label>
+                  </div>
+
+                  {/* Mode selector: Sync vs Custom */}
+                  <div className="flex gap-1 p-0.5 rounded-lg border text-[10px] font-mono font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setAvatarSource("card")}
+                      className="px-2 py-1 rounded transition-colors cursor-pointer flex-1 text-center truncate"
+                      style={{
+                        backgroundColor: avatarSource === "card" ? (isCyber ? "#00F5FF" : "#FFFFFF") : "transparent",
+                        color: avatarSource === "card" ? (isCyber ? "#050816" : "#000000") : (isCyber ? "#94A3B8" : "#4B5563"),
+                      }}
+                    >
+                      1. Sync Card
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAvatarSource("custom")}
+                      className="px-2 py-1 rounded transition-colors cursor-pointer flex-1 text-center truncate"
+                      style={{
+                        backgroundColor: avatarSource === "custom" ? (isCyber ? "#00F5FF" : "#FFFFFF") : "transparent",
+                        color: avatarSource === "custom" ? (isCyber ? "#050816" : "#000000") : (isCyber ? "#94A3B8" : "#4B5563"),
+                      }}
+                    >
+                      2. Custom Avatar
+                    </button>
+                  </div>
+
+                  {avatarSource === "card" ? (
+                    <div className="space-y-2">
+                      <div className="h-44 w-full rounded-xl overflow-hidden border flex flex-col items-center justify-center relative bg-black/10">
+                        {imageUrl ? (
+                          <img src={imageUrl} alt="synced avatar" className="w-full h-full object-cover object-center" />
+                        ) : (
+                          <span className="text-xs font-mono opacity-60">No Card Image Set</span>
+                        )}
+                      </div>
+                      <p className="text-[10px] font-mono theme-text-muted">
+                        ✓ Synced with Card Image fallback.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <CharacterImageUploader
+                        label="Custom 1:1 Avatar"
+                        value={avatarUrl}
+                        onChange={(url) => setAvatarUrl(url)}
+                        onClear={() => setAvatarUrl("")}
+                        aspect={1}
+                        hint="Square profile avatar artwork."
+                        previewClass="h-44 w-full"
+                      />
+                      <input
+                        type="text"
+                        value={avatarUrl.startsWith("data:") ? "" : avatarUrl}
+                        onChange={(e) => setAvatarUrl(e.target.value)}
+                        placeholder="Or paste avatar URL…"
+                        className="w-full p-2 rounded-lg border text-xs font-mono theme-text-primary focus:outline-none"
+                        style={{
+                          backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "#F9FAFB",
+                          borderColor: isCyber ? "rgba(255,255,255,0.12)" : "#E5E7EB",
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* 2. Portrait (3:4 Profile Modal Image) */}
@@ -1242,12 +1613,12 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                       }`}
                     >
                       <div className="w-9 h-9 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-bold text-sm shrink-0 border border-cyan-500/40">
-                        {preset.name.charAt(0)}
+                        {preset.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="text-xs font-bold theme-text-primary truncate">{preset.name}</div>
                         <div className="text-[10px] theme-text-muted truncate">
-                          {preset.nationality || "Artist"} • {(preset.occupation || []).join(", ")}
+                          {preset.nationality || "Artist"}{preset.occupation.length > 0 ? ` • ${preset.occupation.join(", ")}` : ""}
                         </div>
                       </div>
                     </div>
@@ -1260,11 +1631,13 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                 <div className="p-3 rounded-xl border border-cyan-500/30 bg-cyan-500/10 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono font-bold text-cyan-300">
-                      Selected: {selectedPreset.name} ({selectedPreset.fullName || ""})
+                      Selected: {selectedPreset.name}{selectedPreset.fullName ? ` (${selectedPreset.fullName})` : ""}
                     </span>
                   </div>
 
-                  <p className="text-xs leading-relaxed text-white/80 line-clamp-2">{selectedPreset.bio}</p>
+                  {selectedPreset.bio && (
+                    <p className="text-xs leading-relaxed text-white/80 line-clamp-2">{selectedPreset.bio}</p>
+                  )}
 
                   {/* Autofill Options */}
                   <div className="flex flex-col gap-2 pt-2 border-t border-cyan-500/20 text-xs font-mono">
@@ -1357,6 +1730,8 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
             </div>
           </div>
         </form>
+          </>
+        )}
       </div>
 
     </Modal>

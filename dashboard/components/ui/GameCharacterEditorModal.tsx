@@ -25,6 +25,7 @@ import {
   CompetitiveFieldValues,
 } from "@/components/game/DynamicGameFields";
 import { useToast } from "@/components/ui/ToastProvider";
+import { GameCharacterJsonEditor } from "@/components/ui/GameCharacterJsonEditor";
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 const TABS = [
@@ -344,6 +345,7 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
   const { success: toastSuccess, error: toastError } = useToast();
 
   const [activeTab, setActiveTab] = useState<TabId>("basic");
+  const [editorMode, setEditorMode] = useState<"visual" | "json">("visual");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetchingMeta, setIsFetchingMeta] = useState(false);
 
@@ -557,6 +559,135 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
       toastError("Failed to fetch metadata.");
     } finally {
       setIsFetchingMeta(false);
+    }
+  };
+
+  // ── JSON live payload helper ──
+  const getLivePayload = (): Partial<GameCharacterEntry> => {
+    const voiceActors = {
+      ...(voiceJP ? { jp: voiceJP } : {}),
+      ...(voiceCN ? { cn: voiceCN } : {}),
+      ...(voiceKR ? { kr: voiceKR } : {}),
+      ...(voiceEN ? { en: voiceEN } : {}),
+    };
+    return {
+      id: characterToEdit?.id || `gc-${Date.now()}`,
+      name: name.trim() || "New Game Character",
+      officialName: officialName || undefined,
+      alias: alias || undefined,
+      nickname: nickname || undefined,
+      nativeName: nativeName || undefined,
+      title: title || undefined,
+      gameId: gameId || undefined,
+      gameName: gameName || undefined,
+      characterId: characterId || undefined,
+      tier: tier || "S",
+      rank: rank === "" ? undefined : Number(rank),
+      isFavorite,
+      isFeatured,
+      accentColor,
+      birthday: birthday || undefined,
+      age: age || undefined,
+      gender: gender || undefined,
+      height: height || undefined,
+      weight: weight || undefined,
+      species: species || undefined,
+      race: race || undefined,
+      nation: nation || undefined,
+      region: region || undefined,
+      planet: planet || undefined,
+      organization: organization || undefined,
+      affiliation: affiliation || undefined,
+      faction: faction || undefined,
+      role: role || undefined,
+      element: element || undefined,
+      attribute: attribute || undefined,
+      path: path || undefined,
+      weapon: weapon || undefined,
+      rarity: rarity || undefined,
+      damageType: damageType || undefined,
+      combatRole: combatRole || undefined,
+      voiceActors: Object.keys(voiceActors).length > 0 ? voiceActors : undefined,
+      personality: personality || undefined,
+      biography: biography || undefined,
+      officialDescription: officialDescription || undefined,
+      favoriteQuote: favoriteQuote || undefined,
+      cardImage: cardImage || undefined,
+      avatarUrl: avatarUrl || undefined,
+      splashArt: splashArt || undefined,
+      gallery: gallery.length > 0 ? gallery : undefined,
+    };
+  };
+
+  // ── JSON Apply handler ──
+  const handleJsonApply = (updated: Partial<GameCharacterEntry>, mode: "replace" | "merge") => {
+    if (updated.name !== undefined) setName(updated.name);
+    if (updated.officialName !== undefined) setOfficialName(updated.officialName || "");
+    if (updated.alias !== undefined) setAlias(updated.alias || "");
+    if (updated.nickname !== undefined) setNickname(updated.nickname || "");
+    if (updated.nativeName !== undefined) setNativeName(updated.nativeName || "");
+    if (updated.title !== undefined) setTitle(updated.title || "");
+    if (updated.gameId !== undefined) setGameId(updated.gameId || "");
+    if (updated.gameName !== undefined) setGameName(updated.gameName || "");
+    if (updated.tier !== undefined) setTier(updated.tier || "S");
+    if (updated.rank !== undefined) setRank(typeof updated.rank === "number" ? updated.rank : "");
+    if (updated.isFavorite !== undefined) setIsFavorite(Boolean(updated.isFavorite));
+    if (updated.isFeatured !== undefined) setIsFeatured(Boolean(updated.isFeatured));
+    if (updated.accentColor !== undefined) setAccentColor(updated.accentColor || "#00F5FF");
+    if (updated.birthday !== undefined) setBirthday(updated.birthday || "");
+    if (updated.age !== undefined) setAge(updated.age || "");
+    if (updated.gender !== undefined) setGender(updated.gender || "");
+    if (updated.height !== undefined) setHeight(updated.height || "");
+    if (updated.weight !== undefined) setWeight(updated.weight || "");
+    if (updated.species !== undefined) setSpecies(updated.species || "");
+    if (updated.race !== undefined) setRace(updated.race || "");
+    if (updated.nation !== undefined) setNation(updated.nation || "");
+    if (updated.region !== undefined) setRegion(updated.region || "");
+    if (updated.planet !== undefined) setPlanet(updated.planet || "");
+    if (updated.organization !== undefined) setOrganization(updated.organization || "");
+    if (updated.affiliation !== undefined) setAffiliation(updated.affiliation || "");
+    if (updated.faction !== undefined) setFaction(updated.faction || "");
+    if (updated.role !== undefined) setRole(updated.role || "");
+    if (updated.element !== undefined) setElement(updated.element || "");
+    if (updated.attribute !== undefined) setAttribute(updated.attribute || "");
+    if (updated.path !== undefined) setPath(updated.path || "");
+    if (updated.weapon !== undefined) setWeapon(updated.weapon || "");
+    if (updated.rarity !== undefined) setRarity(updated.rarity || "");
+    if (updated.damageType !== undefined) setDamageType(updated.damageType || "");
+    if (updated.combatRole !== undefined) setCombatRole(updated.combatRole || "");
+    if (updated.voiceActors) {
+      if (updated.voiceActors.jp !== undefined) setVoiceJP(updated.voiceActors.jp || "");
+      if (updated.voiceActors.cn !== undefined) setVoiceCN(updated.voiceActors.cn || "");
+      if (updated.voiceActors.kr !== undefined) setVoiceKR(updated.voiceActors.kr || "");
+      if (updated.voiceActors.en !== undefined) setVoiceEN(updated.voiceActors.en || "");
+    }
+    if (updated.personality !== undefined) setPersonality(updated.personality || "");
+    if (updated.biography !== undefined) setBiography(updated.biography || "");
+    if (updated.officialDescription !== undefined) setOfficialDescription(updated.officialDescription || "");
+    if (updated.favoriteQuote !== undefined) setFavoriteQuote(updated.favoriteQuote || "");
+    if (updated.cardImage !== undefined) setCardImage(updated.cardImage || "");
+    if (updated.avatarUrl !== undefined) setAvatarUrl(updated.avatarUrl || "");
+    if (updated.splashArt !== undefined) setSplashArt(updated.splashArt || "");
+    if (updated.gallery !== undefined) setGallery(Array.isArray(updated.gallery) ? updated.gallery : []);
+    setEditorMode("visual");
+    toastSuccess(`✓ Applied JSON data (${mode} mode).`);
+  };
+
+  // ── Export JSON handler ──
+  const handleExportJson = () => {
+    try {
+      const payload = getLivePayload();
+      const json = JSON.stringify(payload, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(name || "game-character").replace(/\s+/g, "_").toLowerCase()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toastSuccess(`✓ Exported ${name || "game-character"}.json`);
+    } catch {
+      toastError("Failed to export JSON.");
     }
   };
 
@@ -1020,12 +1151,64 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
               </div>
 
               <div className="flex items-center gap-2">
+                {/* Visual / JSON Mode Switch */}
+                <div
+                  className="flex items-center rounded-lg border overflow-hidden shrink-0"
+                  style={{ borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB" }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setEditorMode("visual")}
+                    className="px-2.5 py-1 text-[10px] font-bold font-mono transition-all cursor-pointer"
+                    style={{
+                      backgroundColor: editorMode === "visual"
+                        ? isCyber ? accent : "#1E293B"
+                        : isCyber ? "rgba(255,255,255,0.04)" : "#F1F5F9",
+                      color: editorMode === "visual"
+                        ? isCyber ? "#000" : "#FFF"
+                        : isCyber ? "#94A3B8" : "#64748B",
+                    }}
+                  >
+                    🖊 Visual
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditorMode("json")}
+                    className="px-2.5 py-1 text-[10px] font-bold font-mono transition-all cursor-pointer"
+                    style={{
+                      backgroundColor: editorMode === "json"
+                        ? isCyber ? accent : "#1E293B"
+                        : isCyber ? "rgba(255,255,255,0.04)" : "#F1F5F9",
+                      color: editorMode === "json"
+                        ? isCyber ? "#000" : "#FFF"
+                        : isCyber ? "#94A3B8" : "#64748B",
+                    }}
+                  >
+                    {"{ }"} JSON
+                  </button>
+                </div>
+
+                {/* Export JSON Button */}
+                <button
+                  type="button"
+                  onClick={handleExportJson}
+                  className="px-2.5 py-1 text-[10px] font-bold font-mono rounded-lg border transition-all cursor-pointer shrink-0"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#F8FAFC",
+                    borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB",
+                    color: isCyber ? "#94A3B8" : "#475569",
+                  }}
+                  title="Export character data as JSON"
+                >
+                  ⬇ Export
+                </button>
+
                 {/* Auto-fill metadata button */}
                 <button
                   type="button"
                   onClick={handleAutoFill}
                   disabled={isFetchingMeta || !name.trim()}
-                  className="px-3 py-1.5 rounded-xl text-[10px] font-mono font-bold border transition-all disabled:opacity-40 flex items-center gap-1.5"
+                  className="px-3 py-1 rounded-xl text-[10px] font-mono font-bold border transition-all disabled:opacity-40 flex items-center gap-1.5"
                   style={{
                     borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#D1D5DB",
                     color: isCyber ? "#00F5FF" : "#6B7280",
@@ -1050,120 +1233,132 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
               </div>
             </div>
 
-            {/* Tab bar */}
-            <div
-              className="flex items-center gap-0.5 px-4 py-2 overflow-x-auto shrink-0 border-b"
-              style={{ borderColor: isCyber ? "rgba(255,255,255,0.06)" : "#F3F4F6" }}
-            >
-              {TABS.map((tab) => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveTab(tab.id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold font-mono whitespace-nowrap transition-all"
-                    style={{
-                      backgroundColor: isActive
-                        ? isCyber ? `${accent}18` : "#F0F9FF"
-                        : "transparent",
-                      color: isActive
-                        ? isCyber ? accent : "#2563EB"
-                        : isCyber ? "rgba(255,255,255,0.4)" : "#9CA3AF",
-                      borderBottom: isActive
-                        ? `2px solid ${isCyber ? accent : "#2563EB"}`
-                        : "2px solid transparent",
-                      borderRadius: "8px 8px 0 0",
-                    }}
-                  >
-                    <span>{tab.icon}</span>
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Tab content */}
-            <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-              <div className="flex-1 overflow-y-auto px-6 py-5 overscroll-contain">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeTab}
-                    initial={{ opacity: 0, x: 8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -8 }}
-                    transition={{ duration: 0.14 }}
-                  >
-                    {renderTab()}
-                  </motion.div>
-                </AnimatePresence>
+            {/* Mode Content Switch */}
+            {editorMode === "json" ? (
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5">
+                <GameCharacterJsonEditor
+                  profile={getLivePayload()}
+                  onApply={handleJsonApply}
+                />
               </div>
-
-              {/* Footer */}
-              <div
-                className="flex items-center justify-between px-6 py-4 border-t shrink-0"
-                style={{ borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#E5E7EB" }}
-              >
-                {/* Tab navigation arrows */}
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const idx = TABS.findIndex((t) => t.id === activeTab);
-                      if (idx > 0) setActiveTab(TABS[idx - 1].id);
-                    }}
-                    disabled={activeTab === TABS[0].id}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold border opacity-60 hover:opacity-100 disabled:opacity-20 transition-all"
-                    style={{ borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB" }}
-                  >
-                    ← Prev
-                  </button>
-                  <span className="text-[10px] font-mono opacity-40 theme-text-muted">
-                    {TABS.findIndex((t) => t.id === activeTab) + 1} / {TABS.length}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const idx = TABS.findIndex((t) => t.id === activeTab);
-                      if (idx < TABS.length - 1) setActiveTab(TABS[idx + 1].id);
-                    }}
-                    disabled={activeTab === TABS[TABS.length - 1].id}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold border opacity-60 hover:opacity-100 disabled:opacity-20 transition-all"
-                    style={{ borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB" }}
-                  >
-                    Next →
-                  </button>
+            ) : (
+              <>
+                {/* Tab bar */}
+                <div
+                  className="flex items-center gap-0.5 px-4 py-2 overflow-x-auto shrink-0 border-b"
+                  style={{ borderColor: isCyber ? "rgba(255,255,255,0.06)" : "#F3F4F6" }}
+                >
+                  {TABS.map((tab) => {
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveTab(tab.id)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold font-mono whitespace-nowrap transition-all"
+                        style={{
+                          backgroundColor: isActive
+                            ? isCyber ? `${accent}18` : "#F0F9FF"
+                            : "transparent",
+                          color: isActive
+                            ? isCyber ? accent : "#2563EB"
+                            : isCyber ? "rgba(255,255,255,0.4)" : "#9CA3AF",
+                          borderBottom: isActive
+                            ? `2px solid ${isCyber ? accent : "#2563EB"}`
+                            : "2px solid transparent",
+                          borderRadius: "8px 8px 0 0",
+                        }}
+                      >
+                        <span>{tab.icon}</span>
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="px-4 py-2 rounded-xl text-sm font-bold opacity-60 hover:opacity-100 border transition-all"
-                    style={{ borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB" }}
+                {/* Tab content */}
+                <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+                  <div className="flex-1 overflow-y-auto px-6 py-5 overscroll-contain">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={activeTab}
+                        initial={{ opacity: 0, x: 8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -8 }}
+                        transition={{ duration: 0.14 }}
+                      >
+                        {renderTab()}
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Footer */}
+                  <div
+                    className="flex items-center justify-between px-6 py-4 border-t shrink-0"
+                    style={{ borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#E5E7EB" }}
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || !name.trim()}
-                    className="px-5 py-2 rounded-xl text-sm font-bold text-white transition-all shadow-lg active:scale-95 disabled:opacity-50"
-                    style={{
-                      background: isCyber
-                        ? `linear-gradient(135deg, ${accent}CC, #BF5FFF99)`
-                        : "#7C3AED",
-                      boxShadow: isCyber ? `0 4px 20px ${accent}40` : undefined,
-                    }}
-                  >
-                    {isSubmitting
-                      ? "Saving…"
-                      : characterToEdit
-                      ? "Save Changes"
-                      : "Create Character"}
-                  </button>
-                </div>
-              </div>
-            </form>
+                    {/* Tab navigation arrows */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const idx = TABS.findIndex((t) => t.id === activeTab);
+                          if (idx > 0) setActiveTab(TABS[idx - 1].id);
+                        }}
+                        disabled={activeTab === TABS[0].id}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold border opacity-60 hover:opacity-100 disabled:opacity-20 transition-all"
+                        style={{ borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB" }}
+                      >
+                        ← Prev
+                      </button>
+                      <span className="text-[10px] font-mono opacity-40 theme-text-muted">
+                        {TABS.findIndex((t) => t.id === activeTab) + 1} / {TABS.length}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const idx = TABS.findIndex((t) => t.id === activeTab);
+                          if (idx < TABS.length - 1) setActiveTab(TABS[idx + 1].id);
+                        }}
+                        disabled={activeTab === TABS[TABS.length - 1].id}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold border opacity-60 hover:opacity-100 disabled:opacity-20 transition-all"
+                        style={{ borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB" }}
+                      >
+                        Next →
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={onClose}
+                        className="px-4 py-2 rounded-xl text-sm font-bold opacity-60 hover:opacity-100 border transition-all"
+                        style={{ borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB" }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmitting || !name.trim()}
+                        className="px-5 py-2 rounded-xl text-sm font-bold text-white transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                        style={{
+                          background: isCyber
+                            ? `linear-gradient(135deg, ${accent}CC, #BF5FFF99)`
+                            : "#7C3AED",
+                          boxShadow: isCyber ? `0 4px 20px ${accent}40` : undefined,
+                        }}
+                      >
+                        {isSubmitting
+                          ? "Saving…"
+                          : characterToEdit
+                          ? "Save Changes"
+                          : "Create Character"}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </>
+            )}
           </motion.div>
         </div>
       )}

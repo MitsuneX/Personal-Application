@@ -6,7 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { gridContainerVariants } from "@/lib/theme/motionVariants";
-import { HofEditorModal } from "@/components/ui/HofEditorModal";
+import { TokusatsuEditorModal } from "@/components/ui/TokusatsuEditorModal";
 import { HofEntryCard, getGroupForEntry, getGroupDetails } from "@/components/cards/HofEntryCard";
 import { CharacterVotePanel } from "@/components/ui/CharacterVotePanel";
 import type { HallOfFameEntry } from "@/lib/store/dashboardStore";
@@ -181,10 +181,10 @@ export default function PowerRangersPage() {
         accentColor="#EAB308"
       />
 
-      {/* ── Editor Modal ── */}
+      {/* ── Tokusatsu Editor Modal ── */}
       <AnimatePresence>
         {editorOpen && (
-          <HofEditorModal
+          <TokusatsuEditorModal
             isOpen={editorOpen}
             onClose={() => setEditorOpen(false)}
             entryToEdit={selectedEntry}
