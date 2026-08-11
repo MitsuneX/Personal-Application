@@ -6,6 +6,7 @@ import { useTheme } from "@/lib/theme";
 import { GameCharacterEntry, useDashboardStore } from "@/lib/store/dashboardStore";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { useToast } from "@/components/ui/ToastProvider";
+import { duplicateGameCharacter } from "@/lib/data/duplicateHelper";
 
 const ELEMENT_COLORS: Record<string, string> = {
   pyro:"#FF4A4A", hydro:"#1E90FF", anemo:"#4DC9A9", geo:"#CFA827",
@@ -170,13 +171,11 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
         id: "duplicate",
         label: "Duplicate Character",
         icon: "📋",
+        divider: true,
         onClick: async () => {
-          await addGameCharacter({
-            ...character,
-            id: undefined,
-            name: `${character.name} (Copy)`,
-          });
-          toastSuccess(`Duplicated ${character.name}!`);
+          const cloned = duplicateGameCharacter(character);
+          await addGameCharacter(cloned);
+          toastSuccess(`Duplicated “${character.name}” — independent copy created!`);
         },
       },
       {

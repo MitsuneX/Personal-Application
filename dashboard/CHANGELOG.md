@@ -2,6 +2,52 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [11.7.0] - 2026-08-11
+
+### 🔐 Character Identity, Duplicate & Delete System
+
+**Problem Solved**: Previously, deleting one of two identical Game Character records would accidentally use name/content matching, affecting both records instead of only the target. The duplicate creation flow also lacked any prevention, allowing unlimited accidental duplicates.
+
+**ID-Strict Record Identity (All Character Systems)**
+- Every stored character entry is now mutated (delete, update, favorite, rank, like) **exclusively by its unique `id`**. Name matching, content matching, and multi-field matching are never used to identify an existing record.
+- Audited: `dashboardStore.ts`, `/api/action/route.ts` — all Prisma operations use `where: { id: payload.id }`, all Zustand filters use `.filter(r => r.id !== targetId)`.
+- Result: Two records with 100% identical data but different IDs are permanently independent.
+
+**Context-Menu Duplicate Action (Game Characters & Character Dictionary)**
+- Right-clicking any Game Character card or Character Dictionary entry now shows a **"Duplicate Entry"** option.
+- Duplicate deep-clones the entire record using the new `deepClone<T>()` recursive engine — zero shared object or array references for `identity`, `world`, `combat`, `voice`, `story`, `details`, `gallery`, `stats`, `tags`, `tokusatsuData`, `forms`, `weapons`, etc.
+- A fresh unique ID is generated. The original name is preserved exactly (no `(Copy)` suffix).
+
+**Duplicate Prevention on Normal Creation**
+- Creating a new Game Character is blocked if an equivalent already exists (match: `gameId`/`gameName` + `name`/`officialName`/`nativeName`).
+- Creating a new Character Dictionary entry is blocked if an equivalent exists (match: `type` + `name` ± `series`/`franchise`).
+- Both editors show a contextual warning toast explaining how to use the right-click Duplicate action for intentional independent copies.
+- JSON import of Game Characters is also subject to duplicate prevention.
+
+**New File: `lib/data/duplicateHelper.ts`**
+- `deepClone<T>(obj)`: Universal recursive deep-clone with Date support, zero reference sharing.
+- `isGameCharacterDuplicate(newEntry, existingList, excludeId?)`: Canonical identity check using game + name fields.
+- `isHofDuplicate(newEntry, existingList, excludeId?)`: Canonical identity check for Character Dictionary entries. `excludeId` prevents false-positive during edit of existing records.
+- `duplicateGameCharacter(original)`: Returns a deep-cloned `GameCharacterEntry` with new unique ID.
+- `duplicateHofEntry(original)`: Returns a deep-cloned `HallOfFameEntry` with new unique ID.
+
+**Automated Test Suite (`scripts/test_duplicate_and_delete_system.ts`)**: 53 assertions, all passing:
+- Test A: Normal creation blocked when equivalent exists
+- Test B: Context-menu Duplicate creates two independent records with different IDs
+- Test C & D: Deleting one record never affects the other
+- Test E: Editing original biography leaves clone unchanged
+- Test F: Favoriting original leaves clone's isFavorite unchanged
+- Test G: JSON import duplicate prevention
+- Test H: Deep-clone independence for all canonical nested objects
+- Test I: Tokusatsu duplication retains all Tokusatsu-specific data
+- Test J: Japanese Actress stays Actress (not classified as Tokusatsu)
+- Test K: Two records with identical data but different IDs never collide
+- Test L: excludeId prevents false-positive during update of existing record
+
+---
+
+
+
 ## [11.6.1] - 2026-08-11
 
 ### 💾 Game Character Canonical JSON Import Engine & Data Loss Fix

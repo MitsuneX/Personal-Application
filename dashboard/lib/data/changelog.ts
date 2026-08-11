@@ -13,6 +13,36 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v11.7.0",
+    date: "2026-08-11",
+    title: "Character Identity, Duplicate & Delete System",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Implemented a robust ID-strict record identity model for both Game Characters and Character Dictionary (Hall of Fame). All delete, update, favorite-toggle, rank, and like operations now target records exclusively by their unique record ID. Introduced duplicate prevention on normal character creation and a context-menu Duplicate action that deep-clones all nested structures into a fully independent copy without shared object references.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "📋 Context-Menu Duplicate Action (Game Characters): Right-clicking a Game Character card now exposes a 'Duplicate Entry' option that deep-clones the complete record — including identity, world, combat, voice, story, gallery, stats, and tags — into a new record with a fresh unique ID. No name suffix added.",
+          "📋 Context-Menu Duplicate Action (Character Dictionary): Right-clicking a Hall of Fame / Character Dictionary card now exposes a 'Duplicate Entry' option that deep-clones the complete entry — including tokusatsuData, details, gallery, socialLinks, and all specialized fields — into a new independent record.",
+          "🛡️ Duplicate Prevention on Normal Creation: Creating a new Game Character is now blocked if an equivalent already exists (matched by gameId/gameName + name/officialName/nativeName). Creating a new Character Dictionary entry is blocked if an equivalent exists (matched by type + name ± series/franchise). Both show a contextual warning with instructions to use the right-click Duplicate action for intentional copies.",
+          "🛡️ JSON Import Duplicate Prevention: Importing a Game Character via JSON is blocked if an equivalent already exists, with the same warning directing users to the Duplicate context-menu action.",
+          "🔬 Deep Clone Engine (duplicateHelper.ts): Implemented a recursive safe deepClone<T>() function guaranteeing zero shared object or array references between original and cloned records.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🐛 Duplicate Context-Menu was using Shallow Spread (GameCharacterCard.tsx): Previous inline duplicate handler used { ...character, id: undefined, name: '(Copy)' }, producing shallow clones with shared nested references. Replaced with duplicateGameCharacter() deep-clone.",
+          "✅ ID-Strict Record Operations Confirmed: Audited all delete/update/toggle/like flows in dashboardStore.ts and /api/action/route.ts. All operations use where: { id: payload.id } or .filter(r => r.id !== targetId) — never name or content matching.",
+          "📐 isHofDuplicate excludeId Parameter: When editing an existing Character Dictionary record, excludeId prevents the editor from falsely blocking saves against the same record being edited.",
+          "🧪 Automated Test Suite (test_duplicate_and_delete_system.ts): Created a 53-assertion test suite covering Tests A–L including creation blocking, deep-clone independence, ID-isolated deletes, ID-isolated favorites/edits, Tokusatsu data retention, Japanese Actress type preservation, and identity collision prevention.",
+        ],
+      },
+    ],
+  },
+
+  {
     version: "v11.6.1",
     date: "2026-08-11",
     title: "Game Character Canonical JSON Import Engine & Data Loss Fix",

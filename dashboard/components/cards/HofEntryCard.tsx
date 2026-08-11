@@ -8,6 +8,7 @@ import type { MediaStatus, HallOfFameEntry } from "@/lib/store/dashboardStore";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useContextMenu } from "@/hooks/useContextMenu";
+import { duplicateHofEntry } from "@/lib/data/duplicateHelper";
 
 // ─── Constants & Styles ────────────────────────────────────────────────────────
 
@@ -161,6 +162,7 @@ interface CardProps {
   group: typeof NATIONALITY_GROUPS[0] | typeof OTHER_GROUP;
   onEdit: (entry: HallOfFameEntry) => void;
   onDelete: (id: string, name: string) => void;
+  onDuplicate?: (entry: HallOfFameEntry) => void;
   showType?: boolean;
   podiumRank?: number | null;
   onDoubleTap?: (e: React.MouseEvent | React.TouchEvent, id: string) => void;
@@ -175,6 +177,7 @@ export function HofEntryCard({
   group,
   onEdit,
   onDelete,
+  onDuplicate,
   showType = false,
   podiumRank = null,
   onDoubleTap,
@@ -183,7 +186,7 @@ export function HofEntryCard({
 }: CardProps) {
   const [imgError, setImgError] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
-  const { likeHof } = useDashboardStore();
+  const { likeHof, updateHof } = useDashboardStore();
   const { openContextMenu } = useContextMenu();
   const router = useRouter();
 
@@ -242,11 +245,21 @@ export function HofEntryCard({
           onClick: () => onEdit(entry),
         },
         {
+          id: "duplicate",
+          label: "Duplicate Entry",
+          icon: "📋",
+          divider: true,
+          onClick: async () => {
+            const cloned = duplicateHofEntry(entry);
+            await updateHof(cloned.id, cloned);
+            if (onDuplicate) onDuplicate(cloned);
+          },
+        },
+        {
           id: "delete",
           label: "Remove Entry",
           icon: "🗑️",
           danger: true,
-          divider: true,
           onClick: () => onDelete(entry.id, entry.name),
         },
       ],

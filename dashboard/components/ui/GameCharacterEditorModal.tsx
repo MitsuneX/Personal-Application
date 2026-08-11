@@ -27,6 +27,7 @@ import {
 import { useToast } from "@/components/ui/ToastProvider";
 import { GameCharacterJsonEditor } from "@/components/ui/GameCharacterJsonEditor";
 import { normalizeGameCharacterJson, exportGameCharacterToJson } from "@/lib/data/gameCharacterSchema";
+import { isGameCharacterDuplicate } from "@/lib/data/duplicateHelper";
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 const TABS = [
@@ -342,8 +343,8 @@ function TextareaField({
 export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: Props) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { games, addGameCharacter, updateGameCharacter } = useDashboardStore();
-  const { success: toastSuccess, error: toastError } = useToast();
+  const { games, gameCharacters, addGameCharacter, updateGameCharacter } = useDashboardStore();
+  const { success: toastSuccess, error: toastError, warning: toastWarning } = useToast();
 
   const [activeTab, setActiveTab] = useState<TabId>("basic");
   const [editorMode, setEditorMode] = useState<"visual" | "json">("visual");
@@ -717,9 +718,20 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
 
     try {
       if (characterToEdit) {
+        // ── UPDATE: strictly by unique record ID ──
         await updateGameCharacter(characterToEdit.id, payload);
         toastSuccess(`${name} updated!`);
       } else {
+        // ── CREATE: check canonical duplicate first ──
+        const duplicate = isGameCharacterDuplicate(payload, gameCharacters);
+        if (duplicate) {
+          toastWarning(
+            `“${duplicate.name}” already exists in your roster (${duplicate.gameName || "this game"}). ` +
+            `Right-click the existing card and choose “Duplicate Entry” if you intentionally want an independent copy.`
+          );
+          setIsSubmitting(false);
+          return;
+        }
         await addGameCharacter(payload);
         toastSuccess(`${name} added to your roster!`);
       }

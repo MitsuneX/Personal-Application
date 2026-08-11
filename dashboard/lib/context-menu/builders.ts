@@ -294,6 +294,7 @@ export interface CharacterCardMenuParams {
   onToggleFavorite?: () => void;
   onToggleHof?: () => void;
   onEdit?: () => void;
+  onDuplicate?: () => void;
   onDelete?: () => void;
   onCopyLink?: () => void;
 }
@@ -304,6 +305,7 @@ export function buildCharacterCardMenu({
   onToggleFavorite,
   onToggleHof,
   onEdit,
+  onDuplicate,
   onDelete,
   onCopyLink,
 }: CharacterCardMenuParams): ContextMenuItem[] {
@@ -357,13 +359,22 @@ export function buildCharacterCardMenu({
     });
   }
 
+  if (onDuplicate) {
+    items.push({
+      id: "duplicate",
+      label: "Duplicate Entry",
+      icon: "📋",
+      divider: true,
+      onClick: onDuplicate,
+    });
+  }
+
   if (onDelete) {
     items.push({
       id: "delete",
       label: `Delete ${character.name}`,
       icon: "🗑️",
       danger: true,
-      divider: true,
       shortcut: "Del",
       onClick: onDelete,
     });

@@ -14,6 +14,7 @@ import { CharacterImageUploader, GalleryUploader } from "@/components/ui/Charact
 import { TokusatsuEditorModal } from "@/components/ui/TokusatsuEditorModal";
 import { isTokusatsuEntry } from "@/lib/data/tokusatsuDataHelper";
 import { HofJsonEditor } from "@/components/ui/HofJsonEditor";
+import { isHofDuplicate } from "@/lib/data/duplicateHelper";
 
 interface HofEditorModalProps {
   isOpen: boolean;
@@ -42,8 +43,8 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   }
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { updateHof } = useDashboardStore();
-  const { success: toastSuccess, error: toastError } = useToast();
+  const { updateHof, hallOfFame } = useDashboardStore();
+  const { success: toastSuccess, error: toastError, warning: toastWarning } = useToast();
 
   const [activeFormTab, setActiveFormTab] = useState<FormTab>("basic");
   const [editorMode, setEditorMode] = useState<"visual" | "json">("visual");
@@ -593,6 +594,19 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
     setIsSaving(true);
     try {
       const id = entryToEdit?.id || "hof-" + Math.random().toString(36).substr(2, 9);
+
+      // ── Duplicate prevention (only for new entries) ──
+      if (!entryToEdit) {
+        const duplicate = isHofDuplicate({ name: String(name).trim(), type }, hallOfFame);
+        if (duplicate) {
+          toastWarning(
+            `“${duplicate.name}” already exists in the Character Directory. ` +
+            `Right-click the existing card and choose “Duplicate Entry” if you intentionally want an independent copy.`
+          );
+          setIsSaving(false);
+          return;
+        }
+      }
 
       const splitCsv = (val: unknown): string[] => {
         if (!val) return [];

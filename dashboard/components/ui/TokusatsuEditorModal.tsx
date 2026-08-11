@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/modal";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore, HallOfFameEntry } from "@/lib/store/dashboardStore";
 import { useToast } from "@/components/ui/ToastProvider";
+import { isHofDuplicate } from "@/lib/data/duplicateHelper";
 import { CharacterImageUploader, GalleryUploader } from "@/components/ui/CharacterImageUploader";
 import {
   TokusatsuProfile,
@@ -82,8 +83,8 @@ export function TokusatsuEditorModal({
 }: TokusatsuEditorModalProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { updateHof } = useDashboardStore();
-  const { success: toastSuccess, error: toastError } = useToast();
+  const { updateHof, hallOfFame } = useDashboardStore();
+  const { success: toastSuccess, error: toastError, warning: toastWarning } = useToast();
 
   const [activeTab, setActiveTab] = useState<TokuTab>("basic");
   // "visual" = standard form editor | "json" = JSON editor panel
@@ -484,6 +485,23 @@ export function TokusatsuEditorModal({
     setIsSaving(true);
     try {
       const id = entryToEdit?.id || `toku-${Date.now()}`;
+
+      // ── Duplicate prevention (only for new entries) ──
+      if (!entryToEdit) {
+        const duplicate = isHofDuplicate(
+          { name: profile.heroName.trim(), type: "tokusatsu", tokusatsuFranchise: profile.franchiseType },
+          hallOfFame
+        );
+        if (duplicate) {
+          toastWarning(
+            `“${duplicate.name}” already exists in the Character Directory. ` +
+            `Right-click the existing card and choose “Duplicate Entry” if you intentionally want an independent copy.`
+          );
+          setIsSaving(false);
+          return;
+        }
+      }
+
       const payload = extractHofDataFromTokusatsuProfile(profile, entryToEdit);
 
       await updateHof(id, {
