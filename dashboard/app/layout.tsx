@@ -103,15 +103,13 @@ export default function RootLayout({
         <meta name="application-name" content="Nexus Xenon" />
         <meta name="msapplication-TileColor" content="#FF6B35" />
         <meta name="msapplication-TileImage" content="/icons/icon-192.png" />
-      </head>
-      <body className="font-[family-name:var(--font-space-grotesk)] antialiased" suppressHydrationWarning>
-        <Script
-          id="theme-script"
-          strategy="beforeInteractive"
+        <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('dashboard-theme');var root=document.documentElement;if(t==='cyber'){root.setAttribute('data-theme','cyber');root.classList.add('theme-cyber');root.classList.remove('theme-neo-brutal');}else{root.setAttribute('data-theme','brutal');root.classList.add('theme-neo-brutal');root.classList.remove('theme-cyber');}}catch(e){}})();`,
           }}
         />
+      </head>
+      <body className="font-[family-name:var(--font-space-grotesk)] antialiased" suppressHydrationWarning>
         {/* 📱 PWA — Service Worker registration */}
         <Script
           id="sw-register"

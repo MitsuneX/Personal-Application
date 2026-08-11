@@ -20,7 +20,7 @@ if (!global.__prismaPool) {
     ssl: { rejectUnauthorized: false }, // required for Supabase pooler
     max: 3, // safe for Supabase session-mode pooler (limit: 15)
     idleTimeoutMillis: 10000,
-    connectionTimeoutMillis: 5000,
+    connectionTimeoutMillis: 15000,
   });
 }
 
