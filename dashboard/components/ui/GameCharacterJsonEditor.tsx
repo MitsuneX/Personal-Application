@@ -5,6 +5,9 @@ import { useTheme } from "@/lib/theme";
 import type { GameCharacterEntry } from "@/lib/store/dashboardStore";
 import {
   validateGameCharacterJson,
+  normalizeGameCharacterJson,
+  exportGameCharacterToJson,
+  deepMergeGameCharacter,
   diffGameCharacterProfiles,
   summarizeDiff,
   type ValidationError,
@@ -18,6 +21,10 @@ interface GameCharacterJsonEditorProps {
 
 function prettyPrint(obj: unknown): string {
   try {
+    if (obj && typeof obj === "object") {
+      const canonical = exportGameCharacterToJson(obj as Partial<GameCharacterEntry>);
+      return JSON.stringify(canonical, null, 2);
+    }
     return JSON.stringify(obj, null, 2);
   } catch {
     return "";
@@ -59,7 +66,7 @@ export function GameCharacterJsonEditor({ profile, onApply }: GameCharacterJsonE
     } else {
       setValidationState("valid");
       setErrors([]);
-      const norm = raw as Partial<GameCharacterEntry>;
+      const norm = normalizeGameCharacterJson(raw);
       setParsed(norm);
       setDiffs(diffGameCharacterProfiles(profile, norm));
     }
@@ -90,7 +97,8 @@ export function GameCharacterJsonEditor({ profile, onApply }: GameCharacterJsonE
   }, [jsonText]);
 
   const handleDownload = useCallback(() => {
-    const blob = new Blob([prettyPrint(profile)], { type: "application/json" });
+    const canonical = exportGameCharacterToJson(profile);
+    const blob = new Blob([JSON.stringify(canonical, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -123,13 +131,7 @@ export function GameCharacterJsonEditor({ profile, onApply }: GameCharacterJsonE
     if (mode === "replace") {
       onApply(parsed, "replace");
     } else {
-      const merged: Partial<GameCharacterEntry> = { ...profile };
-      (Object.keys(parsed) as (keyof GameCharacterEntry)[]).forEach((key) => {
-        const val = parsed[key];
-        if (val !== undefined) {
-          (merged as any)[key] = val;
-        }
-      });
+      const merged = deepMergeGameCharacter(profile, parsed);
       onApply(merged, "merge");
     }
     setValidationState("idle");

@@ -107,7 +107,10 @@ function resolveField(char: GameCharacterEntry, key: string): string | null {
     const val = (char.stats as any)?.[key.replace("stats.", "")];
     return val ? String(val) : null;
   }
-  const val = (char as any)[key];
+  let val = (char as any)[key];
+  if (val === undefined || val === null || val === "") {
+    val = (char.combat as any)?.[key] ?? (char.identity as any)?.[key] ?? (char.world as any)?.[key] ?? (char.story as any)?.[key];
+  }
   if (val === undefined || val === null || val === "") return null;
   if (typeof val === "number") return `${val}`;
   return String(val);
@@ -282,18 +285,18 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
     switch (activeTab) {
       case "overview":
         const filledCombat = combatConfig.fields.filter(f => resolveField(character, f.key));
-        const va = character.voiceActors || character.stats?.voiceActors || {};
+        const va = character.voiceActors || character.voice || character.stats?.voiceActors || {};
         const vaEntries = [
-          { lang: "Japanese", flag: "🇯🇵", val: va.jp },
-          { lang: "Chinese",  flag: "🇨🇳", val: va.cn },
-          { lang: "Korean",   flag: "🇰🇷", val: va.kr },
-          { lang: "English",  flag: "🇺🇸", val: va.en },
+          { lang: "Japanese", flag: "🇯🇵", val: va.jp || va.japanese },
+          { lang: "Chinese",  flag: "🇨🇳", val: va.cn || va.chinese },
+          { lang: "Korean",   flag: "🇰🇷", val: va.kr || va.korean },
+          { lang: "English",  flag: "🇺🇸", val: va.en || va.english },
         ].filter(e => e.val);
 
-        const bio = character.biography || character.stats?.biography;
-        const personality = character.personality || character.stats?.personality;
-        const officialDesc = character.officialDescription || character.stats?.officialDescription;
-        const quote = character.favoriteQuote || character.stats?.favoriteQuote;
+        const bio = character.biography || character.story?.biography || character.stats?.biography;
+        const personality = character.personality || character.story?.personality || character.stats?.personality;
+        const officialDesc = character.officialDescription || character.story?.officialDescription || character.stats?.officialDescription;
+        const quote = character.favoriteQuote || character.story?.favoriteQuote || character.stats?.favoriteQuote;
 
         return (
           <div className="space-y-2">
@@ -312,29 +315,29 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
             {/* Section 1: Identity */}
             <SectionTitle isCyber={isCyber}>Identity & Profile</SectionTitle>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-              <InfoRow label="Official Name" value={character.officialName || character.stats?.officialName} isCyber={isCyber} />
-              <InfoRow label="Native Name" value={character.nativeName || character.stats?.nativeName} isCyber={isCyber} />
-              <InfoRow label="Alias" value={character.alias || character.stats?.alias} isCyber={isCyber} />
-              <InfoRow label="Nickname" value={character.nickname || character.stats?.nickname} isCyber={isCyber} />
-              <InfoRow label="Title" value={character.title} isCyber={isCyber} />
-              <InfoRow label="Gender" value={character.gender || character.stats?.gender} isCyber={isCyber} />
-              <InfoRow label="Birthday" value={character.birthday} isCyber={isCyber} />
-              <InfoRow label="Age" value={character.age || character.stats?.age} isCyber={isCyber} />
-              <InfoRow label="Height" value={character.height || character.stats?.height} isCyber={isCyber} />
-              <InfoRow label="Weight" value={character.weight || character.stats?.weight} isCyber={isCyber} />
-              <InfoRow label="Species" value={character.species || character.stats?.species} isCyber={isCyber} />
-              <InfoRow label="Race" value={character.race || character.stats?.race} isCyber={isCyber} />
+              <InfoRow label="Official Name" value={character.officialName || character.identity?.officialName || character.stats?.officialName} isCyber={isCyber} />
+              <InfoRow label="Native Name" value={character.nativeName || character.identity?.nativeName || character.stats?.nativeName} isCyber={isCyber} />
+              <InfoRow label="Alias" value={character.alias || character.identity?.alias || character.stats?.alias} isCyber={isCyber} />
+              <InfoRow label="Nickname" value={character.nickname || character.identity?.nickname || character.stats?.nickname} isCyber={isCyber} />
+              <InfoRow label="Title" value={character.title || character.identity?.title} isCyber={isCyber} />
+              <InfoRow label="Gender" value={character.gender || character.identity?.gender || character.stats?.gender} isCyber={isCyber} />
+              <InfoRow label="Birthday" value={character.birthday || character.identity?.birthday || character.combat?.birthday} isCyber={isCyber} />
+              <InfoRow label="Age" value={character.age || character.identity?.age || character.stats?.age} isCyber={isCyber} />
+              <InfoRow label="Height" value={character.height || character.identity?.height || character.stats?.height} isCyber={isCyber} />
+              <InfoRow label="Weight" value={character.weight || character.identity?.weight || character.stats?.weight} isCyber={isCyber} />
+              <InfoRow label="Species" value={character.species || character.identity?.species || character.stats?.species} isCyber={isCyber} />
+              <InfoRow label="Race" value={character.race || character.identity?.race || character.stats?.race} isCyber={isCyber} />
             </div>
 
             {/* Section 2: World */}
             <SectionTitle isCyber={isCyber}>World & Faction</SectionTitle>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-              <InfoRow label="Nation" value={character.nation} isCyber={isCyber} />
-              <InfoRow label="Region" value={character.region || character.stats?.region} isCyber={isCyber} />
-              <InfoRow label="Planet" value={character.planet || character.stats?.planet} isCyber={isCyber} />
-              <InfoRow label="Organization" value={character.organization || character.stats?.organization} isCyber={isCyber} />
-              <InfoRow label="Affiliation" value={character.affiliation || character.stats?.affiliation} isCyber={isCyber} />
-              <InfoRow label="Faction" value={character.faction || character.stats?.faction} isCyber={isCyber} />
+              <InfoRow label="Nation" value={character.nation || character.world?.nation || character.combat?.nation} isCyber={isCyber} />
+              <InfoRow label="Region" value={character.region || character.world?.region || character.stats?.region} isCyber={isCyber} />
+              <InfoRow label="Planet" value={character.planet || character.world?.planet || character.stats?.planet} isCyber={isCyber} />
+              <InfoRow label="Organization" value={character.organization || character.world?.organization || character.stats?.organization} isCyber={isCyber} />
+              <InfoRow label="Affiliation" value={character.affiliation || character.world?.affiliation || character.stats?.affiliation} isCyber={isCyber} />
+              <InfoRow label="Faction" value={character.faction || character.world?.faction || character.stats?.faction} isCyber={isCyber} />
             </div>
 
             {/* Section 3: Combat */}

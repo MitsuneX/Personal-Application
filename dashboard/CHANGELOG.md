@@ -2,7 +2,25 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [11.6.1] - 2026-08-11
+
+### 💾 Game Character Canonical JSON Import Engine & Data Loss Fix
+
+**Root Cause Identified & Fixed (`gameCharacterSchema.ts`)**
+- **Data Loss Root Cause**: The JSON parser, visual editor, and import handlers only searched for flat top-level properties (e.g. `obj.birthday`, `obj.nation`). When importing standardized canonical JSON containing nested objects (`identity.*`, `world.*`, `combat.*`, `voice.*`, `story.*`), those nested fields were ignored and dropped. Shallow merge operations (`{ ...profile, ...parsed }`) further wiped unmentioned nested keys.
+- **Bidirectional Mapping Engine**: Implemented `normalizeGameCharacterJson(raw)` and `exportGameCharacterToJson(entry)` to translate between canonical nested JSON and internal `GameCharacterEntry` store records. Populates BOTH canonical nested objects (`identity`, `world`, `combat`, `voice`, `story`) AND flat fallback properties.
+- **Recursive Deep Merge Engine (`deepMergeGameCharacter`)**: Implemented recursive deep merging for nested objects (`identity`, `world`, `combat`, `voice`, `story`, `voiceActors`, `stats`), ensuring partial JSON updates update specified keys without erasing existing properties.
+- **Editor & Exporter Wiring (`GameCharacterEditorModal.tsx` & `GameCharacterJsonEditor.tsx`)**:
+  - `useEffect`: Form state initializes from both flat and canonical nested properties.
+  - `getLivePayload` & `handleSubmit`: Generates complete payloads containing both canonical nested objects and flat fallback fields.
+  - `handleExportJson`: Uses `exportGameCharacterToJson` to download canonical nested JSON files matching the user's standardized format.
+- **Profile View Modal (`CharacterProfileModal.tsx`)**: `resolveField` and `InfoRow` renderers updated to check both canonical sub-objects and flat properties, ensuring all 30+ identity, world, combat, voice, and story fields render in the UI.
+- **Automated Data Preservation Suite (`scripts/test_json_import_preservation.ts`)**: Programmatic test suite validating exact Daring Heart (Umamusume) and Xiao (Genshin Impact) JSON import/export, deep merge, and data retention fidelity.
+
+---
+
 ## [11.6.0] - 2026-08-11
+
 
 ### 🎭 New Character Type-Selection Flow & Tokusatsu Classification Engine Overhaul
 

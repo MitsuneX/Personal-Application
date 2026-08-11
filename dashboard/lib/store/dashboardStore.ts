@@ -208,6 +208,58 @@ export interface GameCharacterEntry {
   biography?: string;
   officialDescription?: string;
   favoriteQuote?: string;
+  // Canonical Nested Objects (Standardized Game Character JSON Format)
+  identity?: {
+    birthday?: string;
+    age?: string;
+    gender?: string;
+    height?: string;
+    weight?: string;
+    species?: string;
+    race?: string;
+    [key: string]: any;
+  };
+  world?: {
+    nation?: string;
+    region?: string;
+    planet?: string;
+    organization?: string;
+    affiliation?: string;
+    faction?: string;
+    [key: string]: any;
+  };
+  combat?: {
+    role?: string;
+    attribute?: string;
+    element?: string;
+    path?: string;
+    weaponType?: string;
+    weapon?: string;
+    rarity?: string;
+    nation?: string;
+    birthday?: string;
+    damageType?: string;
+    combatRole?: string;
+    [key: string]: any;
+  };
+  voice?: {
+    japanese?: string;
+    chinese?: string;
+    korean?: string;
+    english?: string;
+    jp?: string;
+    cn?: string;
+    kr?: string;
+    en?: string;
+    [key: string]: any;
+  };
+  story?: {
+    personality?: string;
+    biography?: string;
+    officialDescription?: string;
+    favoriteQuote?: string;
+    [key: string]: any;
+  };
   // Media
   cardImage?: string;
   avatarUrl?: string;

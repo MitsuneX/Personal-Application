@@ -13,6 +13,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v11.6.1",
+    date: "2026-08-11",
+    title: "Game Character Canonical JSON Import Engine & Data Loss Fix",
+    badge: "PATCH",
+    type: "patch",
+    summary: "Fixed Game Character JSON import data-loss bug by implementing a bidirectional mapping engine (normalizeGameCharacterJson & exportGameCharacterToJson) supporting the standardized canonical JSON format (identity, world, combat, voice, story). Added recursive deep merging to prevent partial updates from wiping existing fields.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "💾 Canonical Nested JSON Support (gameCharacterSchema.ts): Built normalizeGameCharacterJson and exportGameCharacterToJson mapping functions that translate between canonical nested JSON (identity.*, world.*, combat.*, voice.*, story.*) and internal store entries, populating both nested objects and flat fields.",
+          "🔄 Recursive Deep Merge Engine (deepMergeGameCharacter): Replaced shallow object merging with a recursive deep merge algorithm, ensuring incoming partial JSON updates do not overwrite unmentioned sub-keys or erase default values.",
+          "🪪 Standardized Field Preservation: Ensured all 30+ canonical fields (including birthday, species, race, nation, organization, role, combatRole, voice actors, biography, quote, and empty strings) survive import -> persistence -> edit -> view -> export lifecycles.",
+          "👁️ Profile Modal Field Resolution (CharacterProfileModal.tsx): Updated resolveField and InfoRow renderers to inspect both canonical nested objects and flat fallback properties, displaying all identity, world, combat, voice, and story fields.",
+          "🧪 Automated Verification Suite (test_json_import_preservation.ts): Added a programmatic data-preservation test suite verifying exact Daring Heart (Umamusume) and Xiao (Genshin Impact) JSON import/export and deep merge fidelity.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v11.6.0",
     date: "2026-08-11",
     title: "New Character Type-Selection Flow & Tokusatsu Classification Engine Overhaul",

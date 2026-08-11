@@ -26,6 +26,7 @@ import {
 } from "@/components/game/DynamicGameFields";
 import { useToast } from "@/components/ui/ToastProvider";
 import { GameCharacterJsonEditor } from "@/components/ui/GameCharacterJsonEditor";
+import { normalizeGameCharacterJson, exportGameCharacterToJson } from "@/lib/data/gameCharacterSchema";
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 const TABS = [
@@ -424,65 +425,66 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
     if (!isOpen) return;
     setActiveTab("basic");
     if (characterToEdit) {
-      setName(characterToEdit.name || "");
-      setOfficialName(characterToEdit.officialName || characterToEdit.stats?.officialName || "");
-      setAlias(characterToEdit.alias || characterToEdit.stats?.alias || "");
-      setNickname(characterToEdit.nickname || characterToEdit.stats?.nickname || "");
-      setNativeName(characterToEdit.nativeName || characterToEdit.stats?.nativeName || "");
-      setTitle(characterToEdit.title || "");
-      setGameId(characterToEdit.gameId || "");
-      setGameName(characterToEdit.gameName || "");
-      setCharacterId(characterToEdit.characterId || "");
-      setTier(characterToEdit.tier || "S");
-      setRank(characterToEdit.rank ?? "");
-      setIsFavorite(characterToEdit.isFavorite ?? true);
-      setIsFeatured(characterToEdit.isFeatured ?? false);
-      setAccentColor(characterToEdit.accentColor || "#00F5FF");
+      const c = normalizeGameCharacterJson(characterToEdit);
+      setName(c.name || "");
+      setOfficialName(c.officialName || "");
+      setAlias(c.alias || "");
+      setNickname(c.nickname || "");
+      setNativeName(c.nativeName || "");
+      setTitle(c.title || "");
+      setGameId(c.gameId || "");
+      setGameName(c.gameName || "");
+      setCharacterId(c.characterId || "");
+      setTier(c.tier || "S");
+      setRank(c.rank ?? "");
+      setIsFavorite(c.isFavorite ?? true);
+      setIsFeatured(c.isFeatured ?? false);
+      setAccentColor(c.accentColor || "#00F5FF");
       // Identity
-      setBirthday(characterToEdit.birthday || "");
-      setAge(characterToEdit.age || characterToEdit.stats?.age || "");
-      setGender(characterToEdit.gender || characterToEdit.stats?.gender || "");
-      setHeight(characterToEdit.height || characterToEdit.stats?.height || "");
-      setWeight(characterToEdit.weight || characterToEdit.stats?.weight || "");
-      setSpecies(characterToEdit.species || characterToEdit.stats?.species || "");
-      setRace(characterToEdit.race || characterToEdit.stats?.race || "");
+      setBirthday(c.birthday || "");
+      setAge(c.age || "");
+      setGender(c.gender || "");
+      setHeight(c.height || "");
+      setWeight(c.weight || "");
+      setSpecies(c.species || "");
+      setRace(c.race || "");
       // World
-      setNation(characterToEdit.nation || "");
-      setRegion(characterToEdit.region || characterToEdit.stats?.region || "");
-      setPlanet(characterToEdit.planet || characterToEdit.stats?.planet || "");
-      setOrganization(characterToEdit.organization || characterToEdit.stats?.organization || "");
-      setAffiliation(characterToEdit.affiliation || characterToEdit.stats?.affiliation || "");
-      setFaction(characterToEdit.faction || characterToEdit.stats?.faction || "");
+      setNation(c.nation || "");
+      setRegion(c.region || "");
+      setPlanet(c.planet || "");
+      setOrganization(c.organization || "");
+      setAffiliation(c.affiliation || "");
+      setFaction(c.faction || "");
       // Combat
-      setRole(characterToEdit.role || "");
-      setElement(characterToEdit.element || "");
-      setPath(characterToEdit.path || "");
-      setWeapon(characterToEdit.weapon || "");
-      setRarity(characterToEdit.rarity || "");
-      setAttribute(characterToEdit.attribute || characterToEdit.stats?.attribute || "");
-      setDamageType(characterToEdit.damageType || characterToEdit.stats?.damageType || "");
-      setCombatRole(characterToEdit.combatRole || characterToEdit.stats?.combatRole || "");
-      setWinRate(characterToEdit.winRate?.toString() || "");
-      setPickRate(characterToEdit.pickRate?.toString() || "");
-      setBanRate(characterToEdit.banRate?.toString() || "");
+      setRole(c.role || "");
+      setElement(c.element || "");
+      setPath(c.path || "");
+      setWeapon(c.weapon || "");
+      setRarity(c.rarity || "");
+      setAttribute(c.attribute || "");
+      setDamageType(c.damageType || "");
+      setCombatRole(c.combatRole || "");
+      setWinRate(c.winRate?.toString() || "");
+      setPickRate(c.pickRate?.toString() || "");
+      setBanRate(c.banRate?.toString() || "");
       // Voice
-      setVoiceJP(characterToEdit.voiceActors?.jp || characterToEdit.stats?.voiceActors?.jp || "");
-      setVoiceCN(characterToEdit.voiceActors?.cn || characterToEdit.stats?.voiceActors?.cn || "");
-      setVoiceKR(characterToEdit.voiceActors?.kr || characterToEdit.stats?.voiceActors?.kr || "");
-      setVoiceEN(characterToEdit.voiceActors?.en || characterToEdit.stats?.voiceActors?.en || "");
+      setVoiceJP(c.voiceActors?.jp || c.voice?.japanese || "");
+      setVoiceCN(c.voiceActors?.cn || c.voice?.chinese || "");
+      setVoiceKR(c.voiceActors?.kr || c.voice?.korean || "");
+      setVoiceEN(c.voiceActors?.en || c.voice?.english || "");
       // Story
-      setPersonality(characterToEdit.personality || characterToEdit.stats?.personality || "");
-      setBiography(characterToEdit.biography || characterToEdit.stats?.biography || "");
-      setOfficialDescription(characterToEdit.officialDescription || characterToEdit.stats?.officialDescription || "");
-      setFavoriteQuote(characterToEdit.favoriteQuote || characterToEdit.stats?.favoriteQuote || "");
-      setNotes(characterToEdit.notes || "");
+      setPersonality(c.personality || "");
+      setBiography(c.biography || "");
+      setOfficialDescription(c.officialDescription || "");
+      setFavoriteQuote(c.favoriteQuote || "");
+      setNotes(c.notes || "");
       // Images
-      setCardImage(characterToEdit.cardImage || "");
-      setAvatarUrl(characterToEdit.avatarUrl || "");
-      setSplashArt(characterToEdit.splashArt || "");
-      setGallery(characterToEdit.gallery || characterToEdit.stats?.gallery || []);
+      setCardImage(c.cardImage || "");
+      setAvatarUrl(c.avatarUrl || "");
+      setSplashArt(c.splashArt || "");
+      setGallery(c.gallery || []);
       // Persistent Crop Data
-      const existingCrop = characterToEdit.stats?.cropData || {};
+      const existingCrop = c.stats?.cropData || {};
       setCardImageCrop(existingCrop.cardImageCrop || null);
       setAvatarCrop(existingCrop.avatarCrop || null);
       setSplashArtCrop(existingCrop.splashArtCrop || null);
@@ -564,111 +566,105 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
 
   // ── JSON live payload helper ──
   const getLivePayload = (): Partial<GameCharacterEntry> => {
-    const voiceActors = {
-      ...(voiceJP ? { jp: voiceJP } : {}),
-      ...(voiceCN ? { cn: voiceCN } : {}),
-      ...(voiceKR ? { kr: voiceKR } : {}),
-      ...(voiceEN ? { en: voiceEN } : {}),
-    };
-    return {
+    const raw: any = {
       id: characterToEdit?.id || `gc-${Date.now()}`,
       name: name.trim() || "New Game Character",
-      officialName: officialName || undefined,
-      alias: alias || undefined,
-      nickname: nickname || undefined,
-      nativeName: nativeName || undefined,
-      title: title || undefined,
-      gameId: gameId || undefined,
-      gameName: gameName || undefined,
-      characterId: characterId || undefined,
+      officialName: officialName || "",
+      alias: alias || "",
+      nickname: nickname || "",
+      nativeName: nativeName || "",
+      title: title || "",
+      gameId: gameId || "",
+      gameName: gameName || "",
+      characterId: characterId || "",
       tier: tier || "S",
-      rank: rank === "" ? undefined : Number(rank),
+      rank: rank === "" ? null : Number(rank),
       isFavorite,
       isFeatured,
       accentColor,
-      birthday: birthday || undefined,
-      age: age || undefined,
-      gender: gender || undefined,
-      height: height || undefined,
-      weight: weight || undefined,
-      species: species || undefined,
-      race: race || undefined,
-      nation: nation || undefined,
-      region: region || undefined,
-      planet: planet || undefined,
-      organization: organization || undefined,
-      affiliation: affiliation || undefined,
-      faction: faction || undefined,
-      role: role || undefined,
-      element: element || undefined,
-      attribute: attribute || undefined,
-      path: path || undefined,
-      weapon: weapon || undefined,
-      rarity: rarity || undefined,
-      damageType: damageType || undefined,
-      combatRole: combatRole || undefined,
-      voiceActors: Object.keys(voiceActors).length > 0 ? voiceActors : undefined,
-      personality: personality || undefined,
-      biography: biography || undefined,
-      officialDescription: officialDescription || undefined,
-      favoriteQuote: favoriteQuote || undefined,
+      identity: {
+        birthday, age, gender, height, weight, species, race,
+        ...(characterToEdit?.identity || {}),
+      },
+      world: {
+        nation, region, planet, organization, affiliation, faction,
+        ...(characterToEdit?.world || {}),
+      },
+      combat: {
+        role, attribute, element, path, weaponType: weapon, weapon, rarity,
+        nation, birthday, damageType, combatRole,
+        ...(characterToEdit?.combat || {}),
+      },
+      voice: {
+        japanese: voiceJP, chinese: voiceCN, korean: voiceKR, english: voiceEN,
+        jp: voiceJP, cn: voiceCN, kr: voiceKR, en: voiceEN,
+        ...(characterToEdit?.voice || {}),
+      },
+      story: {
+        personality, biography, officialDescription, favoriteQuote,
+        ...(characterToEdit?.story || {}),
+      },
       cardImage: cardImage || undefined,
       avatarUrl: avatarUrl || undefined,
       splashArt: splashArt || undefined,
       gallery: gallery.length > 0 ? gallery : undefined,
+      notes: notes || undefined,
     };
+
+    return normalizeGameCharacterJson(raw);
   };
 
   // ── JSON Apply handler ──
   const handleJsonApply = (updated: Partial<GameCharacterEntry>, mode: "replace" | "merge") => {
-    if (updated.name !== undefined) setName(updated.name);
-    if (updated.officialName !== undefined) setOfficialName(updated.officialName || "");
-    if (updated.alias !== undefined) setAlias(updated.alias || "");
-    if (updated.nickname !== undefined) setNickname(updated.nickname || "");
-    if (updated.nativeName !== undefined) setNativeName(updated.nativeName || "");
-    if (updated.title !== undefined) setTitle(updated.title || "");
-    if (updated.gameId !== undefined) setGameId(updated.gameId || "");
-    if (updated.gameName !== undefined) setGameName(updated.gameName || "");
-    if (updated.tier !== undefined) setTier(updated.tier || "S");
-    if (updated.rank !== undefined) setRank(typeof updated.rank === "number" ? updated.rank : "");
-    if (updated.isFavorite !== undefined) setIsFavorite(Boolean(updated.isFavorite));
-    if (updated.isFeatured !== undefined) setIsFeatured(Boolean(updated.isFeatured));
-    if (updated.accentColor !== undefined) setAccentColor(updated.accentColor || "#00F5FF");
-    if (updated.birthday !== undefined) setBirthday(updated.birthday || "");
-    if (updated.age !== undefined) setAge(updated.age || "");
-    if (updated.gender !== undefined) setGender(updated.gender || "");
-    if (updated.height !== undefined) setHeight(updated.height || "");
-    if (updated.weight !== undefined) setWeight(updated.weight || "");
-    if (updated.species !== undefined) setSpecies(updated.species || "");
-    if (updated.race !== undefined) setRace(updated.race || "");
-    if (updated.nation !== undefined) setNation(updated.nation || "");
-    if (updated.region !== undefined) setRegion(updated.region || "");
-    if (updated.planet !== undefined) setPlanet(updated.planet || "");
-    if (updated.organization !== undefined) setOrganization(updated.organization || "");
-    if (updated.affiliation !== undefined) setAffiliation(updated.affiliation || "");
-    if (updated.faction !== undefined) setFaction(updated.faction || "");
-    if (updated.role !== undefined) setRole(updated.role || "");
-    if (updated.element !== undefined) setElement(updated.element || "");
-    if (updated.attribute !== undefined) setAttribute(updated.attribute || "");
-    if (updated.path !== undefined) setPath(updated.path || "");
-    if (updated.weapon !== undefined) setWeapon(updated.weapon || "");
-    if (updated.rarity !== undefined) setRarity(updated.rarity || "");
-    if (updated.damageType !== undefined) setDamageType(updated.damageType || "");
-    if (updated.combatRole !== undefined) setCombatRole(updated.combatRole || "");
-    if (updated.voiceActors) {
-      if (updated.voiceActors.jp !== undefined) setVoiceJP(updated.voiceActors.jp || "");
-      if (updated.voiceActors.cn !== undefined) setVoiceCN(updated.voiceActors.cn || "");
-      if (updated.voiceActors.kr !== undefined) setVoiceKR(updated.voiceActors.kr || "");
-      if (updated.voiceActors.en !== undefined) setVoiceEN(updated.voiceActors.en || "");
+    const norm = normalizeGameCharacterJson(updated);
+    if (norm.name !== undefined) setName(norm.name);
+    if (norm.officialName !== undefined) setOfficialName(norm.officialName || "");
+    if (norm.alias !== undefined) setAlias(norm.alias || "");
+    if (norm.nickname !== undefined) setNickname(norm.nickname || "");
+    if (norm.nativeName !== undefined) setNativeName(norm.nativeName || "");
+    if (norm.title !== undefined) setTitle(norm.title || "");
+    if (norm.gameId !== undefined) setGameId(norm.gameId || "");
+    if (norm.gameName !== undefined) setGameName(norm.gameName || "");
+    if (norm.tier !== undefined) setTier(norm.tier || "S");
+    if (norm.rank !== undefined) setRank(typeof norm.rank === "number" ? norm.rank : "");
+    if (norm.isFavorite !== undefined) setIsFavorite(Boolean(norm.isFavorite));
+    if (norm.isFeatured !== undefined) setIsFeatured(Boolean(norm.isFeatured));
+    if (norm.accentColor !== undefined) setAccentColor(norm.accentColor || "#00F5FF");
+    if (norm.birthday !== undefined) setBirthday(norm.birthday || "");
+    if (norm.age !== undefined) setAge(norm.age || "");
+    if (norm.gender !== undefined) setGender(norm.gender || "");
+    if (norm.height !== undefined) setHeight(norm.height || "");
+    if (norm.weight !== undefined) setWeight(norm.weight || "");
+    if (norm.species !== undefined) setSpecies(norm.species || "");
+    if (norm.race !== undefined) setRace(norm.race || "");
+    if (norm.nation !== undefined) setNation(norm.nation || "");
+    if (norm.region !== undefined) setRegion(norm.region || "");
+    if (norm.planet !== undefined) setPlanet(norm.planet || "");
+    if (norm.organization !== undefined) setOrganization(norm.organization || "");
+    if (norm.affiliation !== undefined) setAffiliation(norm.affiliation || "");
+    if (norm.faction !== undefined) setFaction(norm.faction || "");
+    if (norm.role !== undefined) setRole(norm.role || "");
+    if (norm.element !== undefined) setElement(norm.element || "");
+    if (norm.attribute !== undefined) setAttribute(norm.attribute || "");
+    if (norm.path !== undefined) setPath(norm.path || "");
+    if (norm.weapon !== undefined) setWeapon(norm.weapon || "");
+    if (norm.rarity !== undefined) setRarity(norm.rarity || "");
+    if (norm.damageType !== undefined) setDamageType(norm.damageType || "");
+    if (norm.combatRole !== undefined) setCombatRole(norm.combatRole || "");
+    if (norm.voiceActors) {
+      if (norm.voiceActors.jp !== undefined) setVoiceJP(norm.voiceActors.jp || "");
+      if (norm.voiceActors.cn !== undefined) setVoiceCN(norm.voiceActors.cn || "");
+      if (norm.voiceActors.kr !== undefined) setVoiceKR(norm.voiceActors.kr || "");
+      if (norm.voiceActors.en !== undefined) setVoiceEN(norm.voiceActors.en || "");
     }
-    if (updated.personality !== undefined) setPersonality(updated.personality || "");
-    if (updated.biography !== undefined) setBiography(updated.biography || "");
-    if (updated.officialDescription !== undefined) setOfficialDescription(updated.officialDescription || "");
-    if (updated.favoriteQuote !== undefined) setFavoriteQuote(updated.favoriteQuote || "");
-    if (updated.cardImage !== undefined) setCardImage(updated.cardImage || "");
-    if (updated.avatarUrl !== undefined) setAvatarUrl(updated.avatarUrl || "");
-    if (updated.splashArt !== undefined) setSplashArt(updated.splashArt || "");
-    if (updated.gallery !== undefined) setGallery(Array.isArray(updated.gallery) ? updated.gallery : []);
+    if (norm.personality !== undefined) setPersonality(norm.personality || "");
+    if (norm.biography !== undefined) setBiography(norm.biography || "");
+    if (norm.officialDescription !== undefined) setOfficialDescription(norm.officialDescription || "");
+    if (norm.favoriteQuote !== undefined) setFavoriteQuote(norm.favoriteQuote || "");
+    if (norm.cardImage !== undefined) setCardImage(norm.cardImage || "");
+    if (norm.avatarUrl !== undefined) setAvatarUrl(norm.avatarUrl || "");
+    if (norm.splashArt !== undefined) setSplashArt(norm.splashArt || "");
+    if (norm.gallery !== undefined) setGallery(Array.isArray(norm.gallery) ? norm.gallery : []);
     setEditorMode("visual");
     toastSuccess(`✓ Applied JSON data (${mode} mode).`);
   };
@@ -677,7 +673,8 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
   const handleExportJson = () => {
     try {
       const payload = getLivePayload();
-      const json = JSON.stringify(payload, null, 2);
+      const canonical = exportGameCharacterToJson(payload);
+      const json = JSON.stringify(canonical, null, 2);
       const blob = new Blob([json], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -701,68 +698,13 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
     if (!name.trim()) return;
     setIsSubmitting(true);
 
-    const voiceActors = {
-      ...(voiceJP ? { jp: voiceJP } : {}),
-      ...(voiceCN ? { cn: voiceCN } : {}),
-      ...(voiceKR ? { kr: voiceKR } : {}),
-      ...(voiceEN ? { en: voiceEN } : {}),
-    };
-
+    const live = getLivePayload();
     const payload: Partial<GameCharacterEntry> = {
-      name: name.trim(),
-      officialName: officialName || undefined,
-      alias: alias || undefined,
-      nickname: nickname || undefined,
-      nativeName: nativeName || undefined,
-      title: title || undefined,
-      gameId: gameId || undefined,
-      gameName: gameName || undefined,
-      characterId: characterId || undefined,
-      tier: tier || "S",
-      rank: rank === "" ? undefined : Number(rank),
-      isFavorite,
-      isFeatured,
-      accentColor,
-      // Identity
-      birthday: birthday || undefined,
-      age: age || undefined,
-      gender: gender || undefined,
-      height: height || undefined,
-      weight: weight || undefined,
-      species: species || undefined,
-      race: race || undefined,
-      // World
-      nation: nation || undefined,
-      region: region || undefined,
-      planet: planet || undefined,
-      organization: organization || undefined,
-      affiliation: affiliation || undefined,
-      faction: faction || undefined,
-      // Combat
-      role: role || undefined,
-      element: element || undefined,
-      path: path || undefined,
-      weapon: weapon || undefined,
-      rarity: rarity || undefined,
-      attribute: attribute || undefined,
-      damageType: damageType || undefined,
-      combatRole: combatRole || undefined,
+      ...live,
       winRate: winRate !== "" ? Number(winRate) : undefined,
       pickRate: pickRate !== "" ? Number(pickRate) : undefined,
       banRate: banRate !== "" ? Number(banRate) : undefined,
-      // Voice
-      voiceActors: Object.keys(voiceActors).length > 0 ? voiceActors : undefined,
-      // Story
-      personality: personality || undefined,
-      biography: biography || undefined,
-      officialDescription: officialDescription || undefined,
-      favoriteQuote: favoriteQuote || undefined,
       notes: notes || undefined,
-      // Media
-      cardImage: cardImage || undefined,
-      avatarUrl: avatarUrl || undefined,
-      splashArt: splashArt || undefined,
-      gallery: gallery.length > 0 ? gallery : undefined,
       stats: {
         ...(characterToEdit?.stats || {}),
         cropData: {
