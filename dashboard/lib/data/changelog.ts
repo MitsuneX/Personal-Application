@@ -13,6 +13,74 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v11.5.0",
+    date: "2026-08-11",
+    title: "Tokusatsu Navigation Centralization, Dynamic Subtype Filtering & Franchise Badging",
+    badge: "FEATURE",
+    type: "minor",
+    summary: "Centralized Tokusatsu into the Character Dictionary navigation, removing duplicate sidebar items. Added dynamic franchise subtype filtering (Ultraman, Kamen Rider, Power Rangers, Super Sentai) with live entry counts, semantic card badges, and legacy route redirects.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🦸 Centralized Character Dictionary Navigation (Sidebar.tsx & app/characters/page.tsx): Consolidated Tokusatsu into the main Character Dictionary system, removing duplicate Tokusatsu menu items and accordion dropdowns from the left sidebar.",
+          "⚡ Dynamic Franchise Subtype Filter Bar (app/characters/page.tsx): Implemented a secondary franchise subtype filter bar (All Tokusatsu, Ultraman, Kamen Rider, Power Rangers, Super Sentai) that dynamically appears when the Tokusatsu category pill is selected, featuring live entry counts for each franchise.",
+          "🏷️ Semantic Franchise Card Badges (HofEntryCard.tsx): Added semantic Tokusatsu badges (⚡ Ultraman, 🏍️ Kamen Rider, 🔴 Power Rangers, 🛡️ Super Sentai) to character cards using the existing card tag visual language.",
+          "🔀 Multi-Filter & URL Query Integration: Integrated franchise subtype filtering with search queries, origin dropdowns, popularity/A-Z sorting, favorites, and GOAT member toggles. Preserved query search parameters (/characters?category=tokusatsu&subtype=ultraman).",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "↪️ Legacy Route Safe Redirects: Implemented safe redirects from legacy routes (/tokusatsu, /tokusatsu/ultraman, /tokusatsu/kamen-rider, /tokusatsu/power-rangers) to /characters?category=tokusatsu&subtype=....",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v11.4.1",
+    date: "2026-08-11",
+    title: "Tokusatsu Runtime Profile Modal Routing & Detection Engine Fix",
+    badge: "PATCH",
+    type: "patch",
+    summary: "Resolved runtime routing issue where clicking Tokusatsu character cards in the Character Dictionary rendered the generic 4-tab modal instead of TokusatsuProfileModal. Enhanced isTokusatsuEntry() to perform deep property and keyword detection.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🐛 Character Dictionary Profile Modal Delegation (CharacterDictProfileModal.tsx): Added an early-return check in CharacterDictProfileModal to delegate Tokusatsu records directly to TokusatsuProfileModal when opened from /characters.",
+          "🏆 Hall of Fame Profile Routing (HofProfileModal.tsx): Integrated isTokusatsuEntry() resolution to route Tokusatsu entries directly to TokusatsuProfileModal.",
+          "🔍 Deep Tokusatsu Detection Engine (tokusatsuDataHelper.ts): Enhanced isTokusatsuEntry() to inspect details.tokusatsuData, details.ultraman, details.kamenRider, details.powerRangers, details.superSentai, tokusatsuFranchise, tokusatsuShow, as well as textual keyword matching across name, series, franchise, and universe.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v11.4.0",
+    date: "2026-08-11",
+    title: "Dedicated Tokusatsu Profile View System, Visual Editor & JSON Import/Export Pipeline",
+    badge: "FEATURE",
+    type: "minor",
+    summary: "Built a dedicated 9-tab Tokusatsu profile modal (Overview, Gallery, Lore, Appearances, Forms, Weapons, Vehicles, Powers, Franchise) with Ultraman, Kamen Rider, Power Rangers, and Super Sentai renderers. Implemented Tokusatsu visual editor and raw JSON import/export workflow.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🦸 Dedicated Tokusatsu Profile Modal (TokusatsuProfileModal.tsx): Created a specialized read-only viewer for Tokusatsu heroes featuring 9 navigation tabs (Overview, Gallery, Lore, Appearances, Forms, Weapons, Vehicles, Powers, Franchise) and dual-theme styling.",
+          "🛡️ Contextual Franchise Renderers: Built dedicated franchise-specific data blocks for Ultraman (Color Timer, Host, Beam Attacks, Defense Team, Planet Origin), Kamen Rider (Belt, System, Rider Kick, Rival/Allied Riders), Power Rangers (Color, Morphing Call, Zords, Megazords), and Super Sentai (Gattai, Mecha, Team Position).",
+          "✏️ Dedicated Tokusatsu Visual Editor (TokusatsuEditorModal.tsx): Created a visual editor with schema-aware form validation, normalization pipeline (normalizeTokusatsuProfile), and 3:4 portrait crop integration.",
+          "📋 Raw JSON Import & Export Editors (TokusatsuJsonEditor.tsx, HofJsonEditor.tsx, GameCharacterJsonEditor.tsx): Added schema-validated raw JSON editors supporting JSON pasting, formatting, validation errors, copying, and immediate data store syncing.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🛡️ Schema Normalization & Empty-State Safeguards: Standardized tokusatsuData schema normalization with clean empty-state placeholders for optional empty collections, preventing blank modal screens or raw JSON fallback.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v11.3.4",
     date: "2026-08-10",
     title: "Refined Intelligent Horizontal Tab Auto-Scrolling in HofEditorModal",

@@ -2,7 +2,88 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [11.5.0] - 2026-08-11
+
+### 🦸 Tokusatsu Navigation Centralization, Dynamic Subtype Filtering & Franchise Badging
+
+**Sidebar & Navigation Refactoring**
+- **Standalone Tokusatsu Item Removed (`Sidebar.tsx`)**: Removed the `Tokusatsu` accordion menu item and its sub-navigation entries (`Ultraman`, `Kamen Rider`, `Power Rangers`) from the left sidebar. Character Dictionary (`/characters`) is now the single entry point for all collectible character categories.
+
+**Character Dictionary Tokusatsu Subtype Filtering (`app/characters/page.tsx`)**
+- **Dynamic Franchise Subtype Filter Bar**: A secondary subtype filter row (`All Tokusatsu`, `Ultraman`, `Kamen Rider`, `Power Rangers`, `Super Sentai`) dynamically appears below the main category pills when the `Tokusatsu` category is selected. Hidden for all other categories.
+- **Live Entry Counts**: Each franchise subtype button displays a live count badge derived from `resolveFranchiseType()` applied to the full Tokusatsu dataset.
+- **Multi-Filter Integration**: Subtype filtering fully composes with search, origin, popularity/A-Z/Z-A sorting, favorites, and GOAT filters.
+- **URL Search Param Support**: State reads `?category=tokusatsu&subtype=ultraman` etc. on initial mount for deep-link compatibility.
+
+**Character Card Franchise Badges (`HofEntryCard.tsx`)**
+- **Semantic Franchise Badges**: Updated `getTypeLabel()` to display specific franchise badges (⚡ Ultraman, 🏍️ Kamen Rider, 🔴 Power Rangers, 🛡️ Super Sentai) instead of the generic `🦸 Tokusatsu` label.
+
+**Legacy Route Redirects**
+- `/tokusatsu` → `/characters?category=tokusatsu`
+- `/tokusatsu/ultraman` → `/characters?category=tokusatsu&subtype=ultraman`
+- `/tokusatsu/kamen-rider` → `/characters?category=tokusatsu&subtype=kamen-rider`
+- `/tokusatsu/power-rangers` → `/characters?category=tokusatsu&subtype=power-rangers`
+
+---
+
+## [11.4.1] - 2026-08-11
+
+### 🐛 Tokusatsu Runtime Profile Modal Routing Fix & Detection Engine
+
+**Root Cause Identified & Fixed**
+- **Character Dictionary Click Path Bypassed HofProfileModal**: `app/characters/page.tsx` invoked `<CharacterDictProfileModal>` directly via `onOpenProfile` handler, bypassing `HofProfileModal` entirely. Tokusatsu entries clicked from `/characters` therefore rendered the generic 4-tab view rather than the dedicated 9-tab Tokusatsu modal.
+
+**Character Dictionary Modal Delegation (`CharacterDictProfileModal.tsx`)**
+- **Early-Return Tokusatsu Routing**: Added `if (entry && isTokusatsuEntry(entry)) return <TokusatsuProfileModal .../>` at the top of `CharacterDictProfileModal`, ensuring every click path through the Character Dictionary that resolves to a Tokusatsu entry delegates immediately to `TokusatsuProfileModal`.
+
+**Hall of Fame Profile Routing (`HofProfileModal.tsx`)**
+- **`isTokusatsuEntry()` Integration**: Integrated detection check so `/hall-of-fame` and `/tokusatsu` paths also route Tokusatsu entries to `TokusatsuProfileModal`.
+
+**Tokusatsu Detection Engine (`lib/data/tokusatsuDataHelper.ts`)**
+- **Enhanced `isTokusatsuEntry()`**: Extended detection to inspect `details.tokusatsuData`, `details.ultraman`, `details.kamenRider`, `details.powerRangers`, `details.superSentai`, `tokusatsuFranchise`, `tokusatsuShow`, plus textual keyword matching across `name`, `series`, `franchise`, and `universe` fields (`ultraman`, `kamen rider`, `super sentai`, `power ranger`, `tokusatsu`).
+
+---
+
+## [11.4.0] - 2026-08-11
+
+### 🏯 Dedicated Tokusatsu Profile View System, Visual Editor & JSON Import/Export Pipeline
+
+**Dedicated Tokusatsu Profile Modal (`TokusatsuProfileModal.tsx`)**
+- **9 Specialized Navigation Tabs**: Overview, Gallery, Lore, Appearances, Forms, Weapons, Vehicles, Powers, Franchise.
+- **Data Source**: Consumes `normalizeTokusatsuProfile(entry.details?.tokusatsuData, entry)` for a consistent, backward-compatible rendering pipeline.
+- **Dual-Theme Support**: Full Cyberpunk and Neo-Brutalism fidelity via `useTheme()` and `isCyber` style branching.
+- **Gallery Lightbox**: Image gallery with `ImageLightboxModal` integration.
+- **Empty-State Safeguards**: Clean placeholders for any optional collection that is empty, with no blank tabs.
+
+**Franchise-Specific Contextual Renderers (Franchise Tab)**
+- **Ultraman**: Color Timer, Host (human form), Beam Attacks, Defense Team, Planet/Home Origin.
+- **Kamen Rider**: Rider System, Belt Device, Rider Kick, Rival Riders, Allied Riders.
+- **Power Rangers**: Ranger Color, Morphing Call, Zords, Megazords, Team Name.
+- **Super Sentai**: Gattai Name, Mecha, Team Position, Series Era, Villain Faction.
+
+**Dedicated Tokusatsu Visual Editor (`TokusatsuEditorModal.tsx`)**
+- Built a full-featured visual editor with form sections for every Tokusatsu field: Identity, Franchise, Forms & Transformations, Weapons, Vehicles, Powers & Finishers, Appearances, Franchise-Specific fields, Cast & Production.
+- Integrated schema-aware normalization (`normalizeTokusatsuProfile`) and 3:4 portrait crop modal.
+
+**Raw JSON Import/Export Editors**
+- **`TokusatsuJsonEditor.tsx`**: Schema-validated JSON editor for Tokusatsu entries (paste, validate, import to data store, export to clipboard).
+- **`HofJsonEditor.tsx`**: JSON editor for Hall of Fame entries.
+- **`GameCharacterJsonEditor.tsx`**: JSON editor for Game Character entries.
+
+**Schema & Normalization Pipeline**
+- **`lib/types/tokusatsu.ts`**: Full TypeScript interface definitions for `TokusatsuProfile`, `TokusatsuForm`, `TokusatsuWeapon`, `TokusatsuVehicle`, `TokusatsuAbility`, `TokusatsuAppearance`, and franchise-specific blocks.
+- **`lib/data/tokusatsuDataHelper.ts`**: Normalization helpers (`normalizeTokusatsuProfile`, `resolveFranchiseType`, `isTokusatsuEntry`) ensuring consistent data-store-to-UI rendering.
+- **`lib/data/tokusatsuSchema.ts`**: Runtime schema definition and validation for import validation.
+- **`lib/data/hofSchema.ts`**: Schema definition for Hall of Fame entry JSON validation.
+- **`lib/data/gameCharacterSchema.ts`**: Schema definition for Game Character JSON validation.
+
+**Build Fix**
+- **`app/tokusatsu/page.tsx` Suspense Boundary (commit 2a7aa0b)**: Wrapped `useSearchParams()` in a `<Suspense>` boundary to resolve Next.js 16 static generation build error.
+
+---
+
 ## [11.3.4] - 2026-08-10
+
 
 ### ↔️ Refined Intelligent Horizontal Tab Auto-Scrolling in HofEditorModal
 
