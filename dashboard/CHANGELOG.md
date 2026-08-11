@@ -2,7 +2,42 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [11.6.0] - 2026-08-11
+
+### 🎭 New Character Type-Selection Flow & Tokusatsu Classification Engine Overhaul
+
+**New Character Creation Dialog (`NewCharacterTypeSelector.tsx`)**
+- **Two-Step Creation Flow**: The `＋ Add New Entry` button in Character Dictionary now opens a clean type-selection dialog instead of immediately opening the generic editor.
+- **Artist / Anime Option**: Routes to `HofEditorModal` (standard editor) for actresses, actors, anime characters, singers, VTubers, and other normal collectibles.
+- **Tokusatsu Option**: Routes directly to `TokusatsuEditorModal` (dedicated Tokusatsu Hero & Armor System editor) for Ultraman, Kamen Rider, Power Rangers, Super Sentai entries.
+- **Franchise Tags**: The Tokusatsu option displays all four franchise chips (⚡ Ultraman, 🏍️ Kamen Rider, 🔴 Power Rangers, 🛡️ Super Sentai) as visual hints.
+- **Dual-Theme Support**: Full Cyberpunk (neon cyan/red glow, dark glass) and Neo-Brutalism (bold black border, box-shadow) fidelity via `useTheme()`.
+- **Animated**: Framer Motion spring animation on dialog enter/exit.
+
+**Characters Page Wiring (`app/characters/page.tsx`)**
+- Added `typeSelectorOpen` and `tokusatsuEditorOpen` state variables.
+- `Add New Entry` button now sets `typeSelectorOpen=true` instead of directly opening an editor.
+- `NewCharacterTypeSelector`, `TokusatsuEditorModal` (new creation instance), and `HofEditorModal` are all mounted in the modal section.
+- Existing `handleEditHof` edit path is completely unchanged — still routes through `HofEditorModal` which delegates to `TokusatsuEditorModal` for existing Tokusatsu entries.
+
+---
+
+**Critical Bug Fix — Japan ≠ Tokusatsu (`lib/data/tokusatsuDataHelper.ts`)**
+- **Root Cause**: `isTokusatsuEntry()` was building a `combinedText` string from `entry.name`, `entry.universe`, `entry.knownFor`, then matching Tokusatsu keywords across it. Japanese actresses/actors with names written in Japanese characters, or entries with "Japan" in their universe/knownFor, were incorrectly flagged as Tokusatsu.
+- **Fix**: Completely rewrote `isTokusatsuEntry()` — `combinedText` scan removed entirely. Detection now uses strict explicit-data-first hierarchy:
+
+  1. `entry.type === "tokusatsu"` (authoritative stored type)
+  2. Type field keyword: `toku`, `kamen`, `ultraman`, `sentai`, `power ranger` — **only the `type` field**, not the name
+  3. Explicit structured data: `details.tokusatsuData`, `details.kamenRider`, `details.ultraman`, `details.powerRangers`, `details.superSentai`
+  4. Explicit metadata: `tokusatsuFranchise`, `tokusatsuShow`
+  5. Keyword match in `entry.franchise` and `entry.series` **only** — not `entry.name`, `entry.nationality`, `entry.country`, or `entry.universe`
+
+- **Guaranteed Non-Tokusatsu**: `nationality`, `country`, `origin`, `name`, `universe`, `knownFor` are permanently excluded as Tokusatsu classification signals. A Japanese actress with `country="Japan"` will never be misclassified.
+
+---
+
 ## [11.5.0] - 2026-08-11
+
 
 ### 🦸 Tokusatsu Navigation Centralization, Dynamic Subtype Filtering & Franchise Badging
 

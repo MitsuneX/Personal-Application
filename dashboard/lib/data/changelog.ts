@@ -13,6 +13,35 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v11.6.0",
+    date: "2026-08-11",
+    title: "New Character Type-Selection Flow & Tokusatsu Classification Engine Overhaul",
+    badge: "FEATURE",
+    type: "minor",
+    summary: "Replaced the single-step Add New Entry button with a two-step type-selection dialog, letting the user explicitly choose between 'Artist / Anime' (standard editor) or 'Tokusatsu' (dedicated hero editor). Simultaneously overhauled isTokusatsuEntry() to eliminate false positives caused by Japan/nationality detection — Japanese actresses, actors, and singers are now never misclassified as Tokusatsu.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🎭 New Character Type-Selection Dialog (NewCharacterTypeSelector.tsx): Implemented a premium animated modal that appears when clicking '＋ Add New Entry' in Character Dictionary. Presents two clear options — 'Artist / Anime' (actresses, actors, anime, singers, VTubers) and 'Tokusatsu' (Ultraman, Kamen Rider, Power Rangers, Super Sentai) — each with descriptive subtitles, franchise tags, and routing to the appropriate dedicated editor.",
+          "⚡ Artist/Anime → Standard Editor routing: Selecting 'Artist / Anime' opens HofEditorModal with entryToEdit=null, preserving the full standard creation flow unchanged.",
+          "🦸 Tokusatsu → Dedicated Editor routing: Selecting 'Tokusatsu' opens TokusatsuEditorModal directly with entryToEdit=null, bypassing the generic editor entirely and setting type=tokusatsu from the outset.",
+          "🎨 Dual-Theme Type Selector (Cyberpunk + Neo-Brutalism): NewCharacterTypeSelector is fully theme-aware using useTheme() and isCyber branching — Cyberpunk uses neon cyan/red glow styling, Neo-Brutalism uses bold black borders and box-shadow.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🐛 Critical Classification Fix — Japan ≠ Tokusatsu (tokusatsuDataHelper.ts): Completely rewrote isTokusatsuEntry() to remove the combinedText scan over entry.name, entry.universe, and entry.knownFor. These fields were causing Japanese actresses, actors, and singers to be incorrectly classified as Tokusatsu purely because their name or description contained Japanese text.",
+          "🔒 Strict Detection Hierarchy: New isTokusatsuEntry() detection order: (1) explicit type === 'tokusatsu', (2) type field keyword match only (toku/kamen/ultraman/sentai), (3) explicit structured fields (details.tokusatsuData, details.kamenRider, details.ultraman, details.powerRangers, details.superSentai), (4) explicit metadata (tokusatsuFranchise, tokusatsuShow), (5) keyword match in entry.franchise and entry.series fields only.",
+          "✅ nationality/country/name are permanently excluded as Tokusatsu signals: A Japanese actress with country='Japan' is never flagged as Tokusatsu regardless of name, nationality, or origin field values.",
+          "🛡️ Existing edit routing preserved: handleEditHof() continues to open HofEditorModal for existing entries; the existing delegation guard (isTokusatsuEntry(entryToEdit)) correctly re-routes Tokusatsu entries to TokusatsuEditorModal for editing.",
+        ],
+      },
+    ],
+  },
+
+  {
     version: "v11.5.0",
     date: "2026-08-11",
     title: "Tokusatsu Navigation Centralization, Dynamic Subtype Filtering & Franchise Badging",
