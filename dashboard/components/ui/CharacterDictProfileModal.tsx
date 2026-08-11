@@ -6,6 +6,8 @@ import { useTheme } from "@/lib/theme";
 import { HallOfFameEntry, GameCharacterEntry, useDashboardStore } from "@/lib/store/dashboardStore";
 import { ImageLightboxModal } from "@/components/ui/ImageLightboxModal";
 import { CharacterProfileModal } from "@/components/game/CharacterProfileModal";
+import { TokusatsuProfileModal } from "@/components/ui/TokusatsuProfileModal";
+import { isTokusatsuEntry } from "@/lib/data/tokusatsuDataHelper";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Props {
@@ -131,6 +133,17 @@ export function CharacterDictProfileModal({
   onEdit,
   onLike,
 }: Props) {
+  if (entry && isTokusatsuEntry(entry)) {
+    return (
+      <TokusatsuProfileModal
+        isOpen={isOpen}
+        entry={entry}
+        onClose={onClose}
+        onEdit={onEdit}
+        onLike={onLike}
+      />
+    );
+  }
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { gameCharacters = [], dossierCharacters = [], likeHof } = useDashboardStore();

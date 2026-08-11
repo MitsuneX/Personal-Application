@@ -40,6 +40,8 @@ export function isTokusatsuEntry(entry: HallOfFameEntry | null | undefined): boo
   const show = (entry.tokusatsuShow || "").toLowerCase();
   const details = entry.details || {};
 
+  const combinedText = `${type} ${entry.name || ""} ${entry.series || ""} ${entry.franchise || ""} ${entry.universe || ""} ${entry.knownFor ? entry.knownFor.join(" ") : ""}`.toLowerCase();
+
   return (
     type === "tokusatsu" ||
     type.includes("toku") ||
@@ -49,7 +51,16 @@ export function isTokusatsuEntry(entry: HallOfFameEntry | null | undefined): boo
     type.includes("power ranger") ||
     !!franchise ||
     !!show ||
-    !!details.tokusatsuData
+    !!details.tokusatsuData ||
+    !!details.kamenRider ||
+    !!details.ultraman ||
+    !!details.powerRangers ||
+    !!details.superSentai ||
+    combinedText.includes("ultraman") ||
+    combinedText.includes("kamen rider") ||
+    combinedText.includes("super sentai") ||
+    combinedText.includes("power ranger") ||
+    combinedText.includes("tokusatsu")
   );
 }
 

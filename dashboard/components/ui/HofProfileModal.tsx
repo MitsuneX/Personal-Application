@@ -4,6 +4,8 @@ import React from "react";
 import { HallOfFameEntry, useDashboardStore } from "@/lib/store/dashboardStore";
 import { CharacterDictProfileModal } from "@/components/ui/CharacterDictProfileModal";
 import { CharacterProfileModal } from "@/components/game/CharacterProfileModal";
+import { TokusatsuProfileModal } from "@/components/ui/TokusatsuProfileModal";
+import { isTokusatsuEntry } from "@/lib/data/tokusatsuDataHelper";
 
 interface HofProfileModalProps {
   isOpen: boolean;
@@ -19,6 +21,7 @@ export function HofProfileModal({
   onClose,
   entry,
   onLike,
+  onEdit,
 }: HofProfileModalProps) {
   const { gameCharacters = [] } = useDashboardStore();
 
@@ -32,7 +35,7 @@ export function HofProfileModal({
     ? gameCharacters.find((gc) => gc.name.toLowerCase() === entry.name.toLowerCase())
     : null;
 
-  // 2. Route Game Character entries to existing Game Character profile modal (Read-Only context: no onEdit)
+  // 2. Route Game Character entries to Game Character profile modal
   if (matchedGameChar) {
     return (
       <CharacterProfileModal
@@ -44,13 +47,26 @@ export function HofProfileModal({
     );
   }
 
-  // 3. Route Character Dictionary, Drama, Anime, Movie, and Tokusatsu entries to CharacterDictProfileModal (Read-Only context: no onEdit)
+  // 3. Route Tokusatsu entries to the dedicated Tokusatsu profile modal
+  if (isTokusatsuEntry(entry)) {
+    return (
+      <TokusatsuProfileModal
+        isOpen={isOpen}
+        entry={entry}
+        onClose={onClose}
+        onEdit={onEdit}
+        onLike={onLike}
+      />
+    );
+  }
+
+  // 4. Route all other entries (Artist, Actor, Actress, Anime, Singer, etc.) to CharacterDictProfileModal
   return (
     <CharacterDictProfileModal
       isOpen={isOpen}
       entry={entry}
       onClose={onClose}
-      onEdit={undefined}
+      onEdit={onEdit}
       onLike={onLike}
     />
   );
