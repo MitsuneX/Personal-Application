@@ -32,36 +32,59 @@ function safeStrArr(val: unknown): string[] {
 }
 
 // ─── Tokusatsu Entry Detection ────────────────────────────────────────────────
+//
+// Detection Priority (highest to lowest):
+//   1. Explicit stored type === "tokusatsu"
+//   2. Explicit Tokusatsu structured fields (tokusatsuFranchise, tokusatsuShow, details.*)
+//   3. Type field keyword match (kamen, ultraman, sentai, power ranger)
+//   4. Franchise/show field keyword match
+//
+// NEVER uses: nationality, country, origin, or entry name as Tokusatsu evidence.
+// Japan/Japanese is NOT a Tokusatsu signal.
 
 export function isTokusatsuEntry(entry: HallOfFameEntry | null | undefined): boolean {
   if (!entry) return false;
-  const type = (entry.type || "").toLowerCase();
-  const franchise = (entry.tokusatsuFranchise || "").toLowerCase();
-  const show = (entry.tokusatsuShow || "").toLowerCase();
-  const details = entry.details || {};
 
-  const combinedText = `${type} ${entry.name || ""} ${entry.series || ""} ${entry.franchise || ""} ${entry.universe || ""} ${entry.knownFor ? entry.knownFor.join(" ") : ""}`.toLowerCase();
+  // ── 1. Explicit stored type (authoritative) ──
+  const type = (entry.type || "").toLowerCase().trim();
+  if (type === "tokusatsu") return true;
 
-  return (
-    type === "tokusatsu" ||
+  // ── 2. Explicit non-artist types that are clearly Tokusatsu ──
+  // Only match keywords in the TYPE field itself, not in names or nationalities
+  if (
     type.includes("toku") ||
     type.includes("kamen") ||
     type.includes("ultraman") ||
     type.includes("sentai") ||
-    type.includes("power ranger") ||
-    !!franchise ||
-    !!show ||
-    !!details.tokusatsuData ||
-    !!details.kamenRider ||
-    !!details.ultraman ||
-    !!details.powerRangers ||
-    !!details.superSentai ||
-    combinedText.includes("ultraman") ||
-    combinedText.includes("kamen rider") ||
-    combinedText.includes("super sentai") ||
-    combinedText.includes("power ranger") ||
-    combinedText.includes("tokusatsu")
-  );
+    type.includes("power ranger")
+  ) return true;
+
+  // ── 3. Explicit Tokusatsu structured data fields ──
+  const details = entry.details || {};
+  if (details.tokusatsuData) return true;
+  if (details.kamenRider) return true;
+  if (details.ultraman) return true;
+  if (details.powerRangers) return true;
+  if (details.superSentai) return true;
+
+  // ── 4. Explicit Tokusatsu metadata fields on the entry ──
+  const franchise = (entry.tokusatsuFranchise || "").toLowerCase().trim();
+  if (franchise) return true;
+
+  const show = (entry.tokusatsuShow || "").toLowerCase().trim();
+  if (show) return true;
+
+  // ── 5. Keyword match ONLY in the franchise/show metadata fields (NOT name, NOT nationality) ──
+  const franchiseKeywords = `${entry.franchise || ""} ${entry.series || ""}`.toLowerCase();
+  if (
+    franchiseKeywords.includes("ultraman") ||
+    franchiseKeywords.includes("kamen rider") ||
+    franchiseKeywords.includes("super sentai") ||
+    franchiseKeywords.includes("power rangers") ||
+    franchiseKeywords.includes("tokusatsu")
+  ) return true;
+
+  return false;
 }
 
 // ─── Franchise Type Resolver ──────────────────────────────────────────────────

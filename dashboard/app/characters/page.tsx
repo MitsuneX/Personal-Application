@@ -6,6 +6,8 @@ import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore, HallOfFameEntry, DossierCharacterEntry } from "@/lib/store/dashboardStore";
 import { HofEditorModal } from "@/components/ui/HofEditorModal";
+import { TokusatsuEditorModal } from "@/components/ui/TokusatsuEditorModal";
+import { NewCharacterTypeSelector } from "@/components/ui/NewCharacterTypeSelector";
 import { HofEntryCard, getGroupForEntry, getGroupDetails } from "@/components/cards/HofEntryCard";
 import { DossierCharacterCard } from "@/components/cards/DossierCharacterCard";
 import { CharacterPreviewModal } from "@/components/ui/CharacterPreviewModal";
@@ -72,6 +74,10 @@ function CharactersContent() {
   const [selectedHofEntry, setSelectedHofEntry] = useState<HallOfFameEntry | null>(null);
   const [previewCharacter, setPreviewCharacter] = useState<DossierCharacterEntry | null>(null);
   const [dictProfileEntry, setDictProfileEntry] = useState<HallOfFameEntry | null>(null);
+
+  // New Character type-selector state
+  const [typeSelectorOpen, setTypeSelectorOpen] = useState(false);
+  const [tokusatsuEditorOpen, setTokusatsuEditorOpen] = useState(false);
 
   const targetCategory = searchParams?.get("category") || searchParams?.get("type") || null;
   const targetSubtype = searchParams?.get("subtype") || searchParams?.get("sub") || null;
@@ -313,8 +319,7 @@ function CharactersContent() {
 
             <button
               onClick={() => {
-                setSelectedHofEntry(null);
-                setEditorOpen(true);
+                setTypeSelectorOpen(true);
               }}
               className="px-5 py-3 text-xs font-black rounded-xl bg-amber-500 text-black border-2 border-black shadow-[3px_3px_0_#000] hover:translate-y-[-2px] transition-all cursor-pointer shrink-0"
             >
@@ -564,10 +569,34 @@ function CharactersContent() {
         </BentoCard>
 
         {/* Modals */}
+
+        {/* Type selector: shown when creating a NEW entry */}
+        <NewCharacterTypeSelector
+          isOpen={typeSelectorOpen}
+          onClose={() => setTypeSelectorOpen(false)}
+          onSelectArtist={() => {
+            setTypeSelectorOpen(false);
+            setSelectedHofEntry(null);
+            setEditorOpen(true);
+          }}
+          onSelectTokusatsu={() => {
+            setTypeSelectorOpen(false);
+            setTokusatsuEditorOpen(true);
+          }}
+        />
+
+        {/* Standard Artist/Anime editor (also used for editing existing non-Tokusatsu entries) */}
         <HofEditorModal
           isOpen={editorOpen}
           onClose={() => setEditorOpen(false)}
           entryToEdit={selectedHofEntry}
+        />
+
+        {/* Dedicated Tokusatsu editor: for new Tokusatsu entries from the type selector */}
+        <TokusatsuEditorModal
+          isOpen={tokusatsuEditorOpen}
+          onClose={() => setTokusatsuEditorOpen(false)}
+          entryToEdit={null}
         />
 
         <CharacterDictProfileModal
