@@ -121,9 +121,17 @@ export const getGroupDetails = (code: string) => {
   return OTHER_GROUP;
 };
 
+import { isTokusatsuEntry, resolveFranchiseType } from "@/lib/data/tokusatsuDataHelper";
+
 export const getTypeLabel = (entry: HallOfFameEntry) => {
-  if (entry.tokusatsuFranchise) {
-    return `🦸 ${entry.tokusatsuFranchise}`;
+  if (isTokusatsuEntry(entry)) {
+    const rawFranchise = entry.tokusatsuFranchise || entry.franchise || entry.series;
+    const resolved = resolveFranchiseType(rawFranchise, entry.type, entry.name);
+    if (resolved === "KAMEN_RIDER") return "🏍️ Kamen Rider";
+    if (resolved === "ULTRAMAN") return "⚡ Ultraman";
+    if (resolved === "POWER_RANGERS") return "🔴 Power Rangers";
+    if (resolved === "SUPER_SENTAI") return "🛡️ Super Sentai";
+    return `🦸 ${entry.tokusatsuFranchise || entry.series || "Tokusatsu"}`;
   }
   if (entry.type === "actor") return "🎭 Actor";
   if (entry.type === "actress") return "💫 Actress";
@@ -279,8 +287,8 @@ export function HofEntryCard({
           
           if ((entry as any).isGameCharacterEntry) {
             router.push(`/game-characters?id=${entry.id}`);
-          } else if (type === "tokusatsu" || !!entry.tokusatsuFranchise) {
-            router.push(`/tokusatsu?id=${entry.id}`);
+          } else if (isTokusatsuEntry(entry)) {
+            router.push(`/characters?category=tokusatsu&id=${entry.id}`);
           } else if (type === "anime") {
             router.push(`/characters?id=${entry.id}`);
           } else if (type === "actor" || type === "actress" || type === "singer") {

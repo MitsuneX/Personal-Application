@@ -14,6 +14,7 @@ import { useSearchParams } from "next/navigation";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 import { FilterDropdown } from "@/components/ui/FilterDropdown";
 import { BentoCard } from "@/components/cards/BentoCard";
+import { isTokusatsuEntry, resolveFranchiseType } from "@/lib/data/tokusatsuDataHelper";
 
 const CATEGORY_PILLS = [
   { id: "all", label: "All Entities", icon: "🌐" },
@@ -25,6 +26,14 @@ const CATEGORY_PILLS = [
   { id: "vtuber", label: "VTubers", icon: "👾" },
   { id: "singer", label: "Singers", icon: "🎤" },
   { id: "other", label: "Other Collectibles", icon: "🌟" },
+];
+
+const TOKUSATSU_SUBTYPES = [
+  { id: "all", label: "All Tokusatsu", icon: "🎬" },
+  { id: "ultraman", label: "Ultraman", icon: "⚡" },
+  { id: "kamen-rider", label: "Kamen Rider", icon: "🏍️" },
+  { id: "power-rangers", label: "Power Rangers", icon: "🔴" },
+  { id: "super-sentai", label: "Super Sentai", icon: "🛡️" },
 ];
 
 const NATIONALITY_OPTIONS = [
@@ -47,12 +56,13 @@ const SORT_OPTIONS = [
 function CharactersContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { hallOfFame = [], dossierCharacters = [], deleteHof, removeDossierCharacter } = useDashboardStore();
+  const { hallOfFame = [], dossierCharacters = [], deleteHof } = useDashboardStore();
   const { confirm } = useConfirm();
   const searchParams = useSearchParams();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedTokusatsuSubtype, setSelectedTokusatsuSubtype] = useState("all");
   const [selectedNationality, setSelectedNationality] = useState("all");
   const [selectedSort, setSelectedSort] = useState("popular");
   const [favoriteOnly, setFavoriteOnly] = useState(false);
@@ -63,8 +73,22 @@ function CharactersContent() {
   const [previewCharacter, setPreviewCharacter] = useState<DossierCharacterEntry | null>(null);
   const [dictProfileEntry, setDictProfileEntry] = useState<HallOfFameEntry | null>(null);
 
+  const targetCategory = searchParams?.get("category") || searchParams?.get("type") || null;
+  const targetSubtype = searchParams?.get("subtype") || searchParams?.get("sub") || null;
   const targetSearch = searchParams?.get("search") || null;
   const targetId = searchParams?.get("id") || null;
+
+  useEffect(() => {
+    if (targetCategory) {
+      setSelectedCategory(targetCategory);
+    }
+  }, [targetCategory]);
+
+  useEffect(() => {
+    if (targetSubtype) {
+      setSelectedTokusatsuSubtype(targetSubtype);
+    }
+  }, [targetSubtype]);
 
   useEffect(() => {
     if (targetSearch) {
@@ -98,9 +122,7 @@ function CharactersContent() {
     const actors = hallOfFame.filter((h) => h.type === "actor").length;
     const anime = hallOfFame.filter((h) => h.type === "anime").length;
     const games = dossierCharacters.length;
-    const tokusatsu = hallOfFame.filter(
-      (h) => h.type === "tokusatsu" || !!h.tokusatsuFranchise
-    ).length;
+    const tokusatsu = hallOfFame.filter((h) => isTokusatsuEntry(h)).length;
     const singers = hallOfFame.filter(
       (h) => h.type === "singer" || h.nationality === "Singer"
     ).length;
@@ -122,6 +144,33 @@ function CharactersContent() {
     };
   }, [hallOfFame, dossierCharacters]);
 
+  // Dynamic Subtype Counts for Tokusatsu
+  const tokusatsuCounts = useMemo(() => {
+    const tokusatsuEntries = hallOfFame.filter((h) => isTokusatsuEntry(h));
+
+    let ultraman = 0;
+    let kamenRider = 0;
+    let powerRangers = 0;
+    let superSentai = 0;
+
+    tokusatsuEntries.forEach((h) => {
+      const rawFranchise = h.tokusatsuFranchise || h.franchise || h.series;
+      const res = resolveFranchiseType(rawFranchise, h.type, h.name);
+      if (res === "ULTRAMAN") ultraman++;
+      else if (res === "KAMEN_RIDER") kamenRider++;
+      else if (res === "POWER_RANGERS") powerRangers++;
+      else if (res === "SUPER_SENTAI") superSentai++;
+    });
+
+    return {
+      all: tokusatsuEntries.length,
+      ultraman,
+      "kamen-rider": kamenRider,
+      "power-rangers": powerRangers,
+      "super-sentai": superSentai,
+    };
+  }, [hallOfFame]);
+
   // Filtered Roster
   const filteredHofList = useMemo(() => {
     let list = [...hallOfFame];
@@ -130,7 +179,21 @@ function CharactersContent() {
     if (selectedCategory !== "all") {
       list = list.filter((item) => {
         if (selectedCategory === "tokusatsu") {
-          return item.type === "tokusatsu" || !!item.tokusatsuFranchise;
+          if (!isTokusatsuEntry(item)) return false;
+          if (selectedTokusatsuSubtype === "all") return true;
+
+          const rawFranchise = item.tokusatsuFranchise || item.franchise || item.series;
+          const res = resolveFranchiseType(rawFranchise, item.type, item.name);
+
+          if (selectedTokusatsuSubtype === "ultraman")
+            return res === "ULTRAMAN" || !!item.details?.ultraman;
+          if (selectedTokusatsuSubtype === "kamen-rider")
+            return res === "KAMEN_RIDER" || !!item.details?.kamenRider;
+          if (selectedTokusatsuSubtype === "power-rangers")
+            return res === "POWER_RANGERS" || !!item.details?.powerRangers;
+          if (selectedTokusatsuSubtype === "super-sentai")
+            return res === "SUPER_SENTAI" || !!item.details?.superSentai;
+          return true;
         }
         if (selectedCategory === "singer") {
           return item.type === "singer" || item.nationality === "Singer";
@@ -184,7 +247,16 @@ function CharactersContent() {
     });
 
     return list;
-  }, [hallOfFame, selectedCategory, selectedNationality, favoriteOnly, goatOnly, searchQuery, selectedSort]);
+  }, [
+    hallOfFame,
+    selectedCategory,
+    selectedTokusatsuSubtype,
+    selectedNationality,
+    favoriteOnly,
+    goatOnly,
+    searchQuery,
+    selectedSort,
+  ]);
 
   const handleEditHof = useCallback((entry: HallOfFameEntry) => {
     setSelectedHofEntry(entry);
@@ -295,7 +367,12 @@ function CharactersContent() {
               return (
                 <button
                   key={pill.id}
-                  onClick={() => setSelectedCategory(pill.id)}
+                  onClick={() => {
+                    setSelectedCategory(pill.id);
+                    if (pill.id !== "tokusatsu") {
+                      setSelectedTokusatsuSubtype("all");
+                    }
+                  }}
                   className="px-3.5 py-2 rounded-xl text-xs font-bold font-mono whitespace-nowrap flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shrink-0"
                   style={{
                     backgroundColor: isActive
@@ -316,6 +393,60 @@ function CharactersContent() {
               );
             })}
           </div>
+
+          {/* Secondary Subtype Filter Bar (Only shown when Tokusatsu category is selected) */}
+          <AnimatePresence>
+            {selectedCategory === "tokusatsu" && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none pt-1"
+              >
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-red-400 shrink-0 px-1">
+                  Franchise Subtype:
+                </span>
+                {TOKUSATSU_SUBTYPES.map((sub) => {
+                  const isActive = selectedTokusatsuSubtype === sub.id;
+                  const count = tokusatsuCounts[sub.id as keyof typeof tokusatsuCounts] || 0;
+                  return (
+                    <button
+                      key={sub.id}
+                      onClick={() => setSelectedTokusatsuSubtype(sub.id)}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold font-mono whitespace-nowrap flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shrink-0 border"
+                      style={{
+                        backgroundColor: isActive
+                          ? isCyber ? "#EF4444" : "#FF6B35"
+                          : isCyber ? "rgba(239,68,68,0.1)" : "#FFF1F2",
+                        color: isActive
+                          ? "#FFFFFF"
+                          : isCyber ? "#FCA5A5" : "#991B1B",
+                        borderColor: isActive
+                          ? isCyber ? "#EF4444" : "#000000"
+                          : isCyber ? "rgba(239,68,68,0.25)" : "#FECDD3",
+                        borderWidth: isCyber ? "1px" : "2px",
+                        boxShadow: !isCyber && isActive ? "2px 2px 0 #000" : "none",
+                      }}
+                    >
+                      <span>{sub.icon}</span>
+                      <span>{sub.label}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-black ${
+                          isActive
+                            ? "bg-black/30 text-white"
+                            : isCyber
+                            ? "bg-red-500/20 text-red-300"
+                            : "bg-red-200 text-red-900"
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex-1 min-w-[240px]">
@@ -396,6 +527,7 @@ function CharactersContent() {
               <button
                 onClick={() => {
                   setSelectedCategory("all");
+                  setSelectedTokusatsuSubtype("all");
                   setSelectedNationality("all");
                   setSearchQuery("");
                   setFavoriteOnly(false);
