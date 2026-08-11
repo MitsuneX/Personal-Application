@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
@@ -26,7 +26,7 @@ const TOKUSATSU_SUBCATEGORIES = [
   { id: "other", label: "Other Heroes", icon: "🌟" },
 ];
 
-export default function TokusatsuPage() {
+function TokusatsuContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { dossierCharacters = [], hallOfFame = [], removeDossierCharacter, deleteHof } = useDashboardStore();
@@ -389,5 +389,13 @@ export default function TokusatsuPage() {
         />
       </motion.div>
     </AppShell>
+  );
+}
+
+export default function TokusatsuPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center font-mono text-gray-500">Loading Tokusatsu Master Universe...</div>}>
+      <TokusatsuContent />
+    </Suspense>
   );
 }
