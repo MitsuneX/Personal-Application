@@ -29,7 +29,6 @@ export async function POST(req: Request) {
       );
     }
 
-
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
@@ -89,3 +88,62 @@ export async function POST(req: Request) {
   }
 }
 
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    let targetUrl = searchParams.get("url");
+
+    if (!targetUrl) {
+      try {
+        const body = await req.json();
+        targetUrl = body.url;
+      } catch {
+        // ignore body parse failure if url param missing
+      }
+    }
+
+    if (!targetUrl) {
+      return NextResponse.json({ error: "Missing media URL parameter" }, { status: 400 });
+    }
+
+    let storageDeleted = false;
+
+    // 1. Local disk file deletion (/uploads/...)
+    if (targetUrl.startsWith("/uploads/") || targetUrl.includes("/public/uploads/")) {
+      const fileName = path.basename(targetUrl.split("?")[0]);
+      const filePath = path.join(process.cwd(), "public", "uploads", fileName);
+
+      if (fs.existsSync(filePath)) {
+        await fs.promises.unlink(filePath);
+        storageDeleted = true;
+      }
+    }
+    // 2. Supabase Storage deletion
+    else if (supabaseUrl && supabaseServiceKey && targetUrl.includes(supabaseUrl)) {
+      try {
+        const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+          auth: { persistSession: false },
+        });
+
+        // Extract filename from public URL
+        const parts = targetUrl.split("/uploads/");
+        if (parts.length > 1) {
+          const fileName = parts[1].split("?")[0];
+          const { error } = await supabase.storage.from("uploads").remove([fileName]);
+          if (!error) storageDeleted = true;
+        }
+      } catch (sbErr) {
+        console.warn("[Upload DELETE] Supabase storage deletion failed:", sbErr);
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      storageDeleted,
+      url: targetUrl,
+    });
+  } catch (error: any) {
+    console.error("Upload DELETE error:", error);
+    return NextResponse.json({ error: error.message || "Failed to delete storage asset" }, { status: 500 });
+  }
+}

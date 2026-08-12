@@ -1517,7 +1517,21 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   updateGameCharacter: async (id, data) => {
     const updatedAt = new Date().toISOString();
     set((s) => ({
-      gameCharacters: s.gameCharacters.map((gc) => (gc.id === id ? { ...gc, ...data, updatedAt } : gc)),
+      gameCharacters: s.gameCharacters.map((gc) => {
+        if (gc.id !== id) return gc;
+        const mergedStats = (gc.stats || data.stats) ? { ...(gc.stats || {}), ...(data.stats || {}) } : undefined;
+        const mergedGallery = data.gallery !== undefined
+          ? (Array.isArray(data.gallery) ? Array.from(new Set(data.gallery)) : [])
+          : (gc.gallery || (gc.stats as any)?.gallery || []);
+        if (mergedStats) mergedStats.gallery = mergedGallery;
+        return {
+          ...gc,
+          ...data,
+          gallery: mergedGallery,
+          stats: mergedStats,
+          updatedAt,
+        };
+      }),
     }));
     try {
       const item = get().gameCharacters.find((gc) => gc.id === id);

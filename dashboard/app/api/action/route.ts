@@ -472,7 +472,7 @@ export async function POST(req: Request) {
             tokusatsuShow: payload.tokusatsuShow ?? null,
             associatedDramas: payload.associatedDramas ?? [],
             details: payload.details ?? null,
-            gallery: payload.gallery ?? [],
+            gallery: payload.gallery !== undefined ? payload.gallery : (existing?.gallery || []),
             splashArt: payload.splashArt ?? null,
             portraitUrl: payload.portraitUrl ?? null,
             accentColor: payload.accentColor ?? null,

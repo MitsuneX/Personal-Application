@@ -321,7 +321,8 @@ export function GalleryUploader({ images, onChange }: GalleryUploaderProps) {
     }
 
     if (newImages.length > 0) {
-      onChange([...images, ...newImages]);
+      const combined = Array.from(new Set([...(images || []), ...newImages]));
+      onChange(combined);
     }
     setIsUploading(false);
   };

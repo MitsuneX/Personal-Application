@@ -8,6 +8,7 @@ import { ImageLightboxModal } from "@/components/ui/ImageLightboxModal";
 import { useToast } from "@/components/ui/ToastProvider";
 import { getElementTheme, ElementTheme } from "@/lib/utils/elementTheme";
 import { ElementParticles } from "@/components/game/ElementParticles";
+import { useContextMenu } from "@/hooks/useContextMenu";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Props {
@@ -364,6 +365,11 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
   const [customTags, setCustomTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
 
+  // Gallery deletion state — MUST be above early return to satisfy Rules of Hooks
+  const { openContextMenu } = useContextMenu();
+  const [deleteTarget, setDeleteTarget] = useState<{ src: string; label: string } | null>(null);
+  const [isDeletingMedia, setIsDeletingMedia] = useState(false);
+
   // ESC to close
   useEffect(() => {
     if (!isOpen) return;
@@ -428,6 +434,8 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
 
   const hasImg = (u?: string) => Boolean(u && (u.startsWith("http") || u.startsWith("data:") || u.startsWith("/")));
 
+
+
   const handleToggleFav = () => updateGameCharacter(character.id, { isFavorite: !character.isFavorite });
   const handleSavePersonal = async () => {
     await updateGameCharacter(character.id, {
@@ -459,6 +467,73 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
     if (!linkedDossierChar) return;
     if (confirm(`Sync Splash Art with Game Database entry "${linkedDossierChar.name}"?`)) {
       await syncGameCharacterSplashArt(character.id, linkedDossierChar.id, "to_game_character");
+    }
+  };
+
+  // Right-Click Context Menu & Deletion Handler for Gallery Images
+  const handleImageContextMenu = (e: React.MouseEvent, img: { src: string; label: string }, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    openContextMenu(e, [
+      {
+        id: "view-image",
+        label: "👁️ View Image in Lightbox",
+        onClick: () => {
+          setLightboxSrc(img.src);
+          setLightboxTitle(img.label);
+          setLightboxIndex(index);
+        },
+      },
+      {
+        id: "delete-image",
+        label: "🗑️ Delete Image Permanently",
+        danger: true,
+        onClick: () => {
+          setDeleteTarget(img);
+        },
+      },
+    ]);
+  };
+
+  const confirmDeleteImage = async () => {
+    if (!deleteTarget || !character) return;
+    setIsDeletingMedia(true);
+    try {
+      const src = deleteTarget.src;
+      const currentGallery = character.gallery || character.stats?.gallery || [];
+      const isCustomGalleryItem = currentGallery.includes(src);
+
+      const updatePayload: Partial<GameCharacterEntry> = {};
+
+      if (isCustomGalleryItem) {
+        const updatedGallery = currentGallery.filter((url: string) => url !== src);
+        updatePayload.gallery = updatedGallery;
+        updatePayload.stats = {
+          ...(character.stats || {}),
+          gallery: updatedGallery,
+        };
+      } else {
+        if (character.splashArt === src) updatePayload.splashArt = null as any;
+        if (character.cardImage === src) updatePayload.cardImage = null as any;
+        if (character.avatarUrl === src) updatePayload.avatarUrl = null as any;
+      }
+
+      await updateGameCharacter(character.id, updatePayload);
+
+      try {
+        await fetch(`/api/upload?url=${encodeURIComponent(src)}`, { method: "DELETE" });
+      } catch (storageErr) {
+        console.warn("Storage deletion cleanup warning:", storageErr);
+      }
+
+      toastSuccess(`✓ Deleted ${deleteTarget.label} permanently.`);
+      setDeleteTarget(null);
+    } catch (err: any) {
+      console.error("Failed to delete gallery image:", err);
+      toastError(err?.message || "Failed to delete image.");
+    } finally {
+      setIsDeletingMedia(false);
     }
   };
 
@@ -663,6 +738,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                     whileHover={{ scale: 1.03 }}
                     transition={{ duration: 0.2 }}
                     onClick={() => { setLightboxSrc(src); setLightboxTitle(label); setLightboxIndex(i); }}
+                    onContextMenu={(e) => handleImageContextMenu(e, { src, label }, i)}
                     className={`relative aspect-[3/4] rounded-2xl overflow-hidden cursor-zoom-in border group ${
                       isCyber ? "border-cyan-500/20 bg-black/40" : "border-black bg-gray-100 shadow-[3px_3px_0_#000]"
                     }`}
@@ -1345,6 +1421,70 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
               </motion.div>
             </div>
           </>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {deleteTarget && (
+          <div
+            className="fixed inset-0 z-[1800] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+            onClick={() => setDeleteTarget(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className={`w-full max-w-md p-6 rounded-2xl border shadow-2xl space-y-4 ${
+                isCyber
+                  ? "border-red-500/40 bg-[#0c0814] text-white"
+                  : "border-black bg-white text-black shadow-[4px_4px_0_#000]"
+              }`}
+            >
+              <div className="flex items-center gap-3 text-red-400">
+                <span className="text-2xl">⚠️</span>
+                <h4 className="text-base font-bold font-mono">Delete Gallery Image</h4>
+              </div>
+              <p className={`text-xs sm:text-sm leading-relaxed ${isCyber ? "text-slate-300" : "text-gray-700"}`}>
+                Are you sure you want to permanently delete <strong className="text-cyan-400">{deleteTarget.label}</strong>? This action cannot be undone and will remove the media asset from storage.
+              </p>
+
+              <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-red-500/20 bg-black/40">
+                {deleteTarget.src.endsWith(".mp4") || deleteTarget.src.endsWith(".webm") || /\.(mp4|webm|mov)(?:[?#]|$)/i.test(deleteTarget.src) ? (
+                  <video src={deleteTarget.src} muted autoPlay loop className="w-full h-full object-cover" />
+                ) : (
+                  <img src={deleteTarget.src} alt={deleteTarget.label} className="w-full h-full object-cover" />
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isDeletingMedia}
+                  onClick={() => setDeleteTarget(null)}
+                  className={`px-4 py-2 rounded-xl text-xs font-mono font-bold border transition-all cursor-pointer ${
+                    isCyber
+                      ? "border-slate-700 text-slate-300 hover:bg-slate-800"
+                      : "border-black bg-gray-100 text-black hover:bg-gray-200"
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeletingMedia}
+                  onClick={confirmDeleteImage}
+                  className={`px-4 py-2 rounded-xl text-xs font-mono font-bold border transition-all cursor-pointer flex items-center gap-2 ${
+                    isCyber
+                      ? "border-red-500 bg-red-600/20 text-red-300 hover:bg-red-600/40"
+                      : "border-black bg-red-500 text-white hover:bg-red-600 shadow-[2px_2px_0_#000]"
+                  }`}
+                >
+                  {isDeletingMedia ? "Deleting..." : "🗑️ Confirm Delete"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

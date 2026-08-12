@@ -306,9 +306,16 @@ export function normalizeGameCharacterJson(raw: any): GameCharacterEntry {
     cardImage: raw.cardImage,
     avatarUrl: raw.avatarUrl,
     splashArt: raw.splashArt,
-    gallery: Array.isArray(raw.gallery) ? raw.gallery : [],
+    gallery: Array.isArray(raw.gallery) && raw.gallery.length > 0
+      ? raw.gallery
+      : (Array.isArray(raw.stats?.gallery) ? raw.stats.gallery : (Array.isArray(raw.gallery) ? raw.gallery : [])),
     notes: raw.notes,
-    stats: raw.stats,
+    stats: raw.stats ? {
+      ...raw.stats,
+      gallery: Array.isArray(raw.gallery) && raw.gallery.length > 0
+        ? raw.gallery
+        : (Array.isArray(raw.stats?.gallery) ? raw.stats.gallery : (Array.isArray(raw.gallery) ? raw.gallery : [])),
+    } : raw.stats,
     tags: raw.tags,
 
     // Canonical nested objects
@@ -453,9 +460,10 @@ export function deepMergeGameCharacter(
     }
   }
 
-  // Guarantee existing database/store media fields are NEVER erased by JSON imports
-  for (const mKey of MEDIA_KEYS) {
-    const curMedia = (current as any)[mKey];
+  // Guarantee existing database/store media fields & gallery are NEVER erased by JSON imports
+  const allMediaKeys = [...Array.from(MEDIA_KEYS), "gallery"];
+  for (const mKey of allMediaKeys) {
+    const curMedia = (current as any)[mKey] || (current.stats as any)?.[mKey];
     const incMedia = (incoming as any)[mKey];
     const isIncMediaEmpty =
       incMedia === undefined ||
@@ -463,8 +471,11 @@ export function deepMergeGameCharacter(
       incMedia === "" ||
       (Array.isArray(incMedia) && incMedia.length === 0);
 
-    if (curMedia !== undefined && curMedia !== null && curMedia !== "" && isIncMediaEmpty) {
+    if (curMedia !== undefined && curMedia !== null && curMedia !== "" && (!Array.isArray(curMedia) || curMedia.length > 0) && isIncMediaEmpty) {
       merged[mKey] = curMedia;
+      if (merged.stats) {
+        merged.stats[mKey] = curMedia;
+      }
     }
   }
 

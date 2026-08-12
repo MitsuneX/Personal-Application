@@ -292,6 +292,18 @@ export async function processCharacterCreation(
       ? (input.favoriteSplashArt || input.splashArt || null)
       : (existingFavorite?.splashArt || dossierCharacter.splashArt || null);
 
+    const existingGallery = Array.isArray(existingFavorite?.stats?.gallery)
+      ? existingFavorite.stats.gallery
+      : (Array.isArray(existingFavorite?.gallery) ? existingFavorite.gallery : []);
+
+    let resolvedGallery: string[];
+    if (input.gallery !== undefined) {
+      const inputArr = Array.isArray(input.gallery) ? input.gallery : [];
+      resolvedGallery = Array.from(new Set(inputArr));
+    } else {
+      resolvedGallery = existingGallery;
+    }
+
     const favoritePayload = {
       userId,
       characterId: dossierCharacter.id,
@@ -341,7 +353,7 @@ export async function processCharacterCreation(
         biography: input.biography,
         officialDescription: input.officialDescription,
         favoriteQuote: input.favoriteQuote,
-        gallery: input.gallery,
+        gallery: resolvedGallery,
       } as any,
       tags: input.tags ? (input.tags as any) : undefined,
       links: input.links ? (input.links as any) : undefined,
