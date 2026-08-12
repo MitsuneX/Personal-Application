@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { GameCharacterEntry, useDashboardStore } from "@/lib/store/dashboardStore";
@@ -33,6 +33,40 @@ function rarityStars(r?: string) {
   return "★".repeat(n) + "☆".repeat(Math.max(0, 5 - n));
 }
 
+// ─── Portrait Corner Crystal Badge Component ───────────────────────────────────
+// Matches lower-right crystal badge on portrait frame from reference screenshot
+function PortraitCornerBadge({ elemTheme, isCyber }: { elemTheme: ElementTheme; isCyber: boolean }) {
+  if (!isCyber) return null;
+
+  if (elemTheme.category === "glacio") {
+    return (
+      <div className="absolute -bottom-3 -right-3 z-20 w-9 h-9 pointer-events-none filter drop-shadow-[0_0_12px_rgba(56,189,248,0.95)] select-none">
+        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+          <polygon points="20,2 26,20 20,38 14,20" fill="#E0F2FE" />
+          <polygon points="20,2 26,20 20,16" fill="#FFFFFF" />
+          <polygon points="2,20 20,26 38,20 20,14" fill="#38BDF8" />
+          <polygon points="10,10 30,30 20,20" fill="#7DD3FC" />
+          <polygon points="30,10 10,30 20,20" fill="#7DD3FC" />
+        </svg>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="absolute -bottom-2 -right-2 z-20 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border shadow-lg pointer-events-none select-none"
+      style={{
+        backgroundColor: `${elemTheme.primaryColor}E6`,
+        borderColor: "#FFFFFF",
+        color: "#FFFFFF",
+        boxShadow: `0 0 12px ${elemTheme.primaryColor}`,
+      }}
+    >
+      {elemTheme.icon}
+    </div>
+  );
+}
+
 // ─── Game-specific combat config (Extensible System) ─────────────────────────
 export interface CombatFieldDef {
   key: string;
@@ -50,9 +84,9 @@ export function getCombatConfig(gameName?: string, gameCategory?: string): GameC
   const c = (gameCategory || "").toLowerCase();
 
   if (n.includes("wuthering waves")) return { label: "Wuthering Waves Combat", fields: [
-    { key: "element", label: "Attribute", icon: "🌀" },
-    { key: "weapon", label: "Weapon Type", icon: "⚔️" },
-    { key: "role", label: "Role", icon: "🛡️" },
+    { key: "element", label: "Attribute", icon: "❄️" },
+    { key: "weapon", label: "Weapon Type", icon: "🔫" },
+    { key: "role", label: "Role", icon: "⚔️" },
     { key: "combatRole", label: "Combat Specialty", icon: "🎯" },
     { key: "stats.signatureWeapon", label: "Signature Weapon", icon: "🗡️" },
     { key: "stats.resonanceChain", label: "Resonance Chain", icon: "⛓️" },
@@ -172,8 +206,8 @@ function SectionHeader({
         }}
       />
       <h4
-        className={`text-xs font-mono font-black uppercase tracking-[0.2em] flex items-center gap-2 ${
-          isCyber ? "text-white/80" : "text-gray-900"
+        className={`text-xs font-mono font-bold uppercase tracking-[0.2em] flex items-center gap-2 ${
+          isCyber ? "text-cyan-100/90" : "text-gray-900"
         }`}
       >
         {icon && <span>{icon}</span>}
@@ -207,25 +241,22 @@ function InfoCard({
     <div
       className={`p-3.5 rounded-2xl border transition-all group ${
         isCyber
-          ? "border-white/[0.08] bg-white/[0.03] hover:border-white/[0.2] hover:bg-white/[0.05]"
+          ? "border-cyan-500/15 bg-[#080d1e]/80 hover:border-cyan-400/35 hover:bg-[#0b1228]/90"
           : "border-black bg-gray-50/90 hover:bg-white shadow-[2.5px_2.5px_0_#000]"
       }`}
-      style={{
-        boxShadow: isCyber ? undefined : undefined,
-      }}
     >
       <div className="flex items-center gap-1.5 mb-1 select-none">
         {icon && <span className="text-xs opacity-75">{icon}</span>}
         <span
           className={`text-[9.5px] font-mono font-bold uppercase tracking-wider ${
-            isCyber ? "text-white/45" : "text-gray-500"
+            isCyber ? "text-cyan-200/50" : "text-gray-500"
           }`}
         >
           {label}
         </span>
       </div>
       <div
-        className={`text-xs sm:text-sm font-bold break-words ${
+        className={`text-sm sm:text-base font-bold break-words ${
           isCyber ? "text-white/95" : "text-gray-900"
         }`}
       >
@@ -257,7 +288,7 @@ function GameCombatSection({
           No combat metrics configured.
         </p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 my-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 my-2">
           {filledCombat.map(({ key, label, icon }) => {
             const val = resolveField(character, key);
             if (!val) return null;
@@ -268,21 +299,21 @@ function GameCombatSection({
                 key={key}
                 className={`p-3.5 rounded-2xl border space-y-1 transition-all ${
                   isCyber
-                    ? "border-white/10 bg-white/[0.04] hover:border-white/20"
+                    ? "border-cyan-500/20 bg-[#080d1e]/80 hover:border-cyan-400/40 hover:bg-[#0b1228]/90"
                     : "border-black bg-gray-50 shadow-[2.5px_2.5px_0_#000]"
                 }`}
                 style={{
                   boxShadow: isCyber && isElementField ? `0 0 16px ${elemTheme.glowColorRgba}` : undefined,
                 }}
               >
-                <div className={`text-[9.5px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 ${
-                  isCyber ? "text-white/40" : "text-gray-500"
+                <div className={`text-[9.5px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+                  isCyber ? "text-cyan-200/50" : "text-gray-500"
                 }`}>
                   {icon && <span className="text-[10px]">{icon}</span>}
                   <span>{label}</span>
                 </div>
-                <div className={`text-xs sm:text-sm font-bold flex items-center gap-1.5 truncate ${
-                  isCyber ? "text-white/95" : "text-gray-900"
+                <div className={`text-sm sm:text-base font-bold flex items-center gap-1.5 truncate ${
+                  isCyber ? (isElementField ? "text-cyan-300" : "text-white/95") : "text-gray-900"
                 }`}>
                   {isElementField && (
                     <span
@@ -437,10 +468,10 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
       case "overview":
         const va = character.voiceActors || character.voice || character.stats?.voiceActors || {};
         const vaEntries = [
-          { lang: "Japanese", flag: "🇯🇵", val: va.jp || va.japanese },
-          { lang: "Chinese",  flag: "🇨🇳", val: va.cn || va.chinese },
-          { lang: "Korean",   flag: "🇰🇷", val: va.kr || va.korean },
-          { lang: "English",  flag: "🇺🇸", val: va.en || va.english },
+          { lang: "Japanese", flag: "JP", val: va.jp || va.japanese },
+          { lang: "Chinese",  flag: "CN", val: va.cn || va.chinese },
+          { lang: "Korean",   flag: "KR", val: va.kr || va.korean },
+          { lang: "English",  flag: "US", val: va.en || va.english },
         ].filter(e => e.val);
 
         const bio = character.biography || character.story?.biography || character.stats?.biography;
@@ -449,12 +480,12 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
         const quote = character.favoriteQuote || character.story?.favoriteQuote || character.stats?.favoriteQuote;
 
         return (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {/* Quote Banner */}
             {quote && (
               <blockquote
                 className={`p-4 mb-4 rounded-2xl border text-base italic font-medium leading-relaxed ${
-                  isCyber ? "border-white/10 bg-white/[0.03] text-white/90" : "border-black/20 bg-amber-50 text-gray-900 shadow-[3px_3px_0_#000]"
+                  isCyber ? "border-cyan-500/20 bg-[#080d1e]/80 text-white/90" : "border-black/20 bg-amber-50 text-gray-900 shadow-[3px_3px_0_#000]"
                 }`}
                 style={{
                   borderLeft: `4px solid ${elemTheme.primaryColor}`,
@@ -467,30 +498,30 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
 
             {/* Section 1: Identity & Profile */}
             <SectionHeader title="Identity & Profile" icon="👤" isCyber={isCyber} elemTheme={elemTheme} />
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+              <InfoCard label="Title" value={character.title || character.identity?.title} icon="👑" isCyber={isCyber} elemTheme={elemTheme} />
+              <InfoCard label="Gender" value={character.gender || character.identity?.gender || character.stats?.gender} icon="♀️" isCyber={isCyber} elemTheme={elemTheme} />
+              <InfoCard label="Birthday" value={character.birthday || character.identity?.birthday || character.combat?.birthday} icon="🎂" isCyber={isCyber} elemTheme={elemTheme} />
+              <InfoCard label="Species" value={character.species || character.identity?.species || character.stats?.species} icon="👤" isCyber={isCyber} elemTheme={elemTheme} />
               <InfoCard label="Official Name" value={character.officialName || character.identity?.officialName || character.stats?.officialName} icon="🪪" isCyber={isCyber} elemTheme={elemTheme} />
               <InfoCard label="Native Name" value={character.nativeName || character.identity?.nativeName || character.stats?.nativeName} icon="⛩️" isCyber={isCyber} elemTheme={elemTheme} />
               <InfoCard label="Alias" value={character.alias || character.identity?.alias || character.stats?.alias} icon="🕵️" isCyber={isCyber} elemTheme={elemTheme} />
               <InfoCard label="Nickname" value={character.nickname || character.identity?.nickname || character.stats?.nickname} icon="💬" isCyber={isCyber} elemTheme={elemTheme} />
-              <InfoCard label="Title" value={character.title || character.identity?.title} icon="👑" isCyber={isCyber} elemTheme={elemTheme} />
-              <InfoCard label="Gender" value={character.gender || character.identity?.gender || character.stats?.gender} icon="🚻" isCyber={isCyber} elemTheme={elemTheme} />
-              <InfoCard label="Birthday" value={character.birthday || character.identity?.birthday || character.combat?.birthday} icon="🎂" isCyber={isCyber} elemTheme={elemTheme} />
               <InfoCard label="Age" value={character.age || character.identity?.age || character.stats?.age} icon="⏳" isCyber={isCyber} elemTheme={elemTheme} />
               <InfoCard label="Height" value={character.height || character.identity?.height || character.stats?.height} icon="📏" isCyber={isCyber} elemTheme={elemTheme} />
               <InfoCard label="Weight" value={character.weight || character.identity?.weight || character.stats?.weight} icon="⚖️" isCyber={isCyber} elemTheme={elemTheme} />
-              <InfoCard label="Species" value={character.species || character.identity?.species || character.stats?.species} icon="🧬" isCyber={isCyber} elemTheme={elemTheme} />
               <InfoCard label="Race" value={character.race || character.identity?.race || character.stats?.race} icon="🌐" isCyber={isCyber} elemTheme={elemTheme} />
             </div>
 
             {/* Section 2: World & Faction */}
-            <SectionHeader title="World & Faction" icon="🌍" isCyber={isCyber} elemTheme={elemTheme} />
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              <InfoCard label="Nation" value={character.nation || character.world?.nation || character.combat?.nation} icon="🏛️" isCyber={isCyber} elemTheme={elemTheme} />
+            <SectionHeader title="World & Faction" icon="🛡️" isCyber={isCyber} elemTheme={elemTheme} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              <InfoCard label="Nation" value={character.nation || character.world?.nation || character.combat?.nation} icon="🚩" isCyber={isCyber} elemTheme={elemTheme} />
+              <InfoCard label="Affiliation" value={character.affiliation || character.world?.affiliation || character.stats?.affiliation} icon="🏢" isCyber={isCyber} elemTheme={elemTheme} />
+              <InfoCard label="Faction" value={character.faction || character.world?.faction || character.stats?.faction} icon="👥" isCyber={isCyber} elemTheme={elemTheme} />
               <InfoCard label="Region" value={character.region || character.world?.region || character.stats?.region} icon="🗺️" isCyber={isCyber} elemTheme={elemTheme} />
               <InfoCard label="Planet" value={character.planet || character.world?.planet || character.stats?.planet} icon="🪐" isCyber={isCyber} elemTheme={elemTheme} />
-              <InfoCard label="Organization" value={character.organization || character.world?.organization || character.stats?.organization} icon="🏢" isCyber={isCyber} elemTheme={elemTheme} />
-              <InfoCard label="Affiliation" value={character.affiliation || character.world?.affiliation || character.stats?.affiliation} icon="🤝" isCyber={isCyber} elemTheme={elemTheme} />
-              <InfoCard label="Faction" value={character.faction || character.world?.faction || character.stats?.faction} icon="🚩" isCyber={isCyber} elemTheme={elemTheme} />
+              <InfoCard label="Organization" value={character.organization || character.world?.organization || character.stats?.organization} icon="🏛️" isCyber={isCyber} elemTheme={elemTheme} />
             </div>
 
             {/* Section 3: Game & Combat (Extensible Component) */}
@@ -503,22 +534,24 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                 No voice actor credits registered.
               </p>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 my-2">
                 {vaEntries.map(({ lang, flag, val }) => (
                   <div
                     key={lang}
                     className={`p-3.5 rounded-2xl border flex items-center gap-3 transition-all ${
                       isCyber
-                        ? "border-white/10 bg-white/[0.03] hover:border-white/20"
+                        ? "border-cyan-500/20 bg-[#080d1e]/80 hover:border-cyan-400/35"
                         : "border-black bg-gray-50 shadow-[2.5px_2.5px_0_#000]"
                     }`}
                   >
-                    <span className="text-2xl shrink-0 select-none">{flag}</span>
+                    <span className="text-xs font-mono font-bold shrink-0 select-none px-2 py-1.5 rounded-md bg-cyan-500/15 text-cyan-300 border border-cyan-400/30">
+                      {flag}
+                    </span>
                     <div className="min-w-0">
-                      <div className={`text-[9px] font-mono font-bold uppercase tracking-wider truncate ${
-                        isCyber ? "text-white/40" : "text-gray-500"
+                      <div className={`text-[9.5px] font-mono font-bold uppercase tracking-wider truncate ${
+                        isCyber ? "text-cyan-200/50" : "text-gray-500"
                       }`}>{lang}</div>
-                      <div className={`text-xs sm:text-sm font-bold truncate ${
+                      <div className={`text-sm font-bold truncate ${
                         isCyber ? "text-white/95" : "text-gray-900"
                       }`}>{val}</div>
                     </div>
@@ -531,39 +564,39 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
             <SectionHeader title="Story & Lore" icon="📖" isCyber={isCyber} elemTheme={elemTheme} />
             <div className="space-y-4">
               {officialDesc && (
-                <div className={`p-4 rounded-2xl border ${
-                  isCyber ? "border-white/10 bg-white/[0.03]" : "border-black bg-gray-50 shadow-[2.5px_2.5px_0_#000]"
+                <div className={`p-4.5 rounded-2xl border ${
+                  isCyber ? "border-cyan-500/20 bg-[#080d1e]/80" : "border-black bg-gray-50 shadow-[2.5px_2.5px_0_#000]"
                 }`}>
                   <h5 className={`text-[10px] font-mono font-bold uppercase tracking-wider mb-1.5 ${
-                    isCyber ? "text-white/45" : "text-gray-600"
+                    isCyber ? "text-cyan-200/50" : "text-gray-600"
                   }`}>
                     Official Overview
                   </h5>
-                  <p className={`text-xs sm:text-sm leading-relaxed ${isCyber ? "text-white/85" : "text-gray-800"}`}>{officialDesc}</p>
+                  <p className={`text-xs sm:text-sm leading-relaxed ${isCyber ? "text-slate-200/90" : "text-gray-800"}`}>{officialDesc}</p>
                 </div>
               )}
               {personality && (
-                <div className={`p-4 rounded-2xl border ${
-                  isCyber ? "border-white/10 bg-white/[0.03]" : "border-black bg-gray-50 shadow-[2.5px_2.5px_0_#000]"
+                <div className={`p-4.5 rounded-2xl border ${
+                  isCyber ? "border-cyan-500/20 bg-[#080d1e]/80" : "border-black bg-gray-50 shadow-[2.5px_2.5px_0_#000]"
                 }`}>
                   <h5 className={`text-[10px] font-mono font-bold uppercase tracking-wider mb-1.5 ${
-                    isCyber ? "text-white/45" : "text-gray-600"
+                    isCyber ? "text-cyan-200/50" : "text-gray-600"
                   }`}>
                     Personality Traits
                   </h5>
-                  <p className={`text-xs sm:text-sm leading-relaxed ${isCyber ? "text-white/85" : "text-gray-800"}`}>{personality}</p>
+                  <p className={`text-xs sm:text-sm leading-relaxed ${isCyber ? "text-slate-200/90" : "text-gray-800"}`}>{personality}</p>
                 </div>
               )}
               {bio && (
-                <div className={`p-4 rounded-2xl border ${
-                  isCyber ? "border-white/10 bg-white/[0.03]" : "border-black bg-gray-50 shadow-[2.5px_2.5px_0_#000]"
+                <div className={`p-4.5 rounded-2xl border ${
+                  isCyber ? "border-cyan-500/20 bg-[#080d1e]/80" : "border-black bg-gray-50 shadow-[2.5px_2.5px_0_#000]"
                 }`}>
                   <h5 className={`text-[10px] font-mono font-bold uppercase tracking-wider mb-1.5 ${
-                    isCyber ? "text-white/45" : "text-gray-600"
+                    isCyber ? "text-cyan-200/50" : "text-gray-600"
                   }`}>
                     Biography
                   </h5>
-                  <p className={`text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${isCyber ? "text-white/85" : "text-gray-800"}`}>{bio}</p>
+                  <p className={`text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${isCyber ? "text-slate-200/90" : "text-gray-800"}`}>{bio}</p>
                 </div>
               )}
               {!bio && !officialDesc && !personality && (
@@ -580,9 +613,9 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
           <div className="space-y-4">
             {/* Gallery Control Bar */}
             <div className={`flex items-center justify-between gap-2 p-3.5 rounded-2xl border flex-wrap ${
-              isCyber ? "border-white/10 bg-white/[0.04]" : "border-black bg-gray-50 shadow-[2.5px_2.5px_0_#000]"
+              isCyber ? "border-cyan-500/20 bg-[#080d1e]/80" : "border-black bg-gray-50 shadow-[2.5px_2.5px_0_#000]"
             }`}>
-              <span className={`text-xs font-mono font-bold ${isCyber ? "text-white/70" : "text-gray-800"}`}>
+              <span className={`text-xs font-mono font-bold ${isCyber ? "text-cyan-200/80" : "text-gray-800"}`}>
                 🖼️ Gallery ({galleryImages.length} items)
               </span>
 
@@ -631,7 +664,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                     transition={{ duration: 0.2 }}
                     onClick={() => { setLightboxSrc(src); setLightboxTitle(label); setLightboxIndex(i); }}
                     className={`relative aspect-[3/4] rounded-2xl overflow-hidden cursor-zoom-in border group ${
-                      isCyber ? "border-white/10 bg-black/40" : "border-black bg-gray-100 shadow-[3px_3px_0_#000]"
+                      isCyber ? "border-cyan-500/20 bg-black/40" : "border-black bg-gray-100 shadow-[3px_3px_0_#000]"
                     }`}
                   >
                     {src.endsWith(".mp4") || src.endsWith(".webm") || src.startsWith("data:video/") || /\.(mp4|webm|mov)(?:[?#]|$)/i.test(src) ? (
@@ -666,7 +699,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
             {/* Rating */}
             <div>
               <label className={`block text-[10px] font-mono uppercase tracking-widest font-bold mb-3 ${
-                isCyber ? "text-white/50" : "text-gray-700"
+                isCyber ? "text-cyan-200/60" : "text-gray-700"
               }`}>
                 Personal Rating (1-10)
               </label>
@@ -695,7 +728,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
             {/* Pull Status */}
             <div>
               <label className={`block text-[10px] font-mono uppercase tracking-widest font-bold mb-3 ${
-                isCyber ? "text-white/50" : "text-gray-700"
+                isCyber ? "text-cyan-200/60" : "text-gray-700"
               }`}>
                 Pull / Collection Status
               </label>
@@ -729,7 +762,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
             {/* Investment */}
             <div>
               <label className={`block text-[10px] font-mono uppercase tracking-widest font-bold mb-3 ${
-                isCyber ? "text-white/50" : "text-gray-700"
+                isCyber ? "text-cyan-200/60" : "text-gray-700"
               }`}>
                 Investment Level
               </label>
@@ -763,7 +796,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
             {/* Custom Tags */}
             <div>
               <label className={`block text-[10px] font-mono uppercase tracking-widest font-bold mb-3 ${
-                isCyber ? "text-white/50" : "text-gray-700"
+                isCyber ? "text-cyan-200/60" : "text-gray-700"
               }`}>
                 Custom Tags
               </label>
@@ -811,7 +844,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
             {/* Personal Notes */}
             <div>
               <label className={`block text-[10px] font-mono uppercase tracking-widest font-bold mb-3 ${
-                isCyber ? "text-white/50" : "text-gray-700"
+                isCyber ? "text-cyan-200/60" : "text-gray-700"
               }`}>
                 Personal Notes & Build Thoughts
               </label>
@@ -861,12 +894,12 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
               className="fixed inset-0 z-[900]"
-              style={{ backgroundColor: "rgba(0,0,0,0.82)", backdropFilter: "blur(14px)" }}
+              style={{ backgroundColor: "rgba(0,0,0,0.84)", backdropFilter: "blur(16px)" }}
               onClick={onClose}
             />
 
-            {/* ── Modal Container ────────────────────────────────────────── */}
-            <div data-modal-open="true" className="fixed inset-0 z-[901] flex items-center justify-center p-3 sm:p-4 pointer-events-none">
+            {/* ── Modal Container (Landscape Character Dossier Viewport) ── */}
+            <div data-modal-open="true" className="fixed inset-0 z-[901] flex items-center justify-center p-2 sm:p-4 pointer-events-none">
               <motion.div
                 key="modal"
                 initial={{ opacity: 0, scale: 0.94, y: 10 }}
@@ -876,9 +909,9 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                   y: 0,
                   boxShadow: isCyber
                     ? [
-                        `0 40px 120px rgba(0,0,0,0.85), 0 0 0 1px ${elemTheme.primaryColor}35, 0 0 45px ${elemTheme.glowColorRgba}`,
-                        `0 40px 120px rgba(0,0,0,0.85), 0 0 0 1px ${elemTheme.primaryColor}65, 0 0 85px ${elemTheme.glowColorRgba}`,
-                        `0 40px 120px rgba(0,0,0,0.85), 0 0 0 1px ${elemTheme.primaryColor}35, 0 0 45px ${elemTheme.glowColorRgba}`,
+                        `0 40px 120px rgba(0,0,0,0.9), 0 0 0 1.5px ${elemTheme.primaryColor}60, 0 0 50px ${elemTheme.glowColorRgba}`,
+                        `0 40px 120px rgba(0,0,0,0.9), 0 0 0 1.5px ${elemTheme.primaryColor}95, 0 0 90px ${elemTheme.glowColorRgba}`,
+                        `0 40px 120px rgba(0,0,0,0.9), 0 0 0 1.5px ${elemTheme.primaryColor}60, 0 0 50px ${elemTheme.glowColorRgba}`,
                       ]
                     : "10px 10px 0 #000000",
                 }}
@@ -890,12 +923,12 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                 }}
                 className="pointer-events-auto flex flex-col overflow-hidden relative shadow-2xl w-full"
                 style={{
-                  maxWidth: "1240px",
-                  width: "clamp(320px, 88vw, 1240px)",
-                  height: "clamp(520px, 92vh, 940px)",
+                  maxWidth: "1360px",
+                  width: "clamp(320px, 92vw, 1360px)",
+                  height: "clamp(540px, 92vh, 960px)",
                   borderRadius: isCyber ? "26px" : "20px",
-                  backgroundColor: isCyber ? "#05070e" : "#FFFFFF",
-                  borderColor: isCyber ? `${elemTheme.primaryColor}40` : "#000000",
+                  backgroundColor: isCyber ? "#050814" : "#FFFFFF",
+                  borderColor: isCyber ? `${elemTheme.primaryColor}60` : "#000000",
                   borderWidth: isCyber ? "1.5px" : "3.5px",
                 }}
                 onClick={(e) => e.stopPropagation()}
@@ -904,7 +937,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                 {isCyber && (
                   <div
                     aria-hidden="true"
-                    className="absolute inset-x-0 top-0 h-48 pointer-events-none opacity-90 z-0 transition-all duration-700"
+                    className="absolute inset-x-0 top-0 h-56 pointer-events-none opacity-90 z-0 transition-all duration-700"
                     style={{
                       background: elemTheme.headerAuraGradientCyber,
                     }}
@@ -918,13 +951,12 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                       whileHover={{ scale: 1.04 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => onEdit?.(character)}
-                      className="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-lg cursor-pointer select-none"
+                      className="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-lg cursor-pointer select-none font-mono"
                       style={{
-                        backgroundColor: isCyber ? `${elemTheme.primaryColor}25` : "#FFE600",
-                        borderColor: isCyber ? `${elemTheme.primaryColor}60` : "#000000",
-                        borderWidth: isCyber ? "1.5px" : "2px",
+                        backgroundColor: isCyber ? "rgba(0,0,0,0.5)" : "#FFE600",
+                        borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000000",
+                        borderWidth: isCyber ? "1px" : "2px",
                         color: isCyber ? "#FFF" : "#000",
-                        boxShadow: isCyber ? `0 0 16px ${elemTheme.primaryColor}40` : "3px 3px 0 #000",
                         backdropFilter: "blur(12px)",
                       }}
                     >
@@ -935,10 +967,10 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                     onClick={onClose}
                     className="w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all cursor-pointer font-bold select-none"
                     style={{
-                      backgroundColor: isCyber ? "rgba(0,0,0,0.6)" : "#FFFFFF",
-                      color: isCyber ? "rgba(255,255,255,0.8)" : "#000000",
+                      backgroundColor: isCyber ? "rgba(0,0,0,0.5)" : "#FFFFFF",
+                      color: isCyber ? "rgba(255,255,255,0.85)" : "#000000",
                       backdropFilter: "blur(12px)",
-                      borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#000000",
+                      borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000000",
                       borderWidth: isCyber ? "1px" : "2px",
                       boxShadow: isCyber ? undefined : "2px 2px 0 #000",
                     }}
@@ -950,8 +982,8 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                 {/* ── Continuous Scroll Area (Splash Art + Sticky Tabs + Body) ── */}
                 <div className="flex-1 overflow-y-auto overscroll-contain relative custom-scrollbar">
                   {/* ── Splash Art Hero Banner (Full Bleed Edge-to-Edge Header) ───── */}
-                  <div className="relative overflow-hidden w-full shrink-0" style={{ height: "clamp(360px, 50vh, 460px)" }}>
-                    {/* Element Particles */}
+                  <div className="relative overflow-hidden w-full shrink-0" style={{ height: "clamp(340px, 48vh, 440px)" }}>
+                    {/* Element Particles & Corner Shards */}
                     <ElementParticles theme={elemTheme} isCyber={isCyber} />
 
                     {/* Background Hero Image */}
@@ -963,7 +995,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                         initial={{ scale: 1.05 }}
                         animate={{ scale: 1 }}
                         transition={{ duration: 0.7, ease: "easeOut" }}
-                        style={{ filter: isCyber ? "saturate(1.15)" : "none" }}
+                        style={{ filter: isCyber ? "saturate(1.15) brightness(0.9)" : "none" }}
                         draggable={false}
                       />
                     ) : hasImg(cardImg) || hasImg(avatar) ? (
@@ -984,12 +1016,12 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                       />
                     )}
 
-                    {/* Gradient Overlay */}
+                    {/* Dark Gradient Overlay for Header Depth */}
                     <div
                       className="absolute inset-0 pointer-events-none"
                       style={{
                         background: isCyber
-                          ? "linear-gradient(to bottom, rgba(5,7,14,0.15) 0%, rgba(5,7,14,0.65) 75%, rgba(5,7,14,1) 100%)"
+                          ? "linear-gradient(to bottom, rgba(5,8,20,0.2) 0%, rgba(5,8,20,0.7) 60%, rgba(5,8,20,1) 100%)"
                           : "linear-gradient(to bottom, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.7) 75%, rgba(255,255,255,1) 100%)",
                       }}
                     />
@@ -1008,53 +1040,56 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                         </div>
                       )}
                       <div className="flex flex-col sm:flex-row sm:items-end gap-5">
-                        {/* Character Profile Portrait (Avatar / Card Image / Fallback) */}
-                        <motion.div
-                          whileHover={{ scale: 1.03 }}
-                          transition={{ duration: 0.2 }}
-                          onClick={() => {
-                            const portraitSrc = avatar || cardImg;
-                            if (portraitSrc) {
-                              setLightboxSrc(portraitSrc);
-                              setLightboxTitle(`${character.name} Avatar`);
-                            }
-                          }}
-                          className={`shrink-0 w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-2xl md:rounded-3xl overflow-hidden border-2 shadow-2xl relative group flex items-center justify-center font-black text-4xl ${
-                            hasImg(avatar) || hasImg(cardImg) ? "cursor-zoom-in" : ""
-                          }`}
-                          style={{
-                            borderColor: isCyber ? `${elemTheme.primaryColor}` : "#000000",
-                            borderWidth: isCyber ? "2.5px" : "3.5px",
-                            boxShadow: isCyber
-                              ? `0 0 32px ${elemTheme.primaryColor}65, 0 10px 30px rgba(0,0,0,0.85)`
-                              : "6px 6px 0 #000000",
-                            backgroundColor: isCyber ? "rgba(5,7,14,0.9)" : "#FFFFFF",
-                            color: elemTheme.primaryColor,
-                          }}
-                        >
-                          {hasImg(avatar) || hasImg(cardImg) ? (
-                            <img
-                              src={(hasImg(avatar) ? avatar : cardImg)!}
-                              alt={character.name}
-                              className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
-                            />
-                          ) : (
-                            <span className="select-none drop-shadow-md">{character.name.charAt(0)}</span>
-                          )}
-                        </motion.div>
+                        {/* Character Profile Portrait (Avatar / Card Image / Fallback) with Corner Crystal Badge */}
+                        <div className="relative shrink-0">
+                          <motion.div
+                            whileHover={{ scale: 1.03 }}
+                            transition={{ duration: 0.2 }}
+                            onClick={() => {
+                              const portraitSrc = avatar || cardImg;
+                              if (portraitSrc) {
+                                setLightboxSrc(portraitSrc);
+                                setLightboxTitle(`${character.name} Avatar`);
+                              }
+                            }}
+                            className={`w-32 h-32 sm:w-38 sm:h-38 md:w-44 md:h-44 rounded-2xl md:rounded-3xl overflow-hidden border-2 shadow-2xl relative group flex items-center justify-center font-black text-4xl ${
+                              hasImg(avatar) || hasImg(cardImg) ? "cursor-zoom-in" : ""
+                            }`}
+                            style={{
+                              borderColor: isCyber ? `${elemTheme.primaryColor}` : "#000000",
+                              borderWidth: isCyber ? "2.5px" : "3.5px",
+                              boxShadow: isCyber
+                                ? `0 0 32px ${elemTheme.primaryColor}75, 0 10px 30px rgba(0,0,0,0.85)`
+                                : "6px 6px 0 #000000",
+                              backgroundColor: isCyber ? "rgba(5,8,20,0.9)" : "#FFFFFF",
+                              color: elemTheme.primaryColor,
+                            }}
+                          >
+                            {hasImg(avatar) || hasImg(cardImg) ? (
+                              <img
+                                src={(hasImg(avatar) ? avatar : cardImg)!}
+                                alt={character.name}
+                                className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
+                              />
+                            ) : (
+                              <span className="select-none drop-shadow-md">{character.name.charAt(0)}</span>
+                            )}
+                          </motion.div>
+                          <PortraitCornerBadge elemTheme={elemTheme} isCyber={isCyber} />
+                        </div>
 
                         <div className="flex-1">
                           <h2
-                            className="text-4xl md:text-5xl font-black leading-none tracking-tight"
+                            className="text-4xl md:text-5xl font-black leading-none tracking-tight flex items-center gap-2 flex-wrap"
                             style={{
                               color: isCyber ? "#FFFFFF" : "#000000",
                               textShadow: isCyber ? `0 2px 24px rgba(0,0,0,0.9), 0 0 30px ${elemTheme.primaryColor}40` : undefined,
                             }}
                           >
-                            {character.name}
+                            <span>{character.name}</span>
                             {character.isFavorite && (
                               <motion.span
-                                className="ml-3 text-2xl"
+                                className="text-2xl"
                                 animate={{ scale: [1, 1.3, 1] }}
                                 transition={{ repeat: Infinity, duration: 3, repeatDelay: 1 }}
                               >
@@ -1063,16 +1098,16 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                             )}
                           </h2>
                           {gameName && (
-                            <p className="text-sm font-mono opacity-70 mt-1.5 flex items-center gap-2" style={{ color: isCyber ? "#94A3B8" : "#4B5563" }}>
+                            <p className="text-sm font-mono opacity-80 mt-1.5 flex items-center gap-2" style={{ color: isCyber ? "#94A3B8" : "#4B5563" }}>
                               <span>🎮 {gameName}</span>
                             </p>
                           )}
 
-                          {/* Badges & Action Controls */}
+                          {/* Badges & Action Controls (Matching Reference Screenshot Row) */}
                           <div className="flex items-center gap-2 flex-wrap mt-3">
                             {character.element && (
                               <span
-                                className="px-3.5 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 shadow-sm"
+                                className="px-3.5 py-1.5 rounded-full text-xs font-bold border flex items-center gap-1.5 shadow-sm"
                                 style={{
                                   backgroundColor: isCyber ? elemTheme.badgeBgCyber : elemTheme.badgeBgBrutal,
                                   borderColor: isCyber ? elemTheme.badgeBorderCyber : elemTheme.badgeBorderBrutal,
@@ -1086,7 +1121,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                             )}
                             {character.role && (
                               <span
-                                className="px-3 py-1 rounded-full text-xs font-bold border"
+                                className="px-3.5 py-1.5 rounded-full text-xs font-bold border"
                                 style={{
                                   backgroundColor: isCyber ? "rgba(255,255,255,0.1)" : "#F3F4F6",
                                   borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000000",
@@ -1099,7 +1134,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                             )}
                             {character.rarity && (
                               <span
-                                className="px-3 py-1 rounded-full text-xs font-bold border"
+                                className="px-3.5 py-1.5 rounded-full text-xs font-bold border"
                                 style={{
                                   backgroundColor: isCyber ? "rgba(234,179,8,0.15)" : "#FEF3C7",
                                   borderColor: isCyber ? "rgba(234,179,8,0.4)" : "#000000",
@@ -1126,7 +1161,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                                   toastError(err.message || "Sign in to like this character.");
                                 }
                               }}
-                              className="px-3.5 py-1 rounded-full text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer transition-all border shadow-sm select-none"
+                              className="px-3.5 py-1.5 rounded-full text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer transition-all border shadow-sm select-none"
                               style={{
                                 backgroundColor: userLikedGameCharacterIds.includes(character.id)
                                   ? isCyber
@@ -1163,7 +1198,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
 
                             {isLinked ? (
                               <span
-                                className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold border"
+                                className="px-3 py-1.5 rounded-full text-[10px] font-mono font-bold border"
                                 style={{
                                   backgroundColor: isCyber ? "rgba(34,197,94,0.15)" : "#DCFCE7",
                                   borderColor: isCyber ? "rgba(34,197,94,0.3)" : "#000000",
@@ -1175,7 +1210,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                               </span>
                             ) : (
                               <span
-                                className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold border"
+                                className="px-3 py-1.5 rounded-full text-[10px] font-mono font-bold border"
                                 style={{
                                   backgroundColor: isCyber ? "rgba(245,158,11,0.15)" : "#FEF3C7",
                                   borderColor: isCyber ? "rgba(245,158,11,0.3)" : "#000000",
@@ -1192,7 +1227,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                                 onClick={() => {
                                   window.location.href = `/games/${character.gameId}`;
                                 }}
-                                className="px-3 py-1 rounded-full text-xs font-bold border transition-all cursor-pointer flex items-center gap-1 select-none"
+                                className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer flex items-center gap-1 select-none"
                                 style={{
                                   backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#E0F2FE",
                                   borderColor: isCyber ? "rgba(0,245,255,0.4)" : "#000000",
@@ -1207,7 +1242,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
 
                             <button
                               onClick={handleToggleFav}
-                              className="px-3 py-1 rounded-full text-xs font-bold border transition-all cursor-pointer select-none"
+                              className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer select-none"
                               style={{
                                 backgroundColor: character.isFavorite
                                   ? isCyber ? "rgba(251,191,36,0.18)" : "#FEF08A"
@@ -1233,7 +1268,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                     style={{
                       borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#000000",
                       borderBottomWidth: isCyber ? "1px" : "2px",
-                      backgroundColor: isCyber ? "rgba(5,7,14,0.96)" : "#FFFFFF",
+                      backgroundColor: isCyber ? "rgba(5,8,20,0.96)" : "#FFFFFF",
                       backdropFilter: "blur(12px)",
                     }}
                   >
@@ -1257,9 +1292,9 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                               layoutId="profile-tab-line"
                               className="absolute bottom-0 left-0 right-0"
                               style={{
-                                height: isCyber ? "2px" : "3px",
+                                height: isCyber ? "2.5px" : "3px",
                                 backgroundColor: isCyber ? elemTheme.primaryColor : "#000000",
-                                boxShadow: isCyber ? `0 0 10px ${elemTheme.primaryColor}` : "none",
+                                boxShadow: isCyber ? `0 0 12px ${elemTheme.primaryColor}` : "none",
                               }}
                               transition={{ type: "spring", stiffness: 500, damping: 35 }}
                             />
@@ -1291,7 +1326,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                   style={{
                     borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#000000",
                     borderTopWidth: isCyber ? "1px" : "2px",
-                    backgroundColor: isCyber ? "#05070e" : "#F9FAFB",
+                    backgroundColor: isCyber ? "#050814" : "#F9FAFB",
                   }}
                 >
                   <span className={`text-xs font-mono font-medium ${isCyber ? "text-white/40" : "text-gray-600"}`}>
