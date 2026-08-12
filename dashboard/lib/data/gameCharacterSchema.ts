@@ -6,6 +6,7 @@
  */
 
 import type { GameCharacterEntry } from "@/lib/store/dashboardStore";
+import { MEDIA_KEYS } from "@/lib/utils/mediaResolver";
 
 export interface ValidationError {
   path: string;
@@ -402,17 +403,20 @@ export function exportGameCharacterToJson(entry: Partial<GameCharacterEntry>): R
     },
   };
 
-  // Include media and meta fields if present
-  if (norm.cardImage) result.cardImage = norm.cardImage;
-  if (norm.avatarUrl) result.avatarUrl = norm.avatarUrl;
-  if (norm.splashArt) result.splashArt = norm.splashArt;
-  if (norm.gallery && norm.gallery.length > 0) result.gallery = norm.gallery;
+  // Include meta fields if present (excluding media storage fields)
   if (norm.notes) result.notes = norm.notes;
-  if (norm.stats && Object.keys(norm.stats).length > 0) result.stats = norm.stats;
+  if (norm.stats && Object.keys(norm.stats).length > 0) {
+    const cleanStats = { ...norm.stats };
+    delete cleanStats.cardVideo;
+    delete cleanStats.previewVideo;
+    delete cleanStats.videoUrl;
+    if (Object.keys(cleanStats).length > 0) result.stats = cleanStats;
+  }
   if (norm.tags && norm.tags.length > 0) result.tags = norm.tags;
 
-  // Preserve any remaining custom top-level fields
+  // Preserve any remaining custom character-data top-level fields (stripping media keys)
   for (const key of Object.keys(entry)) {
+    if (MEDIA_KEYS.has(key)) continue;
     if (!(key in result) && (entry as any)[key] !== undefined) {
       result[key] = (entry as any)[key];
     }
@@ -446,6 +450,21 @@ export function deepMergeGameCharacter(
       merged[key] = { ...curVal, ...incVal };
     } else {
       merged[key] = incVal;
+    }
+  }
+
+  // Guarantee existing database/store media fields are NEVER erased by JSON imports
+  for (const mKey of MEDIA_KEYS) {
+    const curMedia = (current as any)[mKey];
+    const incMedia = (incoming as any)[mKey];
+    const isIncMediaEmpty =
+      incMedia === undefined ||
+      incMedia === null ||
+      incMedia === "" ||
+      (Array.isArray(incMedia) && incMedia.length === 0);
+
+    if (curMedia !== undefined && curMedia !== null && curMedia !== "" && isIncMediaEmpty) {
+      merged[mKey] = curMedia;
     }
   }
 

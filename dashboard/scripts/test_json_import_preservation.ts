@@ -4,6 +4,7 @@ import {
   exportGameCharacterToJson,
   deepMergeGameCharacter,
 } from "../lib/data/gameCharacterSchema";
+import { getCardVideoUrl, getCardImageUrl, isVideoUrl } from "../lib/utils/mediaResolver";
 
 const daringHeartInput = {
   id: "gc-1786432530733",
@@ -215,7 +216,64 @@ function runTests() {
 
   console.log("✓ Generic Non-Uma Character Test PASSED.");
 
-  console.log("\nALL DATA PRESERVATION & CANONICAL MAPPING TESTS PASSED SUCCESSFULLY! ✨");
+  // TEST 6: Media Exclusion from JSON Export
+  console.log("\nTest 6: Media Exclusion from Canonical JSON Export...");
+  const entryWithMedia = {
+    ...entry1,
+    cardImage: "https://example.com/card.jpg",
+    avatarUrl: "https://example.com/avatar.jpg",
+    splashArt: "https://example.com/splash.jpg",
+    gallery: ["https://example.com/g1.jpg", "https://example.com/g2.jpg"],
+    cardVideo: "https://example.com/preview.mp4",
+  };
+  const exportedNoMedia = exportGameCharacterToJson(entryWithMedia);
+
+  if (exportedNoMedia.cardImage) throw new Error("exported JSON contained cardImage!");
+  if (exportedNoMedia.avatarUrl) throw new Error("exported JSON contained avatarUrl!");
+  if (exportedNoMedia.splashArt) throw new Error("exported JSON contained splashArt!");
+  if (exportedNoMedia.gallery) throw new Error("exported JSON contained gallery!");
+  if (exportedNoMedia.cardVideo) throw new Error("exported JSON contained cardVideo!");
+  if (exportedNoMedia.previewVideo) throw new Error("exported JSON contained previewVideo!");
+  console.log("✓ Media Exclusion from JSON Export PASSED.");
+
+  // TEST 7: Media Preservation on JSON Import/Merge
+  console.log("\nTest 7: Preserving Database Media on JSON Import...");
+  const dbCharacter = {
+    id: "gc-1786432530733",
+    name: "Daring Heart",
+    cardImage: "https://db-server.com/daring_heart_card.jpg",
+    avatarUrl: "https://db-server.com/daring_heart_avatar.jpg",
+    splashArt: "https://db-server.com/daring_heart_splash.jpg",
+    gallery: ["https://db-server.com/g1.jpg"],
+    cardVideo: "https://db-server.com/daring_heart_preview.mp4",
+  };
+  const importedCharacterData = {
+    name: "Daring Heart",
+    identity: { birthday: "March 24", species: "Umamusume" },
+    combat: { role: "Racer" },
+  };
+
+  const mergedWithDbMedia = deepMergeGameCharacter(dbCharacter, importedCharacterData);
+  if (mergedWithDbMedia.cardImage !== dbCharacter.cardImage) throw new Error("JSON import erased existing db cardImage!");
+  if (mergedWithDbMedia.avatarUrl !== dbCharacter.avatarUrl) throw new Error("JSON import erased existing db avatarUrl!");
+  if (mergedWithDbMedia.splashArt !== dbCharacter.splashArt) throw new Error("JSON import erased existing db splashArt!");
+  if (JSON.stringify(mergedWithDbMedia.gallery) !== JSON.stringify(dbCharacter.gallery)) throw new Error("JSON import erased existing db gallery!");
+  if (mergedWithDbMedia.cardVideo !== dbCharacter.cardVideo) throw new Error("JSON import erased existing db cardVideo!");
+  if (mergedWithDbMedia.identity?.birthday !== "March 24") throw new Error("JSON import failed to merge identity metadata!");
+  console.log("✓ Preserving Database Media on JSON Import PASSED.");
+
+  // TEST 8: MP4 Video Preview Resolution & Fallback
+  console.log("\nTest 8: MP4 Video Preview Resolution & Image Fallback...");
+  const videoEntry = { name: "Xiao", cardVideo: "https://cdn.example.com/xiao_idle.mp4", cardImage: "https://cdn.example.com/xiao.jpg" };
+  const imageOnlyEntry = { name: "Xiao", cardImage: "https://cdn.example.com/xiao.jpg" };
+
+  if (getCardVideoUrl(videoEntry) !== "https://cdn.example.com/xiao_idle.mp4") throw new Error("failed to resolve MP4 video URL");
+  if (getCardImageUrl(imageOnlyEntry) !== "https://cdn.example.com/xiao.jpg") throw new Error("failed to resolve image URL");
+  if (getCardVideoUrl(imageOnlyEntry) !== null) throw new Error("image-only entry falsely returned video URL");
+  if (!isVideoUrl("sample.mp4") || !isVideoUrl("sample.webm") || !isVideoUrl("data:video/mp4;base64,...")) throw new Error("isVideoUrl resolution failed");
+  console.log("✓ MP4 Video Preview Resolution PASSED.");
+
+  console.log("\nALL DATA PRESERVATION, MEDIA STRIPPING & CANONICAL MAPPING TESTS PASSED SUCCESSFULLY! ✨");
 }
 
 runTests();

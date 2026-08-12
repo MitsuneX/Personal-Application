@@ -7,6 +7,7 @@ import { GameCharacterEntry, useDashboardStore } from "@/lib/store/dashboardStor
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { useToast } from "@/components/ui/ToastProvider";
 import { duplicateGameCharacter } from "@/lib/data/duplicateHelper";
+import { getCardVideoUrl, getCardImageUrl } from "@/lib/utils/mediaResolver";
 
 const ELEMENT_COLORS: Record<string, string> = {
   pyro:"#FF4A4A", hydro:"#1E90FF", anemo:"#4DC9A9", geo:"#CFA827",
@@ -38,6 +39,8 @@ interface GameCharacterCardProps {
 export function GameCharacterCard({ character, onClick, onEdit, onDelete }: GameCharacterCardProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
+  const [videoError, setVideoError] = React.useState(false);
+  const [imgError, setImgError] = React.useState(false);
   const {
     games,
     dossierCharacters,
@@ -62,13 +65,15 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
   );
 
   const accent = character.accentColor || parentGame?.accentColor || "#A855F7";
-  const cardImg = character.cardImage || character.splashArt || character.avatarUrl;
+  const videoUrl = !videoError ? getCardVideoUrl(character) : null;
+  const cardImg = !imgError ? (getCardImageUrl(character) || character.cardImage || character.splashArt) : null;
   const avatar = character.avatarUrl || character.cardImage;
   const gameName = character.gameName || parentGame?.game || "";
   const isLinked = Boolean(character.gameId && parentGame);
   const stars = rarityStars(character.rarity);
   const ec = elColor(character.element);
 
+  const hasVideo = !!videoUrl;
   const hasCardImg = cardImg && (cardImg.startsWith("http") || cardImg.startsWith("data:") || cardImg.startsWith("/"));
   const hasAvatar = avatar && (avatar.startsWith("http") || avatar.startsWith("data:") || avatar.startsWith("/"));
 
@@ -243,25 +248,26 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
         variants={{ hover: { scale: 1.07 } }}
         transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
       >
-        {hasCardImg ? (
-          cardImg!.endsWith(".mp4") || cardImg!.endsWith(".webm") || cardImg!.startsWith("data:video/") ? (
-            <video
-              src={cardImg!}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full h-full object-cover object-top"
-              draggable={false}
-            />
-          ) : (
-            <img
-              src={cardImg!}
-              alt={character.name}
-              className="w-full h-full object-cover object-top"
-              draggable={false}
-            />
-          )
+        {hasVideo ? (
+          <video
+            src={videoUrl!}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            onError={() => setVideoError(true)}
+            className="w-full h-full object-cover object-top pointer-events-none"
+            draggable={false}
+          />
+        ) : hasCardImg ? (
+          <img
+            src={cardImg!}
+            alt={character.name}
+            onError={() => setImgError(true)}
+            className="w-full h-full object-cover object-top"
+            draggable={false}
+          />
         ) : hasAvatar ? (
           <img
             src={avatar!}

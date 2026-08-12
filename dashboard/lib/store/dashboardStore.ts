@@ -265,6 +265,8 @@ export interface GameCharacterEntry {
   avatarUrl?: string;
   splashArt?: string;
   gallery?: string[];
+  cardVideo?: string;
+  previewVideo?: string;
   accentColor?: string;
   // Meta
   rank?: number;
@@ -624,6 +626,8 @@ export interface HallOfFameEntry {
   portraitUrl?: string;
   avatarUrl?: string;
   avatarSource?: "card" | "custom";
+  cardVideo?: string;
+  previewVideo?: string;
   accentColor?: string;
 
   gameCharacterId?: string;

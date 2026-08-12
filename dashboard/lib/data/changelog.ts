@@ -13,6 +13,33 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v11.8.0",
+    date: "2026-08-12",
+    title: "Game Character Media Isolation & MP4 Card Preview Engine",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Stripped image and video media storage fields from canonical Game Character JSON format to treat JSON strictly as a character metadata container. Implemented database media preservation during JSON import, and added full MP4 video preview card capabilities to both Character Dictionary and Game Character cards with automatic image fallback.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🎥 MP4 Card Preview Engine (HofEntryCard.tsx & GameCharacterCard.tsx): Character Dictionary and Game Character cards now support .mp4/.webm video card previews playing seamlessly in 3:4 aspect ratio with object-cover object-top formatting, muted, looped, playsInline, metadata preload, and zero player controls.",
+          "🔄 Automatic Video-to-Image Error Fallback: Built getCardVideoUrl and getCardImageUrl resolution logic with video onError event handlers. If an MP4 video fails to load, the card preview automatically falls back to the existing image preview, avatar, or card initials.",
+          "🛡️ Database Media Preservation on JSON Import (gameCharacterSchema.ts): JSON imports and deep merges now update metadata without deleting or wiping existing database-managed media (cardImage, avatarUrl, splashArt, gallery, cardVideo, etc.).",
+          "🧹 Clean Canonical JSON Export: Updated exportGameCharacterToJson to strip all media storage fields (cardImage, avatarUrl, splashArt, gallery, videoUrl, cardVideo) from output JSON, keeping identity, world, combat, voice, and story nested structures pure.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🔬 Shared Media Resolution Module (mediaResolver.ts): Centralized card preview video and image resolution rules, media key stripping sets, and format detection.",
+          "🧪 Programmatic Verification (test_json_import_preservation.ts & test_duplicate_and_delete_system.ts): Updated automated test suites verifying media stripping on export, media preservation on import, MP4 video URL resolution, and ID-strict duplicate/delete behavior.",
+        ],
+      },
+    ],
+  },
+
+  {
     version: "v11.7.0",
     date: "2026-08-11",
     title: "Character Identity, Duplicate & Delete System",

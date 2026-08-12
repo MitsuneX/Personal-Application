@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { duplicateHofEntry } from "@/lib/data/duplicateHelper";
+import { getCardVideoUrl, getCardImageUrl } from "@/lib/utils/mediaResolver";
 
 // ─── Constants & Styles ────────────────────────────────────────────────────────
 
@@ -185,6 +186,7 @@ export function HofEntryCard({
   onCompare,
 }: CardProps) {
   const [imgError, setImgError] = React.useState(false);
+  const [videoError, setVideoError] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
   const { likeHof, updateHof } = useDashboardStore();
   const { openContextMenu } = useContextMenu();
@@ -274,8 +276,10 @@ export function HofEntryCard({
     .join("")
     .toUpperCase();
 
-  const cardImg = entry.imageUrl || entry.portraitUrl;
-  const hasImage = !!cardImg && !imgError;
+  const videoUrl = !videoError ? getCardVideoUrl(entry) : null;
+  const cardImg = !imgError ? (getCardImageUrl(entry) || entry.imageUrl || entry.portraitUrl) : null;
+  const hasVideo = !!videoUrl;
+  const hasImage = !!cardImg;
 
   const cyberStyle = STATUS_STYLE[entry.status] || STATUS_STYLE["GOAT Status"];
   const brutalStyle = BRUTAL_STATUS_STYLE[entry.status] || BRUTAL_STATUS_STYLE["GOAT Status"];
@@ -332,7 +336,19 @@ export function HofEntryCard({
         variants={{ hover: { scale: 1.07 } }}
         transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
       >
-        {hasImage ? (
+        {hasVideo ? (
+          <video
+            src={videoUrl!}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            onError={() => setVideoError(true)}
+            className="w-full h-full object-cover object-[center_25%] pointer-events-none"
+            draggable={false}
+          />
+        ) : hasImage ? (
           <Image
             src={cardImg!}
             alt={entry.name}

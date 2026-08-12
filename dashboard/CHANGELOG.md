@@ -2,6 +2,36 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [11.8.0] - 2026-08-12
+
+### 🎥 Game Character Media Isolation & MP4 Card Preview Engine
+
+**1. Removal of Image/Media Storage from Game Character JSON (`gameCharacterSchema.ts`)**
+- **Clean Metadata Exports**: Updated `exportGameCharacterToJson` to strip all media storage fields (`cardImage`, `avatarUrl`, `splashArt`, `gallery`, `portraitUrl`, `bannerUrl`, `videoUrl`, `thumbnail`, `previewVideo`, `cardVideo`) from exported JSON documents.
+- **Canonical Structure Intact**: All 30+ canonical nested and flat character metadata fields (`identity.*`, `world.*`, `combat.*`, `voice.*`, `story.*`, `id`, `name`, `officialName`, `alias`, `nickname`, `nativeName`, `title`, `gameId`, `gameName`, `tier`, `rank`, `isFavorite`, `isFeatured`, `accentColor`) are preserved exactly.
+
+**2. Database Media Preservation During JSON Import (`deepMergeGameCharacter`)**
+- Updated `deepMergeGameCharacter` so JSON imports and partial metadata updates NEVER erase existing database/store media (`cardImage`, `avatarUrl`, `splashArt`, `gallery`, `cardVideo`, `previewVideo`, etc.).
+- Existing database media remains intact when metadata is updated via JSON file imports.
+
+**3. MP4 Video Card Preview Support (`HofEntryCard.tsx` & `GameCharacterCard.tsx`)**
+- **Character Dictionary Cards (`HofEntryCard.tsx`)**: Added support for `.mp4` and `.webm` video card previews playing seamlessly inside the 3:4 aspect ratio preview layer.
+- **Game Character Cards (`GameCharacterCard.tsx`)**: Integrated shared `getCardVideoUrl` and `getCardImageUrl` media resolution helpers.
+- **Playback & Hygiene**: Video elements render with `autoPlay`, `muted`, `loop`, `playsInline`, `preload="metadata"`, `pointer-events-none`, `object-cover object-top` formatting, and zero player controls.
+- **Automatic Error Fallback**: Built `onError={() => setVideoError(true)}` handlers on `<video>` elements. If an MP4 fails to load, card preview automatically falls back to image artwork (`cardImg` / `avatarUrl`), and ultimately to default initials/gradient containers.
+- **Preserved Aesthetics**: All card dimensions, borders, badges, favorite stars, rank badges, hover scale effects, Cyberpunk & Neo-Brutalism themes, and responsive layouts remain untouched.
+
+**4. Shared Media Resolution Module (`lib/utils/mediaResolver.ts`)**
+- Centralized `isVideoUrl`, `getCardVideoUrl`, `getCardImageUrl`, and `MEDIA_KEYS` stripping definitions.
+
+**5. Automated Test Coverage**
+- `scripts/test_json_import_preservation.ts`: Verified canonical nested JSON import/export, data preservation, media exclusion on export, media preservation on import, and MP4 video resolution (8/8 tests PASSED).
+- `scripts/test_duplicate_and_delete_system.ts`: Verified ID-strict record identity, deep cloning, duplicate prevention, and deletion isolation (53/53 assertions PASSED).
+
+---
+
+
+
 ## [11.7.0] - 2026-08-11
 
 ### 🔐 Character Identity, Duplicate & Delete System
