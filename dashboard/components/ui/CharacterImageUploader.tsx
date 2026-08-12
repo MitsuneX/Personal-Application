@@ -3,6 +3,7 @@
 import React, { useRef, useState, useCallback } from "react";
 import { useTheme } from "@/lib/theme";
 import { ImageCropModal, CropData } from "@/components/ui/ImageCropModal";
+import { useToast } from "@/components/ui/ToastProvider";
 
 interface CharacterImageUploaderProps {
   label: string;
@@ -34,25 +35,41 @@ export function CharacterImageUploader({
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [isCropOpen, setIsCropOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const { error: toastError } = useToast();
 
   const handleVideoUpload = async (file: File) => {
     setIsUploading(true);
+    setUploadError(null);
     try {
       const formData = new FormData();
       formData.append("file", file, file.name);
       const res = await fetch("/api/upload", { method: "POST", body: formData });
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => `HTTP ${res.status}`);
+        throw new Error(errText || `Upload failed with status ${res.status}`);
+      }
+
       const json = await res.json();
       if (json.success && json.url) {
         onChange(json.url);
+      } else {
+        throw new Error(json.error || "Server returned no URL after upload.");
       }
-    } catch (err) {
+    } catch (err: any) {
+      const msg = err?.message || "Video upload failed. Check the file and try again.";
       console.error("Video upload error:", err);
+      toastError(msg, "Upload Failed");
+      setUploadError(msg);
     } finally {
       setIsUploading(false);
     }
   };
 
   const processFile = useCallback((file: File) => {
+    // Clear any previous error immediately so the user sees feedback for the new attempt
+    setUploadError(null);
     if (file.type.startsWith("video/")) {
       if (!allowVideo) return;
       handleVideoUpload(file);
@@ -84,6 +101,7 @@ export function CharacterImageUploader({
   const handleCropComplete = async (blob: Blob, newCropData: CropData) => {
     setIsCropOpen(false);
     setIsUploading(true);
+    setUploadError(null);
     try {
       // Create FormData and upload blob to permanent server storage
       const formData = new FormData();
@@ -109,6 +127,7 @@ export function CharacterImageUploader({
       }
     } catch (err) {
       console.error("Upload error, using fallback data URL:", err);
+      // For image crops, still fall back to data URL so the user doesn't lose work
       const reader = new FileReader();
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string;
@@ -123,6 +142,15 @@ export function CharacterImageUploader({
 
   const accent = isCyber ? "#00F5FF" : "#000000";
   const hasImage = Boolean(value && (value.startsWith("http") || value.startsWith("data:") || value.startsWith("/")));
+
+  // Detect video: handles local paths (/uploads/clip.mp4), Supabase CDN URLs with query
+  // strings (?token=abc), and data: URLs — matches mediaResolver.isVideoUrl() exactly.
+  const isVideo = Boolean(
+    value && (
+      /\.(mp4|webm|mov|ogg)(?:[?#]|$)/i.test(value) ||
+      value.startsWith("data:video/")
+    )
+  );
 
   return (
     <div className="space-y-1.5 select-none">
@@ -165,9 +193,25 @@ export function CharacterImageUploader({
             <span className="animate-spin text-xl">🌀</span>
             <span className="text-[10px] font-mono font-bold">Uploading…</span>
           </div>
+        ) : uploadError ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 p-2 text-center">
+            <span className="text-xl">❌</span>
+            <span
+              className="text-[10px] font-mono font-bold"
+              style={{ color: isCyber ? "#FF3B3B" : "#DC2626" }}
+            >
+              Upload Failed
+            </span>
+            <span
+              className="text-[9px] font-mono opacity-70 leading-tight"
+              style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}
+            >
+              Click to retry
+            </span>
+          </div>
         ) : hasImage ? (
           <>
-            {value?.endsWith(".mp4") || value?.endsWith(".webm") || value?.startsWith("data:video/") ? (
+            {isVideo ? (
               <video
                 src={value}
                 autoPlay

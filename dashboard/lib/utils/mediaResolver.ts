@@ -23,13 +23,21 @@ export const MEDIA_KEYS = new Set([
 ]);
 
 /**
- * Returns true if a string is a video URL (.mp4, .webm, data:video/).
+ * Returns true if a string is a video URL (.mp4, .webm, .mov, .ogg — with or without
+ * query-string / fragment suffixes as produced by Supabase Storage CDN URLs).
  */
 export function isVideoUrl(url?: string | null): boolean {
   if (!url || typeof url !== "string") return false;
-  const clean = url.trim().toLowerCase();
-  return clean.endsWith(".mp4") || clean.endsWith(".webm") || clean.startsWith("data:video/");
+  const trimmed = url.trim();
+  // Match extension before an optional query-string (?…) or fragment (#…) or end-of-string.
+  // This correctly handles both local paths (/uploads/clip.mp4) and Supabase CDN URLs
+  // like https://…supabase.co/storage/v1/object/public/uploads/clip.mp4?token=abc
+  return (
+    /\.(mp4|webm|mov|ogg)(?:[?#]|$)/i.test(trimmed) ||
+    trimmed.startsWith("data:video/")
+  );
 }
+
 
 /**
  * Resolves the primary video preview URL for a card if available.

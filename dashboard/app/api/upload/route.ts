@@ -5,6 +5,9 @@ import path from "path";
 
 export const dynamic = "force-dynamic";
 
+// 50 MB hard cap — large enough for short MP4 clips, prevents OOM on serverless
+const MAX_FILE_BYTES = 50 * 1024 * 1024;
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -15,6 +18,17 @@ export async function POST(req: Request) {
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
+
+    // ── Size guard ────────────────────────────────────────────────────────────
+    if (file.size > MAX_FILE_BYTES) {
+      const maxMb = MAX_FILE_BYTES / (1024 * 1024);
+      const fileMb = (file.size / (1024 * 1024)).toFixed(1);
+      return NextResponse.json(
+        { error: `File too large: ${fileMb} MB. Maximum allowed size is ${maxMb} MB.` },
+        { status: 413 }
+      );
+    }
+
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);

@@ -61,6 +61,9 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   const [nationality, setNationality] = useState("");
   const [singerType, setSingerType] = useState("Solo Artist");
   const [imageUrl, setImageUrl] = useState("");
+  // cardVideo stores an MP4/WebM URL when the card image slot holds a video.
+  // Persisted via details.cardVideo so no schema migration is needed.
+  const [cardVideo, setCardVideo] = useState("");
   const [note, setNote] = useState("");
   const [rank, setRank] = useState<number | null>(null);
   const [isChampion, setIsChampion] = useState(false);
@@ -188,7 +191,12 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       setKnownFor(Array.isArray(entryToEdit.knownFor) ? entryToEdit.knownFor.join(", ") : "");
       setNationality(entryToEdit.nationality || "");
       setSingerType(entryToEdit.singerType || "Solo Artist");
-      setImageUrl(entryToEdit.imageUrl || "");
+      // imageUrl holds the card image URL (static image).
+      // cardVideo holds a video URL when the card slot contains an MP4/WebM.
+      const savedCardVideo = details.cardVideo || "";
+      const savedImageUrl = entryToEdit.imageUrl || "";
+      setImageUrl(savedImageUrl);
+      setCardVideo(savedCardVideo);
       setNote(entryToEdit.note || "");
       setRank(entryToEdit.rank !== undefined ? entryToEdit.rank : null);
       setIsChampion(entryToEdit.isChampion || false);
@@ -255,6 +263,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       setNationality("");
       setSingerType("Solo Artist");
       setImageUrl("");
+      setCardVideo("");
       setNote("");
       setRank(null);
       setIsChampion(false);
@@ -652,6 +661,9 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
         socialLinks: validSocialLinks,
         avatarUrl: resolvedAvatar,
         avatarSource,
+        // Store card video URL separately so imageUrl stays a static-image URL.
+        // getCardVideoUrl() already reads entry.details.cardVideo — no DB migration needed.
+        cardVideo: str(cardVideo) || undefined,
       };
 
       await updateHof(id, {
@@ -1260,25 +1272,46 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                 {/* 1. Card Image (Dictionary Roster Thumbnail) */}
                 <div className="space-y-2">
                   <CharacterImageUploader
-                    label="Card Image (3:4 Thumbnail)"
-                    value={imageUrl}
+                    label="Card Image / Preview (3:4)"
+                    allowVideo={true}
+                    value={cardVideo || imageUrl}
                     onChange={(url) => {
-                      setImageUrl(url);
+                      setImgError(false);
+                      // Detect whether the uploaded file is a video or static image
+                      // and route to the correct state field.
+                      const isVid = /\.(mp4|webm|mov|ogg)(?:[?#]|$)/i.test(url) || url.startsWith("data:video/");
+                      if (isVid) {
+                        setCardVideo(url);
+                        // Keep imageUrl as-is so a prior static image isn't lost
+                      } else {
+                        setImageUrl(url);
+                        setCardVideo(""); // clear any prior video when replaced with image
+                      }
+                    }}
+                    onClear={() => {
+                      setImageUrl("");
+                      setCardVideo("");
                       setImgError(false);
                     }}
-                    onClear={() => setImageUrl("")}
                     aspect={3 / 4}
-                    hint="Used for roster list thumbnail."
+                    hint="Supports images and MP4 video previews."
                     previewClass="h-44 w-full"
                   />
                   <input
                     type="text"
-                    value={imageUrl.startsWith("data:") ? "" : imageUrl}
+                    value={(cardVideo || imageUrl).startsWith("data:") ? "" : (cardVideo || imageUrl)}
                     onChange={(e) => {
-                      setImageUrl(e.target.value);
+                      const val = e.target.value;
                       setImgError(false);
+                      const isVid = /\.(mp4|webm|mov|ogg)(?:[?#]|$)/i.test(val) || val.startsWith("data:video/");
+                      if (isVid) {
+                        setCardVideo(val);
+                      } else {
+                        setImageUrl(val);
+                        setCardVideo("");
+                      }
                     }}
-                    placeholder="Or paste image URL…"
+                    placeholder="Or paste image / video URL…"
                     className="w-full p-2 rounded-lg border text-xs font-mono theme-text-primary focus:outline-none"
                     style={{
                       backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "#F9FAFB",
