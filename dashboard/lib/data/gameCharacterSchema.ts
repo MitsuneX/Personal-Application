@@ -199,47 +199,62 @@ export function normalizeGameCharacterJson(raw: any): GameCharacterEntry {
     return { id: `gc-${Date.now()}`, name: "New Game Character" };
   }
 
+  // ── Pull the stats blob (primary DB storage for all rich fields) ──────────
+  // characterCreationService writes biography, voiceActors, identity, etc. into
+  // the Prisma stats JSON column. raw.* top-level columns only have the indexed
+  // scalar DB columns (name, element, role, etc.).
+  const s = isObj(raw.stats) ? (raw.stats as Record<string, any>) : {};
+
   const identity = isObj(raw.identity) ? { ...raw.identity } : {};
   const world = isObj(raw.world) ? { ...raw.world } : {};
   const combat = isObj(raw.combat) ? { ...raw.combat } : {};
   const voice = isObj(raw.voice) ? { ...raw.voice } : {};
   const story = isObj(raw.story) ? { ...raw.story } : {};
-  const voiceActors = isObj(raw.voiceActors) ? { ...raw.voiceActors } : {};
+  // voiceActors can live at raw.voiceActors, raw.stats.voiceActors, or raw.voice
+  const voiceActors = isObj(raw.voiceActors) ? { ...raw.voiceActors }
+    : isObj(s.voiceActors) ? { ...(s.voiceActors as Record<string, any>) } : {};
 
-  // Extract values with priority: nested object > top-level property
-  const birthday = (identity.birthday ?? raw.birthday ?? "") as string;
-  const age = (identity.age ?? raw.age ?? "") as string;
-  const gender = (identity.gender ?? raw.gender ?? "") as string;
-  const height = (identity.height ?? raw.height ?? "") as string;
-  const weight = (identity.weight ?? raw.weight ?? "") as string;
-  const species = (identity.species ?? raw.species ?? "") as string;
-  const race = (identity.race ?? raw.race ?? "") as string;
+  // Extract values with priority: nested object > stats blob > top-level property
+  // (stats blob is the canonical DB storage for all rich / non-indexed fields)
+  const birthday = (identity.birthday ?? s.birthday ?? raw.birthday ?? "") as string;
+  const age = (identity.age ?? s.age ?? raw.age ?? "") as string;
+  const gender = (identity.gender ?? s.gender ?? raw.gender ?? "") as string;
+  const height = (identity.height ?? s.height ?? raw.height ?? "") as string;
+  const weight = (identity.weight ?? s.weight ?? raw.weight ?? "") as string;
+  const species = (identity.species ?? s.species ?? raw.species ?? "") as string;
+  const race = (identity.race ?? s.race ?? raw.race ?? "") as string;
+  const officialName = (identity.officialName ?? s.officialName ?? raw.officialName ?? "") as string;
+  const alias = (identity.alias ?? s.alias ?? raw.alias ?? "") as string;
+  const nickname = (identity.nickname ?? s.nickname ?? raw.nickname ?? "") as string;
+  const nativeName = (identity.nativeName ?? s.nativeName ?? raw.nativeName ?? "") as string;
 
-  const nation = (world.nation ?? combat.nation ?? raw.nation ?? "") as string;
-  const region = (world.region ?? raw.region ?? "") as string;
-  const planet = (world.planet ?? raw.planet ?? "") as string;
-  const organization = (world.organization ?? raw.organization ?? "") as string;
-  const affiliation = (world.affiliation ?? raw.affiliation ?? "") as string;
-  const faction = (world.faction ?? raw.faction ?? "") as string;
+  const nation = (world.nation ?? combat.nation ?? s.nation ?? raw.nation ?? "") as string;
+  const region = (world.region ?? s.region ?? raw.region ?? "") as string;
+  const planet = (world.planet ?? s.planet ?? raw.planet ?? "") as string;
+  const organization = (world.organization ?? s.organization ?? raw.organization ?? "") as string;
+  const affiliation = (world.affiliation ?? s.affiliation ?? raw.affiliation ?? "") as string;
+  const faction = (world.faction ?? s.faction ?? raw.faction ?? "") as string;
 
-  const role = (combat.role ?? raw.role ?? "") as string;
-  const attribute = (combat.attribute ?? raw.attribute ?? "") as string;
-  const element = (combat.element ?? raw.element ?? "") as string;
-  const path = (combat.path ?? raw.path ?? "") as string;
-  const weapon = (combat.weaponType ?? combat.weapon ?? raw.weapon ?? "") as string;
-  const rarity = (combat.rarity ?? raw.rarity ?? "") as string;
-  const damageType = (combat.damageType ?? raw.damageType ?? "") as string;
-  const combatRole = (combat.combatRole ?? raw.combatRole ?? "") as string;
+  const role = (combat.role ?? s.role ?? raw.role ?? "") as string;
+  const attribute = (combat.attribute ?? s.attribute ?? raw.attribute ?? "") as string;
+  const element = (combat.element ?? s.element ?? raw.element ?? "") as string;
+  const path = (combat.path ?? s.path ?? raw.path ?? "") as string;
+  const weapon = (combat.weaponType ?? combat.weapon ?? s.weapon ?? raw.weapon ?? "") as string;
+  const rarity = (combat.rarity ?? s.rarity ?? raw.rarity ?? "") as string;
+  const damageType = (combat.damageType ?? s.damageType ?? raw.damageType ?? "") as string;
+  const combatRole = (combat.combatRole ?? s.combatRole ?? raw.combatRole ?? "") as string;
 
-  const jpVoice = (voice.japanese ?? voice.jp ?? voiceActors.jp ?? "") as string;
-  const cnVoice = (voice.chinese ?? voice.cn ?? voiceActors.cn ?? "") as string;
-  const krVoice = (voice.korean ?? voice.kr ?? voiceActors.kr ?? "") as string;
-  const enVoice = (voice.english ?? voice.en ?? voiceActors.en ?? "") as string;
+  // Voice actors: check raw.stats.voiceActors first, then legacy nested voice/voiceActors objects
+  const statsVA = isObj(s.voiceActors) ? (s.voiceActors as Record<string, any>) : {};
+  const jpVoice = (voice.japanese ?? voice.jp ?? voiceActors.jp ?? statsVA.jp ?? "") as string;
+  const cnVoice = (voice.chinese ?? voice.cn ?? voiceActors.cn ?? statsVA.cn ?? "") as string;
+  const krVoice = (voice.korean ?? voice.kr ?? voiceActors.kr ?? statsVA.kr ?? "") as string;
+  const enVoice = (voice.english ?? voice.en ?? voiceActors.en ?? statsVA.en ?? "") as string;
 
-  const personality = (story.personality ?? raw.personality ?? "") as string;
-  const biography = (story.biography ?? raw.biography ?? "") as string;
-  const officialDescription = (story.officialDescription ?? raw.officialDescription ?? "") as string;
-  const favoriteQuote = (story.favoriteQuote ?? raw.favoriteQuote ?? "") as string;
+  const personality = (story.personality ?? s.personality ?? raw.personality ?? "") as string;
+  const biography = (story.biography ?? s.biography ?? raw.biography ?? "") as string;
+  const officialDescription = (story.officialDescription ?? s.officialDescription ?? raw.officialDescription ?? "") as string;
+  const favoriteQuote = (story.favoriteQuote ?? s.favoriteQuote ?? raw.favoriteQuote ?? "") as string;
 
   // Build full voiceActors object
   const normVoiceActors = {
@@ -248,11 +263,13 @@ export function normalizeGameCharacterJson(raw: any): GameCharacterEntry {
     ...(krVoice ? { kr: krVoice } : {}),
     ...(enVoice ? { en: enVoice } : {}),
     ...voiceActors,
+    ...statsVA,
   };
 
   // Build full canonical nested objects
   const normIdentity = {
     birthday, age, gender, height, weight, species, race,
+    officialName, alias, nickname, nativeName,
     ...identity,
   };
 
@@ -281,19 +298,19 @@ export function normalizeGameCharacterJson(raw: any): GameCharacterEntry {
   const entry: GameCharacterEntry = {
     id: raw.id || `gc-${Date.now()}`,
     name: raw.name || "New Game Character",
-    officialName: raw.officialName ?? identity.officialName ?? "",
-    alias: raw.alias ?? identity.alias ?? "",
-    nickname: raw.nickname ?? identity.nickname ?? "",
-    nativeName: raw.nativeName ?? identity.nativeName ?? "",
-    title: raw.title ?? identity.title ?? "",
+    officialName: officialName || "",
+    alias: alias || "",
+    nickname: nickname || "",
+    nativeName: nativeName || "",
+    title: raw.title ?? s.title ?? identity.title ?? "",
     gameId: raw.gameId ?? "",
     gameName: raw.gameName ?? "",
     characterId: raw.characterId ?? "",
-    tier: raw.tier ?? "S",
+    tier: raw.tier ?? s.tier ?? "S",
     rank: raw.rank !== undefined ? raw.rank : null,
     isFavorite: raw.isFavorite !== undefined ? Boolean(raw.isFavorite) : true,
     isFeatured: raw.isFeatured !== undefined ? Boolean(raw.isFeatured) : false,
-    accentColor: raw.accentColor ?? "#00F5FF",
+    accentColor: raw.accentColor ?? s.accentColor ?? "#00F5FF",
 
     // Flat properties for UI compatibility
     birthday, age, gender, height, weight, species, race,
@@ -308,13 +325,13 @@ export function normalizeGameCharacterJson(raw: any): GameCharacterEntry {
     splashArt: raw.splashArt,
     gallery: Array.isArray(raw.gallery) && raw.gallery.length > 0
       ? raw.gallery
-      : (Array.isArray(raw.stats?.gallery) ? raw.stats.gallery : (Array.isArray(raw.gallery) ? raw.gallery : [])),
-    notes: raw.notes,
+      : (Array.isArray(s.gallery) ? s.gallery : []),
+    notes: raw.notes ?? s.notes ?? undefined,
     stats: raw.stats ? {
       ...raw.stats,
       gallery: Array.isArray(raw.gallery) && raw.gallery.length > 0
         ? raw.gallery
-        : (Array.isArray(raw.stats?.gallery) ? raw.stats.gallery : (Array.isArray(raw.gallery) ? raw.gallery : [])),
+        : (Array.isArray(s.gallery) ? s.gallery : []),
     } : raw.stats,
     tags: raw.tags,
 
@@ -335,6 +352,7 @@ export function normalizeGameCharacterJson(raw: any): GameCharacterEntry {
 
   return entry;
 }
+
 
 /**
  * Converts a GameCharacterEntry into the standardized canonical nested JSON structure.

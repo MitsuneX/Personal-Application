@@ -270,10 +270,11 @@ export async function processCharacterCreation(
   let gameCharacter: any = null;
 
   if (shouldCreateFavorite) {
-    // Check if favorite record already exists for this dossierCharacter or name+game
+    // Check if favorite record already exists for this dossierCharacter, name+game, or direct ID
     let existingFavorite: any = await prisma.gameCharacter.findFirst({
       where: {
         OR: [
+          ...(input.id && !input.createDossierOnly ? [{ id: input.id }] : []),
           { characterId: dossierCharacter.id },
           {
             name: { equals: trimmedName, mode: "insensitive" },
@@ -304,59 +305,67 @@ export async function processCharacterCreation(
       resolvedGallery = existingGallery;
     }
 
+    // ── Build update payload, preserving existing DB values for fields not in input ──
+    // For every field: if input provides a value → use it; if input.X is undefined → fall
+    // back to the existing record's value so partial saves never null out saved data.
+    const ef = existingFavorite; // shorthand
+
     const favoritePayload = {
       userId,
       characterId: dossierCharacter.id,
       gameId: resolvedGameId,
       gameName: resolvedGameName,
       name: trimmedName,
-      title: input.title || null,
-      role: input.role || null,
-      category: input.category || null,
-      element: input.element || null,
-      path: input.path || null,
-      weapon: input.weapon || null,
-      rarity: input.rarity || null,
-      nation: input.nation || null,
-      birthday: input.birthday || null,
+      title: input.title !== undefined ? (input.title || null) : (ef?.title ?? null),
+      role: input.role !== undefined ? (input.role || null) : (ef?.role ?? null),
+      category: input.category !== undefined ? (input.category || null) : (ef?.category ?? null),
+      element: input.element !== undefined ? (input.element || null) : (ef?.element ?? null),
+      path: input.path !== undefined ? (input.path || null) : (ef?.path ?? null),
+      weapon: input.weapon !== undefined ? (input.weapon || null) : (ef?.weapon ?? null),
+      rarity: input.rarity !== undefined ? (input.rarity || null) : (ef?.rarity ?? null),
+      nation: input.nation !== undefined ? (input.nation || null) : (ef?.nation ?? null),
+      birthday: input.birthday !== undefined ? (input.birthday || null) : (ef?.birthday ?? null),
       avatarUrl: favAvatar,
       cardImage: favCardImage,
       splashArt: favSplash,
-      accentColor: input.accentColor || dossierCharacter.accentColor || "#3B82F6",
-      rank: input.rank !== undefined ? Number(input.rank) : 0,
-      likes: input.likes !== undefined ? Number(input.likes) : 0,
+      accentColor: input.accentColor || dossierCharacter.accentColor || ef?.accentColor || "#3B82F6",
+      rank: input.rank !== undefined ? Number(input.rank) : (ef?.rank ?? 0),
+      likes: input.likes !== undefined ? Number(input.likes) : (ef?.likes ?? 0),
       isFavorite: true,
-      isFeatured: input.isFeatured ?? false,
-      notes: input.notes || null,
+      isFeatured: input.isFeatured !== undefined ? input.isFeatured : (ef?.isFeatured ?? false),
+      notes: input.notes !== undefined ? (input.notes || null) : (ef?.notes ?? null),
       stats: {
+        ...(ef?.stats && typeof ef.stats === "object" ? ef.stats as Record<string, unknown> : {}),
         ...(input.stats || {}),
-        officialName: input.officialName,
-        alias: input.alias,
-        nickname: input.nickname,
-        nativeName: input.nativeName,
-        age: input.age,
-        gender: input.gender,
-        height: input.height,
-        weight: input.weight,
-        species: input.species,
-        race: input.race,
-        region: input.region,
-        planet: input.planet,
-        organization: input.organization,
-        affiliation: input.affiliation,
-        faction: input.faction,
-        attribute: input.attribute,
-        damageType: input.damageType,
-        combatRole: input.combatRole,
-        voiceActors: input.voiceActors,
-        personality: input.personality,
-        biography: input.biography,
-        officialDescription: input.officialDescription,
-        favoriteQuote: input.favoriteQuote,
+        // Only write a field if it was explicitly provided — never let undefined overwrite
+        // existing values that were already stored inside input.stats from a prior save.
+        ...(input.officialName !== undefined && { officialName: input.officialName }),
+        ...(input.alias !== undefined && { alias: input.alias }),
+        ...(input.nickname !== undefined && { nickname: input.nickname }),
+        ...(input.nativeName !== undefined && { nativeName: input.nativeName }),
+        ...(input.age !== undefined && { age: input.age }),
+        ...(input.gender !== undefined && { gender: input.gender }),
+        ...(input.height !== undefined && { height: input.height }),
+        ...(input.weight !== undefined && { weight: input.weight }),
+        ...(input.species !== undefined && { species: input.species }),
+        ...(input.race !== undefined && { race: input.race }),
+        ...(input.region !== undefined && { region: input.region }),
+        ...(input.planet !== undefined && { planet: input.planet }),
+        ...(input.organization !== undefined && { organization: input.organization }),
+        ...(input.affiliation !== undefined && { affiliation: input.affiliation }),
+        ...(input.faction !== undefined && { faction: input.faction }),
+        ...(input.attribute !== undefined && { attribute: input.attribute }),
+        ...(input.damageType !== undefined && { damageType: input.damageType }),
+        ...(input.combatRole !== undefined && { combatRole: input.combatRole }),
+        ...(input.voiceActors !== undefined && { voiceActors: input.voiceActors }),
+        ...(input.personality !== undefined && { personality: input.personality }),
+        ...(input.biography !== undefined && { biography: input.biography }),
+        ...(input.officialDescription !== undefined && { officialDescription: input.officialDescription }),
+        ...(input.favoriteQuote !== undefined && { favoriteQuote: input.favoriteQuote }),
         gallery: resolvedGallery,
       } as any,
-      tags: input.tags ? (input.tags as any) : undefined,
-      links: input.links ? (input.links as any) : undefined,
+      tags: input.tags !== undefined ? (input.tags as any) : (ef?.tags ?? undefined),
+      links: input.links !== undefined ? (input.links as any) : (ef?.links ?? undefined),
     };
 
     if (existingFavorite) {
