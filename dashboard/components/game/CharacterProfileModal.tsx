@@ -944,6 +944,9 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                   />
                 )}
 
+                {/* ── Element Particles (full-modal level — corner decorations anchor to modal corners) ── */}
+                <ElementParticles theme={elemTheme} isCyber={isCyber} />
+
                 {/* ── Floating Controls Top-Right ──────────────────────────── */}
                 <div className="absolute top-4 right-4 flex items-center gap-2 z-30">
                   {onEdit && (
@@ -983,8 +986,6 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                 <div className="flex-1 overflow-y-auto overscroll-contain relative custom-scrollbar">
                   {/* ── Splash Art Hero Banner (Full Bleed Edge-to-Edge Header) ───── */}
                   <div className="relative overflow-hidden w-full shrink-0" style={{ height: "clamp(340px, 48vh, 440px)" }}>
-                    {/* Element Particles & Corner Shards */}
-                    <ElementParticles theme={elemTheme} isCyber={isCyber} />
 
                     {/* Background Hero Image */}
                     {hasImg(splash) ? (
