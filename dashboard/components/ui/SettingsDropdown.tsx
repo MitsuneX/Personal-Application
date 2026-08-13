@@ -12,9 +12,10 @@ import { Z_INDEX } from "./ViewportBoundary";
 
 interface SettingsDropdownProps {
   onOpenAesthetics?: () => void;
+  onOpenHistory?: () => void;
 }
 
-export function SettingsDropdown({ onOpenAesthetics }: SettingsDropdownProps) {
+export function SettingsDropdown({ onOpenAesthetics, onOpenHistory }: SettingsDropdownProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const router = useRouter();
@@ -103,7 +104,19 @@ export function SettingsDropdown({ onOpenAesthetics }: SettingsDropdownProps) {
               <span>Profile Settings</span>
             </button>
 
-            {/* 4. Log Out Session */}
+            {/* 4. History */}
+            <button
+              onClick={() => {
+                close();
+                if (onOpenHistory) onOpenHistory();
+              }}
+              className="w-full text-left px-3 py-2 text-xs font-black rounded-xl transition-all flex items-center gap-2 hover:bg-slate-800/40 cursor-pointer"
+            >
+              <span>📜</span>
+              <span>History</span>
+            </button>
+
+            {/* 5. Log Out Session */}
             <div
               className="pt-1 border-t"
               style={{ borderColor: isCyber ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)" }}

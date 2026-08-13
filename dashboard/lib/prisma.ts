@@ -38,7 +38,9 @@ function getPrismaClient(): PrismaClient {
     global.__prismaClient &&
     "userAccount" in global.__prismaClient &&
     "emergencyContact" in global.__prismaClient &&
-    "pendingEmailRelink" in global.__prismaClient;
+    "pendingEmailRelink" in global.__prismaClient &&
+    "gameSyncMetadata" in global.__prismaClient &&
+    "softDeleteHistory" in global.__prismaClient;
 
   if (!isClientValid) {
     global.__prismaClient = new PrismaClient({ adapter, log: ["warn", "error"] });

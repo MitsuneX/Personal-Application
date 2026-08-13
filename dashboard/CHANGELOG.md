@@ -2,6 +2,21 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [12.0.0] - 2026-08-13
+
+### 🔄 Persistent Game Character Sync Engine & Soft-Delete History System
+
+**1. Persistent Idempotent Game Synchronization Engine (`GameSyncMetadata` & `app/api/game-characters/sync/route.ts`)**
+- Resolved recurring game synchronization prompt issues across sessions (specifically for *Girls' Frontline 2: Exilium* and all supported games).
+- Added `GameSyncMetadata` PostgreSQL model to store `lastSuccessfulSyncAt`, `remoteRecordCount`, and `syncStatus` (`UP_TO_DATE`, `CHANGES_AVAILABLE`, `SYNCING`, `ERROR`).
+- Synchronization is fully idempotent: running Sync a second time against unchanged remote data returns 0 changes (`✓ Up to date`) without creating duplicate records or re-syncing.
+
+**2. Database-Backed Soft-Delete History System (`SoftDeleteHistory` & `HistoryModal.tsx`)**
+- Replaced destructive deletes for Game Characters and Character Dictionary entries with a soft-delete flow that preserves complete JSON snapshots, media references, gallery URLs, and exact original record IDs.
+- **Top-Bar Settings Integration (`SettingsDropdown.tsx` & `Header.tsx`)**: Added `History` to the top-bar quick settings dropdown menu between `Profile Settings` and `Log Out`.
+- **Multi-Select Bulk Restore**: Supports selecting single or multiple items to restore simultaneously. Restored items retain their exact original database IDs, media, and gallery without generating new random IDs.
+- **Multi-Select Bulk Permanent Delete w/ Orphan Safety**: Supports permanently removing selected items from History after confirmation. Performs orphan media checks across active database tables and remaining History snapshots to ensure media referenced elsewhere is **never** deleted.
+
 ## [11.9.0] - 2026-08-13
 
 ### 🖼️ Character Dictionary Media Persistence & Universal Game Element Visual Engine

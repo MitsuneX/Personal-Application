@@ -697,3 +697,38 @@ model PendingEmailRelink {
   @@index([userId])
 }
 
+model GameSyncMetadata {
+  id                   String   @id @default(uuid())
+  userId               String?
+  gameId               String
+  gameName             String
+  lastSuccessfulSyncAt DateTime @default(now())
+  remoteVersion        String?
+  remoteHash           String?
+  remoteRecordCount    Int      @default(0)
+  syncStatus           String   @default("UP_TO_DATE") // "UP_TO_DATE" | "CHANGES_AVAILABLE" | "SYNCING" | "ERROR"
+  details              Json?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([userId, gameId])
+  @@index([userId])
+  @@index([gameId])
+}
+
+model SoftDeleteHistory {
+  id               String   @id @default(uuid())
+  userId           String?
+  entityType       String   // "GAME_CHARACTER" | "HALL_OF_FAME"
+  originalRecordId String
+  name             String
+  category         String?  // e.g. gameName or HOF category/status
+  snapshot         Json     // Complete original record snapshot
+  mediaReferences  Json?    // { cardImage, avatarUrl, portraitUrl, splashArt, gallery }
+  deletedAt        DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType])
+  @@index([originalRecordId])
+}
+

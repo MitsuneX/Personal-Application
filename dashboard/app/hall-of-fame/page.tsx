@@ -82,19 +82,19 @@ export default function HallOfFamePage() {
     (id: string, name: string) => {
       const entry = hallOfFame.find((h) => h.id === id);
       confirm({
-        title: "Remove Hall of Fame Entry",
-        message: `Are you sure you want to remove "${name}" from Hall of Fame?`,
-        confirmText: "Remove Entry",
-        variant: "danger",
+        title: `Move "${name}" to History?`,
+        message: `Moving "${name}" to History removes them from the main Hall of Fame list. You can view or restore them anytime from top-bar History.`,
+        variant: "warning",
+        confirmText: "Move to History",
         itemPreview: {
           title: name,
           subtitle: `${entry?.type || "Media"} · ${entry?.nationality || "Global"}`,
           description: Array.isArray(entry?.knownFor) ? entry.knownFor.join(", ") : entry?.knownFor,
           imageUrl: entry?.imageUrl,
-          icon: "👑",
+          icon: "📜",
           category: entry?.type,
         },
-        successToast: `✓ "${name}" removed from Hall of Fame.`,
+        successToast: `✓ Moved "${name}" to History.`,
         onConfirm: async () => {
           await deleteHof(id);
         },

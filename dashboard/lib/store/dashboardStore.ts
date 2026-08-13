@@ -821,7 +821,31 @@ export interface NotificationEntry {
   type: string; // "reminder" | "milestone" | "streak" | "info"
   isRead: boolean;
   isDismissed: boolean;
-  createdAt: string;
+}
+
+export interface SoftDeleteHistoryEntry {
+  id: string;
+  userId?: string | null;
+  entityType: "GAME_CHARACTER" | "HALL_OF_FAME";
+  originalRecordId: string;
+  name: string;
+  category?: string | null;
+  snapshot: any;
+  mediaReferences?: any;
+  deletedAt: string;
+}
+
+export interface GameSyncMetadataEntry {
+  id: string;
+  userId?: string | null;
+  gameId: string;
+  gameName: string;
+  lastSuccessfulSyncAt: string;
+  remoteVersion?: string | null;
+  remoteHash?: string | null;
+  remoteRecordCount: number;
+  syncStatus: "UP_TO_DATE" | "CHANGES_AVAILABLE" | "SYNCING" | "ERROR";
+  details?: any;
 }
 
 // ─── State Interface ──────────────────────────────────────────────────────────
@@ -848,11 +872,19 @@ interface DashboardState {
   links: LinkEntry[];
   gallery: GalleryEntry[];
   savedPrompts: SavedPromptEntry[];
+  historyItems: SoftDeleteHistoryEntry[];
+  gameSyncMetadata: Record<string, GameSyncMetadataEntry>;
   requestSequenceId: number;
   isLoading: boolean;
   isHydrated: boolean;
   isGuest: boolean;
   fetchError: string | null;
+
+  fetchHistory: () => Promise<void>;
+  softDeleteCharacter: (entityType: "GAME_CHARACTER" | "HALL_OF_FAME", id: string) => Promise<void>;
+  restoreHistoryItems: (historyIds: string[]) => Promise<void>;
+  permanentDeleteHistoryItems: (historyIds: string[]) => Promise<void>;
+  fetchGameSyncMetadata: (gameId: string) => Promise<GameSyncMetadataEntry | null>;
 
   resetUserStore: () => void;
   fetchDashboard: () => Promise<void>;
@@ -1133,6 +1165,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   loopMode: "off",
   dramaLog: [],
   savedPrompts: [],
+  historyItems: [],
+  gameSyncMetadata: {},
   hobbySkills: [],
   hobbyLogs: [],
   hobbySessions: [],
@@ -1560,16 +1594,10 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   removeGameCharacter: async (id) => {
+    const target = get().gameCharacters.find((gc) => gc.id === id);
     set((s) => ({ gameCharacters: s.gameCharacters.filter((gc) => gc.id !== id) }));
-    try {
-      await fetch("/api/action", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "DELETE_GAME_CHARACTER", payload: { id } }),
-      });
-    } catch (err) {
-      console.error("Failed to sync deleted game character:", err);
-    }
+    if (!target) return;
+    await get().softDeleteCharacter("GAME_CHARACTER", id);
   },
 
   syncGameCharacterArtwork: async (gameCharId, dossierCharId, direction) => {
@@ -2205,15 +2233,94 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   deleteHof: async (id) => {
+    const target = get().hallOfFame.find((h) => h.id === id);
     set((s) => ({ hallOfFame: s.hallOfFame.filter((h) => h.id !== id) }));
+    if (!target) return;
+    await get().softDeleteCharacter("HALL_OF_FAME", id);
+  },
+
+  // ─── History & Sync Methods ───────────────────────────────────────────────
+  fetchHistory: async () => {
     try {
-      await fetch("/api/action", {
+      const res = await fetch("/api/history");
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        set({ historyItems: data });
+      }
+    } catch (err) {
+      console.error("Failed to fetch history:", err);
+    }
+  },
+
+  softDeleteCharacter: async (entityType, id) => {
+    try {
+      const res = await fetch("/api/history", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "DELETE_HOF", payload: { id } }),
+        body: JSON.stringify({ action: "SOFT_DELETE", entityType, id }),
       });
+      const data = await res.json();
+      if (data.historyEntry) {
+        set((s) => ({ historyItems: [data.historyEntry, ...(s.historyItems || [])] }));
+      }
     } catch (err) {
-      console.error("Failed to delete HOF item:", err);
+      console.error(`Failed to soft delete ${entityType}:`, err);
+    }
+  },
+
+  restoreHistoryItems: async (historyIds) => {
+    if (!historyIds || historyIds.length === 0) return;
+    try {
+      const res = await fetch("/api/history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "RESTORE", ids: historyIds }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        set((s) => ({
+          historyItems: (s.historyItems || []).filter((h) => !historyIds.includes(h.id)),
+        }));
+        await get().fetchDashboard();
+      }
+    } catch (err) {
+      console.error("Failed to restore history items:", err);
+    }
+  },
+
+  permanentDeleteHistoryItems: async (historyIds) => {
+    if (!historyIds || historyIds.length === 0) return;
+    try {
+      const res = await fetch("/api/history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "PERMANENT_DELETE", ids: historyIds }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        set((s) => ({
+          historyItems: (s.historyItems || []).filter((h) => !historyIds.includes(h.id)),
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to permanently delete history items:", err);
+    }
+  },
+
+  fetchGameSyncMetadata: async (gameId) => {
+    try {
+      const res = await fetch(`/api/game-characters/sync?gameId=${encodeURIComponent(gameId)}`);
+      const data = await res.json();
+      if (data && data.gameId) {
+        set((s) => ({
+          gameSyncMetadata: { ...s.gameSyncMetadata, [gameId]: data },
+        }));
+        return data;
+      }
+      return null;
+    } catch (err) {
+      console.error(`Failed to fetch sync metadata for ${gameId}:`, err);
+      return null;
     }
   },
 

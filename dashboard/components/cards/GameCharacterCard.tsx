@@ -198,8 +198,8 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
         ? [
             {
               id: "delete",
-              label: `Delete ${character.name}`,
-              icon: "🗑️",
+              label: `Move to History (${character.name})`,
+              icon: "📜",
               danger: true,
               divider: true,
               onClick: () => onDelete(character),

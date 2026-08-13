@@ -102,7 +102,29 @@ export async function POST(req: Request) {
       }
 
       case "DELETE_GAME_CHARACTER": {
-        await prisma.gameCharacter.delete({ where: { id: payload.id } });
+        const record = await prisma.gameCharacter.findUnique({ where: { id: payload.id } });
+        if (record) {
+          const mediaReferences = {
+            cardImage: record.cardImage,
+            avatarUrl: record.avatarUrl,
+            splashArt: record.splashArt,
+            gallery: record.stats && (record.stats as any).gallery ? (record.stats as any).gallery : [],
+          };
+          const historyEntry = await prisma.softDeleteHistory.create({
+            data: {
+              userId: userId || record.userId || null,
+              entityType: "GAME_CHARACTER",
+              originalRecordId: record.id,
+              name: record.name,
+              category: record.gameName || "Game Character",
+              snapshot: record as any,
+              mediaReferences,
+            },
+          });
+          if (historyEntry && historyEntry.id) {
+            await prisma.gameCharacter.delete({ where: { id: payload.id } });
+          }
+        }
         return NextResponse.json({ success: true });
       }
 
@@ -656,8 +678,29 @@ export async function POST(req: Request) {
             oldRank: existing.rank,
             oldVotes: existing.likes,
           });
+          const detailsObj = (existing.details && typeof existing.details === "object") ? (existing.details as any) : {};
+          const mediaReferences = {
+            imageUrl: existing.imageUrl,
+            portraitUrl: existing.portraitUrl,
+            avatarUrl: detailsObj.avatarUrl || (existing as any).avatarUrl,
+            splashArt: existing.splashArt,
+            gallery: Array.isArray(existing.gallery) ? existing.gallery : [],
+          };
+          const historyEntry = await prisma.softDeleteHistory.create({
+            data: {
+              userId: userId || existing.userId || null,
+              entityType: "HALL_OF_FAME",
+              originalRecordId: existing.id,
+              name: existing.name,
+              category: existing.type || "Character Dictionary",
+              snapshot: existing as any,
+              mediaReferences,
+            },
+          });
+          if (historyEntry && historyEntry.id) {
+            await prisma.hallOfFame.delete({ where: { id: payload.id } });
+          }
         }
-        await prisma.hallOfFame.delete({ where: { id: payload.id } });
         await captureHallRankingSnapshots(prisma, userId);
         return NextResponse.json({ success: true });
       }

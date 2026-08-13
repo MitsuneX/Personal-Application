@@ -259,8 +259,8 @@ export function HofEntryCard({
         },
         {
           id: "delete",
-          label: "Remove Entry",
-          icon: "🗑️",
+          label: "Move to History",
+          icon: "📜",
           danger: true,
           onClick: () => onDelete(entry.id, entry.name),
         },

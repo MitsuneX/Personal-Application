@@ -13,6 +13,32 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v12.0.0",
+    date: "2026-08-13",
+    title: "Persistent Game Character Sync Engine & Soft-Delete History System",
+    badge: "MAJOR",
+    type: "major",
+    summary: "Resolved recurring Game Character synchronization persistence issues across sessions (specifically for Girls' Frontline 2: Exilium and all supported games). Implemented PostgreSQL-backed GameSyncMetadata and a database-backed Soft-Delete History system with bulk multi-select restore, bulk permanent delete, orphan media protection, and top-bar menu integration.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🔄 Persistent Idempotent Game Synchronization Engine (GameSyncMetadata & sync/route.ts): Resolved recurring sync prompt issues by persisting lastSuccessfulSyncAt, remoteRecordCount, and syncStatus in PostgreSQL DB. Second sync pass against unchanged data returns 0 changes ('✓ Up to date') without duplicate records.",
+          "📜 Persistent Soft-Delete History System (SoftDeleteHistory & HistoryModal.tsx): Replaced destructive deletes for Game Characters and Character Dictionary entries with a database-backed soft-delete workflow that preserves full JSON snapshots, media references, and exact original IDs.",
+          "↺ Multi-Select Bulk Restore & Permanent Delete: History modal supports selecting single or multiple items for bulk restoration with original record IDs intact, or permanent deletion with orphan media safety checks.",
+          "⚙️ Top-Bar Settings Integration (SettingsDropdown.tsx & Header.tsx): Positioned 'History' in the top-bar dropdown menu between Profile Settings and Log Out with full Cyberpunk and Neo-Brutalism dual-theme support.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🛡️ Orphan Media Safety Check: Permanent deletion verifies media references across active database tables and remaining History snapshots before cleaning assets, guaranteeing zero media loss.",
+          "🧪 Programmatic Verification (test_sync_and_history_system.ts): Verified GFL2 sync persistence across reloads, soft delete, original ID restoration, multi-select bulk operations, and MP4 card preview resolution (17/17 tests PASSED).",
+        ],
+      },
+    ],
+  },
+  {
     version: "v11.9.0",
     date: "2026-08-13",
     title: "Character Dictionary Media Persistence & Universal Game Element Visual Engine",

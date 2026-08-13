@@ -14,6 +14,7 @@ import { AestheticsModal } from "@/components/ui/AestheticsModal";
 import { CommandPalette } from "@/components/ui/CommandPalette";
 import { TopbarMiniPlayer } from "@/components/ui/TopbarMiniPlayer";
 import { SettingsDropdown } from "@/components/ui/SettingsDropdown";
+import { HistoryModal } from "@/components/ui/HistoryModal";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -318,6 +319,7 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
   // States
   const [editorOpen, setEditorOpen] = useState(false);
   const [aestheticsOpen, setAestheticsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   // Data Selectors
   const { profile } = useDashboardStore();
@@ -475,7 +477,10 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
 
           {/* Settings Gear Dropdown */}
           <div className="hidden sm:block">
-            <SettingsDropdown onOpenAesthetics={() => setAestheticsOpen(true)} />
+            <SettingsDropdown
+              onOpenAesthetics={() => setAestheticsOpen(true)}
+              onOpenHistory={() => setHistoryOpen(true)}
+            />
           </div>
 
           {/* Customizable Profile Card Popover */}
@@ -546,6 +551,9 @@ export function Header({ onMenuToggle, mobileOpen = false }: HeaderProps) {
 
       {/* Aesthetics Dialog */}
       <AestheticsModal isOpen={aestheticsOpen} onClose={() => setAestheticsOpen(false)} />
+
+      {/* Persistent History Modal */}
+      <HistoryModal isOpen={historyOpen} onClose={() => setHistoryOpen(false)} />
 
       {/* Global Command Palette */}
       <CommandPalette />
