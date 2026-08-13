@@ -59,6 +59,64 @@ export function getCardVideoUrl(entry: any): string | null {
   return candidate && isVideoUrl(candidate) ? candidate : null;
 }
 
+export interface VideoFraming {
+  x: number;
+  y: number;
+  zoom: number;
+  aspect: number;
+  posterUrl?: string;
+  posterTimestamp?: number;
+  customPosterUrl?: string;
+  originalUrl?: string;
+}
+
+/**
+ * Resolves non-destructive framing/crop transformation coordinates for card video rendering.
+ */
+export function getCardVideoFraming(entry: any): VideoFraming {
+  const crop =
+    entry?.stats?.cropData?.cardVideoCrop ||
+    entry?.stats?.cropData?.videoFraming ||
+    entry?.stats?.cardVideoCrop ||
+    entry?.details?.cardVideoCrop;
+
+  return {
+    x: typeof crop?.x === "number" ? crop.x : 0,
+    y: typeof crop?.y === "number" ? crop.y : 0,
+    zoom: typeof crop?.zoom === "number" ? crop.zoom : 1,
+    aspect: typeof crop?.aspect === "number" ? crop.aspect : 0.75, // 3:4 aspect ratio
+    posterUrl: crop?.posterUrl,
+    posterTimestamp: crop?.posterTimestamp,
+    customPosterUrl: crop?.customPosterUrl,
+    originalUrl: crop?.originalUrl,
+  };
+}
+
+/**
+ * Resolves poster image URL for MP4 card preview (lightweight initial frame thumbnail).
+ * Priority: 1. customPosterUrl, 2. generated posterUrl, 3. static cardImage fallback
+ */
+export function getCardVideoPosterUrl(entry: any): string | null {
+  if (!entry) return null;
+  const crop = entry?.stats?.cropData?.cardVideoCrop || entry?.details?.cardVideoCrop;
+  const customPoster = crop?.customPosterUrl || entry?.customPosterUrl;
+
+  if (customPoster && typeof customPoster === "string" && !isVideoUrl(customPoster)) {
+    return customPoster;
+  }
+
+  const posterCandidate =
+    crop?.posterUrl ||
+    entry?.posterUrl ||
+    entry?.details?.posterUrl;
+
+  if (posterCandidate && typeof posterCandidate === "string" && !isVideoUrl(posterCandidate)) {
+    return posterCandidate;
+  }
+
+  return getCardImageUrl(entry);
+}
+
 /**
  * Resolves the primary image preview URL for a card.
  */

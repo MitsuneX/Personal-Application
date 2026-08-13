@@ -710,6 +710,7 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
         ...(characterToEdit?.stats || {}),
         cropData: {
           cardImageCrop,
+          cardVideoCrop: cardImageCrop?.x !== undefined ? cardImageCrop : (characterToEdit?.stats?.cropData?.cardVideoCrop || null),
           avatarCrop,
           splashArtCrop,
         },

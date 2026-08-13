@@ -8,7 +8,8 @@ import { useContextMenu } from "@/hooks/useContextMenu";
 import { useToast } from "@/components/ui/ToastProvider";
 import { duplicateGameCharacter } from "@/lib/data/duplicateHelper";
 import { getElementTheme } from "@/lib/utils/elementTheme";
-import { getCardVideoUrl, getCardImageUrl } from "@/lib/utils/mediaResolver";
+import { getCardVideoUrl, getCardImageUrl, getCardVideoPosterUrl, getCardVideoFraming } from "@/lib/utils/mediaResolver";
+import { LazyCardVideo } from "@/components/cards/LazyCardVideo";
 
 function rarityStars(r?: string) {
   if (!r) return null;
@@ -59,6 +60,8 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
   const ec = elemTheme.primaryColor;
 
   const videoUrl = !videoError ? getCardVideoUrl(character) : null;
+  const videoPoster = getCardVideoPosterUrl(character);
+  const videoFraming = getCardVideoFraming(character);
   const cardImg = !imgError ? (getCardImageUrl(character) || character.cardImage || character.splashArt) : null;
   const avatar = character.avatarUrl || character.cardImage;
   const isLinked = Boolean(character.gameId && parentGame);
@@ -240,16 +243,12 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
         transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
       >
         {hasVideo ? (
-          <video
-            src={videoUrl!}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="metadata"
+          <LazyCardVideo
+            videoUrl={videoUrl!}
+            posterUrl={videoPoster}
+            framing={videoFraming}
+            alt={character.name}
             onError={() => setVideoError(true)}
-            className="w-full h-full object-cover object-top pointer-events-none"
-            draggable={false}
           />
         ) : hasCardImg ? (
           <img

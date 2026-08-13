@@ -3,18 +3,20 @@
 import React, { useRef, useState, useCallback } from "react";
 import { useTheme } from "@/lib/theme";
 import { ImageCropModal, CropData } from "@/components/ui/ImageCropModal";
+import { VideoCropModal, VideoCropData } from "@/components/ui/VideoCropModal";
 import { useToast } from "@/components/ui/ToastProvider";
 
 interface CharacterImageUploaderProps {
   label: string;
   value?: string;
-  onChange: (url: string, cropData?: CropData) => void;
+  onChange: (url: string, cropData?: any) => void;
   onClear?: () => void;
   aspect?: number; // 1 = square avatar, 16/9 = splash
   hint?: string;
   previewClass?: string;
-  cropData?: CropData;
+  cropData?: any;
   allowVideo?: boolean;
+  onVideoCropChange?: (cropData: VideoCropData) => void;
 }
 
 export function CharacterImageUploader({
@@ -27,6 +29,7 @@ export function CharacterImageUploader({
   previewClass = "",
   cropData,
   allowVideo = false,
+  onVideoCropChange,
 }: CharacterImageUploaderProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
@@ -34,6 +37,8 @@ export function CharacterImageUploader({
   const [isDragging, setIsDragging] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [isCropOpen, setIsCropOpen] = useState(false);
+  const [isVideoCropOpen, setIsVideoCropOpen] = useState(false);
+  const [videoCropSrc, setVideoCropSrc] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const { error: toastError } = useToast();
@@ -53,7 +58,8 @@ export function CharacterImageUploader({
 
       const json = await res.json();
       if (json.success && json.url) {
-        onChange(json.url);
+        setVideoCropSrc(json.url);
+        setIsVideoCropOpen(true);
       } else {
         throw new Error(json.error || "Server returned no URL after upload.");
       }
@@ -65,6 +71,37 @@ export function CharacterImageUploader({
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handleVideoCropConfirm = async (videoData: VideoCropData, posterBlob?: Blob | null) => {
+    setIsVideoCropOpen(false);
+    if (!videoCropSrc) return;
+
+    let posterUrl: string | undefined = videoData.posterUrl;
+
+    if (posterBlob) {
+      try {
+        const formData = new FormData();
+        formData.append("file", posterBlob, `poster-${Date.now()}.jpg`);
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const json = await res.json();
+        if (json.success && json.url) {
+          posterUrl = json.url;
+        }
+      } catch (err) {
+        console.warn("Poster upload error:", err);
+      }
+    }
+
+    const finalVideoCropData: VideoCropData = {
+      ...videoData,
+      posterUrl,
+      originalUrl: videoCropSrc,
+    };
+
+    onChange(videoCropSrc, finalVideoCropData);
+    onVideoCropChange?.(finalVideoCropData);
+    setVideoCropSrc(null);
   };
 
   const processFile = useCallback((file: File) => {
@@ -255,6 +292,26 @@ export function CharacterImageUploader({
         </p>
       )}
 
+      {isVideo && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setVideoCropSrc(value!);
+            setIsVideoCropOpen(true);
+          }}
+          className="w-full px-3 py-1.5 rounded-xl text-xs font-mono font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer hover:opacity-90 mt-1"
+          style={{
+            backgroundColor: isCyber ? "rgba(0,245,255,0.1)" : "#F1F5F9",
+            borderColor: isCyber ? "#00F5FF" : "#000000",
+            color: isCyber ? "#00F5FF" : "#000000",
+          }}
+        >
+          <span>🎬</span>
+          <span>Frame 3:4 Video Preview</span>
+        </button>
+      )}
+
       <input
         ref={inputRef}
         type="file"
@@ -271,6 +328,16 @@ export function CharacterImageUploader({
         initialCropData={cropData}
         onClose={() => { setIsCropOpen(false); setCropSrc(null); }}
         onCropComplete={handleCropComplete}
+      />
+
+      <VideoCropModal
+        isOpen={isVideoCropOpen}
+        videoSrc={videoCropSrc}
+        aspect={aspect || 3 / 4}
+        title={`Frame Video for ${label}`}
+        initialCropData={cropData}
+        onClose={() => { setIsVideoCropOpen(false); setVideoCropSrc(null); }}
+        onConfirm={handleVideoCropConfirm}
       />
     </div>
   );
