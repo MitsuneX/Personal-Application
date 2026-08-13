@@ -7,20 +7,9 @@ import { GameCharacterEntry, useDashboardStore } from "@/lib/store/dashboardStor
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { useToast } from "@/components/ui/ToastProvider";
 import { duplicateGameCharacter } from "@/lib/data/duplicateHelper";
+import { getElementTheme } from "@/lib/utils/elementTheme";
 import { getCardVideoUrl, getCardImageUrl } from "@/lib/utils/mediaResolver";
 
-const ELEMENT_COLORS: Record<string, string> = {
-  pyro:"#FF4A4A", hydro:"#1E90FF", anemo:"#4DC9A9", geo:"#CFA827",
-  electro:"#A855F7", cryo:"#8FBCD4", dendro:"#5CB85C", fire:"#FF4A4A",
-  water:"#1E90FF", ice:"#8FBCD4", wind:"#4DC9A9", lightning:"#A855F7",
-  rock:"#CFA827", quantum:"#A855F7", imaginary:"#D4A017", physical:"#94A3B8",
-  glacio:"#8FBCD4", fusion:"#FF6B35", havoc:"#DC2626", aero:"#4DC9A9",
-  spectro:"#F4C430", cyber:"#00F5FF",
-};
-function elColor(el?: string) {
-  if (!el) return "#A855F7";
-  return ELEMENT_COLORS[el.toLowerCase().replace(/[^a-z]/g, "")] || "#A855F7";
-}
 function rarityStars(r?: string) {
   if (!r) return null;
   const m = r.match(/(\d)/);
@@ -65,13 +54,15 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
   );
 
   const accent = character.accentColor || parentGame?.accentColor || "#A855F7";
+  const gameName = character.gameName || parentGame?.game || "";
+  const elemTheme = getElementTheme(gameName, character.element, accent);
+  const ec = elemTheme.primaryColor;
+
   const videoUrl = !videoError ? getCardVideoUrl(character) : null;
   const cardImg = !imgError ? (getCardImageUrl(character) || character.cardImage || character.splashArt) : null;
   const avatar = character.avatarUrl || character.cardImage;
-  const gameName = character.gameName || parentGame?.game || "";
   const isLinked = Boolean(character.gameId && parentGame);
   const stars = rarityStars(character.rarity);
-  const ec = elColor(character.element);
 
   const hasVideo = !!videoUrl;
   const hasCardImg = cardImg && (cardImg.startsWith("http") || cardImg.startsWith("data:") || cardImg.startsWith("/"));

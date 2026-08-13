@@ -13,6 +13,30 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v11.9.0",
+    date: "2026-08-13",
+    title: "Character Dictionary Media Persistence & Universal Game Element Visual Engine",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Fixed Character Dictionary square avatar resolution priorities for Tokusatsu and general entity types. Implemented non-destructive additive gallery merging ensuring Card Images, Profile Portraits, and Square Avatars persist to character galleries across reloads. Standardized elemental visual effects across all 19 game titles without mutating canonical database element strings.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🖼️ Square Avatar Resolution Priority: Corrected header 1:1 avatar containers across TokusatsuProfileModal, CharacterDictProfileModal, and HofProfileModal to prioritize dedicated custom Square Avatars (avatarUrl), falling back to Profile Portrait (portraitUrl), Card Image (imageUrl), and Initials without mutating database fields.",
+          "💾 Additive Gallery Union Merging (mediaResolver.ts & route.ts): Centralized mergeCharacterDictionaryMediaIntoGallery helper ensuring Card Images, Profile Portraits, and Square Avatars auto-persist into character galleries without deleting existing items or creating duplicate entries.",
+          "🛡️ Zero Data Loss Preservation: Verified database integrity across 76 Character Dictionary and 302 Game Character records with full JSON metadata preservation and zero media nullification.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "✨ Universal Game Element Visual System (elementTheme.ts & ElementParticles.tsx): Mapped canonical element attributes across 19 game titles (Honkai: Star Rail, Zenless Zone Zero, Genshin Impact, Reverse: 1999, DB Legends, etc.) to 12 standardized visual effect groups with dual-theme Cyberpunk luminous particle layers and Neo-Brutalism solid SVG motifs.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v11.8.0",
     date: "2026-08-12",
     title: "Game Character Media Isolation & MP4 Card Preview Engine",

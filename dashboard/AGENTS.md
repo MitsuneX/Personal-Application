@@ -18,3 +18,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## 3. Focused Task Execution
 - Keep code edits strictly scoped to the specific problem, component, or feature requested by the user.
 - Avoid unnecessary side-effects or premature documentation churn until the user gives the green light.
+
+## 4. Critical Data Safety Rules (Character Dictionary & Game Characters)
+- **Audit First**: Audit local database and deployed database (if available) before modifying media or sync logic.
+- **No Destructive Operations**: Never delete existing records, replace existing images with `null`, or run destructive database migrations.
+- **Richer Data Priority**: Never overwrite richer local data with poorer deployment data (`Existing local data > empty values`, `Richer dataset > poorer dataset`).
+- **Additive Merging**: If deployment contains additional fields or media, merge them additively without replacing local entries.
+- **Preserve Media & Imports**: Always preserve all existing gallery entries and manually imported JSON data. Never reset user data via re-seeding.
+- **Mandatory Backup**: Create a backup export before executing any database modifications.
+

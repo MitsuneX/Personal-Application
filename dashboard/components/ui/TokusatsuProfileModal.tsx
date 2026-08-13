@@ -334,6 +334,7 @@ export function TokusatsuProfileModal({ isOpen, entry, onClose, onEdit, onLike }
   if (!isOpen || !entry) return null;
 
   const accent = profile.accentColor || entry.accentColor || (isCyber ? "#00F5FF" : "#FF6B35");
+  const avatarImage = profile.avatarUrl || entry.avatarUrl || (entry.details as any)?.avatarUrl || profile.portraitUrl || profile.imageUrl || entry.portraitUrl || entry.imageUrl;
   const portraitImage = profile.portraitUrl || profile.imageUrl || entry.portraitUrl || entry.imageUrl;
 
   const galleryImages = profile.galleryUrls.filter(Boolean).map((src, i) => ({
@@ -410,8 +411,8 @@ export function TokusatsuProfileModal({ isOpen, entry, onClose, onEdit, onLike }
                       backgroundColor: isCyber ? "#0A0F2C" : "#E2E8F0",
                     }}
                   >
-                    {portraitImage
-                      ? <img src={portraitImage} alt={profile.heroName} className="w-full h-full object-cover object-center" />
+                    {avatarImage
+                      ? <img src={avatarImage} alt={profile.heroName} className="w-full h-full object-cover object-center" />
                       : <span className="opacity-40 text-4xl" style={{ color: accent }}>{franchiseIcon}</span>
                     }
                   </div>

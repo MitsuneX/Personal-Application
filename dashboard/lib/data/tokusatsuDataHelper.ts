@@ -1,4 +1,5 @@
 import { HallOfFameEntry } from "@/lib/store/dashboardStore";
+import { mergeCharacterDictionaryMediaIntoGallery } from "@/lib/utils/mediaResolver";
 import {
   TokusatsuProfile,
   TokusatsuFranchiseType,
@@ -455,9 +456,16 @@ export function normalizeTokusatsuProfile(
 
     imageUrl: safeStr(raw.imageUrl) || safeStr(fallbackEntry?.imageUrl),
     portraitUrl: safeStr(raw.portraitUrl) || safeStr(fallbackEntry?.portraitUrl),
-    avatarUrl: safeStr(raw.avatarUrl) || safeStr(fallbackEntry?.avatarUrl),
+    avatarUrl: safeStr(raw.avatarUrl) || safeStr(fallbackEntry?.avatarUrl) || safeStr(details.avatarUrl),
     accentColor: safeStr(raw.accentColor) || safeStr(fallbackEntry?.accentColor) || "#EF4444",
-    galleryUrls: safeStrArr(raw.galleryUrls || fallbackEntry?.gallery),
+    galleryUrls: mergeCharacterDictionaryMediaIntoGallery(
+      safeStrArr(raw.galleryUrls || fallbackEntry?.gallery),
+      {
+        imageUrl: safeStr(raw.imageUrl) || safeStr(fallbackEntry?.imageUrl),
+        portraitUrl: safeStr(raw.portraitUrl) || safeStr(fallbackEntry?.portraitUrl),
+        avatarUrl: safeStr(raw.avatarUrl) || safeStr(fallbackEntry?.avatarUrl) || safeStr(details.avatarUrl),
+      }
+    ),
 
     forms,
     weapons,
@@ -508,6 +516,15 @@ export function extractHofDataFromTokusatsuProfile(
 
   const existingDetails = existingEntry?.details || {};
 
+  const resolvedImg = profile.imageUrl || existingEntry?.imageUrl || undefined;
+  const resolvedPort = profile.portraitUrl || existingEntry?.portraitUrl || undefined;
+  const resolvedAv = profile.avatarUrl || existingEntry?.avatarUrl || (existingDetails as any)?.avatarUrl || undefined;
+
+  const mergedGallery = mergeCharacterDictionaryMediaIntoGallery(
+    profile.galleryUrls || existingEntry?.gallery,
+    { imageUrl: resolvedImg, portraitUrl: resolvedPort, avatarUrl: resolvedAv }
+  );
+
   return {
     name: profile.heroName,
     type: "tokusatsu",
@@ -516,11 +533,11 @@ export function extractHofDataFromTokusatsuProfile(
     tokusatsuFranchise: profile.series || franchiseDisplay,
     tokusatsuShow: profile.series,
     knownFor: knownForList,
-    imageUrl: profile.imageUrl || undefined,
-    portraitUrl: profile.portraitUrl || undefined,
-    avatarUrl: profile.avatarUrl || undefined,
+    imageUrl: resolvedImg,
+    portraitUrl: resolvedPort,
+    avatarUrl: resolvedAv,
     accentColor: profile.accentColor || "#EF4444",
-    gallery: profile.galleryUrls,
+    gallery: mergedGallery,
     fullName: profile.civilianName || undefined,
     officialName: profile.heroName || undefined,
     universe: profile.universe || undefined,
@@ -530,7 +547,14 @@ export function extractHofDataFromTokusatsuProfile(
     alignment: profile.alignment || undefined,
     details: {
       ...existingDetails,
-      tokusatsuData: profile,
+      avatarUrl: resolvedAv,
+      tokusatsuData: {
+        ...profile,
+        imageUrl: resolvedImg,
+        portraitUrl: resolvedPort,
+        avatarUrl: resolvedAv,
+        galleryUrls: mergedGallery,
+      },
     },
   };
 }

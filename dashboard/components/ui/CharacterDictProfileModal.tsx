@@ -449,9 +449,13 @@ export function CharacterDictProfileModal({
                   }}
                 >
                   {(() => {
-                    const customAv = entry.avatarUrl || details.avatarUrl;
-                    const avSrc = entry.avatarSource || details.avatarSource || "card";
-                    const displayAv = avSrc === "custom" && customAv ? customAv : entry.imageUrl || entry.portraitUrl || details.imageUrl;
+                    const displayAv =
+                      entry.avatarUrl ||
+                      details.avatarUrl ||
+                      entry.portraitUrl ||
+                      details.portraitUrl ||
+                      entry.imageUrl ||
+                      details.imageUrl;
 
                     if (displayAv) {
                       return (

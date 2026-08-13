@@ -73,3 +73,40 @@ export function getCardImageUrl(entry: any): string | null {
 
   return candidate || null;
 }
+
+/**
+ * Safely merges Character Dictionary media fields (imageUrl, portraitUrl, avatarUrl, and optional splashArt)
+ * into a deduplicated persistent gallery array without overwriting existing gallery items or introducing duplicates.
+ */
+export function mergeCharacterDictionaryMediaIntoGallery(
+  existingGallery?: string[] | null,
+  mediaFields?: {
+    imageUrl?: string | null;
+    portraitUrl?: string | null;
+    avatarUrl?: string | null;
+    splashArt?: string | null;
+  }
+): string[] {
+  const currentList = Array.isArray(existingGallery)
+    ? existingGallery.filter((url) => typeof url === "string" && url.trim().length > 0)
+    : [];
+
+  const candidateUrls: string[] = [];
+
+  if (mediaFields) {
+    if (mediaFields.imageUrl && typeof mediaFields.imageUrl === "string" && !isVideoUrl(mediaFields.imageUrl)) {
+      candidateUrls.push(mediaFields.imageUrl.trim());
+    }
+    if (mediaFields.portraitUrl && typeof mediaFields.portraitUrl === "string" && !isVideoUrl(mediaFields.portraitUrl)) {
+      candidateUrls.push(mediaFields.portraitUrl.trim());
+    }
+    if (mediaFields.avatarUrl && typeof mediaFields.avatarUrl === "string" && !isVideoUrl(mediaFields.avatarUrl)) {
+      candidateUrls.push(mediaFields.avatarUrl.trim());
+    }
+    if (mediaFields.splashArt && typeof mediaFields.splashArt === "string" && !isVideoUrl(mediaFields.splashArt)) {
+      candidateUrls.push(mediaFields.splashArt.trim());
+    }
+  }
+
+  return Array.from(new Set([...currentList, ...candidateUrls].filter(Boolean)));
+}

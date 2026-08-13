@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { processCharacterCreation } from "@/lib/services/characterCreationService";
 import { logHallEvent, captureHallRankingSnapshots, updateChampionshipHistoryOnRankChange } from "@/lib/utils/hofEventEngine";
 import { calculateWritingXp, calculateSessionXp, getLevelDetailsFromXp } from "@/lib/utils/hobbyProgression";
+import { mergeCharacterDictionaryMediaIntoGallery } from "@/lib/utils/mediaResolver";
 
 export async function POST(req: Request) {
   try {
@@ -454,6 +455,15 @@ export async function POST(req: Request) {
           ? null 
           : Number(payload.rank);
 
+        const existingGallery = payload.gallery !== undefined ? payload.gallery : (existing?.gallery || []);
+        const avatarCandidate = payload.avatarUrl || payload.details?.avatarUrl || (existing?.details as any)?.avatarUrl;
+        const resolvedGallery = mergeCharacterDictionaryMediaIntoGallery(existingGallery, {
+          imageUrl: payload.imageUrl !== undefined ? payload.imageUrl : existing?.imageUrl,
+          portraitUrl: payload.portraitUrl !== undefined ? payload.portraitUrl : existing?.portraitUrl,
+          avatarUrl: avatarCandidate,
+          splashArt: payload.splashArt !== undefined ? payload.splashArt : existing?.splashArt,
+        });
+
         const hof = await prisma.hallOfFame.upsert({
           where: { id: payload.id },
           update: {
@@ -472,7 +482,7 @@ export async function POST(req: Request) {
             tokusatsuShow: payload.tokusatsuShow ?? null,
             associatedDramas: payload.associatedDramas ?? [],
             details: payload.details ?? null,
-            gallery: payload.gallery !== undefined ? payload.gallery : (existing?.gallery || []),
+            gallery: resolvedGallery,
             splashArt: payload.splashArt ?? null,
             portraitUrl: payload.portraitUrl ?? null,
             accentColor: payload.accentColor ?? null,
@@ -495,7 +505,7 @@ export async function POST(req: Request) {
             tokusatsuShow: payload.tokusatsuShow || null,
             associatedDramas: payload.associatedDramas || [],
             details: payload.details || null,
-            gallery: payload.gallery || [],
+            gallery: resolvedGallery,
             splashArt: payload.splashArt || null,
             portraitUrl: payload.portraitUrl || null,
             accentColor: payload.accentColor || null,

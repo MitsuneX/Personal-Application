@@ -2,6 +2,19 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [11.9.0] - 2026-08-13
+
+### 🖼️ Character Dictionary Media Persistence & Universal Game Element Visual Engine
+
+**1. Square Avatar Resolution Priority Fix (`TokusatsuProfileModal.tsx` & `CharacterDictProfileModal.tsx`)**
+- Corrected 1:1 square avatar containers across Tokusatsu and general Character Dictionary profile modals to prioritize dedicated custom Square Avatars (`avatarUrl`), falling back to Profile Portrait (`portraitUrl`), Card Image (`imageUrl`), and Initials without overwriting database fields.
+
+**2. Additive Gallery Union Merging Engine (`lib/utils/mediaResolver.ts` & `app/api/action/route.ts`)**
+- Centralized `mergeCharacterDictionaryMediaIntoGallery` helper ensuring Card Images, Profile Portraits, and Square Avatars auto-persist into character galleries across saves and reloads without deleting existing items or creating duplicate entries.
+
+**3. Universal Game Element Visual System (`elementTheme.ts` & `ElementParticles.tsx`)**
+- Standardized elemental visual effects across all 19 supported game titles (Honkai: Star Rail, Zenless Zone Zero, Genshin Impact, Reverse: 1999, DB Legends, Wuthering Waves, NIKKE, etc.) into 12 core visual categories with dual-theme Cyberpunk luminous particle layers and Neo-Brutalism solid SVG corner motifs.
+
 ## [11.8.0] - 2026-08-12
 
 ### 🎥 Game Character Media Isolation & MP4 Card Preview Engine

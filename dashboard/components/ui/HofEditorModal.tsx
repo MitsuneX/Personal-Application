@@ -15,6 +15,7 @@ import { TokusatsuEditorModal } from "@/components/ui/TokusatsuEditorModal";
 import { isTokusatsuEntry } from "@/lib/data/tokusatsuDataHelper";
 import { HofJsonEditor } from "@/components/ui/HofJsonEditor";
 import { isHofDuplicate } from "@/lib/data/duplicateHelper";
+import { mergeCharacterDictionaryMediaIntoGallery } from "@/lib/utils/mediaResolver";
 
 interface HofEditorModalProps {
   isOpen: boolean;
@@ -717,7 +718,11 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
         cameos: splitCsv(cameos),
         works: splitCsv(relatedWorks),
         relatedWorks: splitCsv(relatedWorks),
-        gallery: galleryUrls,
+        gallery: mergeCharacterDictionaryMediaIntoGallery(galleryUrls, {
+          imageUrl: str(imageUrl) || undefined,
+          portraitUrl: resolvedPortrait,
+          avatarUrl: resolvedAvatar,
+        }),
         socialLinks: validSocialLinks,
         accentColor,
         details: detailsObj,

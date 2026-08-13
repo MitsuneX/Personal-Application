@@ -416,7 +416,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
 
   const gameName = character.gameName || parentGame?.game || "";
   const accent = character.accentColor || parentGame?.accentColor || "#A855F7";
-  const elemTheme = getElementTheme(character.element, accent);
+  const elemTheme = getElementTheme(gameName, character.element, accent);
   const splash = character.splashArt;
   const cardImg = character.cardImage;
   const avatar = character.avatarUrl;
