@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
+import { normalizeGameName } from "@/lib/services/characterCreationService";
 
 export const dynamic = "force-dynamic";
 
@@ -54,29 +55,51 @@ export async function POST(req: Request) {
     let targetGame = null;
     if (gameId) {
       targetGame = await prisma.game.findUnique({ where: { id: gameId } });
-    } else if (gameName) {
-      targetGame = await prisma.game.findFirst({
-        where: { game: { equals: gameName, mode: "insensitive" } },
-      });
+    }
+
+    if (!targetGame && gameName) {
+      const normInputName = normalizeGameName(gameName).toLowerCase();
+      const allGames = await prisma.game.findMany();
+      targetGame = allGames.find(
+        (g) => normalizeGameName(g.game).toLowerCase() === normInputName
+      ) || null;
     }
 
     if (!targetGame) {
       return NextResponse.json({ error: "Target game database not found" }, { status: 404 });
     }
 
-    // 1. Relink orphaned characters matching target game name or ID
-    const updatedResult = await prisma.gameCharacter.updateMany({
+    // 1. Relink orphaned characters matching normalized target game name or ID
+    const normalizedTargetName = normalizeGameName(targetGame.game).toLowerCase();
+    const candidateChars = await prisma.gameCharacter.findMany({
       where: {
         OR: [
-          { gameId: null, gameName: { equals: targetGame.game, mode: "insensitive" } },
+          { gameId: null },
+          { gameId: "pending-game" },
           { gameId: targetGame.id },
         ],
       },
-      data: {
-        gameId: targetGame.id,
-        gameName: targetGame.game,
-      },
     });
+
+    const idsToRelink = candidateChars
+      .filter((c) => {
+        if (c.gameId === targetGame.id) return true;
+        const cNorm = normalizeGameName(c.gameName).toLowerCase();
+        return cNorm === normalizedTargetName;
+      })
+      .map((c) => c.id);
+
+    let updatedCount = 0;
+    if (idsToRelink.length > 0) {
+      const updatedResult = await prisma.gameCharacter.updateMany({
+        where: { id: { in: idsToRelink } },
+        data: {
+          gameId: targetGame.id,
+          gameName: targetGame.game,
+        },
+      });
+      updatedCount = updatedResult.count;
+    }
 
     // 2. Fetch all linked characters for target game
     const updatedCharacters = await prisma.gameCharacter.findMany({
@@ -110,8 +133,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      isAlreadyUpToDate: updatedResult.count === 0,
-      syncedCount: updatedResult.count,
+      isAlreadyUpToDate: updatedCount === 0,
+      syncedCount: updatedCount,
       game: targetGame,
       metadata: syncMeta,
       characters: updatedCharacters,

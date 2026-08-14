@@ -30,6 +30,12 @@ const GAME_ALIASES: Record<string, string> = {
   "dragon ball legends": "Dragon Ball Legends",
   "mobile legends": "Mobile Legends: Bang Bang",
   mlbb: "Mobile Legends: Bang Bang",
+  gfl2: "Girls' Frontline 2: Exilium",
+  "gfl 2": "Girls' Frontline 2: Exilium",
+  "girls frontline 2": "Girls' Frontline 2: Exilium",
+  "girls' frontline 2": "Girls' Frontline 2: Exilium",
+  "girls' frontline 2: exilium": "Girls' Frontline 2: Exilium",
+  "girls frontline 2 exilium": "Girls' Frontline 2: Exilium",
 };
 
 export function normalizeGameName(name?: string | null): string {
@@ -172,7 +178,7 @@ export async function processCharacterCreation(
       where: {
         gameId: resolvedGameId,
         name: { equals: cleanName, mode: "insensitive" },
-        ...(userId ? { userId } : {}),
+        ...(userId ? { OR: [{ userId }, { userId: null }] } : {}),
       },
     });
   }
@@ -181,7 +187,7 @@ export async function processCharacterCreation(
     existingDossier = await prisma.gameDossierCharacter.findFirst({
       where: {
         name: { equals: cleanName, mode: "insensitive" },
-        ...(userId ? { userId } : {}),
+        ...(userId ? { OR: [{ userId }, { userId: null }] } : {}),
       },
     });
   }
@@ -277,11 +283,11 @@ export async function processCharacterCreation(
           ...(input.id && !input.createDossierOnly ? [{ id: input.id }] : []),
           { characterId: dossierCharacter.id },
           {
-            name: { equals: trimmedName, mode: "insensitive" },
+            name: { equals: cleanName, mode: "insensitive" },
             ...(resolvedGameId ? { gameId: resolvedGameId } : {}),
           },
         ],
-        ...(userId ? { userId } : {}),
+        ...(userId ? { OR: [{ userId }, { userId: null }] } : {}),
       },
     });
 
@@ -736,7 +742,7 @@ export const PERSONAL_USER_CHARACTERS: CreateCharacterInput[] = [
 
   // GIRLS' FRONTLINE 2
   {
-    gameName: "Girls' Frontline 2",
+    gameName: "Girls' Frontline 2: Exilium",
     name: "Daiyan",
     gender: "Female",
     element: "Physical",
@@ -747,7 +753,7 @@ export const PERSONAL_USER_CHARACTERS: CreateCharacterInput[] = [
     biography: "Tactical Doll from Elmo squad known for her refined zither playing and combat prowess.",
   },
   {
-    gameName: "Girls' Frontline 2",
+    gameName: "Girls' Frontline 2: Exilium",
     name: "Loreley",
     gender: "Female",
     element: "Volt",
@@ -758,7 +764,7 @@ export const PERSONAL_USER_CHARACTERS: CreateCharacterInput[] = [
     biography: "High-mobility Vanguard T-Doll specializing in close-quarters flank assault.",
   },
   {
-    gameName: "Girls' Frontline 2",
+    gameName: "Girls' Frontline 2: Exilium",
     name: "Lainie",
     gender: "Female",
     element: "Physical",
@@ -769,7 +775,7 @@ export const PERSONAL_USER_CHARACTERS: CreateCharacterInput[] = [
     biography: "Precision support Tactical Doll providing long-range suppressive fire.",
   },
   {
-    gameName: "Girls' Frontline 2",
+    gameName: "Girls' Frontline 2: Exilium",
     name: "Tololo",
     gender: "Female",
     element: "Thermal",
@@ -786,6 +792,18 @@ export async function ensureUserPersonalCharacters(userId: string) {
 
   for (const charInput of PERSONAL_USER_CHARACTERS) {
     try {
+      // ── DATA SAFETY: Do NOT resurrect characters soft-deleted in History ──
+      const isSoftDeleted = await prisma.softDeleteHistory.findFirst({
+        where: {
+          userId,
+          name: { equals: charInput.name, mode: "insensitive" },
+        },
+      });
+
+      if (isSoftDeleted) {
+        continue; // User intentionally deleted/rejected this character; preserve history!
+      }
+
       await processCharacterCreation({
         ...charInput,
         userId,
