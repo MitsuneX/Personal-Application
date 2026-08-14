@@ -317,13 +317,19 @@ export function CharacterDictProfileModal({
       entry.gender ||
       entry.age ||
       entry.species ||
+      entry.birthday ||
+      entry.oshiMark ||
+      entry.fanbaseName ||
       details.fullName ||
       details.alias ||
       details.originalLanguage ||
       details.pronunciation ||
       details.gender ||
       details.age ||
-      details.species
+      details.species ||
+      details.birthday ||
+      details.oshiMark ||
+      details.fanbaseName
   );
 
   const hasOrigin = Boolean(
@@ -332,6 +338,9 @@ export function CharacterDictProfileModal({
       entry.series ||
       entry.franchise ||
       entry.tokusatsuFranchise ||
+      entry.agency ||
+      entry.group ||
+      entry.debutDate ||
       entry.nationality ||
       entry.country ||
       entry.region ||
@@ -341,6 +350,9 @@ export function CharacterDictProfileModal({
       (entry.knownFor && entry.knownFor.length > 0) ||
       details.universe ||
       details.series ||
+      details.agency ||
+      details.group ||
+      details.debutDate ||
       details.country ||
       details.creator ||
       details.firstAppearance ||
@@ -390,11 +402,15 @@ export function CharacterDictProfileModal({
   const commonDetailsList = [
     { label: "Universe / Work", value: entry.universe || entry.work || details.universe },
     { label: "Series / Franchise", value: entry.series || entry.franchise || entry.tokusatsuFranchise || details.series },
+    { label: "Agency / Affiliation", value: entry.agency || details.agency },
+    { label: "Group / Generation", value: entry.group || details.group },
     { label: "Country / Region", value: entry.country || entry.nationality || entry.region || details.country },
     { label: "Occupation / Role", value: entry.occupation || entry.role || entry.profession || details.occupation },
     { label: "Type / Species", value: entry.species || entry.type || details.species },
+    { label: "Oshi Mark / Fanbase", value: entry.oshiMark || entry.fanbaseName ? `${entry.oshiMark || ""} ${entry.fanbaseName ? `(${entry.fanbaseName})` : ""}`.trim() : details.oshiMark || details.fanbaseName },
     { label: "Gender", value: entry.gender || details.gender },
     { label: "Age / Age Range", value: entry.age || details.age },
+    { label: "Birthday", value: entry.birthday || details.birthday },
   ].filter((item) => item.value !== undefined && item.value !== null && item.value !== "");
 
   return (
@@ -498,7 +514,7 @@ export function CharacterDictProfileModal({
                             : "bg-cyan-200 text-black border border-black shadow-[1px_1px_0_#000]"
                         }`}
                       >
-                        {entry.type === "actor" ? "🎭 Actor" : entry.type === "actress" ? "💫 Actress" : entry.type === "singer" ? "🎤 Singer" : entry.type === "anime" ? "⛩️ Anime" : entry.type === "tokusatsu" ? "🦸 Tokusatsu" : "👤 Entity"}
+                        {entry.type === "actor" ? "🎭 Actor" : entry.type === "actress" ? "💫 Actress" : entry.type === "singer" ? "🎤 Singer" : entry.type === "anime" ? "⛩️ Anime" : entry.type === "vtuber" ? "👾 VTuber" : entry.type === "tokusatsu" ? "🦸 Tokusatsu" : "👤 Entity"}
                       </span>
 
                       {/* Nationality / Country Badge (Purple) */}
@@ -774,6 +790,9 @@ export function CharacterDictProfileModal({
                         <InfoRow label="Pronunciation" value={entry.pronunciation || details.pronunciation} isCyber={isCyber} />
                         <InfoRow label="Gender" value={entry.gender || details.gender} isCyber={isCyber} />
                         <InfoRow label="Age / Age Range" value={entry.age || details.age} isCyber={isCyber} />
+                        <InfoRow label="Birthday" value={entry.birthday || details.birthday} isCyber={isCyber} />
+                        <InfoRow label="Oshi Mark" value={entry.oshiMark || details.oshiMark} isCyber={isCyber} />
+                        <InfoRow label="Fanbase Name" value={entry.fanbaseName || details.fanbaseName} isCyber={isCyber} />
                         <InfoRow label="Species / Type" value={entry.species || details.species} isCyber={isCyber} />
                       </div>
                     </InformationSection>
@@ -783,10 +802,12 @@ export function CharacterDictProfileModal({
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
                         <InfoRow label="Universe / Work" value={entry.universe || entry.work || entry.knownFor || details.universe} isCyber={isCyber} />
                         <InfoRow label="Series / Franchise" value={entry.series || entry.franchise || entry.tokusatsuFranchise || details.series} isCyber={isCyber} />
+                        <InfoRow label="Agency / Affiliation" value={entry.agency || details.agency} isCyber={isCyber} />
+                        <InfoRow label="Group / Generation" value={entry.group || details.group} isCyber={isCyber} />
                         <InfoRow label="Country / Region" value={entry.country || entry.nationality || entry.region || details.country} isCyber={isCyber} />
                         <InfoRow label="Creator" value={entry.creator || details.creator} isCyber={isCyber} />
                         <InfoRow label="First Appearance" value={entry.firstAppearance || details.firstAppearance} isCyber={isCyber} />
-                        <InfoRow label="Debut Year" value={entry.debutYear || details.debutYear} isCyber={isCyber} />
+                        <InfoRow label="Debut Date / Year" value={entry.debutDate || entry.debutYear || details.debutDate || details.debutYear} isCyber={isCyber} />
                       </div>
                     </InformationSection>
 
@@ -796,6 +817,7 @@ export function CharacterDictProfileModal({
                         <InfoRow label="Personality" value={entry.personality || details.personality} isCyber={isCyber} />
                         <InfoRow label="Archetype" value={entry.archetype || entry.singerType || entry.type || details.archetype} isCyber={isCyber} />
                         <InfoRow label="Occupation / Role" value={entry.occupation || entry.role || entry.profession || details.occupation} isCyber={isCyber} />
+                        <InfoRow label="Status" value={entry.vtuberStatus || details.vtuberStatus} isCyber={isCyber} />
                         <InfoRow label="Alignment" value={entry.alignment || details.alignment} isCyber={isCyber} />
                         <InfoRow label="Character Traits" value={entry.traits || details.traits} isCyber={isCyber} />
                         <InfoRow label="Motivation" value={entry.motivation || details.motivation} isCyber={isCyber} />

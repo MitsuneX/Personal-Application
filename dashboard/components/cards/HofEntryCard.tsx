@@ -140,6 +140,7 @@ export const getTypeLabel = (entry: HallOfFameEntry) => {
   if (entry.type === "actress") return "💫 Actress";
   if (entry.type === "singer") return "🎤 Singer";
   if (entry.type === "anime") return "⛩️ Anime";
+  if (entry.type === "vtuber") return "👾 VTuber";
   if (entry.type === "tokusatsu") return "🦸 Tokusatsu";
   return "👤 Entity";
 };

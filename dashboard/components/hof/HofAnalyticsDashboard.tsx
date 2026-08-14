@@ -47,6 +47,8 @@ export function HofAnalyticsDashboard({ analytics, isCyber }: HofAnalyticsDashbo
         return "#00F5FF"; // Cyan
       case "tokusatsu":
         return "#10B981"; // Emerald
+      case "vtuber":
+        return "#A855F7"; // Violet / Purple
       default:
         return "#8B5CF6"; // Purple
     }
@@ -60,6 +62,8 @@ export function HofAnalyticsDashboard({ analytics, isCyber }: HofAnalyticsDashbo
         return "#2563EB"; // Royal Blue
       case "singer":
         return "#A855F7"; // Purple
+      case "vtuber":
+        return "#8B5CF6"; // Purple / Indigo
       case "voice actor":
         return "#F59E0B"; // Amber
       case "character":

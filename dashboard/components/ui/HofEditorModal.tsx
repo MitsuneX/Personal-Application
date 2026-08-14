@@ -56,7 +56,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
 
   // Basic Card Image fields
   const [name, setName] = useState("");
-  const [type, setType] = useState<"actor" | "actress" | "anime" | "singer" | "tokusatsu">("actress");
+  const [type, setType] = useState<"actor" | "actress" | "anime" | "singer" | "tokusatsu" | "vtuber">("actress");
   const [status, setStatus] = useState<MediaStatus>("GOAT Status");
   const [knownFor, setKnownFor] = useState("");
   const [nationality, setNationality] = useState("");
@@ -72,6 +72,15 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   const [tokusatsuShow, setTokusatsuShow] = useState("");
   const [associatedDramas, setAssociatedDramas] = useState("");
   const [accentColor, setAccentColor] = useState("#00F5FF");
+
+  // VTuber specific fields
+  const [agency, setAgency] = useState("");
+  const [group, setGroup] = useState("");
+  const [oshiMark, setOshiMark] = useState("");
+  const [fanbaseName, setFanbaseName] = useState("");
+  const [birthday, setBirthday] = useState("");
+  const [debutDate, setDebutDate] = useState("");
+  const [vtuberStatus, setVtuberStatus] = useState("Active");
 
   // Dedicated 3:4 Portrait fields (Independent of Card Image)
   const [portraitUrl, setPortraitUrl] = useState("");
@@ -256,6 +265,15 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
 
       // Social Links
       setSocialLinks(entryToEdit.socialLinks || details.socialLinks || []);
+
+      // VTuber fields
+      setAgency(entryToEdit.agency || details.agency || "");
+      setGroup(entryToEdit.group || details.group || "");
+      setOshiMark(entryToEdit.oshiMark || details.oshiMark || "");
+      setFanbaseName(entryToEdit.fanbaseName || details.fanbaseName || "");
+      setBirthday(entryToEdit.birthday || details.birthday || "");
+      setDebutDate(entryToEdit.debutDate || details.debutDate || "");
+      setVtuberStatus(entryToEdit.vtuberStatus || details.vtuberStatus || "Active");
     } else {
       setName("");
       setType("actress");
@@ -278,6 +296,14 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
 
       setAvatarUrl("");
       setAvatarSource("card");
+
+      setAgency("");
+      setGroup("");
+      setOshiMark("");
+      setFanbaseName("");
+      setBirthday("");
+      setDebutDate("");
+      setVtuberStatus("Active");
 
       setFullName("");
       setAlias("");
@@ -462,6 +488,14 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       gallery: Array.isArray(galleryUrls) ? galleryUrls : [],
       socialLinks: validSocialLinks,
       accentColor,
+      // VTuber fields
+      agency: str(agency) || undefined,
+      group: str(group) || undefined,
+      oshiMark: str(oshiMark) || undefined,
+      fanbaseName: str(fanbaseName) || undefined,
+      birthday: str(birthday) || undefined,
+      debutDate: str(debutDate) || undefined,
+      vtuberStatus: str(vtuberStatus) || undefined,
     };
   };
 
@@ -495,6 +529,15 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
     if (updated.tokusatsuShow !== undefined) setTokusatsuShow(updated.tokusatsuShow || "");
     if (updated.associatedDramas !== undefined) setAssociatedDramas(toCsvStr(updated.associatedDramas));
     if (updated.accentColor !== undefined) setAccentColor(updated.accentColor || "#00F5FF");
+
+    // VTuber
+    if (updated.agency !== undefined) setAgency(updated.agency || "");
+    if (updated.group !== undefined) setGroup(updated.group || "");
+    if (updated.oshiMark !== undefined) setOshiMark(updated.oshiMark || "");
+    if (updated.fanbaseName !== undefined) setFanbaseName(updated.fanbaseName || "");
+    if (updated.birthday !== undefined) setBirthday(updated.birthday || "");
+    if (updated.debutDate !== undefined) setDebutDate(updated.debutDate || "");
+    if (updated.vtuberStatus !== undefined) setVtuberStatus(updated.vtuberStatus || "Active");
 
     // Identity
     if (updated.fullName !== undefined || updated.officialName !== undefined) setFullName(updated.fullName || updated.officialName || "");
@@ -665,6 +708,14 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
         // Store card video URL separately so imageUrl stays a static-image URL.
         // getCardVideoUrl() already reads entry.details.cardVideo — no DB migration needed.
         cardVideo: str(cardVideo) || undefined,
+        // VTuber fields
+        agency: str(agency) || undefined,
+        group: str(group) || undefined,
+        oshiMark: str(oshiMark) || undefined,
+        fanbaseName: str(fanbaseName) || undefined,
+        birthday: str(birthday) || undefined,
+        debutDate: str(debutDate) || undefined,
+        vtuberStatus: str(vtuberStatus) || undefined,
       };
 
       await updateHof(id, {
@@ -718,6 +769,14 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
         cameos: splitCsv(cameos),
         works: splitCsv(relatedWorks),
         relatedWorks: splitCsv(relatedWorks),
+        // VTuber fields
+        agency: str(agency) || undefined,
+        group: str(group) || undefined,
+        oshiMark: str(oshiMark) || undefined,
+        fanbaseName: str(fanbaseName) || undefined,
+        birthday: str(birthday) || undefined,
+        debutDate: str(debutDate) || undefined,
+        vtuberStatus: str(vtuberStatus) || undefined,
         gallery: mergeCharacterDictionaryMediaIntoGallery(galleryUrls, {
           imageUrl: str(imageUrl) || undefined,
           portraitUrl: resolvedPortrait,
@@ -934,7 +993,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                       { value: "actor", label: "Actor", icon: "🎭" },
                       { value: "singer", label: "Singer", icon: "🎤" },
                       { value: "anime", label: "Anime", icon: "⛩️" },
-                      { value: "tokusatsu", label: "Tokusatsu", icon: "🦸" },
+                      { value: "vtuber", label: "VTuber", icon: "👾" },
                     ]}
                   />
                 </div>
@@ -954,6 +1013,116 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                   />
                 </div>
               </div>
+
+              {/* VTuber-specific Fields (When type === 'vtuber') */}
+              {type === "vtuber" && (
+                <div className="space-y-3 p-3 rounded-xl border border-purple-500/20 bg-purple-500/5">
+                  <div className="text-[11px] font-black uppercase tracking-wider flex items-center gap-1 text-purple-400">
+                    <span>👾</span> VTuber Attributes
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
+                        Agency / Affiliation
+                      </label>
+                      <input
+                        type="text"
+                        value={agency}
+                        onChange={(e) => setAgency(e.target.value)}
+                        placeholder="e.g. Hololive Production, NIJISANJI, Independent"
+                        className={inputClass}
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
+                        Group / Generation / Unit
+                      </label>
+                      <input
+                        type="text"
+                        value={group}
+                        onChange={(e) => setGroup(e.target.value)}
+                        placeholder="e.g. holoEN Myth, Gamers, Gen 3, Obsydia"
+                        className={inputClass}
+                        style={inputStyle}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
+                        Oshi Mark
+                      </label>
+                      <input
+                        type="text"
+                        value={oshiMark}
+                        onChange={(e) => setOshiMark(e.target.value)}
+                        placeholder="e.g. 🔱, 🥐, ☄️, 🦊"
+                        className={inputClass}
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
+                        Fanbase / Fandom Name
+                      </label>
+                      <input
+                        type="text"
+                        value={fanbaseName}
+                        onChange={(e) => setFanbaseName(e.target.value)}
+                        placeholder="e.g. Chumbuds, Dead Beats, Hoshiyomi"
+                        className={inputClass}
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
+                        Status
+                      </label>
+                      <CustomSelect
+                        value={vtuberStatus}
+                        onChange={(val) => setVtuberStatus(val)}
+                        options={[
+                          { value: "Active", label: "Active", icon: "🟢" },
+                          { value: "Hiatus", label: "Hiatus", icon: "🟡" },
+                          { value: "Graduated", label: "Graduated", icon: "🎓" },
+                          { value: "Affiliated", label: "Affiliated", icon: "💼" },
+                        ]}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
+                        Debut Date
+                      </label>
+                      <input
+                        type="text"
+                        value={debutDate}
+                        onChange={(e) => setDebutDate(e.target.value)}
+                        placeholder="e.g. September 13, 2020 (2020-09-13)"
+                        className={inputClass}
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
+                        Birthday
+                      </label>
+                      <input
+                        type="text"
+                        value={birthday}
+                        onChange={(e) => setBirthday(e.target.value)}
+                        placeholder="e.g. June 20, November 13"
+                        className={inputClass}
+                        style={inputStyle}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Singer Type or Country & Rank */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -983,7 +1152,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                       type="text"
                       value={nationality}
                       onChange={(e) => setNationality(e.target.value)}
-                      placeholder="e.g. Japan, Korea, China"
+                      placeholder="e.g. Japan, Korea, Global"
                       className={inputClass}
                       style={inputStyle}
                     />
@@ -1112,12 +1281,18 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
                     Age / Age Range
                   </label>
                   <input type="text" value={age} onChange={(e) => setAge(e.target.value)} placeholder="e.g. 21, 500+ years" className={inputClass} style={inputStyle} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
+                    Birthday
+                  </label>
+                  <input type="text" value={birthday} onChange={(e) => setBirthday(e.target.value)} placeholder="e.g. June 20, November 13" className={inputClass} style={inputStyle} />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
@@ -1130,15 +1305,15 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-white/10">
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
-                    Universe / Work
+                    Universe / Work / Agency
                   </label>
-                  <input type="text" value={universe} onChange={(e) => setUniverse(e.target.value)} placeholder="e.g. Wuthering Waves, Konosuba" className={inputClass} style={inputStyle} />
+                  <input type="text" value={universe || agency} onChange={(e) => { setUniverse(e.target.value); if (!agency) setAgency(e.target.value); }} placeholder="e.g. Hololive, Wuthering Waves, Konosuba" className={inputClass} style={inputStyle} />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
-                    Series / Franchise
+                    Series / Franchise / Group
                   </label>
-                  <input type="text" value={series} onChange={(e) => setSeries(e.target.value)} placeholder="e.g. Honkai: Star Rail, Fate" className={inputClass} style={inputStyle} />
+                  <input type="text" value={series || group} onChange={(e) => { setSeries(e.target.value); if (!group) setGroup(e.target.value); }} placeholder="e.g. holoEN Myth, Honkai: Star Rail, Fate" className={inputClass} style={inputStyle} />
                 </div>
               </div>
 
@@ -1147,19 +1322,19 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                   <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
                     Country / Region
                   </label>
-                  <input type="text" value={nationality} onChange={(e) => setNationality(e.target.value)} placeholder="e.g. Japan, Huanglong" className={inputClass} style={inputStyle} />
+                  <input type="text" value={nationality} onChange={(e) => setNationality(e.target.value)} placeholder="e.g. Japan, Global" className={inputClass} style={inputStyle} />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
-                    Creator / Studio
+                    Creator / Studio / Illustrator
                   </label>
-                  <input type="text" value={creator} onChange={(e) => setCreator(e.target.value)} placeholder="e.g. Kuro Games, 81 Produce" className={inputClass} style={inputStyle} />
+                  <input type="text" value={creator} onChange={(e) => setCreator(e.target.value)} placeholder="e.g. COVER Corp, Kuro Games, 81 Produce" className={inputClass} style={inputStyle} />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-black uppercase tracking-wider" style={{ color: isCyber ? "#94A3B8" : "#6B7280" }}>
                     Debut Year / Date
                   </label>
-                  <input type="text" value={debutYear} onChange={(e) => setDebutYear(e.target.value)} placeholder="e.g. 2024" className={inputClass} style={inputStyle} />
+                  <input type="text" value={debutYear || debutDate} onChange={(e) => { setDebutYear(e.target.value); if (!debutDate) setDebutDate(e.target.value); }} placeholder="e.g. 2024, 2020-09-12" className={inputClass} style={inputStyle} />
                 </div>
               </div>
             </div>

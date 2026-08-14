@@ -170,10 +170,12 @@ export default function HallOfFamePage() {
       }
     } else if (categoryFilter !== "all") {
       if (categoryFilter === "drama")
-        list = list.filter((e) => e.type !== "anime" && e.type !== "tokusatsu" && e.type !== "singer");
+        list = list.filter((e) => e.type !== "anime" && e.type !== "tokusatsu" && e.type !== "singer" && e.type !== "vtuber");
       else if (categoryFilter === "anime") list = list.filter((e) => e.type === "anime");
       else if (categoryFilter === "tokusatsu")
         list = list.filter((e) => e.type === "tokusatsu" || !!e.tokusatsuFranchise);
+      else if (categoryFilter === "vtuber")
+        list = list.filter((e) => e.type === "vtuber" || !!e.agency || !!e.details?.agency);
       else if (categoryFilter === "music")
         list = list.filter((e) => e.type === "singer" || (e.nationality || "").toLowerCase().includes("singer"));
       else if (categoryFilter === "movie")
@@ -194,6 +196,7 @@ export default function HallOfFamePage() {
       if (professionFilter === "actor") list = list.filter((e) => e.type === "actor");
       else if (professionFilter === "actress") list = list.filter((e) => e.type === "actress");
       else if (professionFilter === "singer") list = list.filter((e) => e.type === "singer");
+      else if (professionFilter === "vtuber") list = list.filter((e) => e.type === "vtuber");
       else if (professionFilter === "anime") list = list.filter((e) => e.type === "anime");
       else if (professionFilter === "tokusatsu")
         list = list.filter((e) => e.type === "tokusatsu" || !!e.tokusatsuFranchise);
@@ -217,7 +220,9 @@ export default function HallOfFamePage() {
         const matchKnown = (Array.isArray(item.knownFor) ? item.knownFor.join(" ") : item.knownFor || "")
           .toLowerCase()
           .includes(q);
-        return matchName || matchKnown;
+        const matchAgency = (item.agency || item.details?.agency || "").toLowerCase().includes(q);
+        const matchGroup = (item.group || item.details?.group || "").toLowerCase().includes(q);
+        return matchName || matchKnown || matchAgency || matchGroup;
       });
     }
 

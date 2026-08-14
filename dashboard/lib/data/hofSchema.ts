@@ -34,7 +34,7 @@ function isStrArr(v: unknown): v is string[] {
   return Array.isArray(v) && v.every((x) => typeof x === "string");
 }
 
-const HOF_TYPES = new Set(["actor", "actress", "anime", "singer", "tokusatsu"]);
+const HOF_TYPES = new Set(["actor", "actress", "anime", "singer", "tokusatsu", "vtuber"]);
 
 function assertStr(
   errors: ValidationError[],
@@ -132,7 +132,7 @@ export function validateHofJson(input: unknown): ValidationResult {
     if (!isStr(obj.type) || !HOF_TYPES.has(obj.type)) {
       errors.push({
         path: "type",
-        message: `Field "type" must be one of: actor, actress, anime, singer, tokusatsu. Got: ${obj.type}`,
+        message: `Field "type" must be one of: actor, actress, anime, singer, tokusatsu, vtuber. Got: ${obj.type}`,
         severity: "error",
       });
     }
@@ -149,6 +149,7 @@ export function validateHofJson(input: unknown): ValidationResult {
     "motivation", "background", "bio", "characterDevelopment",
     "splashArt", "portraitUrl", "avatarUrl", "avatarSource", "accentColor",
     "gameCharacterId", "gameCharacterName",
+    "agency", "group", "fanbaseName", "oshiMark", "birthday", "debutDate", "vtuberStatus",
   ];
 
   for (const field of stringFields) {

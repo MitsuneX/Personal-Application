@@ -128,6 +128,10 @@ export function normalizeHallEntry(item: HallOfFameEntry): NormalizedCategoryRes
   // 1. Profession Normalization
   if (typeStr === "actor") professionCategory = "Actor";
   else if (typeStr === "actress") professionCategory = "Actress";
+  else if (typeStr === "vtuber" || typeStr === "virtual youtuber") {
+    professionCategory = "VTuber";
+    mediaCategory = "VTuber";
+  }
   else if (typeStr === "singer" || item.singerType) professionCategory = "Singer";
   else if (
     typeStr === "voice actor" ||
@@ -146,46 +150,54 @@ export function normalizeHallEntry(item: HallOfFameEntry): NormalizedCategoryRes
   ) {
     professionCategory = "Character";
   } else {
-    if (combinedText.includes("actress")) professionCategory = "Actress";
+    if (combinedText.includes("vtuber") || combinedText.includes("virtual youtuber")) {
+      professionCategory = "VTuber";
+      mediaCategory = "VTuber";
+    }
+    else if (combinedText.includes("actress")) professionCategory = "Actress";
     else if (combinedText.includes("actor")) professionCategory = "Actor";
     else if (combinedText.includes("singer") || combinedText.includes("vocalist") || combinedText.includes("band") || combinedText.includes("idol")) professionCategory = "Singer";
     else if (combinedText.includes("voice actor") || combinedText.includes("seiyuu")) professionCategory = "Voice Actor";
     else if (combinedText.includes("anime") || combinedText.includes("game") || combinedText.includes("rider") || combinedText.includes("hero")) professionCategory = "Character";
   }
 
-  // 2. Media Category Normalization
-  if (typeStr === "anime" || combinedText.includes("anime") || combinedText.includes("manga")) {
-    mediaCategory = "Anime";
-  } else if (
-    typeStr === "tokusatsu" ||
-    item.tokusatsuShow ||
-    item.tokusatsuFranchise ||
-    combinedText.includes("tokusatsu") ||
-    combinedText.includes("kamen rider") ||
-    combinedText.includes("ultraman")
-  ) {
-    mediaCategory = "Tokusatsu";
-  } else if (
-    (item.associatedDramas && item.associatedDramas.length > 0) ||
-    combinedText.includes("drama") ||
-    combinedText.includes("kdrama") ||
-    combinedText.includes("cdrama") ||
-    combinedText.includes("jdrama")
-  ) {
-    mediaCategory = "Drama";
-  } else if (combinedText.includes("movie") || combinedText.includes("film") || combinedText.includes("cinema") || combinedText.includes("hollywood")) {
-    mediaCategory = "Movie";
-  } else if (combinedText.includes("game") || combinedText.includes("gacha") || combinedText.includes("rpg")) {
-    mediaCategory = "Game Character";
-  } else {
-    if (professionCategory === "Actor" || professionCategory === "Actress") {
-      mediaCategory = item.associatedDramas && item.associatedDramas.length > 0 ? "Drama" : "Movie";
-    } else if (professionCategory === "Voice Actor") {
+  // 2. Media Category Normalization (if not already resolved)
+  if (!mediaCategory) {
+    if (typeStr === "anime" || combinedText.includes("anime") || combinedText.includes("manga")) {
       mediaCategory = "Anime";
-    } else if (professionCategory === "Singer") {
+    } else if (
+      typeStr === "tokusatsu" ||
+      item.tokusatsuShow ||
+      item.tokusatsuFranchise ||
+      combinedText.includes("tokusatsu") ||
+      combinedText.includes("kamen rider") ||
+      combinedText.includes("ultraman")
+    ) {
+      mediaCategory = "Tokusatsu";
+    } else if (
+      (item.associatedDramas && item.associatedDramas.length > 0) ||
+      combinedText.includes("drama") ||
+      combinedText.includes("kdrama") ||
+      combinedText.includes("cdrama") ||
+      combinedText.includes("jdrama")
+    ) {
       mediaCategory = "Drama";
-    } else if (professionCategory === "Character") {
-      mediaCategory = "Anime";
+    } else if (combinedText.includes("movie") || combinedText.includes("film") || combinedText.includes("cinema") || combinedText.includes("hollywood")) {
+      mediaCategory = "Movie";
+    } else if (combinedText.includes("game") || combinedText.includes("gacha") || combinedText.includes("rpg")) {
+      mediaCategory = "Game Character";
+    } else {
+      if (professionCategory === "Actor" || professionCategory === "Actress") {
+        mediaCategory = item.associatedDramas && item.associatedDramas.length > 0 ? "Drama" : "Movie";
+      } else if (professionCategory === "Voice Actor") {
+        mediaCategory = "Anime";
+      } else if (professionCategory === "Singer") {
+        mediaCategory = "Drama";
+      } else if (professionCategory === "VTuber") {
+        mediaCategory = "VTuber";
+      } else if (professionCategory === "Character") {
+        mediaCategory = "Anime";
+      }
     }
   }
 

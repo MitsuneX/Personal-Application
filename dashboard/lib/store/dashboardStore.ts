@@ -561,7 +561,7 @@ export interface DramaEntry extends CinematicDossierFields {
 export interface HallOfFameEntry {
   id: string;
   name: string;
-  type: "actor" | "actress" | "anime" | "singer" | "tokusatsu";
+  type: "actor" | "actress" | "anime" | "singer" | "tokusatsu" | "vtuber";
   status: MediaStatus;
   knownFor: string[];
   nationality?: string;
@@ -577,6 +577,15 @@ export interface HallOfFameEntry {
   tokusatsuFranchise?: string | null;
   tokusatsuShow?: string | null;
   associatedDramas?: string[];
+
+  // ── VTuber Specific Optional Fields ──
+  agency?: string;
+  group?: string;
+  fanbaseName?: string;
+  oshiMark?: string;
+  birthday?: string;
+  debutDate?: string;
+  vtuberStatus?: string;
 
   // ── Character Dictionary Extended Fields ──
   fullName?: string;

@@ -127,6 +127,7 @@ export function HofFilterToolbar({
             <option value="anime">⛩️ Anime</option>
             <option value="movie">🎬 Movie</option>
             <option value="tokusatsu">🦸 Tokusatsu</option>
+            <option value="vtuber">👾 VTuber</option>
             <option value="music">🎵 Music</option>
             <option value="game">🎮 Game</option>
           </select>
@@ -182,6 +183,7 @@ export function HofFilterToolbar({
             <option value="actor">🎭 Actor</option>
             <option value="actress">💫 Actress</option>
             <option value="singer">🎤 Singer</option>
+            <option value="vtuber">👾 VTuber</option>
             <option value="anime">⛩️ Anime Character</option>
             <option value="tokusatsu">🦸 Suit Actor</option>
           </select>

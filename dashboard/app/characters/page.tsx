@@ -127,6 +127,7 @@ function CharactersContent() {
     const actresses = hallOfFame.filter((h) => h.type === "actress").length;
     const actors = hallOfFame.filter((h) => h.type === "actor").length;
     const anime = hallOfFame.filter((h) => h.type === "anime").length;
+    const vtubers = hallOfFame.filter((h) => h.type === "vtuber").length;
     const games = dossierCharacters.length;
     const tokusatsu = hallOfFame.filter((h) => isTokusatsuEntry(h)).length;
     const singers = hallOfFame.filter(
@@ -142,6 +143,7 @@ function CharactersContent() {
       actresses,
       actors,
       anime,
+      vtubers,
       games,
       tokusatsu,
       singers,
@@ -234,7 +236,9 @@ function CharactersContent() {
           .toLowerCase()
           .includes(q);
         const matchNote = (item.note || "").toLowerCase().includes(q);
-        return matchName || matchKnown || matchNote;
+        const matchAgency = (item.agency || item.details?.agency || "").toLowerCase().includes(q);
+        const matchGroup = (item.group || item.details?.group || "").toLowerCase().includes(q);
+        return matchName || matchKnown || matchNote || matchAgency || matchGroup;
       });
     }
 

@@ -171,14 +171,29 @@ export async function processCharacterCreation(
     existingDossier = await prisma.gameDossierCharacter.findUnique({
       where: { id: input.id },
     });
+    if (!existingDossier) {
+      const linkedGC = await prisma.gameCharacter.findUnique({
+        where: { id: input.id },
+        select: { characterId: true },
+      });
+      if (linkedGC?.characterId) {
+        existingDossier = await prisma.gameDossierCharacter.findUnique({
+          where: { id: linkedGC.characterId },
+        });
+      }
+    }
   }
 
   if (!existingDossier && resolvedGameId) {
     existingDossier = await prisma.gameDossierCharacter.findFirst({
       where: {
-        gameId: resolvedGameId,
-        name: { equals: cleanName, mode: "insensitive" },
-        ...(userId ? { OR: [{ userId }, { userId: null }] } : {}),
+        AND: [
+          {
+            gameId: resolvedGameId,
+            name: { equals: cleanName, mode: "insensitive" },
+          },
+          ...(userId ? [{ OR: [{ userId }, { userId: null }] }] : []),
+        ],
       },
     });
   }
@@ -186,8 +201,12 @@ export async function processCharacterCreation(
   if (!existingDossier && resolvedGameName) {
     existingDossier = await prisma.gameDossierCharacter.findFirst({
       where: {
-        name: { equals: cleanName, mode: "insensitive" },
-        ...(userId ? { OR: [{ userId }, { userId: null }] } : {}),
+        AND: [
+          {
+            name: { equals: cleanName, mode: "insensitive" },
+          },
+          ...(userId ? [{ OR: [{ userId }, { userId: null }] }] : []),
+        ],
       },
     });
   }
@@ -276,20 +295,33 @@ export async function processCharacterCreation(
   let gameCharacter: any = null;
 
   if (shouldCreateFavorite) {
-    // Check if favorite record already exists for this dossierCharacter, name+game, or direct ID
-    let existingFavorite: any = await prisma.gameCharacter.findFirst({
-      where: {
-        OR: [
-          ...(input.id && !input.createDossierOnly ? [{ id: input.id }] : []),
-          { characterId: dossierCharacter.id },
-          {
-            name: { equals: cleanName, mode: "insensitive" },
-            ...(resolvedGameId ? { gameId: resolvedGameId } : {}),
-          },
-        ],
-        ...(userId ? { OR: [{ userId }, { userId: null }] } : {}),
-      },
-    });
+    // 1. Strictly look up existing favorite by direct primary key ID first
+    let existingFavorite: any = null;
+    if (input.id && !input.createDossierOnly) {
+      existingFavorite = await prisma.gameCharacter.findUnique({
+        where: { id: input.id },
+      });
+    }
+
+    // 2. If no direct ID match, look up by characterId or name + gameId
+    if (!existingFavorite) {
+      existingFavorite = await prisma.gameCharacter.findFirst({
+        where: {
+          AND: [
+            {
+              OR: [
+                ...(dossierCharacter?.id ? [{ characterId: dossierCharacter.id }] : []),
+                {
+                  name: { equals: cleanName, mode: "insensitive" },
+                  ...(resolvedGameId ? { gameId: resolvedGameId } : {}),
+                },
+              ],
+            },
+            ...(userId ? [{ OR: [{ userId }, { userId: null }] }] : []),
+          ],
+        },
+      });
+    }
 
     // cardImage: personal favourite card art (independent column, never overwrites avatarUrl)
     // avatarUrl: official character portrait (synced with Character Collection)
@@ -802,6 +834,17 @@ export async function ensureUserPersonalCharacters(userId: string) {
 
       if (isSoftDeleted) {
         continue; // User intentionally deleted/rejected this character; preserve history!
+      }
+
+      // ── DATA SAFETY: Do NOT overwrite or re-seed if character already exists for this user ──
+      const alreadyExists = await prisma.gameCharacter.findFirst({
+        where: {
+          userId,
+          name: { equals: charInput.name, mode: "insensitive" },
+        },
+      });
+      if (alreadyExists) {
+        continue; // Existing user record exists; preserve all existing user data!
       }
 
       await processCharacterCreation({
