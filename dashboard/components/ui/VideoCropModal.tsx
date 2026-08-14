@@ -6,6 +6,7 @@ import { OverlayPortal } from "@/components/ui/OverlayPortal";
 import { Z_INDEX } from "@/components/ui/ViewportBoundary";
 import { useTheme } from "@/lib/theme";
 import { useToast } from "@/components/ui/ToastProvider";
+import { getVideoFramingStyle, VIDEO_FRAMING_MEDIA_CLASS } from "@/lib/utils/mediaResolver";
 
 export interface VideoCropData {
   x: number;               // -60% to 60%
@@ -198,13 +199,13 @@ export function VideoCropModal({
           ctx.scale(zoom, zoom);
           ctx.translate((x / 100) * canvasWidth, (y / 100) * canvasHeight);
 
-          // Draw centered video
+          // Draw centered video matching object-contain geometry
           const vw = video.videoWidth;
           const vh = video.videoHeight;
           const vAspect = vw / vh;
           let drawW = canvasWidth;
           let drawH = canvasWidth / vAspect;
-          if (drawH < canvasHeight) {
+          if (drawH > canvasHeight) {
             drawH = canvasHeight;
             drawW = canvasHeight * vAspect;
           }
@@ -349,11 +350,8 @@ export function VideoCropModal({
                       setCurrentTime(videoRef.current.currentTime || 0);
                     }
                   }}
-                  style={{
-                    transform: `translate(${x}%, ${y}%) scale(${zoom})`,
-                    transformOrigin: "center center",
-                  }}
-                  className="w-full h-full object-contain object-center pointer-events-none"
+                  style={getVideoFramingStyle({ x, y, zoom })}
+                  className={VIDEO_FRAMING_MEDIA_CLASS}
                 />
 
                 {/* Grid Overlay Guide */}

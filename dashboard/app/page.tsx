@@ -26,6 +26,20 @@ function DashboardContent() {
   const { openContextMenu } = useContextMenu();
   const router = useRouter();
 
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const formattedDate = React.useMemo(() => {
+    if (!mounted) {
+      return isCyber ? "SYS::ONLINE" : "ONLINE";
+    }
+    return isCyber
+      ? `SYS::${new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }).toUpperCase()}`
+      : new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  }, [mounted, isCyber]);
+
   const totalEps = animeList.reduce((s, a) => s + a.episodesWatched, 0);
   const completedAnime = animeList.filter((a) => a.status === "Completed").length;
   const activeGames = games.filter((g) => g.isActive).length;
@@ -35,7 +49,7 @@ function DashboardContent() {
     { label: "Active Games",    value: activeGames,     icon: "🎮", href: "/games",        color: isCyber ? "#00F5FF" : "#FF6B35" },
     { label: "Anime Watched",   value: completedAnime,  icon: "⛩️",  href: "/anime",        color: isCyber ? "#39FF14" : "#06D6A0" },
     { label: "Total Episodes",  value: totalEps,        icon: "📺",  href: "/anime",        color: isCyber ? "#BF5FFF" : "#FFD166" },
-    { label: "Dramas Tracked",  value: totalDramas,     icon: "🎬",  href: "/drama",        color: isCyber ? "#F472B6" : "#EF476F" },
+    { label: "Dramas Tracked",  value: totalDramas,     icon: "🎬",  href: "/drama",        color: isCyber ? "#EF476F" : "#EF476F" },
     { label: "Hall of Fame",    value: hallOfFame.length, icon: "🏆", href: "/hall-of-fame", color: isCyber ? "#FFD700" : "#FF6B35" },
   ];
 
@@ -52,9 +66,7 @@ function DashboardContent() {
           className="text-xs font-bold tracking-widest uppercase mb-1"
           animate={{ color: isCyber ? "rgba(0,245,255,0.5)" : "rgba(0,0,0,0.4)" }}
         >
-          {isCyber
-            ? `SYS::${new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }).toUpperCase()}`
-            : new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+          {formattedDate}
         </motion.p>
         <motion.h1
           className="font-black text-2xl md:text-3xl"

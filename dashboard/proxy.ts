@@ -5,10 +5,22 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
 
 // ─── Protected Routes ─────────────────────────────────────────────────────────
-const PUBLIC_ROUTES = ["/welcome", "/login", "/signup", "/auth", "/api/auth", "/api/"];
+const PUBLIC_ROUTES = [
+  "/welcome",
+  "/login",
+  "/signup",
+  "/auth",
+  "/api/auth",
+  "/api/",
+  "/manifest.webmanifest",
+  "/manifest.json",
+  "/favicon.ico",
+  "/robots.txt",
+  "/sw.js",
+];
 
 function isPublicRoute(pathname: string): boolean {
-  return PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
+  return PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(route));
 }
 
 // ─── Next.js 16 Proxy (Replaces middleware) ───────────────────────────────────
@@ -98,8 +110,8 @@ export const config = {
      * - _next/static  (Next.js static assets)
      * - _next/image   (image optimization)
      * - favicon.ico
-     * - Public image / icon / asset files
+     * - Public image / icon / asset files / PWA manifest / sw.js
      */
-    "/((?!_next/static|_next/image|favicon.ico|icons|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|js|css|json|woff|woff2|ttf|otf)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest\\.webmanifest|manifest\\.json|robots\\.txt|sw\\.js|icons|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|js|css|json|webmanifest|woff|woff2|ttf|otf)$).*)",
   ],
 };

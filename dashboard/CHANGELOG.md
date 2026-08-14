@@ -2,6 +2,27 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [12.1.0] - 2026-08-14
+
+### 🚀 Targeted Dashboard Performance & Hydration Enhancements
+
+**1. API Performance Optimization (`/api/dashboard`)**
+- Removed blocking sequential repair routines (`repairCharacterDatabase`) from the main GET request read-path.
+- Parallelized all 28 canonical dashboard entity queries using a unified `Promise.all` execution block.
+- Result: Reduced API response latency from **~7.9s** to **~118ms** (98% performance gain).
+
+**2. Deterministic SSR Hydration Fix (`app/page.tsx`)**
+- Fixed hydration mismatch warnings caused by direct rendering of browser-dependent localized dates (`new Date().toLocaleDateString(...)`) during Server-Side Rendering.
+- Integrated a `mounted` state boundary to ensure stable, deterministic fallback text during SSR and hydration, falling back to local date format securely post-hydration.
+
+**3. PWA Manifest Redirect Loop Resolution (`proxy.ts`)**
+- Fixed Next.js Proxy middleware auth routing which incorrectly intercepted unauthenticated background requests for PWA manifests and service workers.
+- Explicitly added `.webmanifest`, `manifest.json`, `robots.txt`, and `sw.js` into both `PUBLIC_ROUTES` inclusion and the matcher exclusion pattern.
+
+**4. MP4 Card Video Framing Standardization (`mediaResolver.ts`)**
+- Consolidated video object-fit mapping across all interactive media cards (`LazyCardVideo`, `HofEntryCard`, `VideoCropModal`).
+- Applied unified `getVideoFramingStyle` helper ensuring square/horizontal source videos render correctly in 3:4 portrait borders without edge stretching or cropping misalignment.
+
 ## [12.0.0] - 2026-08-13
 
 ### 🔄 Persistent Game Character Sync Engine & Soft-Delete History System

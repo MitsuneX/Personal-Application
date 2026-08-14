@@ -17,7 +17,6 @@ import {
 import { DEFAULT_AI_TOOLS } from "@/lib/data/initialAiTools";
 import { DEFAULT_GAMES } from "@/lib/data/initialGames";
 import { ensureInitialHallHistory } from "@/lib/utils/hofEventEngine";
-import { repairCharacterDatabase } from "@/lib/services/characterCreationService";
 
 export const dynamic = "force-dynamic";
 
@@ -59,9 +58,77 @@ export async function GET() {
 
     const userId = user.id;
 
-    // 1. Fetch Profile for authenticated user
-    let dbProfile = await prisma.profile.findFirst({ where: { OR: [{ userId }, { id: userId }] } });
+    const safeQuery = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
+      try {
+        return await fn();
+      } catch (err) {
+        console.warn("[Dashboard API] Query fallback:", err);
+        return fallback;
+      }
+    };
 
+    // 1. Parallel Fetch for ALL User-Scoped Dashboard Entities
+    let [
+      rawProfile,
+      dbAiTools,
+      dbGames,
+      dbDossierCharacters,
+      dbGameResources,
+      dbGameShowcaseItems,
+      dbProjects,
+      dbAnime,
+      dbCharacters,
+      dbDramas,
+      dbHOF,
+      dbNotes,
+      dbLinks,
+      dbGallery,
+      dbSongs,
+      dbPlaylists,
+      dbCollections,
+      dbDramaLog,
+      dbPrompts,
+      dbHobbySkills,
+      dbHobbyLogs,
+      dbProfileHistory,
+      dbHallEvents,
+      dbChampionshipHistory,
+      dbHallRankingSnapshots,
+      dbHobbySessions,
+      dbNotifications,
+      dbGameCharacters,
+    ] = await Promise.all([
+      safeQuery(() => prisma.profile.findFirst({ where: { OR: [{ userId }, { id: userId }] } }), null),
+      safeQuery(() => prisma.aiToolItem.findMany({ where: { userId }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] }), []),
+      safeQuery(() => prisma.game.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
+      safeQuery(() => prisma.gameDossierCharacter.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
+      safeQuery(() => prisma.gameExternalResource.findMany({ where: { userId }, orderBy: { sortOrder: "asc" } }), []),
+      safeQuery(() => prisma.gameShowcaseItem.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
+      safeQuery(() => prisma.projectItem.findMany({ where: { userId }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] }), []),
+      safeQuery(() => prisma.anime.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
+      safeQuery(() => prisma.favoriteCharacter.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
+      safeQuery(() => prisma.drama.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
+      safeQuery(() => prisma.hallOfFame.findMany({ where: { userId }, orderBy: { rank: "asc" } }), []),
+      safeQuery(() => prisma.note.findMany({ where: { userId }, orderBy: { updatedAt: "desc" } }), []),
+      safeQuery(() => prisma.link.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
+      safeQuery(() => prisma.galleryItem.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
+      safeQuery(() => prisma.song.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
+      safeQuery(() => prisma.playlist.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
+      safeQuery(() => prisma.musicCollection.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
+      safeQuery(() => prisma.dramaLog.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
+      safeQuery(() => prisma.savedPrompt.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
+      safeQuery(() => prisma.hobbySkill.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
+      safeQuery(() => prisma.hobbyLog.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
+      safeQuery(() => prisma.profileHistory.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 10 }), []),
+      safeQuery(() => prisma.hallEvent.findMany({ where: { userId }, orderBy: { timestamp: "desc" }, take: 50 }), []),
+      safeQuery(() => prisma.championshipHistory.findMany({ where: { userId }, orderBy: { startDate: "desc" } }), []),
+      safeQuery(() => prisma.hallRankingSnapshot.findMany({ where: { userId }, orderBy: { timestamp: "desc" } }), []),
+      safeQuery(() => prisma.hobbySession.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
+      safeQuery(() => prisma.notification.findMany({ where: { userId, isDismissed: false }, orderBy: { createdAt: "desc" }, take: 20 }), []),
+      safeQuery(() => prisma.gameCharacter.findMany({ where: { userId }, orderBy: { rank: "asc" } }), []),
+    ]);
+
+    let dbProfile = rawProfile;
     if (!dbProfile) {
       const userMeta = user.user_metadata || {};
       dbProfile = await prisma.profile.create({
@@ -81,22 +148,7 @@ export async function GET() {
       });
     }
 
-    const safeQuery = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
-      try {
-        return await fn();
-      } catch (err) {
-        console.warn("[Dashboard API] Query fallback:", err);
-        return fallback;
-      }
-    };
-
-    // 2. Fetch User-Scoped AI Tools
-    let dbAiTools: any[] = await safeQuery(
-      () => prisma.aiToolItem.findMany({ where: { userId }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] }),
-      []
-    );
-
-    // Auto-seed AI tools for NEW registered user
+    // Auto-seed AI tools for NEW registered user if empty
     if (dbAiTools.length === 0) {
       try {
         console.log(`[AI Library] Seeding default AI collection for user ${userId}...`);
@@ -138,13 +190,7 @@ export async function GET() {
       }
     }
 
-    // 3. Fetch User-Scoped Games
-    let dbGames: any[] = await safeQuery(
-      () => prisma.game.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }),
-      []
-    );
-
-    // Auto-seed Games for NEW registered user
+    // Auto-seed Games for NEW registered user if empty
     if (dbGames.length === 0) {
       try {
         console.log(`[Games Library] Seeding default games for user ${userId}...`);
@@ -173,70 +219,10 @@ export async function GET() {
       }
     }
 
-    // 4. Fetch all other User-Scoped entities in parallel
-    const [
-      dbDossierCharacters,
-      dbGameResources,
-      dbGameShowcaseItems,
-      dbProjects,
-      dbAnime,
-      dbCharacters,
-      dbDramas,
-      dbHOF,
-      dbNotes,
-      dbLinks,
-      dbGallery,
-      dbSongs,
-      dbPlaylists,
-      dbCollections,
-      dbDramaLog,
-      dbPrompts,
-      dbHobbySkills,
-      dbHobbyLogs,
-      dbProfileHistory,
-      dbHallEvents,
-      dbChampionshipHistory,
-      dbHallRankingSnapshots,
-      dbHobbySessions,
-      dbNotifications,
-      dbGameCharacters,
-    ] = await Promise.all([
-      safeQuery(() => prisma.gameDossierCharacter.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
-      safeQuery(() => prisma.gameExternalResource.findMany({ where: { userId }, orderBy: { sortOrder: "asc" } }), []),
-      safeQuery(() => prisma.gameShowcaseItem.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
-      safeQuery(() => prisma.projectItem.findMany({ where: { userId }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] }), []),
-      safeQuery(() => prisma.anime.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
-      safeQuery(() => prisma.favoriteCharacter.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
-      safeQuery(() => prisma.drama.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
-      safeQuery(() => prisma.hallOfFame.findMany({ where: { userId }, orderBy: { rank: "asc" } }), []),
-      safeQuery(() => prisma.note.findMany({ where: { userId }, orderBy: { updatedAt: "desc" } }), []),
-      safeQuery(() => prisma.link.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
-      safeQuery(() => prisma.galleryItem.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
-      safeQuery(() => prisma.song.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
-      safeQuery(() => prisma.playlist.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
-      safeQuery(() => prisma.musicCollection.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
-      safeQuery(() => prisma.dramaLog.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
-      safeQuery(() => prisma.savedPrompt.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
-      safeQuery(() => prisma.hobbySkill.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
-      safeQuery(() => prisma.hobbyLog.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
-      safeQuery(() => prisma.profileHistory.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 10 }), []),
-      safeQuery(() => prisma.hallEvent.findMany({ where: { userId }, orderBy: { timestamp: "desc" }, take: 50 }), []),
-      safeQuery(() => prisma.championshipHistory.findMany({ where: { userId }, orderBy: { startDate: "desc" } }), []),
-      safeQuery(() => prisma.hallRankingSnapshot.findMany({ where: { userId }, orderBy: { timestamp: "desc" } }), []),
-      safeQuery(() => prisma.hobbySession.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
-      safeQuery(() => prisma.notification.findMany({ where: { userId, isDismissed: false }, orderBy: { createdAt: "desc" }, take: 20 }), []),
-      safeQuery(() => prisma.gameCharacter.findMany({ where: { userId }, orderBy: { rank: "asc" } }), []),
-    ]);
-
     // Ensure initial event history & baseline championship records exist for existing HOF items
     if (dbHOF.length > 0 && dbHallEvents.length === 0) {
       await ensureInitialHallHistory(prisma, userId, dbHOF);
     }
-
-    // Auto-repair missing Character Collection links or pending games in background
-    repairCharacterDatabase(userId).catch((err) =>
-      console.error("Auto-repair character database error:", err)
-    );
 
     return NextResponse.json({
       isGuest: false,

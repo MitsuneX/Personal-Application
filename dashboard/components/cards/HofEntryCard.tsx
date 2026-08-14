@@ -9,7 +9,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { duplicateHofEntry } from "@/lib/data/duplicateHelper";
-import { getCardVideoUrl, getCardImageUrl } from "@/lib/utils/mediaResolver";
+import { getCardVideoUrl, getCardImageUrl, getCardVideoPosterUrl, getCardVideoFraming } from "@/lib/utils/mediaResolver";
+import { LazyCardVideo } from "@/components/cards/LazyCardVideo";
 
 // ─── Constants & Styles ────────────────────────────────────────────────────────
 
@@ -337,16 +338,12 @@ export function HofEntryCard({
         transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
       >
         {hasVideo ? (
-          <video
-            src={videoUrl!}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
+          <LazyCardVideo
+            videoUrl={videoUrl!}
+            posterUrl={getCardVideoPosterUrl(entry)}
+            framing={getCardVideoFraming(entry)}
+            alt={entry.name}
             onError={() => setVideoError(true)}
-            className="w-full h-full object-cover object-[center_25%] pointer-events-none"
-            draggable={false}
           />
         ) : hasImage ? (
           <Image

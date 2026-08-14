@@ -71,6 +71,26 @@ export interface VideoFraming {
 }
 
 /**
+ * Shared CSS transform & origin helper for non-destructive video framing.
+ * Guarantees VideoCropModal, LazyCardVideo, and card previews render 100% pixel-perfect identical compositions.
+ */
+export function getVideoFramingStyle(framing?: Partial<VideoFraming> | null): React.CSSProperties {
+  const x = typeof framing?.x === "number" ? framing.x : 0;
+  const y = typeof framing?.y === "number" ? framing.y : 0;
+  const zoom = typeof framing?.zoom === "number" ? framing.zoom : 1.0;
+
+  return {
+    transform: `translate(${x}%, ${y}%) scale(${zoom})`,
+    transformOrigin: "center center",
+  };
+}
+
+/**
+ * Shared Tailwind/CSS class name for video & media elements inside 3:4 aspect ratio containers.
+ */
+export const VIDEO_FRAMING_MEDIA_CLASS = "w-full h-full object-contain object-center pointer-events-none";
+
+/**
  * Resolves non-destructive framing/crop transformation coordinates for card video rendering.
  */
 export function getCardVideoFraming(entry: any): VideoFraming {

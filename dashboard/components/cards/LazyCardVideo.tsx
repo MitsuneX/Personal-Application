@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { VideoFraming } from "@/lib/utils/mediaResolver";
+import { VideoFraming, getVideoFramingStyle, VIDEO_FRAMING_MEDIA_CLASS } from "@/lib/utils/mediaResolver";
 
 interface LazyCardVideoProps {
   videoUrl: string;
@@ -17,7 +17,7 @@ export function LazyCardVideo({
   posterUrl,
   framing = { x: 0, y: 0, zoom: 1, aspect: 0.75 },
   alt = "Character video preview",
-  className = "w-full h-full object-cover object-top",
+  className = "",
   onError,
 }: LazyCardVideoProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -51,11 +51,8 @@ export function LazyCardVideo({
     return () => observer.disconnect();
   }, []);
 
-  // ── Transform calculations for non-destructive framing ─────────────────────
-  const transformStyle: React.CSSProperties = {
-    transform: `translate(${framing.x}%, ${framing.y}%) scale(${framing.zoom})`,
-    transformOrigin: "center center",
-  };
+  // ── Unified Transform Calculation (Shared with VideoCropModal) ───────────────
+  const transformStyle = getVideoFramingStyle(framing);
 
   const handleVideoError = () => {
     setHasError(true);
@@ -63,14 +60,14 @@ export function LazyCardVideo({
   };
 
   return (
-    <div ref={containerRef} className="relative w-full h-full overflow-hidden bg-black/40">
+    <div ref={containerRef} className="relative w-full h-full overflow-hidden bg-black">
       {/* ── Poster Image (Initial load & fallback) ────────────────────────── */}
       {posterUrl && !hasError && (
         <img
           src={posterUrl}
           alt={alt}
           style={transformStyle}
-          className={`absolute inset-0 w-full h-full object-cover object-center pointer-events-none transition-opacity duration-300 ${
+          className={`absolute inset-0 ${VIDEO_FRAMING_MEDIA_CLASS} transition-opacity duration-300 ${
             isVideoReady ? "opacity-0" : "opacity-100"
           }`}
           draggable={false}
@@ -91,7 +88,7 @@ export function LazyCardVideo({
           onLoadedData={() => setIsVideoReady(true)}
           onError={handleVideoError}
           style={transformStyle}
-          className={`w-full h-full object-cover object-center pointer-events-none transition-opacity duration-300 ${
+          className={`absolute inset-0 ${VIDEO_FRAMING_MEDIA_CLASS} transition-opacity duration-300 ${
             isVideoReady ? "opacity-100" : "opacity-0"
           } ${className}`}
           draggable={false}

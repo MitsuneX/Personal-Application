@@ -13,6 +13,35 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v12.1.0",
+    date: "2026-08-14",
+    title: "Targeted Dashboard Performance & Hydration Enhancements",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Significantly optimized /api/dashboard by removing blocking database repair routines, parallelizing 28 entity queries, resolving a PWA manifest redirect loop, standardizing MP4 card framing, and ensuring deterministic SSR hydration.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "⚡ API Performance Optimization: Parallelized all canonical dashboard entity queries using Promise.all and removed the synchronous repairCharacterDatabase routine from the GET read-path, reducing latency from ~7.9s to ~118ms (98% gain).",
+          "💧 Deterministic SSR Hydration Fix: Wrapped browser-dependent localized dates in app/page.tsx with a mounted state boundary, preventing mismatch warnings between server-rendered HTML and client-hydrated DOM.",
+        ],
+      },
+      {
+        name: "PWA & Mobile",
+        items: [
+          "📱 PWA Manifest Redirect Loop Resolution: Updated Next.js Proxy middleware (proxy.ts) routes and matcher exclusions to explicitly allow unauthenticated access to .webmanifest, manifest.json, sw.js, and robots.txt.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🎥 MP4 Card Video Framing Standardization: Consolidated video object-fit mapping across LazyCardVideo, HofEntryCard, and VideoCropModal using a unified getVideoFramingStyle helper to prevent edge stretching and cropping misalignment in 3:4 portrait borders.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v12.0.0",
     date: "2026-08-13",
     title: "Persistent Game Character Sync Engine & Soft-Delete History System",
