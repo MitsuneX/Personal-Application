@@ -3,8 +3,9 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HallOfFameEntry, useDashboardStore } from "@/lib/store/dashboardStore";
-import { getGroupForEntry, getGroupDetails, getTypeLabel } from "@/components/cards/HofEntryCard";
+import { HofEntryCard, getGroupForEntry, getGroupDetails, getTypeLabel } from "@/components/cards/HofEntryCard";
 import { getPrestigeTier, getRankMovement } from "@/lib/utils/hofEngine";
+import { getLeaderboardRowAvatarUrl } from "@/lib/utils/mediaResolver";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -12,8 +13,6 @@ import Image from "next/image";
 interface HofLiveLeaderboardProps {
   entries: HallOfFameEntry[]; // Ranks #4 to #N
   isCyber: boolean;
-  onEdit: (entry: HallOfFameEntry) => void;
-  onDelete: (id: string, name: string) => void;
   onOpenProfile: (entry: HallOfFameEntry) => void;
   onCompare: (entry: HallOfFameEntry) => void;
 }
@@ -21,8 +20,6 @@ interface HofLiveLeaderboardProps {
 export function HofLiveLeaderboard({
   entries,
   isCyber,
-  onEdit,
-  onDelete,
   onOpenProfile,
   onCompare,
 }: HofLiveLeaderboardProps) {
@@ -120,7 +117,7 @@ export function HofLiveLeaderboard({
                   [
                     {
                       id: "row-profile",
-                      label: `Open ${entry.name} Profile`,
+                      label: `Open ${entry.name} Dossier`,
                       icon: "👑",
                       onClick: () => onOpenProfile(entry),
                     },
@@ -137,24 +134,12 @@ export function HofLiveLeaderboard({
                       onClick: () => likeHof(entry.id),
                     },
                     {
-                      id: "row-edit",
-                      label: "Edit Entry Details",
-                      icon: "✏️",
-                      onClick: () => onEdit(entry),
-                    },
-                    {
-                      id: "row-chars",
-                      label: "Open Character Directory",
-                      icon: "📚",
-                      onClick: () => router.push(`/characters?id=${entry.id}`),
-                    },
-                    {
-                      id: "row-delete",
-                      label: "Remove from Hall of Fame",
-                      icon: "🗑️",
-                      danger: true,
-                      divider: true,
-                      onClick: () => onDelete(entry.id, entry.name),
+                      id: "row-share",
+                      label: `Copy Profile Link`,
+                      icon: "🔗",
+                      onClick: () => {
+                        navigator.clipboard.writeText(`${window.location.origin}/hall-of-fame?id=${entry.id}`);
+                      },
                     },
                   ],
                   entry.name
@@ -193,25 +178,28 @@ export function HofLiveLeaderboard({
                       <span>{movement.label}</span>
                     </span>
 
-                    {/* Avatar */}
+                    {/* Avatar (1:1 dedicated thumbnail) */}
                     <div
                       onClick={() => onOpenProfile(entry)}
                       className="w-11 h-11 rounded-xl border-2 overflow-hidden relative shrink-0 bg-slate-800 flex items-center justify-center hover:scale-105 transition-transform"
                       style={{ borderColor: group.accentColor }}
                     >
-                      {entry.imageUrl ? (
-                        <Image
-                          src={entry.imageUrl}
-                          alt={entry.name}
-                          fill
-                          className="object-cover"
-                          unoptimized
-                        />
-                      ) : (
-                        <span className="text-xs font-black text-white">
-                          {entry.name.slice(0, 2).toUpperCase()}
-                        </span>
-                      )}
+                      {(() => {
+                        const avatarSrc = getLeaderboardRowAvatarUrl(entry);
+                        return avatarSrc ? (
+                          <Image
+                            src={avatarSrc}
+                            alt={entry.name}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <span className="text-xs font-black text-white">
+                            {entry.name.slice(0, 2).toUpperCase()}
+                          </span>
+                        );
+                      })()}
                     </div>
 
                     {/* Info */}
@@ -269,73 +257,24 @@ export function HofLiveLeaderboard({
           </AnimatePresence>
         </div>
       ) : (
-        /* Cards View (Grid) */
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        /* Cards View (Grid) — 100% Unified with 3:4 Media System & LazyCardVideo */
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center">
           {entries.map((entry, idx) => {
             const actualRank = idx + 4;
-            const prestige = getPrestigeTier(entry, actualRank - 1);
-            const movement = getRankMovement(entry, actualRank);
+            const group = getGroupDetails(getGroupForEntry(entry));
 
             return (
-              <motion.div
-                key={entry.id}
-                layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="p-4 rounded-3xl border space-y-3 relative font-mono cursor-pointer shadow-md transition-all hover:translate-y-[-2px]"
-                style={{
-                  backgroundColor: isCyber ? "rgba(10,15,36,0.6)" : "#FFFFFF",
-                  borderColor: isCyber ? "rgba(255,215,0,0.2)" : "#000000",
-                  borderWidth: isCyber ? "1px" : "2px",
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-0.5 rounded-lg border text-xs font-black bg-amber-500/20 text-amber-400 border-amber-500/40">
-                    #{actualRank}
-                  </span>
-                  <span className={`px-2 py-0.5 rounded-lg border text-[10px] font-black ${movement.badgeBg}`}>
-                    {movement.icon} {movement.label}
-                  </span>
-                </div>
-
-                <div
-                  onClick={() => onOpenProfile(entry)}
-                  className="w-full h-48 sm:h-52 md:h-56 rounded-2xl relative overflow-hidden bg-slate-800 flex items-center justify-center cursor-pointer hover:scale-[1.02] transition-transform duration-200"
-                >
-                  {entry.imageUrl ? (
-                    <Image
-                      src={entry.imageUrl}
-                      alt={entry.name}
-                      fill
-                      className="object-cover object-[center_15%]"
-                      unoptimized
-                    />
-                  ) : (
-                    <span className="text-xl font-black text-white">
-                      {entry.name.slice(0, 2).toUpperCase()}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <strong className="text-sm font-black theme-text-primary block truncate">{entry.name}</strong>
-                  <span className="text-[10px] theme-text-muted block truncate">
-                    {Array.isArray(entry.knownFor) ? entry.knownFor.join(", ") : entry.knownFor}
-                  </span>
-                </div>
-
-                <div className="pt-2 border-t flex items-center justify-between" style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0" }}>
-                  <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black border ${prestige.badgeBg}`}>
-                    {prestige.icon} {prestige.name}
-                  </span>
-                  <button
-                    onClick={() => likeHof(entry.id)}
-                    className="text-xs font-black text-pink-500 flex items-center gap-1 cursor-pointer"
-                  >
-                    ❤️ {entry.likes || 0}
-                  </button>
-                </div>
-              </motion.div>
+              <div key={entry.id} className="w-full flex justify-center max-w-[280px]">
+                <HofEntryCard
+                  entry={entry}
+                  idx={actualRank - 1}
+                  isCyber={isCyber}
+                  group={group}
+                  podiumRank={actualRank}
+                  onOpenProfile={onOpenProfile}
+                  onCompare={onCompare}
+                />
+              </div>
             );
           })}
         </div>

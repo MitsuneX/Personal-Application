@@ -1708,20 +1708,19 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     const gameChar = get().gameCharacters.find((c) => c.id === characterId);
     if (!gameChar) return { liked: false, likesCount: 0 };
 
-    const alreadyLiked = get().userLikedGameCharacterIds.includes(characterId);
-    const newLikedState = !alreadyLiked;
-    const newLikesCount = newLikedState
-      ? (gameChar.likes || 0) + 1
-      : Math.max(0, (gameChar.likes || 0) - 1);
+    // ── Continuous Increment (never toggle off) ──────────────────────────────
+    // Every call always adds +1 — no toggle-off, no decrement.
+    const newLikesCount = (gameChar.likes || 0) + 1;
 
     // Optimistic store update
     set((s) => ({
       gameCharacters: s.gameCharacters.map((c) =>
         c.id === characterId ? { ...c, likes: newLikesCount } : c
       ),
-      userLikedGameCharacterIds: newLikedState
-        ? [...s.userLikedGameCharacterIds, characterId]
-        : s.userLikedGameCharacterIds.filter((id) => id !== characterId),
+      // Always mark as liked — repeated taps never remove from liked set
+      userLikedGameCharacterIds: s.userLikedGameCharacterIds.includes(characterId)
+        ? s.userLikedGameCharacterIds
+        : [...s.userLikedGameCharacterIds, characterId],
     }));
 
     try {
@@ -1733,20 +1732,23 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        // Revert optimistic update
+        // Revert optimistic update on API failure
         set((s) => ({
           gameCharacters: s.gameCharacters.map((c) =>
             c.id === characterId ? { ...c, likes: gameChar.likes } : c
           ),
-          userLikedGameCharacterIds: alreadyLiked
-            ? [...s.userLikedGameCharacterIds, characterId]
-            : s.userLikedGameCharacterIds.filter((id) => id !== characterId),
         }));
         throw new Error(errData.error || "Sign in to like this character.");
       }
 
       const data = await res.json();
-      return { liked: data.liked, likesCount: data.likesCount };
+      // Sync with server-confirmed count
+      set((s) => ({
+        gameCharacters: s.gameCharacters.map((c) =>
+          c.id === characterId ? { ...c, likes: data.likesCount } : c
+        ),
+      }));
+      return { liked: true, likesCount: data.likesCount };
     } catch (err: any) {
       console.error("likeGameCharacter store action error:", err);
       throw err;

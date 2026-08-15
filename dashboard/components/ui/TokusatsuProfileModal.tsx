@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
-import { HallOfFameEntry } from "@/lib/store/dashboardStore";
+import { useDashboardStore, HallOfFameEntry } from "@/lib/store/dashboardStore";
 import {
   normalizeTokusatsuProfile,
 } from "@/lib/data/tokusatsuDataHelper";
@@ -438,11 +438,20 @@ export function TokusatsuProfileModal({ isOpen, entry, onClose, onEdit, onLike }
                         )}
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-                        {onLike && (
-                          <button onClick={() => onLike(entry.id)} className={`px-2.5 py-1 rounded-lg text-[11px] font-bold font-mono transition-all cursor-pointer flex items-center gap-1 border ${isCyber ? "bg-pink-500/20 text-pink-300 border-pink-500/40 hover:bg-pink-500/30" : "bg-pink-300 text-black border-black shadow-[1.5px_1.5px_0_#000] hover:scale-105"}`}>
-                            <span>❤️</span><span>{entry.likes || 0}</span>
-                          </button>
-                        )}
+                        <button
+                          onClick={() => {
+                            if (onLike) onLike(entry.id);
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold font-mono transition-all cursor-pointer flex items-center gap-1 border active:scale-95 ${
+                            isCyber
+                              ? "bg-pink-500/20 text-pink-300 border-pink-500/40 hover:bg-pink-500/30"
+                              : "bg-pink-300 text-black border-black shadow-[1.5px_1.5px_0_#000] hover:scale-105"
+                          }`}
+                          title="Like this legend"
+                        >
+                          <span>❤️</span>
+                          <span>{entry.likes || 0}</span>
+                        </button>
                         {onEdit && (
                           <button onClick={() => { onClose(); onEdit(entry); }} className={`px-2.5 py-1 rounded-lg text-[11px] font-bold font-mono transition-all cursor-pointer border ${isCyber ? "bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30" : "bg-amber-400 text-black border-black shadow-[1.5px_1.5px_0_#000] hover:scale-105"}`}>
                             ✏️ Edit

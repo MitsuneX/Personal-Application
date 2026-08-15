@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { duplicateHofEntry } from "@/lib/data/duplicateHelper";
-import { getCardVideoUrl, getCardImageUrl, getCardVideoPosterUrl, getCardVideoFraming } from "@/lib/utils/mediaResolver";
+import { getCardVideoUrl, getCardImageUrl, getCardVideoPosterUrl, getCardVideoFraming, getCardVideoPosterFraming } from "@/lib/utils/mediaResolver";
 import { LazyCardVideo } from "@/components/cards/LazyCardVideo";
 
 // ─── Constants & Styles ────────────────────────────────────────────────────────
@@ -163,14 +163,15 @@ interface CardProps {
   idx: number;
   isCyber: boolean;
   group: typeof NATIONALITY_GROUPS[0] | typeof OTHER_GROUP;
-  onEdit: (entry: HallOfFameEntry) => void;
-  onDelete: (id: string, name: string) => void;
-  onDuplicate?: (entry: HallOfFameEntry) => void;
   showType?: boolean;
   podiumRank?: number | null;
   onDoubleTap?: (e: React.MouseEvent | React.TouchEvent, id: string) => void;
   onOpenProfile?: (entry: HallOfFameEntry) => void;
   onCompare?: (entry: HallOfFameEntry) => void;
+  // Legacy optional props for backward compatibility
+  onEdit?: (entry: HallOfFameEntry) => void;
+  onDelete?: (id: string, name: string) => void;
+  onDuplicate?: (entry: HallOfFameEntry) => void;
 }
 
 export function HofEntryCard({
@@ -178,9 +179,6 @@ export function HofEntryCard({
   idx,
   isCyber,
   group,
-  onEdit,
-  onDelete,
-  onDuplicate,
   showType = false,
   podiumRank = null,
   onDoubleTap,
@@ -190,25 +188,66 @@ export function HofEntryCard({
   const [imgError, setImgError] = React.useState(false);
   const [videoError, setVideoError] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
-  const { likeHof, updateHof } = useDashboardStore();
+  const [showHeartBurst, setShowHeartBurst] = React.useState(false);
+  const { likeHof } = useDashboardStore();
   const { openContextMenu } = useContextMenu();
   const router = useRouter();
 
   const lastTapRef = useRef<number>(0);
+  const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const executeOpenProfile = () => {
+    if (onOpenProfile) {
+      onOpenProfile(entry);
+    } else {
+      const type = (entry.type || "").toLowerCase();
+      if ((entry as any).isGameCharacterEntry) {
+        router.push(`/game-characters?id=${entry.id}`);
+      } else if (isTokusatsuEntry(entry)) {
+        router.push(`/characters?category=tokusatsu&id=${entry.id}`);
+      } else if (type === "anime") {
+        router.push(`/characters?id=${entry.id}`);
+      } else {
+        router.push(`/hall-of-fame?id=${entry.id}`);
+      }
+    }
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Delay single-click execution slightly (250ms) to distinguish from double-click
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+    }
+    clickTimerRef.current = setTimeout(() => {
+      executeOpenProfile();
+      clickTimerRef.current = null;
+    }, 250);
+  };
+
+  const triggerInstantLike = (e: React.MouseEvent | React.TouchEvent) => {
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+    }
+    if (onDoubleTap) onDoubleTap(e, entry.id);
+    likeHof(entry.id);
+    setShowHeartBurst(true);
+    setTimeout(() => setShowHeartBurst(false), 700);
+  };
 
   const handleDoubleClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (onDoubleTap) onDoubleTap(e, entry.id);
-    likeHof(entry.id);
+    e.stopPropagation();
+    triggerInstantLike(e);
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     const now = Date.now();
-    const DOUBLE_TAP_DELAY = 300;
+    const DOUBLE_TAP_DELAY = 280;
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
       e.preventDefault();
-      if (onDoubleTap) onDoubleTap(e, entry.id);
-      likeHof(entry.id);
+      e.stopPropagation();
+      triggerInstantLike(e);
       lastTapRef.current = 0;
     } else {
       lastTapRef.current = now;
@@ -224,9 +263,7 @@ export function HofEntryCard({
           id: "profile",
           label: `Open ${entry.name} Dossier`,
           icon: "📖",
-          onClick: () => {
-            if (onOpenProfile) onOpenProfile(entry);
-          },
+          onClick: () => executeOpenProfile(),
         },
         {
           id: "compare",
@@ -240,31 +277,19 @@ export function HofEntryCard({
           id: "like",
           label: `Heart ${entry.name}`,
           icon: "❤️",
-          onClick: () => likeHof(entry.id),
-        },
-        {
-          id: "edit",
-          label: "Edit Entry Details",
-          icon: "✏️",
-          onClick: () => onEdit(entry),
-        },
-        {
-          id: "duplicate",
-          label: "Duplicate Entry",
-          icon: "📋",
-          divider: true,
-          onClick: async () => {
-            const cloned = duplicateHofEntry(entry);
-            await updateHof(cloned.id, cloned);
-            if (onDuplicate) onDuplicate(cloned);
+          onClick: () => {
+            likeHof(entry.id);
+            setShowHeartBurst(true);
+            setTimeout(() => setShowHeartBurst(false), 700);
           },
         },
         {
-          id: "delete",
-          label: "Move to History",
-          icon: "📜",
-          danger: true,
-          onClick: () => onDelete(entry.id, entry.name),
+          id: "share",
+          label: `Copy Profile Link`,
+          icon: "🔗",
+          onClick: () => {
+            navigator.clipboard.writeText(`${window.location.origin}/hall-of-fame?id=${entry.id}`);
+          },
         },
       ],
       entry.name
@@ -286,6 +311,10 @@ export function HofEntryCard({
   const cyberStyle = STATUS_STYLE[entry.status] || STATUS_STYLE["GOAT Status"];
   const brutalStyle = BRUTAL_STATUS_STYLE[entry.status] || BRUTAL_STATUS_STYLE["GOAT Status"];
 
+  const isGold = podiumRank === 1;
+  const isSilver = podiumRank === 2;
+  const isBronze = podiumRank === 3;
+
   return (
     <motion.div
       variants={cardVariants}
@@ -297,37 +326,27 @@ export function HofEntryCard({
       className="group relative cursor-pointer select-none overflow-hidden rounded-2xl w-full max-w-[280px]"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onClick={() => {
-        if (onOpenProfile) {
-          onOpenProfile(entry);
-        } else {
-          // Explicit Entity Routing based on type/category
-          const type = (entry.type || "").toLowerCase();
-          
-          if ((entry as any).isGameCharacterEntry) {
-            router.push(`/game-characters?id=${entry.id}`);
-          } else if (isTokusatsuEntry(entry)) {
-            router.push(`/characters?category=tokusatsu&id=${entry.id}`);
-          } else if (type === "anime") {
-            router.push(`/characters?id=${entry.id}`);
-          } else if (type === "actor" || type === "actress" || type === "singer") {
-            router.push(`/hall-of-fame?id=${entry.id}`);
-          } else {
-            // Default explicit fallback if entity type is unmatched but exists in HOF ecosystem
-            router.push(`/hall-of-fame?id=${entry.id}`);
-          }
-        }
-      }}
+      onClick={handleClick}
       onDoubleClick={handleDoubleClick}
       onTouchEnd={handleTouchEnd}
       onContextMenu={handleContextMenu}
       style={{
         aspectRatio: "3/4",
-        border: podiumRank === 1
-          ? (isCyber ? `2px solid #FFD700` : `3.5px solid #000000`)
+        border: isGold
+          ? (isCyber ? `2.5px solid #FFD700` : `3.5px solid #000000`)
+          : isSilver
+          ? (isCyber ? `2px solid rgba(226,232,240,0.8)` : `3px solid #64748B`)
+          : isBronze
+          ? (isCyber ? `2px solid rgba(217,119,6,0.8)` : `3px solid #B45309`)
+          : podiumRank
+          ? (isCyber ? `1.5px solid rgba(0,245,255,0.4)` : `2.5px solid #000000`)
           : (isCyber ? `1.5px solid ${group.accentBorder || "rgba(0,245,255,0.2)"}` : `3px solid #000000`),
-        boxShadow: podiumRank === 1
+        boxShadow: isGold
           ? (isCyber ? `0 0 25px rgba(255,215,0,0.35)` : "6px 6px 0 #000000")
+          : isSilver
+          ? (isCyber ? `0 0 15px rgba(226,232,240,0.25)` : "5px 5px 0 #000000")
+          : isBronze
+          ? (isCyber ? `0 0 15px rgba(217,119,6,0.25)` : "5px 5px 0 #000000")
           : (isCyber ? `0 4px 24px rgba(0,0,0,0.6), 0 0 15px ${group.accentBg}` : "5px 5px 0 #000000"),
         backgroundColor: isCyber ? "#090d1c" : "#1A1A1A",
       }}
@@ -343,6 +362,7 @@ export function HofEntryCard({
             videoUrl={videoUrl!}
             posterUrl={getCardVideoPosterUrl(entry)}
             framing={getCardVideoFraming(entry)}
+            posterFraming={getCardVideoPosterFraming(entry)}
             alt={entry.name}
             onError={() => setVideoError(true)}
           />
@@ -387,16 +407,35 @@ export function HofEntryCard({
         <div className="flex items-center gap-1.5 flex-wrap">
           {podiumRank ? (
             <span
-              className="px-2.5 py-0.5 rounded-full text-[10px] font-black font-mono shadow-md border"
+              className="px-2.5 py-0.5 rounded-full text-[10px] font-black font-mono shadow-md border flex items-center gap-1"
               style={{
-                backgroundColor: isCyber ? "rgba(255,215,0,0.2)" : "#FEF08A",
-                color: isCyber ? "#FFD700" : "#854D0E",
-                borderColor: isCyber ? "#FFD700" : "#000",
+                backgroundColor: isGold
+                  ? (isCyber ? "rgba(255,215,0,0.25)" : "#FEF08A")
+                  : isSilver
+                  ? (isCyber ? "rgba(226,232,240,0.25)" : "#F1F5F9")
+                  : isBronze
+                  ? (isCyber ? "rgba(217,119,6,0.25)" : "#FFEDD5")
+                  : (isCyber ? "rgba(0,245,255,0.15)" : "#E0F2FE"),
+                color: isGold
+                  ? (isCyber ? "#FFD700" : "#854D0E")
+                  : isSilver
+                  ? (isCyber ? "#E2E8F0" : "#334155")
+                  : isBronze
+                  ? (isCyber ? "#F59E0B" : "#9A3412")
+                  : (isCyber ? "#00F5FF" : "#0369A1"),
+                borderColor: isGold
+                  ? (isCyber ? "#FFD700" : "#000")
+                  : isSilver
+                  ? (isCyber ? "#E2E8F0" : "#000")
+                  : isBronze
+                  ? (isCyber ? "#F59E0B" : "#000")
+                  : (isCyber ? "#00F5FF" : "#000"),
                 borderWidth: isCyber ? "1px" : "2px",
                 backdropFilter: "blur(8px)",
               }}
             >
-              👑 #{podiumRank}
+              <span>{isGold ? "👑" : isSilver ? "🥈" : isBronze ? "🥉" : "🎖️"}</span>
+              <span>#{podiumRank}</span>
             </span>
           ) : (
             <span
@@ -412,7 +451,7 @@ export function HofEntryCard({
           )}
         </div>
 
-        {/* Interactive Heart Button */}
+        {/* Interactive Heart Button (Supports Continuous Likes) */}
         <motion.button
           type="button"
           whileHover={{ scale: 1.1 }}
@@ -420,8 +459,10 @@ export function HofEntryCard({
           onClick={(e) => {
             e.stopPropagation();
             likeHof(entry.id);
+            setShowHeartBurst(true);
+            setTimeout(() => setShowHeartBurst(false), 700);
           }}
-          className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-black flex items-center gap-1 transition-all cursor-pointer shadow-md ${
+          className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black flex items-center gap-1 transition-all cursor-pointer shadow-md ${
             isCyber
               ? "bg-black/60 text-pink-400 border border-pink-500/40 backdrop-blur-md hover:bg-pink-500/30"
               : "bg-amber-200 text-black border-2 border-black shadow-[2px_2px_0_#000] hover:bg-amber-300"
@@ -431,6 +472,21 @@ export function HofEntryCard({
           <span>{entry.likes || 0}</span>
         </motion.button>
       </div>
+
+      {/* Instant Heart Burst Animation Feedback on Like */}
+      <AnimatePresence>
+        {showHeartBurst && (
+          <motion.div
+            initial={{ scale: 0.5, opacity: 1, y: 0 }}
+            animate={{ scale: 1.8, opacity: 0, y: -40 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="absolute inset-0 flex items-center justify-center pointer-events-none z-50 text-5xl"
+          >
+            💖
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Layer 3: Bottom Content Overlay ── */}
       <div className="absolute bottom-0 left-0 right-0 z-30 p-3.5 flex flex-col gap-1.5 pointer-events-none">
@@ -493,16 +549,6 @@ export function HofEntryCard({
             ))}
           </div>
         )}
-      </div>
-
-      {/* Edit Quick Action Hover Control (Top Left) */}
-      <div className="absolute top-2 left-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-40">
-        <button
-          onClick={(e) => { e.stopPropagation(); onEdit(entry); }}
-          className="px-2 py-0.5 text-[9px] font-black rounded-md bg-black/80 text-cyan-300 border border-cyan-500/40 backdrop-blur-md cursor-pointer hover:bg-black"
-        >
-          ✏️ Edit
-        </button>
       </div>
     </motion.div>
   );

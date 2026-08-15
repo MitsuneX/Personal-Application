@@ -1,14 +1,14 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { GameCharacterEntry, useDashboardStore } from "@/lib/store/dashboardStore";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { useToast } from "@/components/ui/ToastProvider";
 import { duplicateGameCharacter } from "@/lib/data/duplicateHelper";
 import { getElementTheme } from "@/lib/utils/elementTheme";
-import { getCardVideoUrl, getCardImageUrl, getCardVideoPosterUrl, getCardVideoFraming } from "@/lib/utils/mediaResolver";
+import { getCardVideoUrl, getCardImageUrl, getCardVideoPosterUrl, getCardVideoFraming, getCardVideoPosterFraming } from "@/lib/utils/mediaResolver";
 import { LazyCardVideo } from "@/components/cards/LazyCardVideo";
 
 function rarityStars(r?: string) {
@@ -62,6 +62,7 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
   const videoUrl = !videoError ? getCardVideoUrl(character) : null;
   const videoPoster = getCardVideoPosterUrl(character);
   const videoFraming = getCardVideoFraming(character);
+  const posterFraming = getCardVideoPosterFraming(character);
   const cardImg = !imgError ? (getCardImageUrl(character) || character.cardImage || character.splashArt) : null;
   const avatar = character.avatarUrl || character.cardImage;
   const isLinked = Boolean(character.gameId && parentGame);
@@ -214,6 +215,49 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
     openContextMenu(e, items, character.name);
   };
 
+  const lastTapRef = React.useRef<number>(0);
+  const clickTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const [showHeartBurst, setShowHeartBurst] = React.useState(false);
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+    }
+    clickTimerRef.current = setTimeout(() => {
+      onClick(character);
+      clickTimerRef.current = null;
+    }, 250);
+  };
+
+  const triggerInstantLike = (e: React.MouseEvent | React.TouchEvent) => {
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+    }
+    likeGameCharacter(character.id).catch(() => {});
+    setShowHeartBurst(true);
+    setTimeout(() => setShowHeartBurst(false), 700);
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    triggerInstantLike(e);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 280;
+    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+      e.preventDefault();
+      e.stopPropagation();
+      triggerInstantLike(e);
+      lastTapRef.current = 0;
+    } else {
+      lastTapRef.current = now;
+    }
+  };
+
   return (
     <motion.div
       layout
@@ -222,7 +266,9 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
       exit={{ opacity: 0, scale: 0.88 }}
       transition={{ duration: 0.28, ease: [0.25, 0.1, 0.25, 1] }}
       whileHover="hover"
-      onClick={() => onClick(character)}
+      onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
+      onTouchEnd={handleTouchEnd}
       onContextMenu={handleContextMenu}
       className="relative cursor-pointer select-none overflow-hidden rounded-2xl"
       style={{
@@ -236,6 +282,21 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
         backgroundColor: isCyber ? "#090d1c" : "#FFFFFF",
       }}
     >
+      {/* Instant Heart Burst Animation Feedback on Like */}
+      <AnimatePresence>
+        {showHeartBurst && (
+          <motion.div
+            initial={{ scale: 0.5, opacity: 1, y: 0 }}
+            animate={{ scale: 1.8, opacity: 0, y: -40 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="absolute inset-0 flex items-center justify-center pointer-events-none z-50 text-5xl"
+          >
+            💖
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Artwork layer ────────────────────────────────────────────── */}
       <motion.div
         className="absolute inset-0 z-0"
@@ -247,6 +308,7 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
             videoUrl={videoUrl!}
             posterUrl={videoPoster}
             framing={videoFraming}
+            posterFraming={posterFraming}
             alt={character.name}
             onError={() => setVideoError(true)}
           />

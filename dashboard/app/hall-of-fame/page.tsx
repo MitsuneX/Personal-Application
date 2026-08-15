@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore, HallOfFameEntry } from "@/lib/store/dashboardStore";
-import { HofEditorModal } from "@/components/ui/HofEditorModal";
+
 import { HofProfileModal } from "@/components/ui/HofProfileModal";
 import { HofCompareModal } from "@/components/ui/HofCompareModal";
 import { HofPodiumSection } from "@/components/hof/HofPodiumSection";
@@ -16,22 +16,20 @@ import { HofAnalyticsDashboard } from "@/components/hof/HofAnalyticsDashboard";
 import { HofActivityFeed } from "@/components/hof/HofActivityFeed";
 import { HofLiveLeaderboard } from "@/components/hof/HofLiveLeaderboard";
 import { useRouter } from "next/navigation";
-import { useConfirm } from "@/lib/context/ConfirmContext";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import {
   computeHallRecords,
   computeHallAnalytics,
   generateActivityFeed,
-  getChampionshipTimeline,
+  computeChampionshipHistory,
   getPrestigeTier,
 } from "@/lib/utils/hofEngine";
 
 export default function HallOfFamePage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { hallOfFame = [], games = [], gameCharacters = [], hallEvents = [], championshipHistory = [], deleteHof, likeHof } = useDashboardStore();
+  const { hallOfFame = [], games = [], gameCharacters = [], hallEvents = [], championshipHistory = [], likeHof } = useDashboardStore();
   const router = useRouter();
-  const { confirm } = useConfirm();
   const { openContextMenu } = useContextMenu();
 
   // Dropdown Filter Toolbar State
@@ -46,8 +44,6 @@ export default function HallOfFamePage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Modals State
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<HallOfFameEntry | null>(null);
   const [profileModalEntry, setProfileModalEntry] = useState<HallOfFameEntry | null>(null);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [comparedEntries, setComparedEntries] = useState<HallOfFameEntry[]>([]);
@@ -72,37 +68,6 @@ export default function HallOfFamePage() {
     return () => window.removeEventListener("recalculate-goat-rankings", handleRecalc);
   }, [handleResetFilters]);
 
-  // Handlers
-  const handleEdit = useCallback((entry: HallOfFameEntry) => {
-    setSelectedEntry(entry);
-    setEditorOpen(true);
-  }, []);
-
-  const handleDelete = useCallback(
-    (id: string, name: string) => {
-      const entry = hallOfFame.find((h) => h.id === id);
-      confirm({
-        title: `Move "${name}" to History?`,
-        message: `Moving "${name}" to History removes them from the main Hall of Fame list. You can view or restore them anytime from top-bar History.`,
-        variant: "warning",
-        confirmText: "Move to History",
-        itemPreview: {
-          title: name,
-          subtitle: `${entry?.type || "Media"} · ${entry?.nationality || "Global"}`,
-          description: Array.isArray(entry?.knownFor) ? entry.knownFor.join(", ") : entry?.knownFor,
-          imageUrl: entry?.imageUrl,
-          icon: "📜",
-          category: entry?.type,
-        },
-        successToast: `✓ Moved "${name}" to History.`,
-        onConfirm: async () => {
-          await deleteHof(id);
-        },
-      });
-    },
-    [confirm, deleteHof, hallOfFame]
-  );
-
   const handleAddToCompare = (entry: HallOfFameEntry) => {
     if (!comparedEntries.some((c) => c.id === entry.id)) {
       if (comparedEntries.length >= 4) {
@@ -117,6 +82,7 @@ export default function HallOfFamePage() {
   // Map Game Characters to HallOfFameEntry interface for Game category rankings
   const gameHofEntries = useMemo(() => {
     return gameCharacters.map((gc) => ({
+      ...gc,
       id: `gc-${gc.id}`,
       gameCharacterId: gc.id,
       name: gc.name,
@@ -126,7 +92,10 @@ export default function HallOfFamePage() {
       nationality: gc.nation || gc.gameName || "Game",
       singerType: gc.gameName || undefined,
       note: gc.notes || undefined,
+      // Avatar resolution: 1:1 circle uses avatarUrl → portraitUrl; card artwork uses cardImage
+      avatarUrl: gc.avatarUrl || (gc as any).portraitUrl || undefined,
       imageUrl: gc.cardImage || gc.avatarUrl || gc.splashArt || undefined,
+      portraitUrl: (gc as any).portraitUrl || undefined,
       rank: gc.rank || null,
       likes: gc.likes || 0,
       isChampion: false,
@@ -135,19 +104,43 @@ export default function HallOfFamePage() {
       gameName: gc.gameName,
       isFeatured: gc.isFeatured,
       isGameCharacterEntry: true,
+      stats: gc.stats,
+      cropData: (gc.stats as any)?.cropData || (gc as any).cropData,
+      videoFraming: (gc.stats as any)?.videoFraming || (gc as any).videoFraming,
+      posterFraming: (gc.stats as any)?.cropData?.posterFraming || (gc as any).posterFraming,
+      cardVideo: (gc as any).cardVideo || (gc.stats as any)?.cardVideo,
+      previewVideo: (gc as any).previewVideo || (gc.stats as any)?.previewVideo,
+      videoUrl: (gc as any).videoUrl || (gc.stats as any)?.videoUrl,
+      customPosterUrl:
+        (gc.stats as any)?.cropData?.customPosterUrl ||
+        (gc.stats as any)?.cropData?.cardVideoCrop?.customPosterUrl ||
+        (gc as any).customPosterUrl,
+      details: (gc as any).details || gc.stats,
     }));
   }, [gameCharacters]);
 
   // Helper filters
   const sortedList = useMemo(() => {
-    let list: any[] = [...hallOfFame];
+    const normalizedHall = hallOfFame.map((h) => ({
+      ...h,
+      avatarUrl:
+        h.avatarUrl ||
+        (h.details as any)?.avatarUrl ||
+        (h.details as any)?.profileAvatarUrl ||
+        (h.details as any)?.avatar ||
+        (h as any).stats?.avatarUrl ||
+        (h as any).stats?.cropData?.avatarCrop?.originalUrl ||
+        undefined,
+    }));
+
+    let list: any[] = [...normalizedHall];
 
     // Category filter
     if (categoryFilter === "game") {
       // Combine game characters with game-related hall of fame entries
       list = [
         ...gameHofEntries,
-        ...hallOfFame.filter(
+        ...normalizedHall.filter(
           (e) =>
             (e as any).gameName ||
             (Array.isArray(e.knownFor) && e.knownFor.some((k: string) => games.some((g) => k.toLowerCase().includes(g.game.toLowerCase()))))
@@ -263,17 +256,20 @@ export default function HallOfFamePage() {
   }, [hallOfFame]);
 
   const hallRecords = useMemo(
-    () => computeHallRecords(hallOfFame, championshipHistory, hallEvents),
-    [hallOfFame, championshipHistory, hallEvents]
+    () => computeHallRecords(hallOfFame, championshipHistory, hallEvents, categoryFilter),
+    [hallOfFame, championshipHistory, hallEvents, categoryFilter]
   );
-  const hallAnalytics = useMemo(() => computeHallAnalytics(hallOfFame), [hallOfFame]);
+  const hallAnalytics = useMemo(
+    () => computeHallAnalytics(hallOfFame, gameCharacters, games),
+    [hallOfFame, gameCharacters, games]
+  );
   const activityFeed = useMemo(
     () => generateActivityFeed(hallOfFame, hallEvents),
     [hallOfFame, hallEvents]
   );
   const championshipTimeline = useMemo(
-    () => getChampionshipTimeline(hallOfFame, championshipHistory),
-    [hallOfFame, championshipHistory]
+    () => computeChampionshipHistory(hallOfFame, championshipHistory, categoryFilter),
+    [hallOfFame, championshipHistory, categoryFilter]
   );
 
   // Top 3 Podium
@@ -439,8 +435,6 @@ export default function HallOfFamePage() {
             top2={top2}
             top3={top3}
             isCyber={isCyber}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
             onOpenProfile={(e) => setProfileModalEntry(e)}
             onCompare={(e) => handleAddToCompare(e)}
             onContextMenu={handlePageContextMenu}
@@ -448,10 +442,27 @@ export default function HallOfFamePage() {
         </div>
 
         {/* ── 4. HALL ACHIEVEMENTS & RECORDS SHOWCASE ── */}
-        <HofRecordsSection records={hallRecords} isCyber={isCyber} />
+        <HofRecordsSection
+          records={hallRecords}
+          hallList={hallOfFame}
+          championshipHistory={championshipHistory}
+          hallEvents={hallEvents}
+          gameCharacters={gameCharacters}
+          isCyber={isCyber}
+          activeCategoryFilter={categoryFilter}
+          activeCategoryLabel={categoryFilter !== "all" ? (categoryFilter.charAt(0).toUpperCase() + categoryFilter.slice(1)) : "Overall Showcase"}
+        />
 
         {/* ── 5. CHAMPIONSHIP HISTORY TIMELINE ── */}
-        <HofTimelineSection timeline={championshipTimeline} isCyber={isCyber} />
+        <HofTimelineSection
+          timeline={championshipTimeline}
+          hallList={hallOfFame}
+          championshipHistory={championshipHistory}
+          gameCharacters={gameCharacters}
+          isCyber={isCyber}
+          activeCategoryFilter={categoryFilter}
+          activeCategoryLabel={categoryFilter !== "all" ? (categoryFilter.charAt(0).toUpperCase() + categoryFilter.slice(1)) : "Overall Showcase"}
+        />
 
         {/* ── 6. VISUAL MUSEUM ANALYTICS DASHBOARD ── */}
         <HofAnalyticsDashboard analytics={hallAnalytics} isCyber={isCyber} />
@@ -463,24 +474,15 @@ export default function HallOfFamePage() {
         <HofLiveLeaderboard
           entries={restOfList}
           isCyber={isCyber}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
           onOpenProfile={(e) => setProfileModalEntry(e)}
           onCompare={(e) => handleAddToCompare(e)}
         />
 
         {/* ── Modals ── */}
-        <HofEditorModal
-          isOpen={editorOpen}
-          onClose={() => setEditorOpen(false)}
-          entryToEdit={selectedEntry}
-        />
-
         <HofProfileModal
           isOpen={!!profileModalEntry}
           onClose={() => setProfileModalEntry(null)}
           entry={profileModalEntry}
-          onEdit={handleEdit}
           onLike={(id) => likeHof(id)}
         />
 

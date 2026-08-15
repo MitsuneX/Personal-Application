@@ -6,7 +6,7 @@ import { OverlayPortal } from "@/components/ui/OverlayPortal";
 import { Z_INDEX } from "@/components/ui/ViewportBoundary";
 import { useTheme } from "@/lib/theme";
 import { useToast } from "@/components/ui/ToastProvider";
-import { getVideoFramingStyle, VIDEO_FRAMING_MEDIA_CLASS } from "@/lib/utils/mediaResolver";
+import { VideoFraming, getVideoFramingStyle, VIDEO_FRAMING_MEDIA_CLASS } from "@/lib/utils/mediaResolver";
 
 export interface VideoCropData {
   x: number;               // -60% to 60%
@@ -16,6 +16,7 @@ export interface VideoCropData {
   posterUrl?: string;      // Generated poster frame URL
   posterTimestamp?: number;// Video playback timestamp (seconds) used for poster frame
   customPosterUrl?: string;// Optional user-uploaded custom poster image
+  posterFraming?: VideoFraming; // Optional independent framing for custom poster
   originalUrl?: string;    // Preserved source MP4 URL
 }
 
@@ -46,11 +47,19 @@ export function VideoCropModal({
   const containerRef = useRef<HTMLDivElement>(null);
   const customPosterInputRef = useRef<HTMLInputElement>(null);
 
-  // ── Default: Neutral Zoom 1.0 for new uploads (Full Source Video First) ───
+  // ── Framing Mode: "video" or "poster" ───────────────────────────────────────
+  const [activeMode, setActiveMode] = useState<"video" | "poster">("video");
+
+  // ── Video Framing State ───
   const [x, setX] = useState<number>(0);
   const [y, setY] = useState<number>(0);
   const [zoom, setZoom] = useState<number>(1);
+
+  // ── Custom Poster State & Framing ───
   const [customPosterUrl, setCustomPosterUrl] = useState<string | null>(null);
+  const [posterX, setPosterX] = useState<number>(0);
+  const [posterY, setPosterY] = useState<number>(0);
+  const [posterZoom, setPosterZoom] = useState<number>(1);
 
   const [isPlaying, setIsPlaying] = useState(true);
   const [duration, setDuration] = useState(0);
@@ -62,13 +71,20 @@ export function VideoCropModal({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isUploadingPoster, setIsUploadingPoster] = useState(false);
 
-  // ── Sync initial values: New uploads start at neutral 1.0 zoom (Full Source) ──
+  // ── Sync initial values ──
   useEffect(() => {
     if (isOpen) {
       setX(initialCropData?.x !== undefined ? initialCropData.x : 0);
       setY(initialCropData?.y !== undefined ? initialCropData.y : 0);
       setZoom(initialCropData?.zoom !== undefined ? initialCropData.zoom : 1.0);
       setCustomPosterUrl(initialCropData?.customPosterUrl || null);
+
+      const pFraming = initialCropData?.posterFraming;
+      setPosterX(pFraming?.x !== undefined ? pFraming.x : 0);
+      setPosterY(pFraming?.y !== undefined ? pFraming.y : 0);
+      setPosterZoom(pFraming?.zoom !== undefined ? pFraming.zoom : 1.0);
+
+      setActiveMode("video");
       setIsPlaying(true);
       setIsProcessing(false);
     }
@@ -99,7 +115,10 @@ export function VideoCropModal({
   const handlePointerDown = (e: React.PointerEvent) => {
     setIsDragging(true);
     setDragStart({ x: e.clientX, y: e.clientY });
-    setInitialPos({ x, y });
+    setInitialPos({
+      x: activeMode === "video" ? x : posterX,
+      y: activeMode === "video" ? y : posterY,
+    });
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
 
@@ -117,8 +136,16 @@ export function VideoCropModal({
     const newX = Math.min(60, Math.max(-60, initialPos.x + pctX));
     const newY = Math.min(60, Math.max(-60, initialPos.y + pctY));
 
-    setX(Math.round(newX * 10) / 10);
-    setY(Math.round(newY * 10) / 10);
+    const roundedX = Math.round(newX * 10) / 10;
+    const roundedY = Math.round(newY * 10) / 10;
+
+    if (activeMode === "video") {
+      setX(roundedX);
+      setY(roundedY);
+    } else {
+      setPosterX(roundedX);
+      setPosterY(roundedY);
+    }
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
@@ -149,7 +176,8 @@ export function VideoCropModal({
       const json = await res.json();
       if (json.success && json.url) {
         setCustomPosterUrl(json.url);
-        toastSuccess("Custom poster uploaded successfully!");
+        setActiveMode("poster");
+        toastSuccess("Custom poster uploaded! You can now position and frame it.");
       } else {
         throw new Error(json.error || "Poster upload failed.");
       }
@@ -163,15 +191,27 @@ export function VideoCropModal({
 
   // ── Framing Helpers ──────────────────────────────────────────────────────
   const handleReset = () => {
-    setX(0);
-    setY(0);
-    setZoom(1.0); // Full source video view
+    if (activeMode === "video") {
+      setX(0);
+      setY(0);
+      setZoom(1.0);
+    } else {
+      setPosterX(0);
+      setPosterY(0);
+      setPosterZoom(1.0);
+    }
   };
 
   const handleFill = () => {
-    setZoom(1.35); // Fill 3:4 crop boundary
-    setX(0);
-    setY(0);
+    if (activeMode === "video") {
+      setZoom(1.35);
+      setX(0);
+      setY(0);
+    } else {
+      setPosterZoom(1.35);
+      setPosterX(0);
+      setPosterY(0);
+    }
   };
 
   // ── Poster Capture & Confirmation ───────────────────────────────────────
@@ -218,7 +258,6 @@ export function VideoCropModal({
           });
         }
       } catch (err) {
-        // Safe CORS / Canvas export fallback — does not corrupt character record
         console.warn("[VideoCropModal] Canvas poster capture skipped (CORS or canvas error):", err);
       }
     }
@@ -230,14 +269,26 @@ export function VideoCropModal({
       aspect,
       posterTimestamp: currentTime,
       customPosterUrl: customPosterUrl || undefined,
+      posterFraming: customPosterUrl
+        ? {
+            x: posterX,
+            y: posterY,
+            zoom: posterZoom,
+            aspect,
+          }
+        : undefined,
       originalUrl: videoSrc || undefined,
     };
 
     onConfirm(cropDataResult, posterBlob);
     setIsProcessing(false);
-  }, [x, y, zoom, aspect, currentTime, customPosterUrl, videoSrc, onConfirm]);
+  }, [x, y, zoom, aspect, currentTime, customPosterUrl, posterX, posterY, posterZoom, videoSrc, onConfirm]);
 
   if (!isOpen || !videoSrc) return null;
+
+  const curX = activeMode === "video" ? x : posterX;
+  const curY = activeMode === "video" ? y : posterY;
+  const curZoom = activeMode === "video" ? zoom : posterZoom;
 
   return (
     <OverlayPortal>
@@ -284,7 +335,7 @@ export function VideoCropModal({
                     {title}
                   </h2>
                   <p className="text-[11px] font-mono opacity-60">
-                    Full Source Video • Position & Scale for 3:4 Card
+                    {activeMode === "video" ? "Video Frame • Position & Scale for 3:4 Card" : "Custom Poster • Position & Scale for 3:4 Card"}
                   </p>
                 </div>
               </div>
@@ -302,6 +353,44 @@ export function VideoCropModal({
               </button>
             </div>
 
+            {/* Mode Switcher Tabs (Shown when custom poster exists) */}
+            {customPosterUrl && (
+              <div
+                className="px-5 py-2 border-b flex items-center gap-2"
+                style={{
+                  backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#F1F5F9",
+                  borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setActiveMode("video")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all cursor-pointer ${
+                    activeMode === "video"
+                      ? isCyber
+                        ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+                        : "bg-blue-600 text-white font-black shadow-sm"
+                      : "opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  🎬 Video Frame ({x}%, {y}%, {zoom.toFixed(2)}x)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveMode("poster")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all cursor-pointer ${
+                    activeMode === "poster"
+                      ? isCyber
+                        ? "bg-pink-500/20 text-pink-300 border border-pink-500/40"
+                        : "bg-pink-600 text-white font-black shadow-sm"
+                      : "opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  📷 Custom Poster Frame ({posterX}%, {posterY}%, {posterZoom.toFixed(2)}x)
+                </button>
+              </div>
+            )}
+
             {/* Helper Banner */}
             <div
               className="px-4 py-2 border-b text-[11px] font-mono font-bold flex items-center gap-2"
@@ -312,10 +401,14 @@ export function VideoCropModal({
               }}
             >
               <span>ℹ️</span>
-              <span>Full Source Video shown. Drag and zoom to position inside the 3:4 card boundary.</span>
+              <span>
+                {activeMode === "video"
+                  ? "Full Source Video shown. Drag and zoom to position inside the 3:4 card boundary."
+                  : "Custom Poster shown. Drag and zoom to position inside the 3:4 card boundary."}
+              </span>
             </div>
 
-            {/* Body / Video Preview Area */}
+            {/* Body / Media Preview Area */}
             <div className="p-4 sm:p-5 flex flex-col items-center gap-4 overflow-y-auto">
               {/* 3:4 Aspect Ratio Viewport Container */}
               <div
@@ -326,33 +419,47 @@ export function VideoCropModal({
                 className="relative w-60 sm:w-64 rounded-2xl overflow-hidden shadow-xl border cursor-grab active:cursor-grabbing select-none shrink-0"
                 style={{
                   aspectRatio: "3/4",
-                  borderColor: isCyber ? "#00F5FF" : "#000000",
+                  borderColor: isCyber ? (activeMode === "video" ? "#00F5FF" : "#FF69B4") : "#000000",
                   borderWidth: isCyber ? "2px" : "3.5px",
-                  boxShadow: isCyber ? "0 0 30px rgba(0,245,255,0.25)" : "6px 6px 0 #000000",
+                  boxShadow: isCyber
+                    ? activeMode === "video"
+                      ? "0 0 30px rgba(0,245,255,0.25)"
+                      : "0 0 30px rgba(255,105,180,0.25)"
+                    : "6px 6px 0 #000000",
                   backgroundColor: "#000000",
                 }}
               >
-                {/* Framed Video */}
-                <video
-                  ref={videoRef}
-                  src={videoSrc}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  onLoadedMetadata={() => {
-                    if (videoRef.current) {
-                      setDuration(videoRef.current.duration || 0);
-                    }
-                  }}
-                  onTimeUpdate={() => {
-                    if (videoRef.current && !isDragging) {
-                      setCurrentTime(videoRef.current.currentTime || 0);
-                    }
-                  }}
-                  style={getVideoFramingStyle({ x, y, zoom })}
-                  className={VIDEO_FRAMING_MEDIA_CLASS}
-                />
+                {/* Media rendering based on active mode */}
+                {activeMode === "video" ? (
+                  <video
+                    ref={videoRef}
+                    src={videoSrc}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    onLoadedMetadata={() => {
+                      if (videoRef.current) {
+                        setDuration(videoRef.current.duration || 0);
+                      }
+                    }}
+                    onTimeUpdate={() => {
+                      if (videoRef.current && !isDragging) {
+                        setCurrentTime(videoRef.current.currentTime || 0);
+                      }
+                    }}
+                    style={getVideoFramingStyle({ x, y, zoom })}
+                    className={VIDEO_FRAMING_MEDIA_CLASS}
+                  />
+                ) : (
+                  <img
+                    src={customPosterUrl!}
+                    alt="Custom Poster Preview"
+                    style={getVideoFramingStyle({ x: posterX, y: posterY, zoom: posterZoom })}
+                    className={VIDEO_FRAMING_MEDIA_CLASS}
+                    draggable={false}
+                  />
+                )}
 
                 {/* Grid Overlay Guide */}
                 <div className="absolute inset-0 pointer-events-none border border-dashed border-white/20 grid grid-cols-3 grid-rows-3 opacity-40">
@@ -362,64 +469,77 @@ export function VideoCropModal({
                   <div className="border-r border-b border-white/20" />
                   <div className="border-r border-b border-white/20" />
                   <div className="border-b border-white/20" />
-                  <div className="border-r border-white/20" />
-                  <div className="border-r border-white/20" />
+                  <div className="border-r border-b border-white/20" />
+                  <div className="border-r border-b border-white/20" />
                   <div />
                 </div>
 
                 {/* Drag Hint & Zoom Badge */}
                 <div className="absolute bottom-2 left-2 right-2 text-center pointer-events-none flex items-center justify-center gap-1.5">
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-black/70 text-white/90 backdrop-blur-sm border border-white/10">
-                    ✋ Drag to Pan ({x}%, {y}%)
+                    ✋ Drag ({curX}%, {curY}%)
                   </span>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-black/70 text-cyan-300 backdrop-blur-sm border border-cyan-500/30">
-                    {zoom.toFixed(2)}x
+                    {curZoom.toFixed(2)}x
                   </span>
                 </div>
               </div>
 
-              {/* Video Scrub Bar & Playback Controls */}
-              <div className="w-full space-y-3">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={togglePlay}
-                    className="w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center shrink-0 border cursor-pointer"
-                    style={{
-                      backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#E2E8F0",
-                      borderColor: isCyber ? "#00F5FF" : "#000000",
-                      color: isCyber ? "#00F5FF" : "#000000",
-                    }}
-                  >
-                    {isPlaying ? "⏸️" : "▶️"}
-                  </button>
+              {/* Video Scrub Bar & Playback Controls (Video mode only) */}
+              {activeMode === "video" && (
+                <div className="w-full space-y-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={togglePlay}
+                      className="w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center shrink-0 border cursor-pointer"
+                      style={{
+                        backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#E2E8F0",
+                        borderColor: isCyber ? "#00F5FF" : "#000000",
+                        color: isCyber ? "#00F5FF" : "#000000",
+                      }}
+                    >
+                      {isPlaying ? "⏸️" : "▶️"}
+                    </button>
 
-                  <input
-                    type="range"
-                    min={0}
-                    max={duration || 100}
-                    step={0.1}
-                    value={currentTime}
-                    onChange={handleSeek}
-                    className="flex-1 accent-cyan-400 cursor-pointer h-2 bg-black/40 rounded-lg"
-                  />
+                    <input
+                      type="range"
+                      min={0}
+                      max={duration || 100}
+                      step={0.1}
+                      value={currentTime}
+                      onChange={handleSeek}
+                      className="flex-1 accent-cyan-400 cursor-pointer h-2 bg-black/40 rounded-lg"
+                    />
 
-                  <span className="text-[11px] font-mono opacity-70 shrink-0 w-12 text-right">
-                    {currentTime.toFixed(1)}s
-                  </span>
+                    <span className="text-[11px] font-mono opacity-70 shrink-0 w-12 text-right">
+                      {currentTime.toFixed(1)}s
+                    </span>
+                  </div>
                 </div>
+              )}
 
-                {/* Zoom & Framing Controls */}
+              {/* Zoom & Framing Controls */}
+              <div className="w-full space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/10">
                   <div className="flex items-center gap-2 flex-1 min-w-[180px]">
-                    <span className="text-xs font-mono font-bold opacity-70 shrink-0">Zoom ({zoom.toFixed(2)}x):</span>
+                    <span className="text-xs font-mono font-bold opacity-70 shrink-0">
+                      {activeMode === "video" ? "Video Zoom" : "Poster Zoom"} ({curZoom.toFixed(2)}x):
+                    </span>
                     <input
                       type="range"
                       min={1}
                       max={3}
                       step={0.05}
-                      value={zoom}
-                      onChange={(e) => setZoom(parseFloat(e.target.value))}
+                      value={curZoom}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        if (activeMode === "video") {
+                          setZoom(val);
+                        } else {
+                          setPosterZoom(val);
+                        }
+                      }}
                       className="flex-1 accent-cyan-400 cursor-pointer h-2 bg-black/40 rounded-lg"
                     />
                   </div>
@@ -434,9 +554,9 @@ export function VideoCropModal({
                         borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000000",
                         color: isCyber ? "#CBD5E1" : "#000000",
                       }}
-                      title="Reset to unscaled Full Source Video (1.0x)"
+                      title="Reset to unscaled 1.0x"
                     >
-                      Reset (Full Source)
+                      Reset
                     </button>
                     <button
                       type="button"
@@ -478,7 +598,10 @@ export function VideoCropModal({
                     {customPosterUrl ? (
                       <button
                         type="button"
-                        onClick={() => setCustomPosterUrl(null)}
+                        onClick={() => {
+                          setCustomPosterUrl(null);
+                          setActiveMode("video");
+                        }}
                         className="px-2.5 py-1 text-[10px] font-mono text-red-400 border border-red-400/30 rounded-lg hover:bg-red-500/10 cursor-pointer"
                       >
                         ✕ Remove Custom

@@ -11,8 +11,6 @@ interface HofPodiumSectionProps {
   top2?: HallOfFameEntry;
   top3?: HallOfFameEntry;
   isCyber: boolean;
-  onEdit: (entry: HallOfFameEntry) => void;
-  onDelete: (id: string, name: string) => void;
   onOpenProfile: (entry: HallOfFameEntry) => void;
   onCompare: (entry: HallOfFameEntry) => void;
   onContextMenu: (e: React.MouseEvent) => void;
@@ -23,8 +21,6 @@ export function HofPodiumSection({
   top2,
   top3,
   isCyber,
-  onEdit,
-  onDelete,
   onOpenProfile,
   onCompare,
   onContextMenu,
@@ -94,8 +90,6 @@ export function HofPodiumSection({
                   isCyber={isCyber}
                   group={getGroupDetails(getGroupForEntry(top2))}
                   podiumRank={2}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
                   onOpenProfile={onOpenProfile}
                   onCompare={onCompare}
                 />
@@ -166,8 +160,6 @@ export function HofPodiumSection({
                   isCyber={isCyber}
                   group={getGroupDetails(getGroupForEntry(top1))}
                   podiumRank={1}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
                   onOpenProfile={onOpenProfile}
                   onCompare={onCompare}
                 />
@@ -225,8 +217,6 @@ export function HofPodiumSection({
                   isCyber={isCyber}
                   group={getGroupDetails(getGroupForEntry(top3))}
                   podiumRank={3}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
                   onOpenProfile={onOpenProfile}
                   onCompare={onCompare}
                 />

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { HallAnalyticsSummary } from "@/lib/utils/hofEngine";
 import { useContextMenu } from "@/hooks/useContextMenu";
 
@@ -9,9 +10,25 @@ interface HofAnalyticsDashboardProps {
   isCyber: boolean;
 }
 
+type ModalType = "game" | "profession" | "country" | null;
+
 export function HofAnalyticsDashboard({ analytics, isCyber }: HofAnalyticsDashboardProps) {
   const { openContextMenu } = useContextMenu();
+  const [activeModal, setActiveModal] = useState<ModalType>(null);
+  const [modalSearch, setModalSearch] = useState("");
   const [showValidationReport, setShowValidationReport] = useState(false);
+
+  // Close modal on ESC key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setActiveModal(null);
+        setShowValidationReport(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const handleWidgetContextMenu = (e: React.MouseEvent, widgetName: string) => {
     e.preventDefault();
@@ -35,43 +52,31 @@ export function HofAnalyticsDashboard({ analytics, isCyber }: HofAnalyticsDashbo
     );
   };
 
-  const getMediaColor = (cat: string) => {
-    switch (cat.toLowerCase()) {
-      case "drama":
-        return "#EC4899"; // Pink
-      case "anime":
-        return "#FFD700"; // Gold
-      case "movie":
-        return "#3B82F6"; // Blue
-      case "game character":
-        return "#00F5FF"; // Cyan
-      case "tokusatsu":
-        return "#10B981"; // Emerald
-      case "vtuber":
-        return "#A855F7"; // Violet / Purple
-      default:
-        return "#8B5CF6"; // Purple
-    }
-  };
-
   const getProfessionColor = (prof: string) => {
     switch (prof.toLowerCase()) {
       case "actress":
         return "#F43F5E"; // Rose
       case "actor":
         return "#2563EB"; // Royal Blue
-      case "singer":
-        return "#A855F7"; // Purple
       case "vtuber":
-        return "#8B5CF6"; // Purple / Indigo
-      case "voice actor":
-        return "#F59E0B"; // Amber
-      case "character":
-        return "#14B8A6"; // Teal
+        return "#A855F7"; // Purple
+      case "anime":
+        return "#FFD700"; // Gold
+      case "tokusatsu":
+        return "#10B981"; // Emerald
+      case "singer":
+        return "#EC4899"; // Pink
+      case "game character":
+        return "#00F5FF"; // Cyan
       default:
         return "#6366F1"; // Indigo
     }
   };
+
+  // Top 5 slices for main cards
+  const topGames = (analytics.gameDistribution || []).slice(0, 5);
+  const topProfessions = (analytics.professionDistribution || []).slice(0, 5);
+  const topCountries = (analytics.countryDistribution || []).slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -95,7 +100,7 @@ export function HofAnalyticsDashboard({ analytics, isCyber }: HofAnalyticsDashbo
                 color: isCyber ? "#F59E0B" : "#B45309",
               }}
             >
-              🛡️ Dev Audit ({analytics.validationReport.invalidRecordCount} Invalid Excluded)
+              🛡️ Dev Audit ({analytics.validationReport.invalidRecordCount} Excluded)
             </button>
           )}
         </div>
@@ -115,13 +120,12 @@ export function HofAnalyticsDashboard({ analytics, isCyber }: HofAnalyticsDashbo
             <span className="font-black uppercase text-amber-500 flex items-center gap-2">
               🛠️ Internal Developer Validation Report (Data Hygiene)
             </span>
-            <button onClick={() => setShowValidationReport(false)} className="text-xs font-bold opacity-60 hover:opacity-100">
+            <button onClick={() => setShowValidationReport(false)} className="text-xs font-bold opacity-60 hover:opacity-100 cursor-pointer">
               ✕ Close
             </button>
           </div>
           <p className="text-[11px] opacity-80 leading-relaxed">
             Public analytics are generated strictly from <strong>{analytics.validationReport.validRecordCount}</strong> valid/normalized records (out of {analytics.validationReport.totalAnalyzed} total entries).
-            The following <strong>{analytics.validationReport.invalidRecordCount}</strong> invalid/uncategorized records were automatically excluded from public charts:
           </p>
           <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
             {analytics.validationReport.invalidRecords.map((rec) => (
@@ -146,10 +150,10 @@ export function HofAnalyticsDashboard({ analytics, isCyber }: HofAnalyticsDashbo
 
       {/* Grid of Analytics Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 font-mono">
-        {/* 1. Media Category Distribution */}
+        {/* 1. Game Character Distribution (Top 5 + View More) */}
         <div
-          onContextMenu={(e) => handleWidgetContextMenu(e, "Media Category Distribution")}
-          className="p-6 rounded-3xl border space-y-4 cursor-pointer"
+          onContextMenu={(e) => handleWidgetContextMenu(e, "Game Character Distribution")}
+          className="p-6 rounded-3xl border space-y-4 flex flex-col justify-between"
           style={{
             backgroundColor: isCyber ? "rgba(10,15,36,0.6)" : "#FFFFFF",
             borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000000",
@@ -157,44 +161,63 @@ export function HofAnalyticsDashboard({ analytics, isCyber }: HofAnalyticsDashbo
             boxShadow: isCyber ? "0 0 20px rgba(0,245,255,0.05)" : "4px 4px 0 #000000",
           }}
         >
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-black uppercase tracking-wider theme-text-primary flex items-center gap-2">
-              🎬 Media Category Distribution
-            </h4>
-            <span className="text-xs font-bold text-cyan-400">Media Roster Mix</span>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-black uppercase tracking-wider theme-text-primary flex items-center gap-2">
+                🎮 Game Character Distribution
+              </h4>
+              <span className="text-xs font-bold text-cyan-400">Game Roster Mix</span>
+            </div>
+
+            <div className="space-y-3">
+              {topGames.length === 0 ? (
+                <p className="text-xs opacity-50 text-center py-4">No game characters recorded.</p>
+              ) : (
+                topGames.map((item) => (
+                  <div key={item.game} className="space-y-1">
+                    <div className="flex justify-between text-xs font-bold">
+                      <span className="truncate pr-2">{item.game}</span>
+                      <span className="shrink-0 text-cyan-400">
+                        {item.count} ({item.percentage}%)
+                      </span>
+                    </div>
+                    <div className="w-full h-2.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden p-0.5">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${Math.max(4, item.percentage)}%`,
+                          backgroundColor: item.color || "#00F5FF",
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
-          <div className="space-y-3">
-            {analytics.mediaDistribution.length === 0 ? (
-              <p className="text-xs opacity-50 text-center py-4">No valid media records found.</p>
-            ) : (
-              analytics.mediaDistribution.map((item) => (
-                <div key={item.category} className="space-y-1">
-                  <div className="flex justify-between text-xs font-bold">
-                    <span className="uppercase">{item.category}</span>
-                    <span>
-                      {item.count} ({item.percentage}%)
-                    </span>
-                  </div>
-                  <div className="w-full h-3 rounded-full bg-black/10 overflow-hidden p-0.5">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${item.percentage}%`,
-                        backgroundColor: getMediaColor(item.category),
-                      }}
-                    />
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+          {(analytics.gameDistribution || []).length > 5 && (
+            <button
+              onClick={() => {
+                setModalSearch("");
+                setActiveModal("game");
+              }}
+              className="w-full py-2 rounded-xl text-xs font-bold border transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer mt-2"
+              style={{
+                backgroundColor: isCyber ? "rgba(0,245,255,0.1)" : "#F1F5F9",
+                borderColor: isCyber ? "#00F5FF" : "#000000",
+                color: isCyber ? "#00F5FF" : "#000000",
+              }}
+            >
+              View More ({analytics.gameDistribution.length} Games) →
+            </button>
+          )}
         </div>
 
-        {/* 2. Profession Category Distribution */}
+        {/* 2. Profession Category Distribution (Top 5 + View More) */}
         <div
-          onContextMenu={(e) => handleWidgetContextMenu(e, "Profession Category Distribution")}
-          className="p-6 rounded-3xl border space-y-4 cursor-pointer"
+          onContextMenu={(e) => handleWidgetContextMenu(e, "Profession Distribution")}
+          className="p-6 rounded-3xl border space-y-4 flex flex-col justify-between"
           style={{
             backgroundColor: isCyber ? "rgba(10,15,36,0.6)" : "#FFFFFF",
             borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000000",
@@ -202,44 +225,63 @@ export function HofAnalyticsDashboard({ analytics, isCyber }: HofAnalyticsDashbo
             boxShadow: isCyber ? "0 0 20px rgba(0,245,255,0.05)" : "4px 4px 0 #000000",
           }}
         >
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-black uppercase tracking-wider theme-text-primary flex items-center gap-2">
-              🎭 Profession Distribution
-            </h4>
-            <span className="text-xs font-bold text-purple-400">Talent Roles</span>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-black uppercase tracking-wider theme-text-primary flex items-center gap-2">
+                🎭 Profession Distribution
+              </h4>
+              <span className="text-xs font-bold text-purple-400">Talent Roles</span>
+            </div>
+
+            <div className="space-y-3">
+              {topProfessions.length === 0 ? (
+                <p className="text-xs opacity-50 text-center py-4">No profession records found.</p>
+              ) : (
+                topProfessions.map((item) => (
+                  <div key={item.category} className="space-y-1">
+                    <div className="flex justify-between text-xs font-bold">
+                      <span className="uppercase">{item.category}</span>
+                      <span className="text-purple-400">
+                        {item.count} ({item.percentage}%)
+                      </span>
+                    </div>
+                    <div className="w-full h-2.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden p-0.5">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${Math.max(4, item.percentage)}%`,
+                          backgroundColor: getProfessionColor(item.category),
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
-          <div className="space-y-3">
-            {analytics.professionDistribution.length === 0 ? (
-              <p className="text-xs opacity-50 text-center py-4">No valid profession records found.</p>
-            ) : (
-              analytics.professionDistribution.map((item) => (
-                <div key={item.category} className="space-y-1">
-                  <div className="flex justify-between text-xs font-bold">
-                    <span className="uppercase">{item.category}</span>
-                    <span>
-                      {item.count} ({item.percentage}%)
-                    </span>
-                  </div>
-                  <div className="w-full h-3 rounded-full bg-black/10 overflow-hidden p-0.5">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${item.percentage}%`,
-                        backgroundColor: getProfessionColor(item.category),
-                      }}
-                    />
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+          {(analytics.professionDistribution || []).length > 5 && (
+            <button
+              onClick={() => {
+                setModalSearch("");
+                setActiveModal("profession");
+              }}
+              className="w-full py-2 rounded-xl text-xs font-bold border transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer mt-2"
+              style={{
+                backgroundColor: isCyber ? "rgba(168,85,247,0.1)" : "#F1F5F9",
+                borderColor: isCyber ? "#A855F7" : "#000000",
+                color: isCyber ? "#A855F7" : "#000000",
+              }}
+            >
+              View More ({analytics.professionDistribution.length} Categories) →
+            </button>
+          )}
         </div>
 
-        {/* 3. Country Distribution (Bar Chart) */}
+        {/* 3. Country Heritage (Top 5 + View More, No "Others") */}
         <div
-          onContextMenu={(e) => handleWidgetContextMenu(e, "Country Distribution")}
-          className="p-6 rounded-3xl border space-y-4 cursor-pointer"
+          onContextMenu={(e) => handleWidgetContextMenu(e, "Country Heritage")}
+          className="p-6 rounded-3xl border space-y-4 flex flex-col justify-between"
           style={{
             backgroundColor: isCyber ? "rgba(10,15,36,0.6)" : "#FFFFFF",
             borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000000",
@@ -247,37 +289,60 @@ export function HofAnalyticsDashboard({ analytics, isCyber }: HofAnalyticsDashbo
             boxShadow: isCyber ? "0 0 20px rgba(0,245,255,0.05)" : "4px 4px 0 #000000",
           }}
         >
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-black uppercase tracking-wider theme-text-primary flex items-center gap-2">
-              🌍 Country Heritage
-            </h4>
-            <span className="text-xs font-bold text-amber-400">Global Roster</span>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-black uppercase tracking-wider theme-text-primary flex items-center gap-2">
+                🌍 Country Heritage
+              </h4>
+              <span className="text-xs font-bold text-amber-400">Global Roster</span>
+            </div>
+
+            <div className="space-y-3">
+              {topCountries.length === 0 ? (
+                <p className="text-xs opacity-50 text-center py-4">No country records found.</p>
+              ) : (
+                topCountries.map((item) => (
+                  <div key={item.country} className="space-y-1">
+                    <div className="flex justify-between text-xs font-bold">
+                      <span>{item.country}</span>
+                      <span className="text-amber-400">
+                        {item.count} Legends ({item.percentage}%)
+                      </span>
+                    </div>
+                    <div className="w-full h-2.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden p-0.5">
+                      <div
+                        className="h-full rounded-full bg-amber-400 transition-all duration-500"
+                        style={{ width: `${Math.max(4, item.percentage)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
-          <div className="space-y-3">
-            {analytics.countryDistribution.map((item) => (
-              <div key={item.country} className="space-y-1">
-                <div className="flex justify-between text-xs font-bold">
-                  <span>{item.country}</span>
-                  <span>
-                    {item.count} Legends
-                  </span>
-                </div>
-                <div className="w-full h-3 rounded-full bg-black/10 overflow-hidden p-0.5">
-                  <div
-                    className="h-full rounded-full bg-cyan-400 transition-all duration-500"
-                    style={{ width: `${item.percentage}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+          {(analytics.countryDistribution || []).length > 5 && (
+            <button
+              onClick={() => {
+                setModalSearch("");
+                setActiveModal("country");
+              }}
+              className="w-full py-2 rounded-xl text-xs font-bold border transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer mt-2"
+              style={{
+                backgroundColor: isCyber ? "rgba(245,158,11,0.1)" : "#F1F5F9",
+                borderColor: isCyber ? "#F59E0B" : "#000000",
+                color: isCyber ? "#F59E0B" : "#000000",
+              }}
+            >
+              View More ({analytics.countryDistribution.length} Countries) →
+            </button>
+          )}
         </div>
 
         {/* 4. Votes Growth by Season */}
         <div
           onContextMenu={(e) => handleWidgetContextMenu(e, "Votes by Season")}
-          className="p-6 rounded-3xl border space-y-4 cursor-pointer"
+          className="p-6 rounded-3xl border space-y-4 flex flex-col justify-between"
           style={{
             backgroundColor: isCyber ? "rgba(10,15,36,0.6)" : "#FFFFFF",
             borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000000",
@@ -292,9 +357,9 @@ export function HofAnalyticsDashboard({ analytics, isCyber }: HofAnalyticsDashbo
             <span className="text-xs font-bold text-emerald-400">Season Trend</span>
           </div>
 
-          <div className="h-40 flex items-end justify-between gap-2 pt-4 px-2 border-b pb-2" style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0" }}>
+          <div className="h-44 flex items-end justify-between gap-2 pt-4 px-2 border-b pb-2" style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0" }}>
             {analytics.votesBySeason.map((season) => {
-              const maxVotes = 1500;
+              const maxVotes = Math.max(100, ...analytics.votesBySeason.map((s) => s.votes));
               const heightPct = Math.min(100, Math.max(15, Math.round((season.votes / maxVotes) * 100)));
               return (
                 <div key={season.season} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
@@ -312,6 +377,151 @@ export function HofAnalyticsDashboard({ analytics, isCyber }: HofAnalyticsDashbo
           </div>
         </div>
       </div>
+
+      {/* ── View More Modals ────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {activeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setActiveModal(null)}
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            />
+
+            {/* Modal Box */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ duration: 0.2 }}
+              className="relative w-full max-w-lg rounded-3xl p-6 shadow-2xl font-mono z-10 max-h-[85vh] flex flex-col space-y-4"
+              style={{
+                backgroundColor: isCyber ? "#090D1C" : "#FFFFFF",
+                borderColor: isCyber ? "#00F5FF" : "#000000",
+                borderWidth: isCyber ? "1.5px" : "3px",
+                boxShadow: isCyber ? "0 0 40px rgba(0,245,255,0.25)" : "8px 8px 0 #000000",
+              }}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0" }}>
+                <h3 className="text-sm font-black uppercase tracking-wider theme-text-primary flex items-center gap-2">
+                  {activeModal === "game" && "🎮 Complete Game Roster Distribution"}
+                  {activeModal === "profession" && "🎭 Complete Profession Distribution"}
+                  {activeModal === "country" && "🌍 Complete Country Heritage Distribution"}
+                </h3>
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold opacity-70 hover:opacity-100 cursor-pointer"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#F1F5F9",
+                    borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#000000",
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Search Filter in Modal */}
+              <div className="relative">
+                <input
+                  type="text"
+                  value={modalSearch}
+                  onChange={(e) => setModalSearch(e.target.value)}
+                  placeholder="Filter distribution..."
+                  className="w-full pl-8 pr-3 py-2 rounded-xl text-xs border focus:outline-none"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(255,255,255,0.04)" : "#FFFFFF",
+                    borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#000000",
+                    borderWidth: isCyber ? "1px" : "2px",
+                    color: isCyber ? "#FFF" : "#000",
+                  }}
+                />
+                <span className="absolute left-2.5 top-2.5 text-xs opacity-50">🔍</span>
+                {modalSearch && (
+                  <button
+                    onClick={() => setModalSearch("")}
+                    className="absolute right-3 top-2.5 text-xs opacity-60 hover:opacity-100"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Scrollable Distribution Items */}
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar max-h-[55vh]">
+                {activeModal === "game" &&
+                  analytics.gameDistribution
+                    .filter((item) => item.game.toLowerCase().includes(modalSearch.toLowerCase()))
+                    .map((item) => (
+                      <div key={item.game} className="space-y-1 p-2 rounded-xl" style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#F8FAFC" }}>
+                        <div className="flex justify-between text-xs font-bold">
+                          <span className="truncate pr-2">{item.game}</span>
+                          <span className="shrink-0 text-cyan-400">
+                            {item.count} Characters ({item.percentage}%)
+                          </span>
+                        </div>
+                        <div className="w-full h-2.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden p-0.5">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${Math.max(4, item.percentage)}%`,
+                              backgroundColor: item.color || "#00F5FF",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+
+                {activeModal === "profession" &&
+                  analytics.professionDistribution
+                    .filter((item) => item.category.toLowerCase().includes(modalSearch.toLowerCase()))
+                    .map((item) => (
+                      <div key={item.category} className="space-y-1 p-2 rounded-xl" style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#F8FAFC" }}>
+                        <div className="flex justify-between text-xs font-bold">
+                          <span className="uppercase">{item.category}</span>
+                          <span className="text-purple-400">
+                            {item.count} Entries ({item.percentage}%)
+                          </span>
+                        </div>
+                        <div className="w-full h-2.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden p-0.5">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${Math.max(4, item.percentage)}%`,
+                              backgroundColor: getProfessionColor(item.category),
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+
+                {activeModal === "country" &&
+                  analytics.countryDistribution
+                    .filter((item) => item.country.toLowerCase().includes(modalSearch.toLowerCase()))
+                    .map((item) => (
+                      <div key={item.country} className="space-y-1 p-2 rounded-xl" style={{ backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#F8FAFC" }}>
+                        <div className="flex justify-between text-xs font-bold">
+                          <span>{item.country}</span>
+                          <span className="text-amber-400">
+                            {item.count} Legends ({item.percentage}%)
+                          </span>
+                        </div>
+                        <div className="w-full h-2.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden p-0.5">
+                          <div
+                            className="h-full rounded-full bg-amber-400 transition-all duration-500"
+                            style={{ width: `${Math.max(4, item.percentage)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -75,79 +75,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Character not found" }, { status: 404 });
     }
 
-    // Safely query existing like
-    let existingLike: any = null;
-    if ((prisma as any).gameCharacterLike) {
-      existingLike = await (prisma as any).gameCharacterLike.findUnique({
-        where: {
-          userId_gameCharacterId: {
-            userId: user.id,
-            gameCharacterId: characterId,
-          },
-        },
-      });
-    } else {
-      const rawLikes: any[] = await prisma.$queryRawUnsafe(
-        'SELECT id FROM "GameCharacterLike" WHERE "userId" = $1 AND "gameCharacterId" = $2 LIMIT 1;',
-        user.id,
-        characterId
-      );
-      if (rawLikes && rawLikes.length > 0) {
-        existingLike = rawLikes[0];
-      }
-    }
+    // ── Continuous Increment (never toggle off) ──────────────────────────────
+    // Each POST call is an atomic +1 vote. Repeat clicks always add more votes.
+    // This intentionally replaces the old toggle-on/toggle-off behaviour.
 
-    let liked = false;
-    let newLikesCount = character.likes || 0;
+    const newLikesCount = (character.likes || 0) + 1;
 
-    if (existingLike) {
-      // Toggle OFF: Unlike
-      if ((prisma as any).gameCharacterLike) {
-        await (prisma as any).gameCharacterLike.delete({
-          where: { id: existingLike.id },
-        });
-      } else {
-        await prisma.$executeRawUnsafe(
-          'DELETE FROM "GameCharacterLike" WHERE "id" = $1;',
-          existingLike.id
-        );
-      }
-      newLikesCount = Math.max(0, newLikesCount - 1);
-      await prisma.gameCharacter.update({
-        where: { id: characterId },
-        data: { likes: newLikesCount },
-      });
-      liked = false;
-    } else {
-      // Toggle ON: Like
-      const newLikeId = `gcl-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-      if ((prisma as any).gameCharacterLike) {
-        await (prisma as any).gameCharacterLike.create({
-          data: {
-            id: newLikeId,
-            userId: user.id,
-            gameCharacterId: characterId,
-          },
-        });
-      } else {
-        await prisma.$executeRawUnsafe(
-          'INSERT INTO "GameCharacterLike" ("id", "userId", "gameCharacterId", "createdAt") VALUES ($1, $2, $3, NOW());',
-          newLikeId,
-          user.id,
-          characterId
-        );
-      }
-      newLikesCount = newLikesCount + 1;
-      await prisma.gameCharacter.update({
-        where: { id: characterId },
-        data: { likes: newLikesCount },
-      });
-      liked = true;
-    }
+    await prisma.gameCharacter.update({
+      where: { id: characterId },
+      data: { likes: newLikesCount },
+    });
 
     return NextResponse.json({
       characterId,
-      liked,
+      liked: true,
       likesCount: newLikesCount,
     });
   } catch (error: any) {
