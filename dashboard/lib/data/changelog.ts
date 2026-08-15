@@ -13,6 +13,58 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v12.3.0",
+    date: "2026-08-15",
+    title: "Hall of Fame Museum Showcase & Media Framing Correction Pass",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Comprehensive Hall of Fame and Museum Showcase alignment pass. Standardized global sub-filters across Records & Timeline sections, implemented 100% data-driven achievement calculations, enforced read-only Hall integrity, unified MP4 framing metadata across Game Character and Hall of Fame cards, added independent custom poster framing controls, implemented continuous fast-click and double-tap like mechanics, resolved 1:1 dedicated avatar mapping for Character Dictionary rows and Championship History archives, and expanded the analytics intelligence engine.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🏛️ Global Museum Showcase Controls Integration: Streamlined Hall of Fame filtering (app/hall-of-fame/page.tsx, HofRecordsSection.tsx, HofTimelineSection.tsx) so all sub-sections react synchronously to master page filters (Category, Country, Profession, Search Query, and Multi-Select Games) without redundant internal selector chips.",
+          "🏆 2026 Season Legacy Archive & Championship History (HofTimelineSection.tsx, hofEngine.ts): Refactored championship timeline to dynamically showcase Top 3 Gold, Silver, and Bronze contenders with dedicated 1:1 identity avatars (aspect-square), dynamic season notes, and interactive context menus.",
+          "🎬 Dual-Mode Video & Custom Poster Framing Modal (VideoCropModal.tsx): Added independent toggle between Video Framing and Custom Poster Framing with live 3:4 aspect preview, zoom, pan, and poster timestamp scrubbing.",
+          "❤️ Continuous Fast-Click & Double-Tap Like Engine (GameCharacterCard.tsx, HofEntryCard.tsx, LazyCardVideo.tsx): Implemented rapid continuous liking without rate limit lockouts, featuring heart burst animations, floating particles, and mobile double-tap liking.",
+          "📊 Expanded Hall Intelligence & Analytics Dashboard (HofAnalyticsDashboard.tsx): Added live prestige distribution, engagement metrics, category dominance radar, and Hall of Fame statistical breakdowns.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🎯 Canonical MP4 Video Framing & Zero-Crop-Mismatch Resolver (mediaResolver.ts): Enhanced getCardVideoFraming and getCardVideoPosterFraming to extract candidate framings across nested stats, details, and cropData, achieving 100% framing parity between Game Characters and Hall of Fame cards.",
+          "👤 1:1 Square Avatar Resolution for Character Dictionary Rows & Archive (mediaResolver.ts, hofEngine.ts): Updated getLeaderboardRowAvatarUrl to resolve dedicated 1:1 profile crops from details.avatarUrl / avatarUrl before falling back to portrait or card artwork, fixing squished/stretched 3:4 images in Rank 4+ row views and Championship History.",
+          "🏅 100% Data-Driven Historical Records Engine (hofEngine.ts): Replaced sparse/repetitive mock entries with dynamic record computations (Permanent Record Holder, Unrivaled Dominator, Rising Phenom, Most Prestigious Legend, Milestone Titan) calculated directly from real database metrics.",
+          "🛡️ Strict Read-Only Hall of Fame Architecture: Enforced strict read-only browsing across Hall of Fame cards, removing edit/delete mutations from Museum Showcase cards to preserve canonical dictionary integrity.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v12.2.0",
+    date: "2026-08-14",
+    title: "Character Creation Query Fix & VTuber Category Support",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Resolved a Prisma query object collision during automated and manual character detection/creation, added first-class VTuber entity support in Character Dictionary and Hall of Fame with specialized metadata fields (Agency, Group, Fanbase Name, Oshi Mark, Debut Date, VTuber Status) and custom filtering badges.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🎙️ VTuber Category Support in Character Dictionary & Hall of Fame: Expanded data models and editor modals (HofEditorModal.tsx, CharacterDictProfileModal.tsx, hofSchema.ts) to support the 'vtuber' type with dedicated agency, group, fanbase, oshi mark, and debut fields with custom UI badge rendering.",
+          "🎛️ Dedicated VTuber Filters: Integrated VTuber categorization across HofFilterToolbar.tsx, HofAnalyticsDashboard.tsx, and app/hall-of-fame/page.tsx.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🔧 Prisma Query Object Collision Fix (characterCreationService.ts): Replaced invalid nested query objects in Prisma lookups with clean, top-level where-clauses, eliminating runtime query collisions and duplicate entity generation during AI and manual character creation.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v12.1.0",
     date: "2026-08-14",
     title: "Targeted Dashboard Performance & Hydration Enhancements",
