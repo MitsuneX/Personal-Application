@@ -81,7 +81,7 @@ export function DossierHero({
         {/* Top Navigation & Breadcrumbs */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-2 text-xs font-mono font-bold tracking-wider uppercase opacity-80">
-            <Link href="/" className="hover:underline opacity-60">
+            <Link href="/dashboard" className="hover:underline opacity-60">
               Dashboard
             </Link>
             <span>&gt;</span>

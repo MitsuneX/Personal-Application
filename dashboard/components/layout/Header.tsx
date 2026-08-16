@@ -24,7 +24,8 @@ interface HeaderProps {
 }
 
 const PAGE_TITLES: Record<string, { title: string; icon: string }> = {
-  "/":                  { title: "Dashboard",    icon: "🏠" },
+  "/":                  { title: "Landing",      icon: "🌐" },
+  "/dashboard":         { title: "Dashboard",    icon: "🏠" },
   "/anime":             { title: "Anime Zone",   icon: "⛩️" },
   "/drama":             { title: "Drama Hub",    icon: "🎬" },
   "/drama/japanese":    { title: "Japanese Drama", icon: "🇯🇵" },

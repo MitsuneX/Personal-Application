@@ -13,18 +13,9 @@ import { LandingPreviewModal } from "@/components/landing/LandingPreviewModal";
 import { useRouter } from "next/navigation";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 import { useToast } from "@/components/ui/ToastProvider";
+import { LANDING_MODULE_CATALOG } from "@/lib/config/landingModules";
 
 const PLATFORMS = ["GitHub", "Twitter/X", "Discord", "Instagram", "LinkedIn", "Tiktok"];
-const ALL_MODULE_FEATURES = [
-  { id: "game-database", label: "Game Database" },
-  { id: "game-characters", label: "Game Characters" },
-  { id: "hall-of-fame", label: "Hall of Fame" },
-  { id: "music", label: "Music Vault" },
-  { id: "media", label: "Drama, Anime & Tokusatsu" },
-  { id: "ai-library", label: "AI Prompt Library" },
-  { id: "hobbies", label: "Hobbies & Creative Log" },
-  { id: "emergency", label: "Emergency Hub" },
-];
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -963,19 +954,19 @@ export default function ProfilePage() {
 
             {/* 6. 🌐 Landing Page & Public Identity Customization */}
             <div
-              className="p-6 rounded-2xl border-adaptive-unique relative overflow-hidden"
+              className="p-6 rounded-2xl border-adaptive-unique relative overflow-hidden space-y-6"
               style={{
                 backgroundColor: isCyber ? "rgba(10,15,44,0.6)" : "#FFFFFF",
                 boxShadow: isCyber ? "none" : "4px 4px 0px 0px #000000",
               }}
             >
-              <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+              <div className="flex items-center justify-between gap-4 flex-wrap border-b pb-4" style={{ borderColor: isCyber ? "rgba(0,245,255,0.15)" : "rgba(0,0,0,0.1)" }}>
                 <div>
                   <h2 className="text-base font-black uppercase tracking-wider flex items-center gap-2" style={{ color: isCyber ? "#00F5FF" : "#000" }}>
                     🌐 Landing Page & Public Identity
                   </h2>
                   <p className="text-xs opacity-70 mt-0.5 font-mono">
-                    Customize how your personal world appears to visitors on /welcome.
+                    Configure your world identity, visual experience, privacy visibility, and showcase modules.
                   </p>
                 </div>
 
@@ -995,168 +986,194 @@ export default function ProfilePage() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                {/* World Name */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">
-                    Dashboard World Name (Leave blank for fallback)
-                  </label>
-                  <input
-                    type="text"
-                    value={dashboardName}
-                    onChange={(e) => setDashboardName(e.target.value)}
-                    placeholder={`e.g. ${name || "Mitsu"}'s World, Elysium, My Archive`}
-                    className={inputClass}
-                    style={inputStyle}
-                  />
-                  <span className="text-[10px] font-mono opacity-60">
-                    Displays as: <strong className="text-cyan-400">{dashboardName.trim() || `${name || "Personal"}'s World`}</strong>
-                  </span>
-                </div>
-
-                {/* Landing Mode */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">
-                    Landing Page Access Mode
-                  </label>
-                  <CustomSelect
-                    value={landingMode}
-                    onChange={(val) => setLandingMode(val as any)}
-                    options={[
-                      { value: "enabled", label: "Enabled (Public Intro Gate on /welcome)", icon: "🟢" },
-                      { value: "disabled", label: "Disabled (Direct Auth/Dashboard Redirect)", icon: "🔴" },
-                      { value: "preview", label: "Public Preview (Testing /welcome Only)", icon: "🧪" },
-                    ]}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                {/* Hero Style */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">
-                    Hero Intensity Style
-                  </label>
-                  <CustomSelect
-                    value={heroStyle}
-                    onChange={(val) => setHeroStyle(val as any)}
-                    options={[
-                      { value: "cinematic", label: "Cinematic (Particle Matrix Glow)", icon: "🌌" },
-                      { value: "ambient", label: "Ambient (Soft Glow Accent)", icon: "✨" },
-                      { value: "minimal", label: "Minimal (Clean Personal Archive)", icon: "📄" },
-                    ]}
-                  />
-                </div>
-
-                {/* Background Animation Style */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">
-                    Background Animation
-                  </label>
-                  <CustomSelect
-                    value={landingBgStyle}
-                    onChange={(val) => setLandingBgStyle(val as any)}
-                    options={[
-                      { value: "matrix", label: "Matrix Neon Particles", icon: "⚡" },
-                      { value: "nebula", label: "Nebula Atmosphere", icon: "🔮" },
-                      { value: "grid", label: "Grid Drift Pattern", icon: "🌐" },
-                      { value: "minimal", label: "Minimalist Solid", icon: "⚪" },
-                    ]}
-                  />
-                </div>
-
-                {/* Accent Color */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">
-                    Custom Landing Accent Color
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={landingAccentColor}
-                      onChange={(e) => setLandingAccentColor(e.target.value)}
-                      className="w-10 h-10 rounded cursor-pointer border-none bg-transparent"
-                    />
+              {/* Group A: PUBLIC IDENTITY */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-black uppercase tracking-wider font-mono flex items-center gap-2" style={{ color: isCyber ? "#00F5FF" : "#FF6B35" }}>
+                  <span>🏷️</span>
+                  <span>Public Identity</span>
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* World Name */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">
+                      Personal World Name
+                    </label>
                     <input
                       type="text"
-                      value={landingAccentColor}
-                      onChange={(e) => setLandingAccentColor(e.target.value)}
+                      value={dashboardName}
+                      onChange={(e) => setDashboardName(e.target.value)}
+                      placeholder={`e.g. ${name || "Personal"}'s Sanctuary, Elysium`}
                       className={inputClass}
                       style={inputStyle}
                     />
+                    <span className="text-[10px] font-mono opacity-60">
+                      Leave blank to use your personalized default greeting. Displays as: <strong className="text-cyan-400">{dashboardName.trim() || `${name || "Personal"}'s World`}</strong>
+                    </span>
+                  </div>
+
+                  {/* Landing Mode */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">
+                      Landing Page Access Mode
+                    </label>
+                    <CustomSelect
+                      value={landingMode}
+                      onChange={(val) => setLandingMode(val as any)}
+                      options={[
+                        { value: "enabled", label: "Always show landing page (Recommended)", icon: "🟢" },
+                        { value: "disabled", label: "Skip landing page when authenticated", icon: "⚡" },
+                        { value: "preview", label: "Direct dashboard access (Bypass intro)", icon: "🔴" },
+                      ]}
+                    />
+                    <span className="text-[10px] font-mono opacity-60">
+                      Controls whether the landing page appears first upon visiting the application root.
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* Privacy Toggles */}
-              <div className="p-4 rounded-xl border mb-4 bg-black/10 dark:bg-white/5 space-y-3 font-mono">
-                <h4 className="text-xs font-black uppercase tracking-wider text-amber-400">
-                  🔒 Data Privacy Toggles (Off by Default)
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={showPublicStats}
-                      onChange={(e) => setShowPublicStats(e.target.checked)}
-                      className="w-4 h-4 accent-cyan-400 cursor-pointer"
+              {/* Group B: EXPERIENCE */}
+              <div className="space-y-3 pt-3 border-t" style={{ borderColor: isCyber ? "rgba(0,245,255,0.1)" : "rgba(0,0,0,0.08)" }}>
+                <h3 className="text-xs font-black uppercase tracking-wider font-mono flex items-center gap-2" style={{ color: isCyber ? "#00F5FF" : "#FF6B35" }}>
+                  <span>🎨</span>
+                  <span>Visual Experience</span>
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Hero Style */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">
+                      Hero Intensity Style
+                    </label>
+                    <CustomSelect
+                      value={heroStyle}
+                      onChange={(val) => setHeroStyle(val as any)}
+                      options={[
+                        { value: "cinematic", label: "Cinematic (Particle Matrix Glow)", icon: "🌌" },
+                        { value: "ambient", label: "Ambient (Soft Glow Accent)", icon: "✨" },
+                        { value: "minimal", label: "Minimal (Clean Personal Archive)", icon: "📄" },
+                      ]}
                     />
-                    <span>Show Public Stats Counters</span>
-                  </label>
+                  </div>
 
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={showAboutSection}
-                      onChange={(e) => setShowAboutSection(e.target.checked)}
-                      className="w-4 h-4 accent-cyan-400 cursor-pointer"
+                  {/* Background Animation Style */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">
+                      Background Animation
+                    </label>
+                    <CustomSelect
+                      value={landingBgStyle}
+                      onChange={(val) => setLandingBgStyle(val as any)}
+                      options={[
+                        { value: "matrix", label: "Matrix Neon Particles", icon: "⚡" },
+                        { value: "nebula", label: "Nebula Atmosphere", icon: "🔮" },
+                        { value: "grid", label: "Grid Drift Pattern", icon: "🌐" },
+                        { value: "minimal", label: "Minimalist Solid", icon: "⚪" },
+                      ]}
                     />
-                    <span>Show About World Section</span>
-                  </label>
+                  </div>
 
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={showSocialLinks}
-                      onChange={(e) => setShowSocialLinks(e.target.checked)}
-                      className="w-4 h-4 accent-cyan-400 cursor-pointer"
-                    />
-                    <span>Show Public Social Links</span>
-                  </label>
+                  {/* Accent Color */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">
+                      Custom Accent Color
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={landingAccentColor}
+                        onChange={(e) => setLandingAccentColor(e.target.value)}
+                        className="w-10 h-10 rounded cursor-pointer border-none bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={landingAccentColor}
+                        onChange={(e) => setLandingAccentColor(e.target.value)}
+                        className={inputClass}
+                        style={inputStyle}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* About World Text */}
-              {showAboutSection && (
-                <div className="flex flex-col gap-1 mb-4">
-                  <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">
-                    About World Custom Text
-                  </label>
-                  <textarea
-                    value={aboutWorldText}
-                    onChange={(e) => setAboutWorldText(e.target.value)}
-                    rows={3}
-                    placeholder="Enter custom description or bio for your digital sanctuary..."
-                    className={inputClass + " resize-none"}
-                    style={inputStyle}
-                  />
-                </div>
-              )}
+              {/* Group C: VISIBILITY */}
+              <div className="space-y-3 pt-3 border-t" style={{ borderColor: isCyber ? "rgba(0,245,255,0.1)" : "rgba(0,0,0,0.08)" }}>
+                <h3 className="text-xs font-black uppercase tracking-wider font-mono flex items-center gap-2" style={{ color: isCyber ? "#00F5FF" : "#FF6B35" }}>
+                  <span>🔒</span>
+                  <span>Public Visibility & Privacy</span>
+                </h3>
+                <div className="p-4 rounded-xl border bg-black/10 dark:bg-white/5 space-y-3 font-mono">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showPublicStats}
+                        onChange={(e) => setShowPublicStats(e.target.checked)}
+                        className="w-4 h-4 accent-cyan-400 cursor-pointer"
+                      />
+                      <span>Show Public Stats Counters</span>
+                    </label>
 
-              {/* Visible Feature Module Allowlist */}
-              <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-wider theme-text-secondary block">
-                  Showcase Module Features (Allowlist Selection)
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs">
-                  {ALL_MODULE_FEATURES.map((feat) => {
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showAboutSection}
+                        onChange={(e) => setShowAboutSection(e.target.checked)}
+                        className="w-4 h-4 accent-cyan-400 cursor-pointer"
+                      />
+                      <span>Show About World Section</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showSocialLinks}
+                        onChange={(e) => setShowSocialLinks(e.target.checked)}
+                        className="w-4 h-4 accent-cyan-400 cursor-pointer"
+                      />
+                      <span>Show Public Social Links</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* About World Custom Text */}
+                {showAboutSection && (
+                  <div className="flex flex-col gap-1 pt-1">
+                    <label className="text-xs font-black uppercase tracking-wider theme-text-secondary">
+                      About World Custom Text
+                    </label>
+                    <textarea
+                      value={aboutWorldText}
+                      onChange={(e) => setAboutWorldText(e.target.value)}
+                      rows={3}
+                      placeholder="Enter custom description or bio for your digital sanctuary..."
+                      className={inputClass + " resize-none"}
+                      style={inputStyle}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Group D: SHOWCASE */}
+              <div className="space-y-3 pt-3 border-t" style={{ borderColor: isCyber ? "rgba(0,245,255,0.1)" : "rgba(0,0,0,0.08)" }}>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-black uppercase tracking-wider font-mono flex items-center gap-2" style={{ color: isCyber ? "#00F5FF" : "#FF6B35" }}>
+                    <span>🗂️</span>
+                    <span>Showcase Modules</span>
+                  </h3>
+                  <span className="text-[11px] font-mono opacity-60">
+                    {visibleFeatures.length} of {LANDING_MODULE_CATALOG.length} active
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 font-mono text-xs">
+                  {LANDING_MODULE_CATALOG.map((feat) => {
                     const isChecked = visibleFeatures.includes(feat.id);
                     return (
                       <button
                         key={feat.id}
                         type="button"
                         onClick={() => toggleFeatureSelect(feat.id)}
-                        className="p-2.5 rounded-xl border flex items-center gap-2 text-left cursor-pointer transition-all"
+                        className="p-3 rounded-xl border flex items-center justify-between text-left cursor-pointer transition-all hover:scale-[1.02] active:scale-98"
                         style={{
                           backgroundColor: isChecked
                             ? (isCyber ? "rgba(0,245,255,0.12)" : "#FFE600")
@@ -1167,10 +1184,19 @@ export default function ProfilePage() {
                           color: isChecked
                             ? (isCyber ? "#00F5FF" : "#000000")
                             : (isCyber ? "#94A3B8" : "#4B5563"),
+                          boxShadow: isChecked && !isCyber ? "2px 2px 0 #000000" : "none",
                         }}
                       >
-                        <span className="font-bold">{isChecked ? "✓" : "○"}</span>
-                        <span className="font-bold text-[11px] truncate">{feat.label}</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-base shrink-0">{feat.iconEmoji}</span>
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-black text-xs truncate">{feat.title}</span>
+                            <span className="text-[9px] opacity-60 uppercase">{feat.category}</span>
+                          </div>
+                        </div>
+                        <span className="font-black text-sm shrink-0 ml-2">
+                          {isChecked ? "✓" : "○"}
+                        </span>
                       </button>
                     );
                   })}

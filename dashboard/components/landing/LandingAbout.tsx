@@ -3,7 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { ProfileData } from "@/lib/store/dashboardStore";
-import { User, MapPin, Code, Link2 } from "lucide-react";
+import { User, MapPin, Code, Link2, Globe } from "lucide-react";
 
 interface LandingAboutProps {
   profile: ProfileData;
@@ -12,8 +12,11 @@ interface LandingAboutProps {
 }
 
 export function LandingAbout({ profile, isCyber, accentColor = "#00F5FF" }: LandingAboutProps) {
-  // If about section is not explicitly toggled ON, do NOT render anything (opt-in privacy default!)
-  if (!profile.showAboutSection) return null;
+  const hasAbout = Boolean(profile.showAboutSection);
+  const hasSocials = Boolean(profile.showSocialLinks && profile.socials && profile.socials.length > 0);
+
+  // If neither about nor socials are toggled ON, do NOT render anything (opt-in privacy default)
+  if (!hasAbout && !hasSocials) return null;
 
   const aboutText = profile.aboutWorldText?.trim() || profile.bio?.trim();
 
@@ -39,19 +42,19 @@ export function LandingAbout({ profile, isCyber, accentColor = "#00F5FF" }: Land
             fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
           }}
         >
-          About This Digital Sanctuary
+          {hasAbout ? "About This Digital Sanctuary" : "Public Identity & Social Links"}
         </h2>
       </div>
 
-      {aboutText && (
+      {hasAbout && aboutText && (
         <p className="text-sm font-mono leading-relaxed opacity-90">
           {aboutText}
         </p>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2 font-mono text-xs">
-        {/* Skills */}
-        {profile.skills && profile.skills.length > 0 && (
+        {/* Skills & Tech (Rendered if About is enabled) */}
+        {hasAbout && profile.skills && profile.skills.length > 0 && (
           <div className="space-y-2">
             <h4 className="font-black uppercase tracking-wider flex items-center gap-1.5 opacity-70">
               <Code size={14} />
@@ -75,17 +78,17 @@ export function LandingAbout({ profile, isCyber, accentColor = "#00F5FF" }: Land
           </div>
         )}
 
-        {/* Location & Social Links (Opt-in only!) */}
+        {/* Location & Social Links */}
         <div className="space-y-3">
-          {profile.location && (
+          {hasAbout && profile.location && (
             <div className="flex items-center gap-2 font-bold">
               <MapPin size={14} className="text-emerald-400 shrink-0" />
               <span>{profile.location}</span>
             </div>
           )}
 
-          {profile.showSocialLinks && profile.socials && profile.socials.length > 0 && (
-            <div className="space-y-1.5 pt-1">
+          {hasSocials && (
+            <div className="space-y-2 pt-1">
               <h4 className="font-black uppercase tracking-wider flex items-center gap-1.5 opacity-70">
                 <Link2 size={14} />
                 <span>Public Identity Links</span>
@@ -97,15 +100,17 @@ export function LandingAbout({ profile, isCyber, accentColor = "#00F5FF" }: Land
                     href={soc.url || "#"}
                     target="_blank"
                     rel="noreferrer"
-                    className="px-2.5 py-1 rounded-lg border font-bold hover:underline transition-all inline-flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-xl border font-bold hover:scale-105 transition-all inline-flex items-center gap-1.5 shadow-sm"
                     style={{
-                      backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#FFFFFF",
-                      borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000000",
+                      backgroundColor: isCyber ? "rgba(0,245,255,0.08)" : "#FFFFFF",
+                      borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000000",
                       color: isCyber ? "#E0E8FF" : "#000000",
+                      boxShadow: isCyber ? "none" : "2px 2px 0 #000000",
                     }}
                   >
+                    <Globe size={12} className="opacity-70" />
                     <span>{soc.platform}:</span>
-                    <span className="text-cyan-400 font-mono">{soc.handle}</span>
+                    <span className="text-cyan-400 font-mono font-black">{soc.handle}</span>
                   </a>
                 ))}
               </div>

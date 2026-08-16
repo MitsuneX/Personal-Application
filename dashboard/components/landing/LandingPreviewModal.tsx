@@ -2,12 +2,9 @@
 
 import React, { useState } from "react";
 import { ProfileData } from "@/lib/store/dashboardStore";
-import { LandingHero } from "./LandingHero";
-import { LandingWorldStatus } from "./LandingWorldStatus";
-import { LandingFeatures } from "./LandingFeatures";
-import { LandingAbout } from "./LandingAbout";
+import { LandingView } from "./LandingView";
 import { useTheme } from "@/lib/theme";
-import { Eye, X, Moon, Sun, Lock } from "lucide-react";
+import { Eye, X, Moon, Sun } from "lucide-react";
 
 interface LandingPreviewModalProps {
   isOpen: boolean;
@@ -72,43 +69,26 @@ export function LandingPreviewModal({
         </div>
       </div>
 
-      {/* Main Preview Screen Wrapper */}
+      {/* Main Preview Container — Uses Canonical LandingView Renderer */}
       <div
-        className="w-full max-w-6xl p-4 sm:p-8 rounded-3xl border shadow-2xl transition-all"
+        className="w-full max-w-6xl rounded-3xl border shadow-2xl overflow-hidden"
         style={{
           backgroundColor: isCyber ? "#050816" : "#FFFDF0",
           borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000000",
           borderWidth: isCyber ? "1px" : "3px",
-          color: isCyber ? "#E0E8FF" : "#1A1A1A",
         }}
       >
-        <LandingHero
+        <LandingView
           profile={draftProfile}
           isCyber={isCyber}
           isLoggedIn={true}
-          heroStyle={draftProfile.heroStyle || "cinematic"}
+          displayName={draftProfile.name || "Explorer"}
+          stats={{ gamesCount: 12, charactersCount: 28, musicCount: 145, mediaCount: 42, hallCount: 18 }}
           onEnterDashboard={() => {
             alert("Preview Mode: This button routes directly to your Dashboard when logged in.");
           }}
-        />
-
-        <LandingWorldStatus
-          isCyber={isCyber}
-          showPublicStats={Boolean(draftProfile.showPublicStats)}
-          stats={{ gamesCount: 12, charactersCount: 28, musicCount: 145, mediaCount: 42, hallCount: 18 }}
-          accentColor={draftProfile.landingAccentColor}
-        />
-
-        <LandingFeatures
-          isCyber={isCyber}
-          visibleFeatures={draftProfile.visibleFeatures}
-          accentColor={draftProfile.landingAccentColor}
-        />
-
-        <LandingAbout
-          profile={draftProfile}
-          isCyber={isCyber}
-          accentColor={draftProfile.landingAccentColor}
+          onThemeToggle={() => setPreviewTheme(isCyber ? "brutal" : "cyber")}
+          isPreview={true}
         />
       </div>
     </div>

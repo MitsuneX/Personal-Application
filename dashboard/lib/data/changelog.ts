@@ -13,6 +13,33 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v12.5.0",
+    date: "2026-08-16",
+    title: "Canonical Root Landing Page Architecture, Scroll Engine Restoration & Auth-Routing Alignment",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Transformed the root route (/) into a canonical public landing page for both authenticated and guest users while migrating the Command Center dashboard to a dedicated protected route (/dashboard). Restored standard browser document scrolling across the entire landing page, created a centralized Single Source of Truth module catalog with dynamic allowlist filtering, overhauled Profile Customization into 4 clear conceptual groups (Public Identity, Visual Experience, Public Visibility, Showcase Modules), and separated Sign In authentication routing from guest sandbox activation.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🌐 Canonical Root Landing Page Architecture (app/page.tsx, components/landing/LandingView.tsx): Established '/' as the universal entry landing page rendering for all visitors with dynamic auth-aware greetings ('Welcome, {displayName}' vs 'Welcome to Your Personal World'), live guest sandbox activation, and live draft previews.",
+          "🚀 Dedicated Command Center Dashboard Route (app/dashboard/page.tsx): Migrated main dashboard workspace to '/dashboard' wrapped in '<AppShell>', updating Sidebar, Header, Breadcrumbs, and OAuth callback handlers.",
+          "🗂️ Centralized Shared Module Catalog (lib/config/landingModules.tsx): Created a single source of truth defining all system modules (Game Database, Game Characters, Hall of Fame, Music Vault, Drama & Media, AI Library, Hobbies, Emergency Hub, Character Dictionary, Prompt Vault) with categories, routes, tags, and icon renderers.",
+          "⚙️ Reorganized Profile Customization Panel (app/profile/page.tsx): Structured landing customization into 4 clear groups: Public Identity (Personal World Name, Access Mode), Visual Experience (Hero Intensity, Background Animation, Accent Color), Public Visibility (Stats Counters, About Section, Social Links), and Showcase Modules (Allowlist selection).",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🖱️ Primary Document Scroll Restoration (app/globals.css, LandingHero.tsx, LandingFeatures.tsx): Removed global 'body { overflow: hidden; }' lock from 'globals.css', restoring native document window scrolling across mouse wheel, trackpad, touch swipe, scrollbar drag, and keyboard navigation (Page Up/Down, Home/End).",
+          "↓ In-Page Smooth Scroll & Floating Back to Top (LandingHero.tsx, LandingView.tsx): Renamed CTA to 'Explore the Archive ↓' with smooth 'scrollIntoView' navigation and added a theme-aware floating 'Back to Top' button when scrolled past the hero.",
+          "🔐 Sign In & Guest Mode Route Isolation (proxy.ts, LandingView.tsx): Eliminated guest cookie redirects on '/login' in 'proxy.ts', ensuring clicking 'Sign In' routes strictly to '/login' without activating guest sandbox or writing guest state.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v12.4.0",
     date: "2026-08-16",
     title: "One-Way Canonical Metadata Sync Engine & Global Data URL Resolution Pass",

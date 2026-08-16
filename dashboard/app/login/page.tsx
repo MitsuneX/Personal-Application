@@ -170,7 +170,7 @@ function LoginPageInner() {
     localStorage.setItem("is_guest", "true");
     addToast("success", "Entering Guest Sandbox Mode...");
     setTimeout(() => {
-      window.location.href = "/";
+      window.location.href = "/dashboard";
     }, 300);
   };
 
@@ -213,7 +213,7 @@ function LoginPageInner() {
           addToast("error", data.error || "Invalid credentials. Check your email/username & password.");
         } else {
           addToast("success", "Access granted. Initializing secure session...");
-          const next = searchParams.get("next") ?? "/";
+          const next = searchParams.get("next") ?? "/dashboard";
           setTimeout(() => router.push(next), 800);
         }
       } else {

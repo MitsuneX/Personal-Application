@@ -138,7 +138,7 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-sans, "Space Grotesk", system-ui, sans-serif);
-  overflow: hidden;
+  min-height: 100%;
 }
 
 /* ── Custom Scrollbar ───────────────────────────────────────────────────────── */

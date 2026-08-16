@@ -10,19 +10,36 @@ interface LandingHeroProps {
   profile: ProfileData;
   isCyber: boolean;
   isLoggedIn?: boolean;
+  displayName?: string;
   heroStyle?: "cinematic" | "minimal" | "ambient" | "custom";
   onEnterDashboard?: () => void;
+  onGuestLogin?: () => void;
 }
 
 export function LandingHero({
   profile,
   isCyber,
   isLoggedIn = false,
+  displayName,
   heroStyle = "cinematic",
   onEnterDashboard,
+  onGuestLogin,
 }: LandingHeroProps) {
-  const worldName = profile.dashboardName?.trim() || `${profile.name || "Personal"}'s World`;
+  // Personalized or Universal World Title
+  const defaultTitle = isLoggedIn
+    ? (displayName ? `Welcome, ${displayName}` : "Welcome to Your Personal World")
+    : "Welcome to Your Personal World";
+  const worldName = profile.dashboardName?.trim() || defaultTitle;
   const accentColor = profile.landingAccentColor || (isCyber ? "#00F5FF" : "#FF6B35");
+
+  const handleExploreClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (typeof window === "undefined") return;
+    const el = document.getElementById("explore");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
   return (
     <div className="relative w-full overflow-hidden rounded-3xl p-6 sm:p-10 md:p-14 mb-8">
@@ -138,43 +155,41 @@ export function LandingHero({
                 }}
               >
                 <UserCheck size={18} />
-                <span>Continue as {profile.name || "Owner"} →</span>
+                <span>Continue to Dashboard →</span>
               </motion.button>
             ) : (
-              <Link href="/login">
-                <motion.button
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.96 }}
-                  className="px-6 py-3.5 rounded-2xl text-sm font-black uppercase tracking-wider font-mono flex items-center gap-2.5 cursor-pointer border shadow-xl"
-                  style={{
-                    backgroundColor: isCyber ? accentColor : "#FFE600",
-                    color: isCyber ? "#050816" : "#000000",
-                    borderColor: isCyber ? accentColor : "#000000",
-                    borderWidth: isCyber ? "1px" : "3px",
-                    boxShadow: isCyber ? `0 0 25px ${accentColor}50` : "4px 4px 0 #000000",
-                  }}
-                >
-                  <Terminal size={18} />
-                  <span>Enter My World ⚡</span>
-                </motion.button>
-              </Link>
-            )}
-
-            <Link href="/welcome#explore">
-              <button
-                className="px-5 py-3.5 rounded-2xl text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 cursor-pointer border backdrop-blur-md opacity-80 hover:opacity-100 transition-opacity"
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                onClick={onGuestLogin}
+                className="px-6 py-3.5 rounded-2xl text-sm font-black uppercase tracking-wider font-mono flex items-center gap-2.5 cursor-pointer border shadow-xl"
                 style={{
-                  backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#FFFFFF",
-                  borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000000",
-                  color: isCyber ? "#E0E8FF" : "#000000",
-                  borderWidth: isCyber ? "1px" : "2px",
-                  boxShadow: isCyber ? "none" : "3px 3px 0 #000000",
+                  backgroundColor: isCyber ? accentColor : "#FFE600",
+                  color: isCyber ? "#050816" : "#000000",
+                  borderColor: isCyber ? accentColor : "#000000",
+                  borderWidth: isCyber ? "1px" : "3px",
+                  boxShadow: isCyber ? `0 0 25px ${accentColor}50` : "4px 4px 0 #000000",
                 }}
               >
-                <Compass size={15} />
-                <span>Explore Features</span>
-              </button>
-            </Link>
+                <Terminal size={18} />
+                <span>Continue as Guest →</span>
+              </motion.button>
+            )}
+
+            <button
+              onClick={handleExploreClick}
+              className="px-5 py-3.5 rounded-2xl text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 cursor-pointer border backdrop-blur-md opacity-80 hover:opacity-100 transition-opacity"
+              style={{
+                backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#FFFFFF",
+                borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000000",
+                color: isCyber ? "#E0E8FF" : "#000000",
+                borderWidth: isCyber ? "1px" : "2px",
+                boxShadow: isCyber ? "none" : "3px 3px 0 #000000",
+              }}
+            >
+              <Compass size={15} />
+              <span>Explore the Archive ↓</span>
+            </button>
           </div>
         </div>
 

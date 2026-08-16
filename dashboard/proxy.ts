@@ -4,8 +4,9 @@ import { createServerClient } from "@supabase/ssr";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
 
-// ─── Protected Routes ─────────────────────────────────────────────────────────
+// ─── Public Routes (Accessible without authentication) ────────────────────────
 const PUBLIC_ROUTES = [
+  "/",
   "/welcome",
   "/login",
   "/signup",
@@ -20,7 +21,8 @@ const PUBLIC_ROUTES = [
 ];
 
 function isPublicRoute(pathname: string): boolean {
-  return PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(route));
+  if (pathname === "/") return true;
+  return PUBLIC_ROUTES.some((route) => route !== "/" && (pathname === route || pathname.startsWith(route)));
 }
 
 // ─── Next.js 16 Proxy (Replaces middleware) ───────────────────────────────────
@@ -47,14 +49,8 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isGuest = request.cookies.get("is_guest")?.value === "true";
 
-  // Guest Mode sessions pass through all routes
+  // Guest Mode sessions pass through all application routes without blocking /login
   if (isGuest) {
-    if (pathname.startsWith("/login")) {
-      const dashboardUrl = request.nextUrl.clone();
-      dashboardUrl.pathname = "/";
-      dashboardUrl.search = "";
-      return NextResponse.redirect(dashboardUrl);
-    }
     return supabaseResponse;
   }
 
@@ -64,10 +60,6 @@ export async function proxy(request: NextRequest) {
     const hasAuthCookie = allCookies.some(c => c.name.includes("auth-token"));
     if (!hasAuthCookie) {
       const redirectUrl = request.nextUrl.clone();
-      if (pathname === "/") {
-        redirectUrl.pathname = "/welcome";
-        return NextResponse.redirect(redirectUrl);
-      }
       redirectUrl.pathname = "/login";
       redirectUrl.searchParams.set("next", pathname);
       return NextResponse.redirect(redirectUrl);
@@ -82,19 +74,15 @@ export async function proxy(request: NextRequest) {
   // Redirect unauthenticated users trying to access protected routes
   if (!user && !isPublicRoute(pathname)) {
     const redirectUrl = request.nextUrl.clone();
-    if (pathname === "/") {
-      redirectUrl.pathname = "/welcome";
-      return NextResponse.redirect(redirectUrl);
-    }
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Redirect logged-in users away from /login back to dashboard
+  // Redirect logged-in users away from /login to dashboard
   if (user && isPublicRoute(pathname) && pathname.startsWith("/login")) {
     const dashboardUrl = request.nextUrl.clone();
-    dashboardUrl.pathname = "/";
+    dashboardUrl.pathname = "/dashboard";
     dashboardUrl.search = "";
     return NextResponse.redirect(dashboardUrl);
   }
