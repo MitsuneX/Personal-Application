@@ -599,7 +599,7 @@ export default function AiLibraryPage() {
                             tool.logo.startsWith("http") || tool.logo.startsWith("/") || tool.logo.startsWith("data:") ? (
                               <img src={tool.logo} alt={tool.name} className="w-full h-full object-cover" />
                             ) : (
-                              <span>{tool.logo}</span>
+                              <span>{tool.logo.length <= 8 && !tool.logo.includes(";") ? tool.logo : "🤖"}</span>
                             )
                           ) : (
                             <span>🤖</span>

@@ -13,6 +13,31 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v12.4.0",
+    date: "2026-08-16",
+    title: "One-Way Canonical Metadata Sync Engine & Global Data URL Resolution Pass",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Implemented a unified one-way canonical metadata synchronization engine connecting authoritative Game Character records to Game Database dossiers with single and bulk sync actions, repaired Combat Elements aggregation across all game universes, and completely eliminated raw base64 data-URL text leaks across all application components.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🔄 Bulk 'Sync All Data' Engine in Game Database: Added a one-click bulk synchronization action in Game Database Character Collection (app/games/[gameId]/page.tsx, dashboardStore.ts, app/api/game-characters/sync-to-dossier/route.ts) to synchronize all characters in batch from authoritative Game Character records to Game Database dossiers with detailed toast summary metrics.",
+          "⚡ Unified One-Way Canonical Sync API (app/api/game-characters/sync-to-dossier/route.ts): Consolidated single-character and bulk sync pipelines with safe additive field merging, identity resolution (characterId, sourceCharacterId, gameId + name fallback), and strict protection for user-managed fields (notes, levelRank, matches).",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🛡️ Global Data URL & Base64 Text Leak Elimination: Fixed raw 'data:image/...' strings displaying as visible text in the Games Index quick-link tray (app/games/page.tsx), Character Cards (DossierCharacterCard.tsx), global dropdowns (CustomSelect.tsx, FilterDropdown.tsx), Command Palette (CommandPalette.tsx, searchRegistry.ts), Confirmation Modals (GlobalConfirmModal.tsx), Character Preview Modals (CharacterPreviewModal.tsx), and Category Filter badges (InteractiveCategoryFilter.tsx).",
+          "⚔️ Combat Element Aggregation & Alias Normalization (elementTheme.ts, app/games/[gameId]/page.tsx, InteractiveCategoryFilter.tsx): Repaired canonical element resolution across Honkai: Star Rail, Genshin Impact, Wuthering Waves, Zenless Zone Zero, and Dragon Ball Legends, ensuring 100% accurate element roster counts.",
+          "🖼️ Safe Resolver & Input Masking (gameIcons.ts, DossierCharacterEditorModal.tsx, GameEditorModal.tsx): Updated resolveGameIcon to strictly distinguish image media from text fallbacks, and masked base64 data URLs in text input fields while maintaining live preview rendering.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v12.3.0",
     date: "2026-08-15",
     title: "Hall of Fame Museum Showcase & Media Framing Correction Pass",

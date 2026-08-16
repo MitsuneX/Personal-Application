@@ -7,6 +7,7 @@ import { useConfirm } from "@/lib/context/ConfirmContext";
 import { useToast } from "@/components/ui/ToastProvider";
 import { OverlayPortal } from "./OverlayPortal";
 import { Z_INDEX } from "./ViewportBoundary";
+import { isImageUrl } from "@/lib/utils/mediaResolver";
 
 export function GlobalConfirmModal() {
   const { theme } = useTheme();
@@ -167,7 +168,17 @@ export function GlobalConfirmModal() {
                     }}
                   >
                     {itemPreview.icon && (
-                      <span className="text-xl shrink-0">{itemPreview.icon}</span>
+                      typeof itemPreview.icon === "string" ? (
+                        isImageUrl(itemPreview.icon) ? (
+                          <img src={itemPreview.icon} alt="" className="w-6 h-6 object-contain rounded shrink-0" />
+                        ) : itemPreview.icon.length <= 8 && !itemPreview.icon.includes(";") ? (
+                          <span className="text-xl shrink-0">{itemPreview.icon}</span>
+                        ) : (
+                          <span className="text-xl shrink-0">🗑️</span>
+                        )
+                      ) : (
+                        <span className="text-xl shrink-0">{itemPreview.icon}</span>
+                      )
                     )}
                     <div className="min-w-0 flex-1">
                       <p

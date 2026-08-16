@@ -648,3 +648,92 @@ export function getElementTheme(
     }
   }
 }
+
+/**
+ * Canonical Game Character Element Extractor
+ * Safely extracts the canonical element string from a GameCharacter or DossierCharacter.
+ * Never modifies or mutates the underlying record.
+ */
+export function getCanonicalGameCharacterElement(
+  character?: {
+    element?: string | null;
+    role?: string | null;
+    attribute?: string | null;
+    stats?: any;
+  } | null
+): string | null {
+  if (!character) return null;
+
+  // 1. Direct canonical element property
+  if (
+    typeof character.element === "string" &&
+    character.element.trim().length > 0 &&
+    character.element.trim() !== "null" &&
+    character.element.trim() !== "undefined"
+  ) {
+    return character.element.trim();
+  }
+
+  // 2. Stats attribute / element fallback
+  const stats = character.stats;
+  if (stats && typeof stats === "object") {
+    if (
+      typeof stats.element === "string" &&
+      stats.element.trim().length > 0 &&
+      stats.element.trim() !== "null"
+    ) {
+      return stats.element.trim();
+    }
+    if (
+      typeof stats.attribute === "string" &&
+      stats.attribute.trim().length > 0 &&
+      stats.attribute.trim() !== "null"
+    ) {
+      return stats.attribute.trim();
+    }
+  }
+
+  // 3. Direct attribute property if present
+  if (
+    typeof character.attribute === "string" &&
+    character.attribute.trim().length > 0 &&
+    character.attribute.trim() !== "null"
+  ) {
+    return character.attribute.trim();
+  }
+
+  return null;
+}
+
+/**
+ * Match Character Element against Registered GameElement
+ * Matches character's canonical element with the registered game element id/name.
+ * Preserves canonical game terminology (Lightning, Fire, Glacio, Fusion, etc.).
+ * Does NOT force unknown or unrecognized elements into unrelated buckets.
+ */
+export function matchGameElement(
+  characterElement: string | null | undefined,
+  element: { id: string; name: string }
+): boolean {
+  if (!characterElement || !element) return false;
+
+  const cleanChar = characterElement.trim().toLowerCase();
+  const cleanName = element.name.trim().toLowerCase();
+  const cleanId = element.id.trim().toLowerCase();
+
+  // Exact match
+  if (cleanChar === cleanName || cleanChar === cleanId) return true;
+
+  // Punctuation-stripped match (e.g. "red" vs "red", "pur" vs "purple")
+  const normChar = cleanChar.replace(/[^a-z0-9]/g, "");
+  const normName = cleanName.replace(/[^a-z0-9]/g, "");
+  const normId = cleanId.replace(/[^a-z0-9]/g, "");
+  if (normChar === normName || normChar === normId) return true;
+
+  // Substring/Parenthetical match for DB Legends & aliases (e.g. "LGT (Light)" matches "Light" or "LGT", "RED (Red)" matches "RED")
+  if (cleanChar.includes(cleanName) || cleanName.includes(cleanChar)) return true;
+  if (cleanChar.includes(cleanId) || cleanId.includes(cleanChar)) return true;
+
+  return false;
+}
+

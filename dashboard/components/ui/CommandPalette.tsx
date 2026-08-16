@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/lib/theme";
 import { SearchResultItem } from "@/lib/search/searchRegistry";
-
+import { isImageUrl } from "@/lib/utils/mediaResolver";
 import { OverlayPortal } from "./OverlayPortal";
 import { Z_INDEX } from "./ViewportBoundary";
 
@@ -343,7 +343,13 @@ export function CommandPalette() {
                                   }}
                                 >
                                   <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
-                                    <span className="text-base shrink-0">{item.icon || cat.icon}</span>
+                                    <div className="w-6 h-6 shrink-0 flex items-center justify-center text-base">
+                                      {isImageUrl(item.icon || cat.icon) ? (
+                                        <img src={item.icon || cat.icon} alt="" className="w-5 h-5 object-contain rounded" />
+                                      ) : (
+                                        <span>{(item.icon || cat.icon) && (item.icon || cat.icon).length <= 8 ? (item.icon || cat.icon) : "🔍"}</span>
+                                      )}
+                                    </div>
                                     <div className="min-w-0 flex-1">
                                       <div className="flex items-center gap-2">
                                         <p 

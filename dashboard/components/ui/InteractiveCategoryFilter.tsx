@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { DossierCharacterEntry } from "@/lib/store/dashboardStore";
 import { getGameDossierConfig, getCategoryVisualTokens } from "@/lib/data/gameDossierConfig";
+import { getCanonicalGameCharacterElement, matchGameElement } from "@/lib/utils/elementTheme";
+import { isImageUrl } from "@/lib/utils/mediaResolver";
 
 interface InteractiveCategoryFilterProps {
   gameTitle: string;
@@ -127,8 +129,7 @@ export function InteractiveCategoryFilter({
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
             {elementSystem.elements.map((el) => {
               const matchesCount = characters.filter((c) =>
-                c.role?.toLowerCase() === el.name.toLowerCase() ||
-                c.role?.toLowerCase().includes(el.name.toLowerCase())
+                matchGameElement(getCanonicalGameCharacterElement(c), el)
               ).length;
 
               const isSelected = selectedElement.toLowerCase() === el.name.toLowerCase();
@@ -170,7 +171,13 @@ export function InteractiveCategoryFilter({
                   )}
 
                   <div className="relative z-10">
-                    <div className="text-2xl mb-1">{el.icon}</div>
+                    {isImageUrl(el.icon) ? (
+                      <div className="flex justify-center mb-1">
+                        <img src={el.icon} alt={el.name} className="w-7 h-7 object-contain" />
+                      </div>
+                    ) : (
+                      <div className="text-2xl mb-1">{el.icon && el.icon.length <= 8 && !el.icon.includes(";") ? el.icon : "✦"}</div>
+                    )}
                     <p
                       className="font-black text-xs leading-tight"
                       style={{ color: isCyber ? (isSelected ? tokens.accentColor : "#E0E8FF") : "#1A1A1A" }}
@@ -223,10 +230,23 @@ export function InteractiveCategoryFilter({
         {/* Category Cards Overview Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
           {config.categories.map((cat) => {
-            const matchesCount = characters.filter((c) =>
-              c.category?.toLowerCase() === cat.name.toLowerCase() ||
-              c.category?.toLowerCase().includes(cat.name.toLowerCase())
-            ).length;
+            const catName = cat.name.toLowerCase();
+            const catId = cat.id.toLowerCase();
+            const matchesCount = characters.filter((c) => {
+              const charCat = (c.category || "").toLowerCase();
+              const charPath = (c.path || "").toLowerCase();
+              const charRole = (c.role || "").toLowerCase();
+              return (
+                charCat === catName ||
+                charCat === catId ||
+                charCat.includes(catName) ||
+                charPath === catName ||
+                charPath === catId ||
+                charPath.includes(catName) ||
+                charRole === catName ||
+                charRole.includes(catName)
+              );
+            }).length;
 
             const isSelected = selectedCategory.toLowerCase() === cat.name.toLowerCase();
             const tokens = getCategoryVisualTokens(cat, isCyber);
@@ -260,7 +280,11 @@ export function InteractiveCategoryFilter({
                 }}
               >
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="text-xl">{cat.icon}</span>
+                  {isImageUrl(cat.icon) ? (
+                    <img src={cat.icon} alt={cat.name} className="w-5 h-5 object-contain" />
+                  ) : (
+                    <span className="text-xl">{cat.icon && cat.icon.length <= 8 && !cat.icon.includes(";") ? cat.icon : "📁"}</span>
+                  )}
                   <span
                     className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold"
                     style={{

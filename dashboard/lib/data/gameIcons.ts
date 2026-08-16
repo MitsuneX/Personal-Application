@@ -168,17 +168,29 @@ export function resolveGameIcon(
   customIcon?: string
 ): ResolvedIconResult {
   // Priority 1: User-uploaded custom icon
-  if (customIcon && customIcon.trim().length > 0) {
+  if (customIcon && typeof customIcon === "string" && customIcon.trim().length > 0) {
     const trimmed = customIcon.trim();
     if (
-      trimmed.startsWith("http") ||
-      trimmed.startsWith("data:") ||
+      trimmed.startsWith("http://") ||
+      trimmed.startsWith("https://") ||
+      trimmed.startsWith("data:image/") ||
       trimmed.startsWith("/") ||
-      trimmed.includes(".")
+      trimmed.includes(".") ||
+      /\.(png|jpe?g|webp|gif|svg|avif|bmp|ico)(?:[?#]|$)/i.test(trimmed)
     ) {
       return { iconUrl: trimmed, isImage: true, source: "custom" };
     }
-    return { fallbackEmoji: trimmed, isImage: false, source: "custom" };
+    // Only treat as fallbackEmoji if it's a short string (<= 8 chars) and not a data/image string
+    if (
+      trimmed.length <= 8 &&
+      !trimmed.includes("data:") &&
+      !trimmed.includes("base64") &&
+      !trimmed.includes("image/") &&
+      !trimmed.includes(";")
+    ) {
+      return { fallbackEmoji: trimmed, isImage: false, source: "custom" };
+    }
+    // Long invalid/corrupted string -> gracefully fall through to recognized/fallback
   }
 
   // Priority 2 & 3: Recognized game icon

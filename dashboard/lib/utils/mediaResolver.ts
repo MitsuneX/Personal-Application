@@ -41,6 +41,24 @@ export function isVideoUrl(url?: string | null): boolean {
 }
 
 /**
+ * Returns true if a string is a valid image URL or image data URL
+ * (https://..., http://..., /uploads/..., /game-icons/..., or data:image/...).
+ */
+export function isImageUrl(url?: string | null): boolean {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim();
+  if (trimmed.startsWith("data:image/")) return true;
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("/")
+  ) {
+    return true;
+  }
+  return /\.(png|jpe?g|webp|gif|svg|avif|bmp|ico)(?:[?#]|$)/i.test(trimmed);
+}
+
+/**
  * Resolves the primary video preview URL for a card if available.
  */
 export function getCardVideoUrl(entry: any): string | null {

@@ -427,9 +427,9 @@ export function GameEditorModal({ isOpen, onClose, gameToEdit }: GameEditorModal
               <div className="flex gap-2">
                 <input
                   type="text"
-                  value={icon}
+                  value={icon.startsWith("data:") ? "" : icon}
                   onChange={(e) => setIcon(e.target.value)}
-                  placeholder="Custom Icon URL or upload image file →"
+                  placeholder={icon.startsWith("data:") ? "[Custom Uploaded File Active]" : "Custom Icon URL or upload image file →"}
                   className="flex-1 p-2 rounded-xl border text-sm font-semibold focus:outline-none"
                   style={inputStyles}
                 />

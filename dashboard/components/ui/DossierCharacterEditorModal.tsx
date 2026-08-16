@@ -300,9 +300,9 @@ export function DossierCharacterEditorModal({
               </label>
               <input
                 type="text"
-                value={avatarUrl}
+                value={avatarUrl.startsWith("data:") ? "" : avatarUrl}
                 onChange={(e) => setAvatarUrl(e.target.value)}
-                placeholder="Avatar URL or Emoji"
+                placeholder={avatarUrl.startsWith("data:") ? "[Custom Image File Active]" : "Avatar URL or Emoji"}
                 className="w-full p-2 rounded-xl border text-sm font-semibold focus:outline-none"
                 style={inputStyles}
               />
@@ -313,9 +313,9 @@ export function DossierCharacterEditorModal({
               </label>
               <input
                 type="text"
-                value={splashArt}
+                value={splashArt.startsWith("data:") ? "" : splashArt}
                 onChange={(e) => setSplashArt(e.target.value)}
-                placeholder="High-Res Artwork URL"
+                placeholder={splashArt.startsWith("data:") ? "[Custom Image File Active]" : "High-Res Artwork URL"}
                 className="w-full p-2 rounded-xl border text-sm font-semibold focus:outline-none"
                 style={inputStyles}
               />

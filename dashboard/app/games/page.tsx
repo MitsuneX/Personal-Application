@@ -468,6 +468,7 @@ function GamesPageContent() {
           <div className="flex flex-wrap gap-2 mt-6 pt-5 border-t border-slate-700/15 dark:border-slate-400/15 relative z-10">
             {games.filter((g) => g?.rank).map((g) => {
               const accent = g?.accentColor || "#7C3AED";
+              const gIconRes = resolveGameIcon(g?.game, g?.icon);
               return (
                 <motion.div key={g.id}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold select-none cursor-pointer transition-colors"
@@ -480,7 +481,11 @@ function GamesPageContent() {
                   whileHover={{ y: -2, borderColor: accent }}
                   onClick={() => handleEditClick(g)}
                 >
-                  <span>{g?.icon || CATEGORY_ICONS[g?.category || ""] || "🎮"}</span>
+                  {gIconRes.isImage ? (
+                    <img src={gIconRes.iconUrl} alt="" className="w-4 h-4 object-contain rounded shrink-0" />
+                  ) : (
+                    <span>{gIconRes.fallbackEmoji || CATEGORY_ICONS[g?.category || ""] || "🎮"}</span>
+                  )}
                   <span style={{ color: accent }}>{g.rank}</span>
                   <span className="opacity-60 text-[11px] font-mono">— {g?.game?.split(":")[0]}</span>
                 </motion.div>

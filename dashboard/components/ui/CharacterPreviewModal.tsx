@@ -7,6 +7,7 @@ import { DossierCharacterEntry, useDashboardStore, CharacterLinkValue } from "@/
 import { getGameDossierConfig } from "@/lib/data/gameDossierConfig";
 import { resolveLinkDetails } from "@/lib/data/initialDossierCharacters";
 import { useContextMenu } from "@/hooks/useContextMenu";
+import { isImageUrl } from "@/lib/utils/mediaResolver";
 
 interface CharacterPreviewModalProps {
   isOpen: boolean;
@@ -435,7 +436,11 @@ export function CharacterPreviewModal({
                       border: `1.5px solid ${elementItem?.color || accent}`,
                     }}
                   >
-                    <span>{elementItem?.icon || "✦"}</span>
+                    {elementItem?.icon && isImageUrl(elementItem.icon) ? (
+                      <img src={elementItem.icon} alt="" className="w-4 h-4 object-contain" />
+                    ) : (
+                      <span>{elementItem?.icon && elementItem.icon.length <= 8 && !elementItem.icon.includes(";") ? elementItem.icon : "✦"}</span>
+                    )}
                     <span>{character.role}</span>
                   </span>
                 )}
@@ -449,7 +454,11 @@ export function CharacterPreviewModal({
                       border: isCyber ? "1px solid rgba(255,255,255,0.15)" : "1.5px solid #CBD5E1",
                     }}
                   >
-                    <span>{categoryItem?.icon || "📁"}</span>
+                    {categoryItem?.icon && isImageUrl(categoryItem.icon) ? (
+                      <img src={categoryItem.icon} alt="" className="w-4 h-4 object-contain" />
+                    ) : (
+                      <span>{categoryItem?.icon && categoryItem.icon.length <= 8 && !categoryItem.icon.includes(";") ? categoryItem.icon : "📁"}</span>
+                    )}
                     <span>{character.category}</span>
                   </span>
                 )}

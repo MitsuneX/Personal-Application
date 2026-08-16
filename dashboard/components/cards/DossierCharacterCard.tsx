@@ -6,7 +6,9 @@ import { useTheme } from "@/lib/theme";
 import { DossierCharacterEntry, useDashboardStore } from "@/lib/store/dashboardStore";
 import { getGameDossierConfig } from "@/lib/data/gameDossierConfig";
 import { useContextMenu } from "@/hooks/useContextMenu";
+import { useToast } from "@/components/ui/ToastProvider";
 import { DynamicGameStats } from "@/components/game/DynamicGameStats";
+import { isImageUrl } from "@/lib/utils/mediaResolver";
 
 interface DossierCharacterCardProps {
   character: DossierCharacterEntry;
@@ -27,8 +29,9 @@ export function DossierCharacterCard({
 }: DossierCharacterCardProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { updateDossierCharacter, games, gameCharacters, addGameCharacter, syncGameCharacterArtwork } = useDashboardStore();
+  const { updateDossierCharacter, games, gameCharacters, addGameCharacter, syncGameCharacterArtwork, syncMetadataFromGameCharacter } = useDashboardStore();
   const { openContextMenu } = useContextMenu();
+  const { success: toastSuccess, error: toastError } = useToast();
 
   const parentGame = games.find((g) => g.id === character.gameId);
   const resolvedGameTitle = gameTitle || parentGame?.game || "Game";
@@ -126,6 +129,39 @@ export function DossierCharacterCard({
                 label: "Sync Artwork with Game Hub",
                 icon: "🖼️",
                 onClick: () => syncGameCharacterArtwork(linkedGameChar.id, character.id, "to_dossier_character"),
+              },
+              {
+                id: "sync-metadata-from-gc",
+                label: "Sync Metadata from Game Character",
+                icon: "⬇️",
+                onClick: async () => {
+                  const result = await syncMetadataFromGameCharacter(linkedGameChar.id);
+                  if (result && result.fieldsUpdated.length > 0) {
+                    toastSuccess(`Synced ${result.fieldsUpdated.length} field(s) from Game Character!`);
+                  } else if (result && result.fieldsUpdated.length === 0) {
+                    toastSuccess("Already up-to-date — no fields needed syncing.");
+                  } else {
+                    toastError("Sync failed — could not reach Game Character.");
+                  }
+                },
+              },
+            ]
+          : linkedGameChar
+          ? [
+              {
+                id: "sync-metadata-from-gc",
+                label: "Sync Metadata from Game Character",
+                icon: "⬇️",
+                onClick: async () => {
+                  const result = await syncMetadataFromGameCharacter(linkedGameChar.id);
+                  if (result && result.fieldsUpdated.length > 0) {
+                    toastSuccess(`Synced ${result.fieldsUpdated.length} field(s) from Game Character!`);
+                  } else if (result && result.fieldsUpdated.length === 0) {
+                    toastSuccess("Already up-to-date — no fields needed syncing.");
+                  } else {
+                    toastError("Sync failed — could not reach Game Character.");
+                  }
+                },
               },
             ]
           : []),
@@ -228,14 +264,10 @@ export function DossierCharacterCard({
               borderWidth: isCyber ? "1px" : "2px",
             }}
           >
-            {character.avatarUrl ? (
-              character.avatarUrl.startsWith("http") ||
-              character.avatarUrl.startsWith("data:") ||
-              character.avatarUrl.startsWith("/") ? (
-                <img src={character.avatarUrl} alt={character.name} className="w-full h-full object-cover" />
-              ) : (
-                <span>{character.avatarUrl}</span>
-              )
+            {isImageUrl(character.avatarUrl) ? (
+              <img src={character.avatarUrl!} alt={character.name} className="w-full h-full object-cover" />
+            ) : character.avatarUrl && character.avatarUrl.trim().length <= 4 && !character.avatarUrl.includes(";") ? (
+              <span>{character.avatarUrl.trim()}</span>
             ) : (
               <span>{character.name.charAt(0)}</span>
             )}

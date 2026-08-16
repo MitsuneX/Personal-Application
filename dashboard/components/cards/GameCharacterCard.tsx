@@ -41,6 +41,7 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
     syncGameCharacterCardImage,
     syncGameCharacterSplashArt,
     syncOrphanedGameCharacters,
+    syncMetadataFromGameCharacter,
   } = useDashboardStore();
   const { openContextMenu } = useContextMenu();
   const { success: toastSuccess, error: toastError } = useToast();
@@ -136,12 +137,18 @@ export function GameCharacterCard({ character, onClick, onEdit, onDelete }: Game
           ]
         : []),
       {
-        id: "sync-db",
+        id: "sync-metadata",
         label: "Sync Metadata with Database",
         icon: "🔄",
         onClick: async () => {
-          await syncOrphanedGameCharacters(character.gameId || undefined, character.gameName || undefined);
-          toastSuccess("Database synced!");
+          const result = await syncMetadataFromGameCharacter(character.id);
+          if (result && result.fieldsUpdated.length > 0) {
+            toastSuccess(`Synced ${result.fieldsUpdated.length} field(s) to Game Database!`);
+          } else if (result && result.fieldsUpdated.length === 0) {
+            toastSuccess("Already up-to-date — no fields needed syncing.");
+          } else {
+            toastError("No linked Dossier record found to sync to.");
+          }
         },
       },
       {

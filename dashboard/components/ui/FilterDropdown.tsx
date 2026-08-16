@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { FloatingLayer } from "./FloatingLayer";
 import { Z_INDEX } from "./ViewportBoundary";
+import { isImageUrl } from "@/lib/utils/mediaResolver";
 
 export interface FilterOption {
   id: string;
@@ -109,7 +110,17 @@ export function FilterDropdown({
         }`}
         style={triggerStyle}
       >
-        <span className="opacity-90">{activeOption?.icon || icon}</span>
+        {activeOption?.icon || icon ? (
+          typeof (activeOption?.icon || icon) === "string" ? (
+            isImageUrl((activeOption?.icon || icon) as string) ? (
+              <img src={(activeOption?.icon || icon) as string} alt="" className="w-4 h-4 object-contain rounded shrink-0" />
+            ) : ((activeOption?.icon || icon) as string).length <= 8 && !((activeOption?.icon || icon) as string).includes(";") ? (
+              <span className="opacity-90">{activeOption?.icon || icon}</span>
+            ) : null
+          ) : (
+            <span className="opacity-90">{activeOption?.icon || icon}</span>
+          )
+        ) : null}
         <span className="truncate max-w-[150px] sm:max-w-[200px]">
           {activeOption?.label || label}
         </span>
@@ -175,7 +186,17 @@ export function FilterDropdown({
                     style={itemStyle}
                   >
                     <div className="flex items-center gap-2.5 truncate">
-                      {opt.icon && <span className="text-sm">{opt.icon}</span>}
+                      {opt.icon && (
+                        typeof opt.icon === "string" ? (
+                          isImageUrl(opt.icon) ? (
+                            <img src={opt.icon} alt="" className="w-4 h-4 object-contain rounded shrink-0" />
+                          ) : opt.icon.length <= 8 && !opt.icon.includes(";") ? (
+                            <span className="text-sm shrink-0">{opt.icon}</span>
+                          ) : null
+                        ) : (
+                          <span className="text-sm shrink-0">{opt.icon}</span>
+                        )
+                      )}
                       <div className="flex flex-col">
                         <span className="truncate">{opt.label}</span>
                         {opt.description && (

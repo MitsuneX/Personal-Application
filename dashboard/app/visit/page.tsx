@@ -426,7 +426,7 @@ export default function VisitProjectHubPage() {
                             proj.logo.startsWith("http") || proj.logo.startsWith("/") || proj.logo.startsWith("data:") ? (
                               <img src={proj.logo} alt={proj.name} className="w-full h-full object-cover" />
                             ) : (
-                              <span>{proj.logo}</span>
+                              <span>{proj.logo.length <= 8 && !proj.logo.includes(";") ? proj.logo : "🌐"}</span>
                             )
                           ) : (
                             <span>🌐</span>

@@ -912,6 +912,8 @@ interface DashboardState {
   syncGameCharacterCardImage: (gameCharId: string, dossierCharId: string, direction: "to_game_character" | "to_dossier_character") => Promise<void>;
   syncGameCharacterSplashArt: (gameCharId: string, dossierCharId: string, direction: "to_game_character" | "to_dossier_character") => Promise<void>;
   syncOrphanedGameCharacters: (gameId?: string, gameName?: string) => Promise<void>;
+  syncMetadataFromGameCharacter: (gameCharId: string) => Promise<{ fieldsUpdated: string[] } | null>;
+  syncAllGameCharactersMetadata: (gameId: string) => Promise<{ summary: { processed: number; updated: number; current: number; created: number; errors: number }; message: string } | null>;
   addGameResource: (item: GameResourceEntry) => Promise<void>;
   updateGameResource: (id: string, data: Partial<GameResourceEntry>) => Promise<void>;
   removeGameResource: (id: string) => Promise<void>;
@@ -1550,6 +1552,17 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           }
           return { gameCharacters: updatedGameChars, dossierCharacters: updatedDossiers };
         });
+
+        // ── Auto-sync canonical metadata from GameCharacter → Dossier on creation ──
+        try {
+          const syncResult = await get().syncMetadataFromGameCharacter(newItem.id);
+          if (syncResult && syncResult.fieldsUpdated.length > 0) {
+            console.log(`[AutoSync] Created "${newItem.name}": pushed ${syncResult.fieldsUpdated.length} field(s) to Dossier.`);
+          }
+        } catch (syncErr) {
+          // Non-fatal — log only
+          console.warn("[AutoSync] Post-create metadata sync failed:", syncErr);
+        }
       }
     } catch (err) {
       console.error("Failed to sync added game character:", err);
@@ -1576,6 +1589,14 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         };
       }),
     }));
+    // ── Canonical metadata fields that warrant a push to Dossier on update ──
+    const CANONICAL_FIELDS = new Set([
+      "name", "role", "category", "element", "path", "weapon", "rarity",
+      "nation", "birthday", "faction", "accentColor", "avatarUrl", "splashArt",
+      "health", "damage", "difficulty", "winRate", "pickRate", "banRate",
+    ]);
+    const hasCanonicalChanges = Object.keys(data).some((k) => CANONICAL_FIELDS.has(k));
+
     try {
       const item = get().gameCharacters.find((gc) => gc.id === id);
       if (item) {
@@ -1585,15 +1606,16 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           body: JSON.stringify({ action: "UPDATE_GAME_CHARACTER", payload: item }),
         });
 
-        // Sync shared official metadata if linked to dossierCharacter
-        if (item.characterId) {
-          const dc = get().dossierCharacters.find((d) => d.id === item.characterId);
-          if (dc) {
-            await get().updateDossierCharacter(dc.id, {
-              name: item.name || dc.name,
-              role: item.role || dc.role,
-              accentColor: item.accentColor || dc.accentColor,
-            });
+        // ── Auto-sync canonical metadata → Dossier (only when metadata fields changed) ──
+        if (hasCanonicalChanges) {
+          try {
+            const syncResult = await get().syncMetadataFromGameCharacter(id);
+            if (syncResult && syncResult.fieldsUpdated.length > 0) {
+              console.log(`[AutoSync] Updated "${item.name}": pushed ${syncResult.fieldsUpdated.length} field(s) to Dossier.`);
+            }
+          } catch (syncErr) {
+            // Non-fatal — log only
+            console.warn("[AutoSync] Post-update metadata sync failed:", syncErr);
           }
         }
       }
@@ -1662,6 +1684,109 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
   },
 
+  syncMetadataFromGameCharacter: async (gameCharId: string) => {
+    try {
+      const res = await fetch("/api/game-characters/sync-to-dossier", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameCharacterId: gameCharId }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error("[SyncMetadata] API error:", errData);
+        return null;
+      }
+
+      const result = await res.json();
+
+      // Update local dossierCharacters state if the API returned an updated dossier
+      if (result.success && result.dossierCharacter) {
+        set((s) => {
+          const exists = s.dossierCharacters.some((dc) => dc.id === result.dossierCharacter.id);
+          const updatedDossiers = exists
+            ? s.dossierCharacters.map((dc) =>
+                dc.id === result.dossierCharacter.id
+                  ? { ...dc, ...result.dossierCharacter }
+                  : dc
+              )
+            : [...s.dossierCharacters, result.dossierCharacter];
+
+          const updatedGCs = s.gameCharacters.map((c) =>
+            c.id === gameCharId ? { ...c, characterId: result.dossierCharacter.id } : c
+          );
+
+          return { dossierCharacters: updatedDossiers, gameCharacters: updatedGCs };
+        });
+      }
+
+      return {
+        fieldsUpdated: result.fieldsUpdated || [],
+        message: result.message || "",
+        wasLinked: result.wasLinked ?? false,
+      };
+    } catch (err) {
+      console.error("[SyncMetadata] Unexpected error:", err);
+      return null;
+    }
+  },
+
+  syncAllGameCharactersMetadata: async (gameId: string) => {
+    try {
+      const res = await fetch("/api/game-characters/sync-to-dossier", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameId }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error("[BulkSyncMetadata] API error:", errData);
+        return null;
+      }
+
+      const result = await res.json();
+
+      if (result.success && Array.isArray(result.updatedDossiers) && result.updatedDossiers.length > 0) {
+        set((s) => {
+          const updatedMap = new Map<string, DossierCharacterEntry>();
+          for (const d of result.updatedDossiers) {
+            updatedMap.set(d.id, d);
+          }
+
+          const newDossiers = s.dossierCharacters.map((dc) =>
+            updatedMap.has(dc.id) ? { ...dc, ...updatedMap.get(dc.id)! } : dc
+          );
+
+          for (const d of result.updatedDossiers) {
+            if (!newDossiers.some((dc) => dc.id === d.id)) {
+              newDossiers.push(d);
+            }
+          }
+
+          const updatedGCs = s.gameCharacters.map((gc) => {
+            const match = result.updatedDossiers.find(
+              (d: any) => d.name.trim().toLowerCase() === gc.name.trim().toLowerCase()
+            );
+            return match && (!gc.characterId || gc.characterId !== match.id)
+              ? { ...gc, characterId: match.id }
+              : gc;
+          });
+
+          return { dossierCharacters: newDossiers, gameCharacters: updatedGCs };
+        });
+      }
+
+      return {
+        summary: result.summary || { processed: 0, updated: 0, current: 0, created: 0, errors: 0 },
+        message: result.message || "",
+      };
+    } catch (err) {
+      console.error("[BulkSyncMetadata] Unexpected error:", err);
+      return null;
+    }
+  },
+
   syncOrphanedGameCharacters: async (gameId, gameName) => {
     const state = get();
     const relevantDossierChars = state.dossierCharacters.filter((dc) => {
@@ -1712,15 +1837,25 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     // Every call always adds +1 — no toggle-off, no decrement.
     const newLikesCount = (gameChar.likes || 0) + 1;
 
+    const eventItem: HallEventEntry = {
+      id: "evt-like-" + Math.random().toString(36).substr(2, 9),
+      type: "LIKES_CHANGED",
+      characterId: characterId,
+      characterName: gameChar.name,
+      newVotes: newLikesCount,
+      timestamp: new Date().toISOString(),
+      metadata: { increment: 1, isGameCharacter: true },
+    };
+
     // Optimistic store update
     set((s) => ({
       gameCharacters: s.gameCharacters.map((c) =>
         c.id === characterId ? { ...c, likes: newLikesCount } : c
       ),
-      // Always mark as liked — repeated taps never remove from liked set
       userLikedGameCharacterIds: s.userLikedGameCharacterIds.includes(characterId)
         ? s.userLikedGameCharacterIds
         : [...s.userLikedGameCharacterIds, characterId],
+      hallEvents: [eventItem, ...(s.hallEvents || [])],
     }));
 
     try {

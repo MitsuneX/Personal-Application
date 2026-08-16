@@ -264,8 +264,8 @@ export default function HallOfFamePage() {
     [hallOfFame, gameCharacters, games]
   );
   const activityFeed = useMemo(
-    () => generateActivityFeed(hallOfFame, hallEvents),
-    [hallOfFame, hallEvents]
+    () => generateActivityFeed(sortedList, hallEvents, gameCharacters),
+    [sortedList, hallEvents, gameCharacters]
   );
   const championshipTimeline = useMemo(
     () => computeChampionshipHistory(hallOfFame, championshipHistory, categoryFilter),

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { FloatingLayer } from "./FloatingLayer";
 import { Z_INDEX } from "./ViewportBoundary";
+import { isImageUrl } from "@/lib/utils/mediaResolver";
 
 export interface CustomSelectOption {
   value: string;
@@ -118,7 +119,17 @@ export function CustomSelect({
         <span className="flex items-center gap-2 truncate">
           {selectedOption ? (
             <>
-              {selectedOption.icon && <span>{selectedOption.icon}</span>}
+              {selectedOption.icon && (
+                typeof selectedOption.icon === "string" ? (
+                  isImageUrl(selectedOption.icon) ? (
+                    <img src={selectedOption.icon} alt="" className="w-4 h-4 object-contain rounded shrink-0" />
+                  ) : selectedOption.icon.length <= 8 && !selectedOption.icon.includes(";") ? (
+                    <span>{selectedOption.icon}</span>
+                  ) : null
+                ) : (
+                  <span>{selectedOption.icon}</span>
+                )
+              )}
               <span className="truncate">{selectedOption.label}</span>
             </>
           ) : (
@@ -193,7 +204,17 @@ export function CustomSelect({
                     }`}
                   >
                     <div className="flex items-center gap-2 truncate">
-                      {opt.icon && <span className="shrink-0">{opt.icon}</span>}
+                      {opt.icon && (
+                        typeof opt.icon === "string" ? (
+                          isImageUrl(opt.icon) ? (
+                            <img src={opt.icon} alt="" className="w-4 h-4 object-contain rounded shrink-0" />
+                          ) : opt.icon.length <= 8 && !opt.icon.includes(";") ? (
+                            <span className="shrink-0">{opt.icon}</span>
+                          ) : null
+                        ) : (
+                          <span className="shrink-0">{opt.icon}</span>
+                        )
+                      )}
                       <span className="truncate">{opt.label}</span>
                     </div>
                     {isSelected && <span className="text-xs shrink-0">✓</span>}

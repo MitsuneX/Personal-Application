@@ -4,6 +4,8 @@
  * Provides fuzzy, case-insensitive, multi-field matching with zero duplicate entries.
  */
 
+import { resolveGameIcon } from "@/lib/data/gameIcons";
+
 export interface SearchResultItem {
   id: string;
   title: string;
@@ -139,16 +141,19 @@ registerSearchProvider({
           g.mainRole,
         ])
       )
-      .map((g) => ({
-        id: g.id,
-        title: g.game,
-        subtitle: `Game Dossier · ${g.category} · Platform: ${g.platform} · Main: ${g.mainCharacter}`,
-        icon: g.icon || "🎮",
-        module: "Game Database",
-        category: g.category,
-        url: `/games/${g.id}`,
-        accentColor: g.accentColor || "#FF6B35",
-      }));
+      .map((g) => {
+        const iconRes = resolveGameIcon(g.game, g.icon);
+        return {
+          id: g.id,
+          title: g.game,
+          subtitle: `Game Dossier · ${g.category} · Platform: ${g.platform} · Main: ${g.mainCharacter}`,
+          icon: iconRes.isImage ? (iconRes.iconUrl || g.icon || "🎮") : (iconRes.fallbackEmoji || "🎮"),
+          module: "Game Database",
+          category: g.category,
+          url: `/games/${g.id}`,
+          accentColor: g.accentColor || "#FF6B35",
+        };
+      });
   },
 });
 

@@ -21,6 +21,8 @@ import { GameUidBadge } from "@/components/ui/GameUidBadge";
 import { DossierCharacterCard } from "@/components/cards/DossierCharacterCard";
 import { InteractiveCategoryFilter } from "@/components/ui/InteractiveCategoryFilter";
 import { CharacterPreviewModal } from "@/components/ui/CharacterPreviewModal";
+import { getCanonicalGameCharacterElement, matchGameElement } from "@/lib/utils/elementTheme";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const RESOURCE_CATEGORIES = [
   "Meta", "Tier List", "Heroes", "Characters", "Builds",
@@ -236,8 +238,39 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
   const dossierCharacters = useDashboardStore((s) => s.dossierCharacters) || [];
   const gameResources = useDashboardStore((s) => s.gameResources) || [];
   const gameShowcaseItems = useDashboardStore((s) => s.gameShowcaseItems) || [];
-  const { removeGameResource, removeDossierCharacter, removeGameShowcaseItem } = useDashboardStore();
+  const { removeGameResource, removeDossierCharacter, removeGameShowcaseItem, syncAllGameCharactersMetadata } = useDashboardStore();
+  const { success: toastSuccess, error: toastError } = useToast();
+  const [isBulkSyncing, setIsBulkSyncing] = useState(false);
   const currentGame = games.find((g) => g.id === gameId) || games.find((g) => g.game.toLowerCase().replace(/[^a-z0-9]/g, "") === gameId.toLowerCase().replace(/[^a-z0-9]/g, ""));
+  const gameTitle = currentGame?.game || "Game";
+  const accent = currentGame?.accentColor || "#FF6B35";
+  const iconRes = resolveGameIcon(gameTitle, currentGame?.icon);
+  const dossierConfig = getGameDossierConfig(gameTitle, currentGame?.category);
+  const elementSystem = dossierConfig.elementSystem;
+
+  const handleSyncAllData = async () => {
+    if (!currentGame || isBulkSyncing) return;
+    setIsBulkSyncing(true);
+    try {
+      const res = await syncAllGameCharactersMetadata(currentGame.id);
+      if (res && res.summary) {
+        const { processed, updated, current, created, errors } = res.summary;
+        if (errors > 0) {
+          toastError(`Sync Complete with errors: ${processed} processed, ${updated} updated, ${current} current, ${created} created, ${errors} error(s).`);
+        } else if (updated > 0 || created > 0) {
+          toastSuccess(`Sync Complete: ${processed} characters processed (${updated} updated, ${current} already current, ${created} created, 0 errors).`);
+        } else {
+          toastSuccess(`Sync Complete: All ${processed} character(s) already up-to-date (0 updated, 0 errors).`);
+        }
+      } else {
+        toastError("Failed to sync character metadata.");
+      }
+    } catch (err: any) {
+      toastError(`Sync failed: ${err.message || "Unknown error"}`);
+    } finally {
+      setIsBulkSyncing(false);
+    }
+  };
 
   const handleDeleteDossierChar = (char: DossierCharacterEntry) => {
     const gameCharacters = useDashboardStore.getState().gameCharacters || [];
@@ -327,27 +360,44 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
   const filteredCharacters = useMemo(() => {
     if (!currentGame) return [];
     return rawGameCharacters.filter((char) => {
-      // 1. Element / Role filter
+      // 1. Element filter
       if (selectedElement !== "ALL") {
-        const charRole = (char.role || "").toLowerCase();
-        const selEl = selectedElement.toLowerCase();
-        if (charRole !== selEl && !charRole.includes(selEl)) {
-          return false;
+        const charElem = getCanonicalGameCharacterElement(char);
+        const targetEl = elementSystem?.elements.find(
+          (e) => e.name.toLowerCase() === selectedElement.toLowerCase() || e.id.toLowerCase() === selectedElement.toLowerCase()
+        );
+        if (targetEl) {
+          if (!matchGameElement(charElem, targetEl)) {
+            return false;
+          }
+        } else {
+          if (!charElem || !charElem.toLowerCase().includes(selectedElement.toLowerCase())) {
+            return false;
+          }
         }
       }
 
       // 2. Category / Path filter
       if (selectedCategory !== "ALL") {
         const charCat = (char.category || "").toLowerCase();
+        const charPath = (char.path || "").toLowerCase();
+        const charRole = (char.role || "").toLowerCase();
         const selCat = selectedCategory.toLowerCase();
-        if (charCat !== selCat && !charCat.includes(selCat)) {
+        const matches =
+          charCat === selCat ||
+          charCat.includes(selCat) ||
+          charPath === selCat ||
+          charPath.includes(selCat) ||
+          charRole === selCat ||
+          charRole.includes(selCat);
+        if (!matches) {
           return false;
         }
       }
 
       return true;
     });
-  }, [rawGameCharacters, selectedElement, selectedCategory, currentGame]);
+  }, [rawGameCharacters, selectedElement, selectedCategory, currentGame, elementSystem]);
 
   if (!currentGame) {
     return (
@@ -368,12 +418,6 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
       </AppShell>
     );
   }
-
-  const gameTitle = currentGame.game;
-  const accent = currentGame.accentColor || "#FF6B35";
-  const iconRes = resolveGameIcon(gameTitle, currentGame.icon);
-  const dossierConfig = getGameDossierConfig(gameTitle, currentGame.category);
-  const elementSystem = dossierConfig.elementSystem;
 
   // Filter showcase gallery items for this specific game
   const rawShowcaseItems = gameShowcaseItems.filter((i) => i.gameId === currentGame.id);
@@ -402,8 +446,7 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
   if (elementSystem) {
     for (const el of elementSystem.elements) {
       elementCharCounts[el.id] = rawGameCharacters.filter((c) =>
-        c.role?.toLowerCase().includes(el.name.toLowerCase()) ||
-        c.category?.toLowerCase().includes(el.name.toLowerCase())
+        matchGameElement(getCanonicalGameCharacterElement(c), el)
       ).length;
     }
   }
@@ -680,7 +723,13 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
                   {/* Top row */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-lg shrink-0">{res.icon || "🔗"}</span>
+                      <div className="w-6 h-6 shrink-0 flex items-center justify-center text-lg">
+                        {res.icon && (res.icon.startsWith("http") || res.icon.startsWith("data:") || res.icon.startsWith("/")) ? (
+                          <img src={res.icon} alt="" className="w-5 h-5 object-contain" />
+                        ) : (
+                          <span>{res.icon && res.icon.length <= 8 && !res.icon.includes("base64") ? res.icon : "🔗"}</span>
+                        )}
+                      </div>
                       <div className="min-w-0">
                         <p className="font-black text-sm theme-text-primary leading-tight truncate">{res.name}</p>
                         {res.category && (
@@ -771,7 +820,22 @@ export default function GameDossierPage({ params }: { params: Promise<{ gameId: 
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={handleSyncAllData}
+                  disabled={isBulkSyncing}
+                  className="px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(168,85,247,0.15)" : "#E9D5FF",
+                    color: isCyber ? "#C084FC" : "#6B21A8",
+                    border: isCyber ? "1px solid rgba(168,85,247,0.4)" : "2px solid #000",
+                    boxShadow: isCyber ? "0 0 10px rgba(168,85,247,0.2)" : "2px 2px 0 #000",
+                  }}
+                  title="Synchronize all Character Collection metadata from authoritative Game Characters"
+                >
+                  <span>{isBulkSyncing ? "⏳" : "🔄"}</span>
+                  <span>{isBulkSyncing ? "Syncing..." : "Sync All Data"}</span>
+                </button>
                 <button
                   onClick={() => setIsScannerOpen(true)}
                   className="px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
