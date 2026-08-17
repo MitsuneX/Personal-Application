@@ -151,7 +151,85 @@ export function MediaDetailsView({ mediaId, mediaType }: MediaDetailsViewProps) 
     wouldRewatch: existingDrama?.wouldRewatch || false,
     categoryRatings: existingDrama?.categoryRatings || undefined,
     characters: existingDrama?.characters || undefined,
-    castGrid: existingDrama?.castGrid?.length ? existingDrama.castGrid : liveMetadata?.castGrid || [],
+    castGrid: (() => {
+      const savedGrid = existingDrama?.castGrid || [];
+      const liveGrid = liveMetadata?.castGrid || [];
+
+      // 1. If savedGrid has items, keep all items and enrich missing portraits from liveGrid
+      if (savedGrid.length > 0) {
+        return savedGrid.map((item) => {
+          if (item.photoUrl || item.characterImageUrl) return item;
+          const liveMatch = liveGrid.find(
+            (l: any) =>
+              (l.name && l.name.trim().toLowerCase() === item.name?.trim().toLowerCase()) ||
+              (l.characterName && l.characterName.trim().toLowerCase() === item.characterName?.trim().toLowerCase())
+          );
+          return {
+            ...item,
+            photoUrl: item.photoUrl || liveMatch?.photoUrl || liveMatch?.characterImageUrl,
+            characterImageUrl: item.characterImageUrl || liveMatch?.characterImageUrl || liveMatch?.photoUrl,
+          };
+        });
+      }
+
+      // 2. If liveGrid has photos, use liveGrid
+      if (liveGrid.length > 0 && liveGrid.some((l: any) => l.photoUrl || l.characterImageUrl)) {
+        return liveGrid;
+      }
+
+      // 3. If manual cast string array exists, map to items and enrich from liveGrid
+      if (existingDrama?.cast?.length) {
+        return existingDrama.cast.map((name, i) => {
+          const liveMatch = liveGrid.find(
+            (l: any) => l.name && l.name.trim().toLowerCase() === name.trim().toLowerCase()
+          );
+          return {
+            id: `saved-cast-${i}`,
+            name,
+            characterName: liveMatch?.characterName || (i === 0 ? "Main Lead" : "Lead Role"),
+            role: liveMatch?.role || (i < 2 ? "Main Role" : "Supporting Role"),
+            photoUrl: liveMatch?.photoUrl || liveMatch?.characterImageUrl,
+            characterImageUrl: liveMatch?.characterImageUrl || liveMatch?.photoUrl,
+          };
+        });
+      }
+
+      // 4. If log mainActors array exists
+      if (existingLog?.mainActors?.length) {
+        return existingLog.mainActors.map((name, i) => {
+          const liveMatch = liveGrid.find(
+            (l: any) => l.name && l.name.trim().toLowerCase() === name.trim().toLowerCase()
+          );
+          return {
+            id: `log-cast-${i}`,
+            name,
+            characterName: liveMatch?.characterName || (i === 0 ? "Main Lead" : "Lead Role"),
+            role: liveMatch?.role || (i < 2 ? "Main Role" : "Supporting Role"),
+            photoUrl: liveMatch?.photoUrl || liveMatch?.characterImageUrl,
+            characterImageUrl: liveMatch?.characterImageUrl || liveMatch?.photoUrl,
+          };
+        });
+      }
+
+      // 5. If anime cast string array exists
+      if (existingAnime?.cast?.length) {
+        return existingAnime.cast.map((name, i) => {
+          const liveMatch = liveGrid.find(
+            (l: any) => l.name && l.name.trim().toLowerCase() === name.trim().toLowerCase()
+          );
+          return {
+            id: `anime-cast-${i}`,
+            name,
+            characterName: liveMatch?.characterName || name,
+            role: liveMatch?.role || (i < 2 ? "Main Role" : "Supporting Role"),
+            photoUrl: liveMatch?.photoUrl || liveMatch?.characterImageUrl,
+            characterImageUrl: liveMatch?.characterImageUrl || liveMatch?.photoUrl,
+          };
+        });
+      }
+
+      return liveGrid;
+    })(),
     episodeLog: existingDrama?.episodeLog?.length ? existingDrama.episodeLog : liveMetadata?.episodeLog || [],
     emotionalTimeline: existingDrama?.emotionalTimeline || [],
     ostTracks: existingDrama?.ostTracks?.length ? existingDrama.ostTracks : liveMetadata?.ostTracks || [],
@@ -182,12 +260,19 @@ export function MediaDetailsView({ mediaId, mediaType }: MediaDetailsViewProps) 
   };
 
   const handleToggleEpisode = (epNum: number) => {
+    const total = dossierData.episodes || 12;
+    // If clicking the current exact watched episode, toggle it off (step down by 1), otherwise set directly to selected episode
+    const nextWatched = dossierData.episodesWatched === epNum ? Math.max(0, epNum - 1) : epNum;
+    const nextStatus = nextWatched >= total
+      ? "Completed"
+      : nextWatched > 0
+      ? "Watching"
+      : "Plan to Watch";
+
     if (existingDrama) {
-      const nextWatched = Math.max(dossierData.episodesWatched, epNum);
-      updateDrama(existingDrama.id, { episodesWatched: nextWatched });
+      updateDrama(existingDrama.id, { episodesWatched: nextWatched, status: nextStatus });
     } else if (existingAnime) {
-      const nextWatched = Math.max(dossierData.episodesWatched, epNum);
-      updateAnime(existingAnime.id, { episodesWatched: nextWatched });
+      updateAnime(existingAnime.id, { episodesWatched: nextWatched, status: nextStatus });
     }
   };
 

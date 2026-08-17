@@ -5,7 +5,7 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function SessionResumePrompt() {
-  const { playTrack, setPlaylistQueue } = useDashboardStore();
+  const { playTrack, setPlaylistQueue, activeTrack } = useDashboardStore();
   const [session, setSession] = useState<{
     track: any;
     currentTime: number;
@@ -16,6 +16,9 @@ export function SessionResumePrompt() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // If a track is already loaded/active in the global store, do not show resume prompt
+    if (activeTrack) return;
+
     try {
       const raw = localStorage.getItem("music_playback_session");
       if (raw) {
@@ -26,7 +29,7 @@ export function SessionResumePrompt() {
         }
       }
     } catch {}
-  }, []);
+  }, [activeTrack]);
 
   const handleResume = () => {
     if (!session) return;

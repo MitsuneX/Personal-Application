@@ -13,6 +13,104 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v12.8.0",
+    date: "2026-08-17",
+    title: "Dashboard Intelligence, Hall of Fame Live Trends & Unified Watchlist Upgrade",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Refactored the Nexus Xenon Command Center at /dashboard into a streamlined data narrative: ME → WHAT I'M WATCHING → HALL OF FAME TRENDS → PROGRESSION → SYSTEM TELEMETRY. Removed redundant widgets (Command Now & Now Playing mini card) to close all layout gaps, replaced the generic recommendation engine with a 5-card Hall of Fame Live Trends movement intelligence panel with dynamic national and universe accents, unified Continue Watching with category-aware View All modal, and cleaned System Pulse telemetry.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🏆 Hall of Fame · Live Trends Panel (HofLiveTrendsSection.tsx): Real-time 5-card movement intelligence panel computing velocity deltas (RISING, STEADY, COOLING), movement indicators (e.g. ↑ +4 likes · 24h, ↑ +1 rank), and dynamic national/universe visual accents (Korea, China, Japan, Anime, Game, VTuber) layered over the gold Hall of Fame identity.",
+          "▶ Unified Continue Watching & Next Up (ContinueWatchingSection.tsx): Single source of truth for active watching progress with next episode steppers (e.g. EP 17/36 · Next: EP 18) and a centered category-grouped 'View All' modal (ANIME / DRAMA) with deep-linking to dedicated regional hubs.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🧹 Dashboard Layout Reflow & Redundancy Removal (app/dashboard/page.tsx): Decommissioned CommandNowCard and NowPlayingMiniCard, reflowing the grid naturally with zero phantom gaps or empty slots, and positioning Profile, Game Genre Radar, and Anime Progress in the top identity tier.",
+          "🛰️ System Pulse Telemetry Purification (SystemPulseCard.tsx): Focused System Pulse purely on real subsystem telemetry (Database, Sync Engine, Media Engine, Audio, State Hydration) and verified last-recorded events without speculative game states.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v12.7.1",
+    date: "2026-08-16",
+    title: "Character Spotlight Image Resolution, Title-Safe OST Matching & Live Activity Modal Pass",
+    badge: "PATCH",
+    type: "patch",
+    summary: "Targeted media integrity and dashboard telemetry pass. Restored layered character and cast image resolution ensuring actor portraits and canonical image fields are never masked by string-only cast arrays, implemented strict title and release-year OST soundtrack verification to prevent unrelated music contamination, upgraded Live System Activity with a centered non-shifting archive modal dialog, and introduced the balanced System Pulse telemetry companion card.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🖼️ Layered Character Spotlight & Cast Resolution (MediaDetailsView.tsx, DossierCharacterSpotlight.tsx, app/api/media/metadata/route.ts): Solved missing cast portraits by layering existing rich castGrid records with provider photos, preventing manual cast name arrays from blanking out portraits, and supporting all canonical image fields (photoUrl, characterImageUrl, portraitUrl, avatarUrl, imageUrl) with graceful initials fallback.",
+          "🎵 Title-Specific OST Soundtrack Filter (app/api/media/metadata/route.ts): Replaced fuzzy iTunes searching with strict media title and release-year verification, deduplicating by normalized title + artist and enforcing empty-result safety when no legitimate soundtrack exists.",
+          "📜 Centered System Activity Archive Modal (LiveActivityFeed.tsx): Upgraded 'View More' to open a centered overlay modal with scrollable chronological history, Escape key support, and zero dashboard scroll displacement.",
+          "🛰️ System Pulse Telemetry Companion (SystemPulseCard.tsx, app/dashboard/page.tsx): Filled empty dashboard space beside Live Activity with a live telemetry card displaying health of Database/Sandbox, Sync Engine, Media Engine, Audio, and active watch session tracking.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v12.7.0",
+    date: "2026-08-16",
+    title: "Command Center Intelligence Layer, Live Activity Engine & Quick Actions Toolbar",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Evolved the main dashboard at /dashboard from a static widget collection into an intelligent Personal Command Center answering 'What is happening in my world right now, and what should I do next?'. Introduced the Command Now real-time intelligence card, compact Quick Actions toolbar with canonical modal reuse, live system activity stream, actionable Continue Watching cards with direct episode stepping, inline session Now Playing card, enriched contextual metrics, repositioned analytics progression radar, and subsystem status transparency.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "⚡ Command Now Real-Time Intelligence (CommandNowCard.tsx): Answers the 4 core situational questions (Continue most active media/game session, Next Action priority, Recent Change in system, and Momentum & Streak watch pace) using real in-memory derived data without polling.",
+          "🛠️ Canonical Quick Actions Toolbar (QuickActionsToolbar.tsx): Compact 8-action creation grid enabling instant modal creation (+Game, +Character, +Drama, +Anime, +HOF, +AI Tool, +Note, +Prompt) with 100% reuse of existing canonical modals.",
+          "📡 Live System Activity Feed (LiveActivityFeed.tsx): Chronological stream aggregating Hall of Fame milestones, AI tool usage, recently watched anime/drama episodes, and system state updates with relative timestamps and expandable history.",
+          "🎬 Actionable Continue Watching & Next Up (ContinueWatchingSection.tsx): Replaces generic recommendations with immediate continue-watching media cards featuring watch progress bars, episode counters, and direct jump actions.",
+          "🎵 Inline Session Now Playing Card (NowPlayingMiniCard.tsx): Compact session player rendered inside dashboard when an audio track is active, without duplicating the global player.",
+          "🛡️ Subsystem Health Transparency (SystemStatusBar.tsx): Non-intrusive bottom status bar displaying operational health across Database/Sandbox, Sync Engine, Music Engine, Media Engine, and Hydration.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "📊 Contextual Metrics Enrichment (app/dashboard/page.tsx): Augmented the top 5 metric cards with secondary insights (currently watching count, total library scale, #1 Hall legend).",
+          "🎨 Dual-Theme Command Hierarchy: Polished multi-column layout on desktop, 2-column on tablet, and single-column mobile stack with high-contrast glowing neon for Cyberpunk mode and bold 3D offset borders for Neo-Brutalism mode.",
+        ],
+      },
+    ],
+  },
+  {
+    version: "v12.6.0",
+    date: "2026-08-16",
+    title: "Cross-System State, Metadata, Playback & Guest Sandbox Reliability Pass",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Comprehensive cross-system state synchronization and reliability pass. Made music playback UI route-aware to eliminate duplicate controls outside /music, introduced a shared active hover coordinator preventing stale popovers during rapid traversal, established layered cast metadata resolution with top 2–6 spotlight deduplication, normalized single-source-of-truth episode watch progression, implemented multi-factor drama search ranking and title disambiguation, guaranteed popup-blocker-immune AI tool launching, and architected a true ephemeral Guest Sandbox with full seed data coverage across all modules.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🏖️ Ephemeral Guest Sandbox Architecture (guestSeedData.ts, app/api/dashboard/route.ts, app/api/emergency/contacts/route.ts): Established true guest sandbox isolation with 100% seed coverage across all 12 system modules (Character Dictionary, Bookmark Links, Notepad, Prompt Vault, Hobbies, Emergency Contacts, Games, AI Tools, Anime, Drama, Songs, Gallery), allowing seamless in-memory additions and edits without touching the PostgreSQL database, plus an instant 'Reset Sandbox' action in GuestBanner.tsx.",
+          "🎯 Multi-Factor Search & Title Disambiguation Engine (app/api/media/search/route.ts): Implemented intelligent multi-tier ranking prioritizing exact query match, title closeness, series classification, and release year to accurately resolve adaptations (e.g., 'Hidden Love' 2023) and disambiguate candidate records.",
+          "🚀 Popup-Immune AI Library Fast Launcher (app/ai-library/page.tsx, AiToolDetailModal.tsx): Updated AI tool launch buttons to utilize native semantic anchor tags with non-blocking async analytics recording, eliminating browser popup-blocker interference and user-activation timing issues.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🎵 Route-Aware Playback UI Presentation (GlobalMusicPlayer.tsx, SessionResumePrompt.tsx): Resolved player duplication by restricting the large bottom playback bar strictly to /music/* while retaining the compact TopbarMiniPlayer in Header as the global playback indicator across other routes; added active track guards to SessionResumePrompt.",
+          "⚡ Keyed Active Hover Coordinator (MediaCard.tsx): Fixed stale hover popovers and async race conditions during rapid card traversal by subscribing cards to a centralized activeHoveredCardId coordinator, executing instant invalidation on mouse leave, and smoothing exit transitions.",
+          "🎭 Layered Cast Metadata Resolution (app/api/media/metadata/route.ts, MediaDetailsView.tsx, DossierCharacterSpotlight.tsx): Built non-destructive fallback pipeline (saved manual cast → primary Jikan/TVMaze → OMDb actor parsing) and normalized Spotlight presentation to top 2–6 deduplicated cast members with graceful avatar fallbacks.",
+          "📺 Atomic Episode Navigator & Progress Sync (MediaDetailsView.tsx, DossierEpisodeNavigator.tsx): Eliminated Math.max episode selection traps, enabling users to click any episode or step down freely while atomically synchronizing status (Completed, Watching, Plan to Watch) and preserving movie 1-episode integrity.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v12.5.0",
     date: "2026-08-16",
     title: "Canonical Root Landing Page Architecture, Scroll Engine Restoration & Auth-Routing Alignment",

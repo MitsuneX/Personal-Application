@@ -384,7 +384,18 @@ export function MediaCard({
   const accent2 = t.accent2;
   const cardText = isCyber ? t.text : (THEMES[category].brutal as typeof THEMES["japanese"]["brutal"]).text;
 
+// ── Shared Active Card Hover Coordinator ──
+let globalActiveHoverCardId: string | null = null;
+const hoverChangeListeners = new Set<(activeId: string | null) => void>();
+
+function setGlobalActiveHoverCard(id: string | null) {
+  if (globalActiveHoverCardId === id) return;
+  globalActiveHoverCardId = id;
+  hoverChangeListeners.forEach((fn) => fn(id));
+}
+
   const [hovered, setHovered] = useState(false);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [localStatus, setLocalStatus] = useState(status);
   const [localEps, setLocalEps] = useState(episodesWatched);
@@ -394,6 +405,21 @@ export function MediaCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
+
+  // Subscribe to global hover coordinator to invalidate stale popups immediately
+  useEffect(() => {
+    const listener = (activeId: string | null) => {
+      if (activeId !== id) {
+        setHovered(false);
+        setDropdownOpen(false);
+      }
+    };
+    hoverChangeListeners.add(listener);
+    return () => {
+      hoverChangeListeners.delete(listener);
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    };
+  }, [id]);
 
   const handleViewDetails = useCallback(() => {
     if (category === "anime") {
@@ -424,20 +450,26 @@ export function MediaCard({
   const sc = STATUS_COLORS[statusColorKey] ?? { cyber: "#94A3B8", brutal: "#6B7280" };
   const statusColor = isCyber ? sc.cyber : sc.brutal;
 
-  // Lock popSide once when mouse enters card bounds
+  // Lock popSide once when mouse enters card bounds and schedule hover
   const handleMouseEnter = useCallback((e: React.MouseEvent) => {
-    setHovered(true);
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+
     if (cardRef.current && typeof window !== "undefined") {
       const rect = cardRef.current.getBoundingClientRect();
       const cardMidX = rect.left + rect.width / 2;
-      // If the card center is on the right half of the screen, open left; otherwise open right.
       if (cardMidX > window.innerWidth * 0.52) {
         setPopSide("left");
       } else {
         setPopSide("right");
       }
     }
-  }, []);
+
+    // Schedule activation with fast debounce to prevent flickering on fast sweeps
+    hoverTimerRef.current = setTimeout(() => {
+      setGlobalActiveHoverCard(id);
+      setHovered(true);
+    }, 70);
+  }, [id]);
 
   // 3D tilt on mouse move only
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -449,10 +481,17 @@ export function MediaCard({
   }, []);
 
   const handleMouseLeave = useCallback(() => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
     setTilt({ x: 0, y: 0 });
     setHovered(false);
     setDropdownOpen(false);
-  }, []);
+    if (globalActiveHoverCardId === id) {
+      setGlobalActiveHoverCard(null);
+    }
+  }, [id]);
 
   const handleStatusCycle = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -706,18 +745,16 @@ export function MediaCard({
           <motion.div
             initial={{
               opacity: 0,
-              scale: 0.9,
-              x: popSide === "right" ? -25 : 25,
-              rotateY: popSide === "right" ? -15 : 15,
+              scale: 0.94,
+              x: popSide === "right" ? -15 : 15,
             }}
-            animate={{ opacity: 1, scale: 1, x: 0, rotateY: 0 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{
               opacity: 0,
-              scale: 0.9,
-              x: popSide === "right" ? -15 : 15,
-              rotateY: popSide === "right" ? -10 : 10,
+              scale: 0.95,
+              transition: { duration: 0.08, ease: "easeOut" },
             }}
-            transition={{ type: "spring", stiffness: 350, damping: 22 }}
+            transition={{ duration: 0.14, ease: "easeOut" }}
             className={`absolute z-50 p-4 flex flex-col gap-2 rounded-xl backdrop-blur-md overflow-visible
                        top-0 bottom-0 left-0 right-0 md:bottom-auto md:min-h-full md:w-[280px]
                        ${

@@ -42,7 +42,17 @@ export async function POST(req: Request) {
     const isGuest = cookieStore.get("is_guest")?.value === "true";
 
     if (isGuest || !user) {
-      return NextResponse.json({ error: "Sign in to save contacts." }, { status: 403 });
+      const body = await req.json();
+      return NextResponse.json({
+        success: true,
+        isGuest: true,
+        contact: {
+          id: `guest-emergency-${Date.now()}`,
+          ...body,
+          favorite: Boolean(body.favorite),
+          available24Hours: Boolean(body.available24Hours),
+        },
+      });
     }
 
     const body = await req.json();
@@ -91,7 +101,8 @@ export async function PUT(req: Request) {
     const isGuest = cookieStore.get("is_guest")?.value === "true";
 
     if (isGuest || !user) {
-      return NextResponse.json({ error: "Sign in to update contacts." }, { status: 403 });
+      const body = await req.json();
+      return NextResponse.json({ success: true, isGuest: true, contact: body });
     }
 
     const body = await req.json();
@@ -148,7 +159,7 @@ export async function DELETE(req: Request) {
     const isGuest = cookieStore.get("is_guest")?.value === "true";
 
     if (isGuest || !user) {
-      return NextResponse.json({ error: "Sign in to delete contacts." }, { status: 403 });
+      return NextResponse.json({ success: true, isGuest: true });
     }
 
     const { searchParams } = new URL(req.url);

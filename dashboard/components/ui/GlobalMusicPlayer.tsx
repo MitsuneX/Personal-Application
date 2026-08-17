@@ -37,10 +37,9 @@ export function GlobalMusicPlayer() {
 
   const [lyricsOpen, setLyricsOpen] = useState(false);
 
-  // ── Show player on /music/* or when a track is playing anywhere ───────────
+  // ── Route-Aware Presentation: Large bottom player renders strictly on /music/* ──
   const isOnMusicPage = pathname.startsWith("/music");
-  if (!activeTrack) return null;
-  if (!isOnMusicPage && !isPlaying) return null;
+  if (!isOnMusicPage || !activeTrack) return null;
 
   const formatTime = (secs: number) => {
     if (isNaN(secs) || secs < 0) return "0:00";

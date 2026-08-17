@@ -152,9 +152,12 @@ export function AiToolDetailModal({ isOpen, onClose, tool, onEdit }: AiToolDetai
 
         {/* Primary Launch Fast Bar */}
         {primaryLaunch && (
-          <button
+          <a
+            href={primaryLaunch}
+            target="_blank"
+            rel="noopener noreferrer"
             onClick={handleLaunch}
-            className="w-full py-3 px-4 rounded-xl font-black text-sm text-center transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2 shadow-lg"
+            className="w-full py-3 px-4 rounded-xl font-black text-sm text-center transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2 shadow-lg no-underline"
             style={{
               backgroundColor: accent,
               color: "#FFFFFF",
@@ -163,7 +166,7 @@ export function AiToolDetailModal({ isOpen, onClose, tool, onEdit }: AiToolDetai
             }}
           >
             <span>🚀</span> Launch {tool.name} ↗
-          </button>
+          </a>
         )}
 
         {/* Description */}

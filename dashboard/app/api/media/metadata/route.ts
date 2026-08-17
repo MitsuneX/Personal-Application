@@ -282,18 +282,58 @@ async function fetchOmdbCandidates(title: string, imdbId?: string): Promise<Cand
   }
 }
 
-// ── ITUNES OST FETCHING ────────────────────────────────────────────────────────
-async function fetchItunesOstTracks(title: string): Promise<any[]> {
+// ── ITUNES OST FETCHING WITH STRICT TITLE & YEAR MATCHING ────────────────────
+async function fetchItunesOstTracks(title: string, year?: number, originalTitle?: string): Promise<any[]> {
+  if (!title || !title.trim()) return [];
   try {
-    const url = `https://itunes.apple.com/search?term=${encodeURIComponent(title + " OST")}&entity=song&limit=10`;
+    const cleanTitle = title.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+    const cleanOrig = originalTitle ? originalTitle.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim() : "";
+
+    const url = `https://itunes.apple.com/search?term=${encodeURIComponent(title + " Soundtrack")}&entity=song&limit=15`;
     const res = await fetch(url, { next: { revalidate: 86400 } });
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.results || []).map((track: any) => {
+    const results = data.results || [];
+
+    const seenTracks = new Set<string>();
+    const validTracks: any[] = [];
+
+    for (const track of results) {
+      const trackName = (track.trackName || "").toLowerCase();
+      const collName = (track.collectionName || "").toLowerCase();
+      const artistName = (track.artistName || "").toLowerCase();
+      const trackYear = track.releaseDate ? parseInt(track.releaseDate.split("-")[0]) : undefined;
+
+      // 1. Strict Title Verification
+      const matchesTitle =
+        collName.includes(cleanTitle) ||
+        trackName.includes(cleanTitle) ||
+        (cleanOrig && (collName.includes(cleanOrig) || trackName.includes(cleanOrig))) ||
+        collName.includes("soundtrack") ||
+        collName.includes("original soundtrack") ||
+        collName.includes(" ost");
+
+      if (!matchesTitle && !collName.includes(cleanTitle)) {
+        continue;
+      }
+
+      // 2. Year Validation
+      if (year && trackYear && trackYear < year - 4) {
+        if (!collName.includes(cleanTitle)) {
+          continue;
+        }
+      }
+
+      // 3. Deduplication by trackName + artistName
+      const dedupKey = `${trackName}__${artistName}`.replace(/[^a-z0-9]/g, "");
+      if (seenTracks.has(dedupKey)) continue;
+      seenTracks.add(dedupKey);
+
       const ms = track.trackTimeMillis || 0;
       const mins = Math.floor(ms / 60000);
       const secs = Math.floor((ms % 60000) / 1000);
-      return {
+
+      validTracks.push({
         id: `ost-${track.trackId}`,
         title: track.trackName,
         artist: track.artistName,
@@ -306,8 +346,10 @@ async function fetchItunesOstTracks(title: string): Promise<any[]> {
         youtubeUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(track.trackName + " " + track.artistName + " OST")}`,
         appleMusicUrl: track.collectionViewUrl || undefined,
         url: track.previewUrl || track.collectionViewUrl || undefined,
-      };
-    });
+      });
+    }
+
+    return validTracks;
   } catch {
     return [];
   }
@@ -400,11 +442,14 @@ export async function GET(req: NextRequest) {
       primeVideo: `https://www.amazon.com/s?k=${encodeURIComponent(title || "")}`,
     };
 
+    const matchYear = topMatch?.year || year;
+    const origTitle = topMatch?.originalTitle || undefined;
+
     if (mediaType === "anime" && topMatch?.malId) {
       const [animeCast, animeThemes, itunesOst] = await Promise.all([
         fetchJikanAnimeCharacters(topMatch.malId),
         fetchJikanAnimeThemes(topMatch.malId),
-        fetchItunesOstTracks(title || ""),
+        fetchItunesOstTracks(title || "", matchYear, origTitle),
       ]);
       castGrid = animeCast;
       ostTracks = [...animeThemes, ...itunesOst];
@@ -418,13 +463,13 @@ export async function GET(req: NextRequest) {
 
         const rawCast = rawTv._embedded?.cast || [];
         castGrid = rawCast.slice(0, 12).map((item: any, idx: number) => ({
-          id: `cast-${item.person.id || idx}`,
-          name: item.person.name,
-          characterName: item.character.name,
+          id: `cast-${item.person?.id || idx}`,
+          name: item.person?.name || item.character?.name,
+          characterName: item.character?.name || item.person?.name,
           role: idx < 4 ? "Main Role" : "Supporting Role",
-          photoUrl: item.person.image?.medium || item.character.image?.medium || undefined,
-          characterImageUrl: item.character.image?.medium || undefined,
-          nationality: item.person.country?.name || undefined,
+          photoUrl: item.person?.image?.original || item.person?.image?.medium || item.character?.image?.original || item.character?.image?.medium || undefined,
+          characterImageUrl: item.character?.image?.original || item.character?.image?.medium || item.person?.image?.original || item.person?.image?.medium || undefined,
+          nationality: item.person?.country?.name || undefined,
         }));
 
         const rawEpisodes = rawTv._embedded?.episodes || [];
@@ -437,9 +482,48 @@ export async function GET(req: NextRequest) {
         }));
       }
 
-      ostTracks = await fetchItunesOstTracks(title || "");
+      ostTracks = await fetchItunesOstTracks(title || "", matchYear, origTitle);
     } else {
-      ostTracks = await fetchItunesOstTracks(title || "");
+      // If no tvmazeId matched yet and it is drama/TV, try searching TVMaze for cast photos
+      if (mediaType !== "anime" && title) {
+        const tvMazeCandidates = await fetchTvMazeCandidates(title);
+        if (tvMazeCandidates.length > 0) {
+          const bestTv = tvMazeCandidates[0];
+          if (bestTv.tvmazeId) {
+            const tvMazeFull = await fetchTvMazeCandidates("", bestTv.tvmazeId);
+            const rawTv = tvMazeFull[0]?.rawDetails;
+            if (rawTv && rawTv._embedded?.cast?.length > 0) {
+              const rawCast = rawTv._embedded.cast;
+              castGrid = rawCast.slice(0, 12).map((item: any, idx: number) => ({
+                id: `cast-${item.person?.id || idx}`,
+                name: item.person?.name || item.character?.name,
+                characterName: item.character?.name || item.person?.name,
+                role: idx < 4 ? "Main Role" : "Supporting Role",
+                photoUrl: item.person?.image?.original || item.person?.image?.medium || item.character?.image?.original || item.character?.image?.medium || undefined,
+                characterImageUrl: item.character?.image?.original || item.character?.image?.medium || item.person?.image?.original || item.person?.image?.medium || undefined,
+                nationality: item.person?.country?.name || undefined,
+              }));
+            }
+          }
+        }
+      }
+
+      ostTracks = await fetchItunesOstTracks(title || "", matchYear, origTitle);
+    }
+
+    // Secondary cast enrichment from OMDb / IMDb details if castGrid is still empty
+    if (castGrid.length === 0) {
+      const omdbActors = topMatch?.rawDetails?.Actors;
+      if (omdbActors && omdbActors !== "N/A" && typeof omdbActors === "string") {
+        const actorNames = omdbActors.split(",").map((a: string) => a.trim()).filter(Boolean);
+        castGrid = actorNames.map((name: string, idx: number) => ({
+          id: `omdb-cast-${idx}`,
+          name,
+          characterName: idx === 0 ? "Main Lead" : "Lead Role",
+          role: idx < 2 ? "Main Role" : "Supporting Role",
+          photoUrl: undefined,
+        }));
+      }
     }
 
     const metadata = {

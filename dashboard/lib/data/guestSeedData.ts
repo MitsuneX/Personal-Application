@@ -410,3 +410,221 @@ export const GUEST_EMERGENCY_CONTACTS = [
     notes: "Fire Suppression & Hazard Rescue",
   },
 ];
+
+export const GUEST_FAVORITE_CHARACTERS = [
+  {
+    id: "guest-fav-char-1",
+    name: "Acheron",
+    anime: "Honkai: Star Rail",
+    isFavorite: true,
+  },
+  {
+    id: "guest-fav-char-2",
+    name: "Satoru Gojo",
+    anime: "Jujutsu Kaisen",
+    isFavorite: true,
+  },
+  {
+    id: "guest-fav-char-3",
+    name: "Frieren",
+    anime: "Frieren: Beyond Journey's End",
+    isFavorite: true,
+  },
+  {
+    id: "guest-fav-char-4",
+    name: "Sung Jinwoo",
+    anime: "Solo Leveling",
+    isFavorite: true,
+  },
+];
+
+export const GUEST_LINKS = [
+  {
+    id: "guest-link-1",
+    title: "GitHub Repository",
+    url: "https://github.com",
+    category: "Development",
+  },
+  {
+    id: "guest-link-2",
+    title: "Next.js Documentation",
+    url: "https://nextjs.org/docs",
+    category: "Documentation",
+  },
+  {
+    id: "guest-link-3",
+    title: "MDN Web Docs",
+    url: "https://developer.mozilla.org",
+    category: "Reference",
+  },
+  {
+    id: "guest-link-4",
+    title: "Prisma ORM",
+    url: "https://www.prisma.io/docs",
+    category: "Database",
+  },
+  {
+    id: "guest-link-5",
+    title: "HoYoLAB Community",
+    url: "https://www.hoyolab.com",
+    category: "Gaming",
+  },
+];
+
+export const GUEST_NOTES = [
+  {
+    id: "guest-note-1",
+    title: "Welcome to Nexus Guest Sandbox",
+    content: "Welcome to the Nexus Xenon interactive demonstration. In this guest sandbox, all actions—such as creating characters, liking items, editing progress, and modifying configurations—remain ephemeral in your browser session without mutating real user data.\n\nEnjoy exploring the modules!",
+    category: "System",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "guest-note-2",
+    title: "Full-Stack System Architecture Overview",
+    content: "Nexus operates on a single canonical state architecture:\n1. Canonical Data Source\n2. Shared Derived State\n3. Route-Aware Presentation Layers\n4. Ephemeral Sandbox Isolation for Guests.",
+    category: "Architecture",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
+
+export const GUEST_SAVED_PROMPTS = [
+  {
+    id: "guest-prompt-1",
+    title: "System Architecture Reviewer",
+    targetAI: "Claude / GPT-4o",
+    promptText: "Analyze this architecture for cross-system state integrity, data ownership boundaries, and race-condition resistance. Provide concrete refactoring recommendations.",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "guest-prompt-2",
+    title: "Full-Stack Code Refactoring Assistant",
+    targetAI: "ChatGPT",
+    promptText: "Refactor this TypeScript Next.js component to enforce single-source-of-truth derived state, eliminate UI duplication, and handle async cancellation gracefully.",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "guest-prompt-3",
+    title: "Character Lore & World-Building Prompt",
+    targetAI: "Gemini",
+    promptText: "Generate cohesive character profile metadata including personality traits, combat element alignment, backstory, signature quote, and voice actor casting notes.",
+    createdAt: new Date().toISOString(),
+  },
+];
+
+export const GUEST_HOBBY_SKILLS = [
+  {
+    id: "guest-hobby-1",
+    name: "Full-Stack Web Engineering",
+    category: "Development",
+    priority: "Priority",
+    progress: 85,
+    level: 7,
+    xp: 3450,
+    streak: 14,
+    longestStreak: 28,
+    totalMinutes: 2840,
+    longestSessionMin: 180,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "guest-hobby-2",
+    name: "Japanese Language (N3 Prep)",
+    category: "Languages",
+    priority: "Priority",
+    progress: 60,
+    level: 4,
+    xp: 1820,
+    streak: 9,
+    longestStreak: 15,
+    totalMinutes: 1420,
+    longestSessionMin: 90,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "guest-hobby-3",
+    name: "Music Curation & Sound Synthesis",
+    category: "Creative",
+    priority: "Manifest",
+    progress: 45,
+    level: 3,
+    xp: 980,
+    streak: 5,
+    longestStreak: 12,
+    totalMinutes: 760,
+    longestSessionMin: 60,
+    createdAt: new Date().toISOString(),
+  },
+];
+
+export const GUEST_HOBBY_LOGS = [
+  {
+    id: "guest-hlog-1",
+    skillId: "guest-hobby-1",
+    delta: 50,
+    wordCount: 300,
+    note: "Implemented route-aware playback presentation and hover race condition fixes.",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "guest-hlog-2",
+    skillId: "guest-hobby-2",
+    delta: 30,
+    wordCount: 150,
+    note: "Reviewed Kanji flashcards and listening practice.",
+    createdAt: new Date().toISOString(),
+  },
+];
+
+export const GUEST_HOBBY_SESSIONS = [
+  {
+    id: "guest-hsession-1",
+    skillId: "guest-hobby-1",
+    minutesLearned: 60,
+    sessionXp: 120,
+    note: "Full-stack state synchronization session.",
+    createdAt: new Date().toISOString(),
+  },
+];
+
+export const GUEST_PROJECTS = [
+  {
+    id: "guest-proj-1",
+    title: "Nexus Xenon Command Center",
+    description: "Personal dashboard and full-stack media hub built with Next.js 16, Prisma, Zustand, and dual Cyberpunk/Neo-Brutalism design systems.",
+    category: "Full-Stack",
+    status: "Active",
+    techStack: ["Next.js 16", "TypeScript", "TailwindCSS", "Prisma", "Supabase"],
+    githubUrl: "https://github.com",
+    demoUrl: "/dashboard",
+    isPinned: true,
+  },
+  {
+    id: "guest-proj-2",
+    title: "Game Character Canonical Sync Engine",
+    description: "Authoritative one-way metadata sync pipeline uniting game characters, dossier archives, and combat elements.",
+    category: "Data Engine",
+    status: "Completed",
+    techStack: ["TypeScript", "Prisma", "Zustand"],
+    isPinned: true,
+  },
+];
+
+export const GUEST_GALLERY = [
+  {
+    id: "guest-gal-1",
+    title: "Cyberpunk Cityscape",
+    url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200",
+    category: "Wallpapers",
+    tags: ["Cyberpunk", "Neon", "City"],
+  },
+  {
+    id: "guest-gal-2",
+    title: "Neon Horizon",
+    url: "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1200",
+    category: "Artwork",
+    tags: ["Anime", "Abstract", "Art"],
+  },
+];

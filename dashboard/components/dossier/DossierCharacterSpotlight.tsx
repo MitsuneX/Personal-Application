@@ -29,18 +29,54 @@ export function DossierCharacterSpotlight({
     return null;
   }
 
-  // Map castGrid items to standard display structure
-  const displayCast = castGrid.length > 0
-    ? castGrid.map((c) => ({
-        id: c.id,
-        name: c.characterName || c.name,
-        actor: c.characterName ? c.name : "Actor",
-        role: c.role || "Cast",
-        portraitUrl: c.photoUrl || c.characterImageUrl,
-        isFavorite: false,
-        notes: c.nationality ? `Nationality: ${c.nationality}` : undefined,
-      }))
-    : characters;
+  // Map castGrid items to standard display structure, deduplicate by name, and prioritize top 2-6 main cast
+  const displayCast = React.useMemo(() => {
+    const rawList = castGrid.length > 0
+      ? castGrid.map((c) => ({
+          id: c.id,
+          name: c.characterName || c.name,
+          actor: c.characterName ? c.name : "Actor",
+          role: c.role || "Cast",
+          portraitUrl:
+            c.photoUrl ||
+            c.characterImageUrl ||
+            (c as any).portraitUrl ||
+            (c as any).avatarUrl ||
+            (c as any).imageUrl ||
+            (c as any).image ||
+            undefined,
+          isFavorite: false,
+          notes: c.nationality ? `Nationality: ${c.nationality}` : undefined,
+        }))
+      : characters.map((c) => ({
+          id: c.id,
+          name: c.name,
+          actor: c.actor || "Actor",
+          role: c.role || "Cast",
+          portraitUrl:
+            c.portraitUrl ||
+            (c as any).photoUrl ||
+            (c as any).characterImageUrl ||
+            (c as any).avatarUrl ||
+            (c as any).imageUrl ||
+            (c as any).image ||
+            undefined,
+          isFavorite: c.isFavorite || false,
+          notes: c.notes || undefined,
+        }));
+
+    const seenNames = new Set<string>();
+    const deduplicated: typeof rawList = [];
+
+    for (const item of rawList) {
+      const key = (item.name || "").trim().toLowerCase();
+      if (!key || seenNames.has(key)) continue;
+      seenNames.add(key);
+      deduplicated.push(item);
+    }
+
+    return deduplicated.slice(0, 6);
+  }, [castGrid, characters]);
 
   return (
     <div
@@ -87,13 +123,26 @@ export function DossierCharacterSpotlight({
                 : "3px 3px 0px #000000",
             }}
           >
-            {/* Portrait */}
-            <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-white/20">
-              <img
-                src={c.portraitUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80"}
-                alt={c.name}
-                className="w-full h-full object-cover"
-              />
+            {/* Portrait / Avatar Fallback */}
+            <div
+              className="w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-white/20 flex items-center justify-center font-black text-sm select-none"
+              style={{
+                backgroundColor: isCyber ? "rgba(0, 245, 255, 0.15)" : "#FFE600",
+                color: isCyber ? "#00F5FF" : "#000000",
+              }}
+            >
+              {c.portraitUrl ? (
+                <img
+                  src={c.portraitUrl}
+                  alt={c.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = "none";
+                  }}
+                />
+              ) : (
+                <span>{(c.name || "C").slice(0, 2).toUpperCase()}</span>
+              )}
             </div>
 
             {/* Info */}
@@ -151,8 +200,26 @@ export function DossierCharacterSpotlight({
               </button>
 
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-20 h-20 rounded-xl overflow-hidden border-2 shrink-0" style={{ borderColor: themeConfig.primaryAccent }}>
-                  <img src={activeCharacter.portraitUrl} alt={activeCharacter.name} className="w-full h-full object-cover" />
+                <div
+                  className="w-20 h-20 rounded-xl overflow-hidden border-2 shrink-0 flex items-center justify-center font-black text-xl select-none"
+                  style={{
+                    borderColor: themeConfig.primaryAccent,
+                    backgroundColor: isCyber ? "rgba(0, 245, 255, 0.15)" : "#FFE600",
+                    color: isCyber ? "#00F5FF" : "#000000",
+                  }}
+                >
+                  {activeCharacter.portraitUrl ? (
+                    <img
+                      src={activeCharacter.portraitUrl}
+                      alt={activeCharacter.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <span>{(activeCharacter.name || "C").slice(0, 2).toUpperCase()}</span>
+                  )}
                 </div>
                 <div>
                   <h3 className="font-black text-xl">{activeCharacter.name}</h3>

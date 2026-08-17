@@ -722,9 +722,14 @@ export default function AiLibraryPage() {
                       <div className="flex items-center gap-2">
                         {/* Primary Fast Launch Button */}
                         {isValidUrl(primaryLaunch) && (
-                          <button
-                            onClick={() => handleLaunch(tool)}
-                            className="flex-1 py-2 px-3 rounded-xl font-black text-xs text-center transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 shadow-md"
+                          <a
+                            href={primaryLaunch}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => {
+                              recordAiToolLaunch(tool.id);
+                            }}
+                            className="flex-1 py-2 px-3 rounded-xl font-black text-xs text-center transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 shadow-md no-underline"
                             style={{
                               backgroundColor: accent,
                               color: "#FFFFFF",
@@ -733,7 +738,7 @@ export default function AiLibraryPage() {
                             }}
                           >
                             <span>🚀</span> Launch ↗
-                          </button>
+                          </a>
                         )}
 
                         {/* Detail Modal Trigger Button */}

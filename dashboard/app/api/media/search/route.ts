@@ -276,7 +276,46 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // 5. Intelligent Multi-Factor Ranking & Disambiguation Algorithm
+    const cleanQuery = query.toLowerCase().trim();
     const results = Object.values(mergedResults);
+
+    results.sort((a, b) => {
+      const aTitle = (a.title || "").toLowerCase().trim();
+      const bTitle = (b.title || "").toLowerCase().trim();
+
+      // Priority 1: Exact title match
+      const aExact = aTitle === cleanQuery;
+      const bExact = bTitle === cleanQuery;
+      if (aExact && !bExact) return -1;
+      if (!aExact && bExact) return 1;
+
+      // Priority 2: Starts with exact query title
+      const aStarts = aTitle.startsWith(cleanQuery);
+      const bStarts = bTitle.startsWith(cleanQuery);
+      if (aStarts && !bStarts) return -1;
+      if (!aStarts && bStarts) return 1;
+
+      // Priority 3: Title length closeness to query (penalize extra subtitles / sequels)
+      const aDiff = Math.abs(aTitle.length - cleanQuery.length);
+      const bDiff = Math.abs(bTitle.length - cleanQuery.length);
+      if (Math.abs(aDiff - bDiff) > 3) {
+        return aDiff - bDiff;
+      }
+
+      // Priority 4: Higher rating
+      const aRating = parseFloat(a.rating) || 0;
+      const bRating = parseFloat(b.rating) || 0;
+      if (bRating !== aRating) {
+        return bRating - aRating;
+      }
+
+      // Priority 5: Newer release year
+      const aYear = parseInt(a.year) || 0;
+      const bYear = parseInt(b.year) || 0;
+      return bYear - aYear;
+    });
+
     return NextResponse.json({ results });
 
   } catch (err) {
