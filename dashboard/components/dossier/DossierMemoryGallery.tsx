@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { ThemeAccentConfig } from "./DossierThemeAccent";
 import { ImageLightboxModal } from "@/components/ui/ImageLightboxModal";
-import { Image as ImageIcon, Plus, Maximize2, Tag } from "lucide-react";
+import { Image as ImageIcon, Plus, Maximize2, Trash2, Upload, Loader2 } from "lucide-react";
 
 export interface MemoryScreenshot {
   id: string;
@@ -19,12 +19,14 @@ export interface DossierMemoryGalleryProps {
   screenshots?: MemoryScreenshot[];
   themeConfig: ThemeAccentConfig;
   onAddScreenshot?: (shot: MemoryScreenshot) => void;
+  onDeleteScreenshot?: (id: string) => void;
 }
 
 export function DossierMemoryGallery({
   screenshots = [],
   themeConfig,
   onAddScreenshot,
+  onDeleteScreenshot,
 }: DossierMemoryGalleryProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
@@ -32,26 +34,62 @@ export function DossierMemoryGallery({
   const [userScreenshots, setUserScreenshots] = useState<MemoryScreenshot[]>(screenshots);
   const [activeImage, setActiveImage] = useState<{ url: string; title: string } | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Upload Form State
   const [urlInput, setUrlInput] = useState("");
   const [captionInput, setCaptionInput] = useState("");
   const [epInput, setEpInput] = useState("");
 
+  useEffect(() => {
+    setUserScreenshots(screenshots);
+  }, [screenshots]);
+
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.url) {
+        setUrlInput(data.url);
+      }
+    } catch (err) {
+      console.error("[DossierMemoryGallery] File upload error:", err);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleUpload = () => {
     if (!urlInput.trim()) return;
     const newShot: MemoryScreenshot = {
       id: `shot-${Date.now()}`,
-      url: urlInput,
-      caption: captionInput || "Drama Memory Screenshot",
-      episode: epInput || "Ep 1",
+      url: urlInput.trim(),
+      caption: captionInput.trim() || "Drama Memory Screenshot",
+      episode: epInput.trim() || "Ep 1",
     };
-    setUserScreenshots((prev) => [...prev, newShot]);
+    const updated = [...userScreenshots, newShot];
+    setUserScreenshots(updated);
     onAddScreenshot?.(newShot);
     setUrlInput("");
     setCaptionInput("");
     setEpInput("");
     setShowUploadModal(false);
+  };
+
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    const updated = userScreenshots.filter((s) => s.id !== id);
+    setUserScreenshots(updated);
+    onDeleteScreenshot?.(id);
   };
 
   return (
@@ -116,7 +154,16 @@ export function DossierMemoryGallery({
                       {shot.episode}
                     </span>
                   )}
-                  <Maximize2 size={14} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => handleDelete(e, shot.id)}
+                      className="p-1 rounded bg-red-600/80 hover:bg-red-600 text-white transition-colors"
+                      title="Delete screenshot"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                    <Maximize2 size={14} className="text-white" />
+                  </div>
                 </div>
                 <p className="text-xs font-semibold text-white line-clamp-1">{shot.caption}</p>
               </div>
@@ -148,10 +195,49 @@ export function DossierMemoryGallery({
       {/* Upload Modal */}
       <AnimatePresence>
         {showUploadModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
             <div className="p-6 rounded-2xl max-w-md w-full border bg-slate-900 text-white relative">
               <h3 className="font-black text-lg mb-4">Attach Memory Screenshot</h3>
               <div className="flex flex-col gap-3">
+                {/* File Upload Option */}
+                <div>
+                  <label className="text-xs font-mono opacity-70 block mb-1">Upload Local Image</label>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleFileUpload(f);
+                    }}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="w-full p-2.5 rounded-lg border border-dashed border-cyan-400/40 hover:border-cyan-400 flex items-center justify-center gap-2 text-xs font-mono text-cyan-300 bg-cyan-950/30 transition-colors"
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin text-cyan-400" />
+                        <span>Uploading image...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={14} />
+                        <span>Choose Image File to Upload</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2 my-1">
+                  <div className="flex-1 h-px bg-white/10" />
+                  <span className="text-[10px] font-mono opacity-40 uppercase">Or provide URL</span>
+                  <div className="flex-1 h-px bg-white/10" />
+                </div>
+
                 <div>
                   <label className="text-xs font-mono opacity-70">Image URL</label>
                   <input
@@ -159,7 +245,7 @@ export function DossierMemoryGallery({
                     value={urlInput}
                     onChange={(e) => setUrlInput(e.target.value)}
                     placeholder="https://..."
-                    className="w-full p-2 rounded-lg text-xs font-mono border bg-transparent mt-1"
+                    className="w-full p-2 rounded-lg text-xs font-mono border bg-transparent mt-1 border-white/20"
                   />
                 </div>
                 <div>
@@ -169,7 +255,7 @@ export function DossierMemoryGallery({
                     value={captionInput}
                     onChange={(e) => setCaptionInput(e.target.value)}
                     placeholder="e.g. Sunset scene at Namsan"
-                    className="w-full p-2 rounded-lg text-xs font-mono border bg-transparent mt-1"
+                    className="w-full p-2 rounded-lg text-xs font-mono border bg-transparent mt-1 border-white/20"
                   />
                 </div>
                 <div>
@@ -179,13 +265,19 @@ export function DossierMemoryGallery({
                     value={epInput}
                     onChange={(e) => setEpInput(e.target.value)}
                     placeholder="e.g. Ep 12"
-                    className="w-full p-2 rounded-lg text-xs font-mono border bg-transparent mt-1"
+                    className="w-full p-2 rounded-lg text-xs font-mono border bg-transparent mt-1 border-white/20"
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <button onClick={() => setShowUploadModal(false)} className="px-3 py-1.5 text-xs font-mono border rounded-lg">Cancel</button>
-                <button onClick={handleUpload} className="px-4 py-1.5 text-xs font-mono font-bold rounded-lg bg-cyan-500 text-black">Attach Memory</button>
+              <div className="flex justify-end gap-2 mt-5">
+                <button onClick={() => setShowUploadModal(false)} className="px-3 py-1.5 text-xs font-mono border border-white/20 rounded-lg">Cancel</button>
+                <button
+                  onClick={handleUpload}
+                  disabled={!urlInput.trim() || isUploading}
+                  className="px-4 py-1.5 text-xs font-mono font-bold rounded-lg bg-cyan-500 text-black disabled:opacity-50"
+                >
+                  Attach Memory
+                </button>
               </div>
             </div>
           </div>

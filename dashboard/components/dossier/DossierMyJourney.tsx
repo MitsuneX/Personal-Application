@@ -57,6 +57,18 @@ export function DossierMyJourney({
   const [formScore, setFormScore] = useState(personalScore);
   const [formRewatch, setFormRewatch] = useState(wouldRewatch);
 
+  // Synchronize internal form state when props change
+  React.useEffect(() => {
+    setFormStart(startDate);
+    setFormFinish(finishDate);
+    setFormFavEp(favoriteEpisode);
+    setFormFavChar(favoriteCharacter);
+    setFormEmoEp(emotionalEpisode);
+    setFormMood(mood);
+    setFormScore(personalScore);
+    setFormRewatch(wouldRewatch);
+  }, [startDate, finishDate, favoriteEpisode, favoriteCharacter, emotionalEpisode, mood, personalScore, wouldRewatch]);
+
   const handleSave = () => {
     onSaveJourney?.({
       startDate: formStart,

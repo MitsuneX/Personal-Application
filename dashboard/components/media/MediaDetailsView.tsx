@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
-import { useDashboardStore, DramaEntry, CategoryRatings } from "@/lib/store/dashboardStore";
+import { useDashboardStore, DramaEntry, AnimeEntry, CategoryRatings, DossierEmotionMilestone } from "@/lib/store/dashboardStore";
 import { resolveDossierTheme } from "@/components/dossier/DossierThemeAccent";
 import { DossierHero } from "@/components/dossier/DossierHero";
 import { DossierStatsBar } from "@/components/dossier/DossierStatsBar";
@@ -12,7 +12,7 @@ import { DossierMyJourney } from "@/components/dossier/DossierMyJourney";
 import { DossierCharacterSpotlight } from "@/components/dossier/DossierCharacterSpotlight";
 import { DossierEpisodeNavigator } from "@/components/dossier/DossierEpisodeNavigator";
 import { DossierRatingRadar } from "@/components/dossier/DossierRatingRadar";
-import { DossierMemoryGallery } from "@/components/dossier/DossierMemoryGallery";
+import { DossierMemoryGallery, MemoryScreenshot } from "@/components/dossier/DossierMemoryGallery";
 import { DossierEmotionalTimeline } from "@/components/dossier/DossierEmotionalTimeline";
 import { DossierReviewEditor } from "@/components/dossier/DossierReviewEditor";
 import { DossierExternalLinks } from "@/components/dossier/DossierExternalLinks";
@@ -26,7 +26,7 @@ export interface MediaDetailsViewProps {
 
 export function MediaDetailsView({ mediaId, mediaType }: MediaDetailsViewProps) {
   const router = useRouter();
-  const { dramas, animeList, dramaLog, updateDrama, updateAnime } = useDashboardStore();
+  const { dramas, animeList, dramaLog, updateDrama, updateAnime, addDrama, addAnime } = useDashboardStore();
 
   // Search existing item in store / logs
   const existingDrama =
@@ -40,6 +40,28 @@ export function MediaDetailsView({ mediaId, mediaType }: MediaDetailsViewProps) 
   const existingLog = dramaLog.find((d) => d.id === mediaId);
 
   const rawTitle = existingDrama?.title || existingAnime?.title || existingLog?.title || mediaId.replace(/-/g, " ");
+
+  // Local storage extended dossier cache to guarantee refresh persistence
+  const [localDossier, setLocalDossier] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`nexus_dossier_${mediaId}`);
+      if (saved) {
+        setLocalDossier(JSON.parse(saved));
+      }
+    } catch {}
+  }, [mediaId]);
+
+  const persistDossierPatch = (patch: Record<string, any>) => {
+    setLocalDossier((prev) => {
+      const next = { ...prev, ...patch };
+      try {
+        localStorage.setItem(`nexus_dossier_${mediaId}`, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
 
   const [liveMetadata, setLiveMetadata] = useState<any>(null);
   const [loadingMetadata, setLoadingMetadata] = useState(false);
@@ -130,7 +152,7 @@ export function MediaDetailsView({ mediaId, mediaType }: MediaDetailsViewProps) 
     originalTitle: existingDrama?.originalTitle || liveMetadata?.originalTitle || undefined,
     country: (existingDrama?.country || liveMetadata?.country || existingLog?.country || (mediaType === "anime" ? "japanese" : "korean")) as any,
     episodes: existingDrama?.episodes || existingAnime?.totalEpisodes || liveMetadata?.episodes || existingLog?.totalEpisodes || 12,
-    episodesWatched: existingDrama?.episodesWatched || existingAnime?.episodesWatched || existingLog?.episodesWatched || 0,
+    episodesWatched: existingDrama?.episodesWatched ?? existingAnime?.episodesWatched ?? existingLog?.episodesWatched ?? 0,
     status: existingDrama?.status || (existingAnime?.status as any) || "Watching",
     rating: existingDrama?.rating ?? existingAnime?.rating ?? (existingLog?.rating ? Number(existingLog.rating) : 0),
     genre: existingDrama?.genre || existingAnime?.genre || (liveMetadata?.genres?.length ? liveMetadata.genres.join(", ") : "Drama"),
@@ -141,15 +163,15 @@ export function MediaDetailsView({ mediaId, mediaType }: MediaDetailsViewProps) 
     synopsis: existingDrama?.synopsis || existingAnime?.synopsis || liveMetadata?.synopsis || existingLog?.plotSummary || undefined,
     studio: existingDrama?.studio || existingAnime?.studio || liveMetadata?.studio || undefined,
     runtime: existingDrama?.runtime || liveMetadata?.runtime || undefined,
-    startDate: existingDrama?.startDate || undefined,
-    finishDate: existingDrama?.finishDate || undefined,
-    rewatchCount: existingDrama?.rewatchCount || 0,
-    favoriteEpisode: existingDrama?.favoriteEpisode || undefined,
-    favoriteCharacter: existingDrama?.favoriteCharacter || undefined,
-    emotionalEpisode: existingDrama?.emotionalEpisode || undefined,
-    mood: existingDrama?.mood || undefined,
-    wouldRewatch: existingDrama?.wouldRewatch || false,
-    categoryRatings: existingDrama?.categoryRatings || undefined,
+    startDate: existingDrama?.startDate || localDossier.startDate || undefined,
+    finishDate: existingDrama?.finishDate || localDossier.finishDate || undefined,
+    rewatchCount: existingDrama?.rewatchCount || localDossier.rewatchCount || 0,
+    favoriteEpisode: existingDrama?.favoriteEpisode || localDossier.favoriteEpisode || undefined,
+    favoriteCharacter: existingDrama?.favoriteCharacter || localDossier.favoriteCharacter || undefined,
+    emotionalEpisode: existingDrama?.emotionalEpisode || localDossier.emotionalEpisode || undefined,
+    mood: existingDrama?.mood || localDossier.mood || undefined,
+    wouldRewatch: existingDrama?.wouldRewatch ?? localDossier.wouldRewatch ?? false,
+    categoryRatings: existingDrama?.categoryRatings || localDossier.categoryRatings || undefined,
     characters: existingDrama?.characters || undefined,
     castGrid: (() => {
       const savedGrid = existingDrama?.castGrid || [];
@@ -231,10 +253,10 @@ export function MediaDetailsView({ mediaId, mediaType }: MediaDetailsViewProps) 
       return liveGrid;
     })(),
     episodeLog: existingDrama?.episodeLog?.length ? existingDrama.episodeLog : liveMetadata?.episodeLog || [],
-    emotionalTimeline: existingDrama?.emotionalTimeline || [],
+    emotionalTimeline: existingDrama?.emotionalTimeline || localDossier.emotionalTimeline || [],
     ostTracks: existingDrama?.ostTracks?.length ? existingDrama.ostTracks : liveMetadata?.ostTracks || [],
     externalLinks: { ...(liveMetadata?.externalLinks || {}), ...(existingDrama?.externalLinks || {}) },
-    reviewMarkdown: existingDrama?.reviewMarkdown || undefined,
+    reviewMarkdown: existingDrama?.reviewMarkdown || localDossier.reviewMarkdown || undefined,
     awards: existingDrama?.awards?.length ? existingDrama.awards : liveMetadata?.awards || [],
   };
 
@@ -252,16 +274,48 @@ export function MediaDetailsView({ mediaId, mediaType }: MediaDetailsViewProps) 
   };
 
   const handleSaveJourney = (updated: any) => {
+    persistDossierPatch(updated);
     if (existingDrama) {
       updateDrama(existingDrama.id, updated);
     } else if (existingAnime) {
       updateAnime(existingAnime.id, updated);
+    } else if (mediaType === "anime") {
+      addAnime({
+        id: mediaId,
+        title: dossierData.title,
+        episodesWatched: dossierData.episodesWatched,
+        totalEpisodes: dossierData.episodes,
+        status: dossierData.status as any,
+        rating: dossierData.rating,
+        genre: dossierData.genre,
+        studio: dossierData.studio,
+        year: dossierData.year,
+        posterUrl: dossierData.posterUrl,
+        synopsis: dossierData.synopsis,
+        cast: dossierData.cast,
+        ...updated,
+      });
+    } else {
+      addDrama({
+        id: mediaId,
+        title: dossierData.title,
+        country: dossierData.country,
+        episodes: dossierData.episodes,
+        episodesWatched: dossierData.episodesWatched,
+        status: dossierData.status as any,
+        rating: dossierData.rating,
+        genre: dossierData.genre,
+        year: dossierData.year,
+        platform: dossierData.platform,
+        cast: dossierData.cast,
+        ...updated,
+      });
     }
   };
 
   const handleToggleEpisode = (epNum: number) => {
     const total = dossierData.episodes || 12;
-    // If clicking the current exact watched episode, toggle it off (step down by 1), otherwise set directly to selected episode
+    // If clicking current exact watched episode, step down by 1; otherwise set directly to selected episode
     const nextWatched = dossierData.episodesWatched === epNum ? Math.max(0, epNum - 1) : epNum;
     const nextStatus = nextWatched >= total
       ? "Completed"
@@ -269,24 +323,106 @@ export function MediaDetailsView({ mediaId, mediaType }: MediaDetailsViewProps) 
       ? "Watching"
       : "Plan to Watch";
 
+    persistDossierPatch({ episodesWatched: nextWatched, status: nextStatus });
+
     if (existingDrama) {
       updateDrama(existingDrama.id, { episodesWatched: nextWatched, status: nextStatus });
     } else if (existingAnime) {
       updateAnime(existingAnime.id, { episodesWatched: nextWatched, status: nextStatus });
+    } else if (mediaType === "anime") {
+      addAnime({
+        id: mediaId,
+        title: dossierData.title,
+        episodesWatched: nextWatched,
+        totalEpisodes: total,
+        status: nextStatus as any,
+        rating: dossierData.rating,
+        genre: dossierData.genre,
+        studio: dossierData.studio,
+        year: dossierData.year,
+        posterUrl: dossierData.posterUrl,
+      });
+    } else {
+      addDrama({
+        id: mediaId,
+        title: dossierData.title,
+        country: dossierData.country,
+        episodes: total,
+        episodesWatched: nextWatched,
+        status: nextStatus as any,
+        rating: dossierData.rating,
+        genre: dossierData.genre,
+        year: dossierData.year,
+        platform: dossierData.platform,
+      });
     }
   };
 
   const handleSaveRatings = (ratings: CategoryRatings) => {
+    const ratedVals = Object.values(ratings).filter((v) => typeof v === "number" && v > 0) as number[];
+    const avg = ratedVals.length > 0 ? Math.round(ratedVals.reduce((a, b) => a + b, 0) / ratedVals.length) : dossierData.rating;
+    persistDossierPatch({ categoryRatings: ratings, rating: avg });
+
     if (existingDrama) {
-      const ratedVals = Object.values(ratings).filter((v) => typeof v === "number" && v > 0) as number[];
-      const avg = ratedVals.length > 0 ? Math.round(ratedVals.reduce((a, b) => a + b, 0) / ratedVals.length) : dossierData.rating;
       updateDrama(existingDrama.id, { categoryRatings: ratings, rating: avg });
+    } else if (existingAnime) {
+      updateAnime(existingAnime.id, { categoryRatings: ratings, rating: avg });
     }
   };
 
   const handleSaveReview = (reviewMarkdown: string) => {
+    persistDossierPatch({ reviewMarkdown });
     if (existingDrama) {
       updateDrama(existingDrama.id, { reviewMarkdown });
+    } else if (existingAnime) {
+      updateAnime(existingAnime.id, { reviewMarkdown });
+    }
+  };
+
+  const handleSaveTimeline = (emotionalTimeline: DossierEmotionMilestone[]) => {
+    persistDossierPatch({ emotionalTimeline });
+    if (existingDrama) {
+      updateDrama(existingDrama.id, { emotionalTimeline });
+    } else if (existingAnime) {
+      updateAnime(existingAnime.id, { emotionalTimeline });
+    }
+  };
+
+  // Convert gallery string array to MemoryScreenshot objects
+  const memoryScreenshots: MemoryScreenshot[] = useMemo(() => {
+    const rawList = existingDrama?.gallery || localDossier.gallery || [];
+    return rawList.map((item: any, i: number) => {
+      if (typeof item === "string") {
+        return {
+          id: `shot-${i}`,
+          url: item,
+          caption: "Drama Memory Screenshot",
+          episode: `Memory ${i + 1}`,
+        };
+      }
+      return item;
+    });
+  }, [existingDrama?.gallery, localDossier.gallery]);
+
+  const handleAddScreenshot = (shot: MemoryScreenshot) => {
+    const current = localDossier.gallery || existingDrama?.gallery || [];
+    const updated = [...current, shot.url];
+    persistDossierPatch({ gallery: updated });
+    if (existingDrama) {
+      updateDrama(existingDrama.id, { gallery: updated } as any);
+    } else if (existingAnime) {
+      updateAnime(existingAnime.id, { gallery: updated } as any);
+    }
+  };
+
+  const handleDeleteScreenshot = (shotId: string) => {
+    const updatedScreenshots = memoryScreenshots.filter((s) => s.id !== shotId);
+    const updatedUrls = updatedScreenshots.map((s) => s.url);
+    persistDossierPatch({ gallery: updatedUrls });
+    if (existingDrama) {
+      updateDrama(existingDrama.id, { gallery: updatedUrls } as any);
+    } else if (existingAnime) {
+      updateAnime(existingAnime.id, { gallery: updatedUrls } as any);
     }
   };
 
@@ -374,10 +510,19 @@ export function MediaDetailsView({ mediaId, mediaType }: MediaDetailsViewProps) 
         />
 
         {/* 8. Memory Gallery & Screenshots */}
-        <DossierMemoryGallery themeConfig={themeConfig} />
+        <DossierMemoryGallery
+          screenshots={memoryScreenshots}
+          themeConfig={themeConfig}
+          onAddScreenshot={handleAddScreenshot}
+          onDeleteScreenshot={handleDeleteScreenshot}
+        />
 
         {/* 9. Emotional Milestone Timeline */}
-        <DossierEmotionalTimeline timeline={dossierData.emotionalTimeline} themeConfig={themeConfig} />
+        <DossierEmotionalTimeline
+          timeline={dossierData.emotionalTimeline}
+          themeConfig={themeConfig}
+          onSaveTimeline={handleSaveTimeline}
+        />
 
         {/* 10. Personal Review & Critique */}
         <DossierReviewEditor

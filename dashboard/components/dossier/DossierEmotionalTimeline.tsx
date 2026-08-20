@@ -1,48 +1,86 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { ThemeAccentConfig } from "./DossierThemeAccent";
 import { DossierEmotionMilestone } from "@/lib/store/dashboardStore";
-import { Heart, Plus, Calendar, Image as ImageIcon, Trash2 } from "lucide-react";
+import { Heart, Plus, Calendar, Edit3, Trash2 } from "lucide-react";
 
 export interface DossierEmotionalTimelineProps {
   timeline?: DossierEmotionMilestone[];
   themeConfig: ThemeAccentConfig;
-  onAddMilestone?: (milestone: DossierEmotionMilestone) => void;
+  onSaveTimeline?: (timeline: DossierEmotionMilestone[]) => void;
 }
 
 export function DossierEmotionalTimeline({
   timeline = [],
   themeConfig,
-  onAddMilestone,
+  onSaveTimeline,
 }: DossierEmotionalTimelineProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
 
   const [milestones, setMilestones] = useState<DossierEmotionMilestone[]>(timeline);
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   // Form State
   const [formEp, setFormEp] = useState("");
   const [formEmotion, setFormEmotion] = useState("😊 Intrigued");
   const [formNote, setFormNote] = useState("");
+  const [formDate, setFormDate] = useState("");
 
-  const handleAdd = () => {
-    if (!formEp.trim()) return;
-    const newEntry: DossierEmotionMilestone = {
-      episode: formEp,
-      emotion: formEmotion,
-      note: formNote,
-      date: new Date().toISOString().split("T")[0],
-    };
-    const updated = [...milestones, newEntry];
-    setMilestones(updated);
-    onAddMilestone?.(newEntry);
+  useEffect(() => {
+    setMilestones(timeline);
+  }, [timeline]);
+
+  const openAddModal = () => {
+    setEditingIndex(null);
     setFormEp("");
+    setFormEmotion("😊 Intrigued");
     setFormNote("");
-    setShowAddModal(false);
+    setFormDate(new Date().toISOString().split("T")[0]);
+    setShowModal(true);
+  };
+
+  const openEditModal = (idx: number) => {
+    const item = milestones[idx];
+    if (!item) return;
+    setEditingIndex(idx);
+    setFormEp(item.episode || "");
+    setFormEmotion(item.emotion || "😊 Intrigued");
+    setFormNote(item.note || "");
+    setFormDate(item.date || new Date().toISOString().split("T")[0]);
+    setShowModal(true);
+  };
+
+  const handleSave = () => {
+    if (!formEp.trim()) return;
+
+    const entry: DossierEmotionMilestone = {
+      episode: formEp.trim(),
+      emotion: formEmotion,
+      note: formNote.trim(),
+      date: formDate || new Date().toISOString().split("T")[0],
+    };
+
+    let updated: DossierEmotionMilestone[];
+    if (editingIndex !== null) {
+      updated = milestones.map((m, i) => (i === editingIndex ? entry : m));
+    } else {
+      updated = [...milestones, entry];
+    }
+
+    setMilestones(updated);
+    onSaveTimeline?.(updated);
+    setShowModal(false);
+  };
+
+  const handleDelete = (idx: number) => {
+    const updated = milestones.filter((_, i) => i !== idx);
+    setMilestones(updated);
+    onSaveTimeline?.(updated);
   };
 
   return (
@@ -72,7 +110,7 @@ export function DossierEmotionalTimeline({
         </div>
 
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={openAddModal}
           className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-mono font-bold uppercase tracking-wider cursor-pointer border"
           style={{
             backgroundColor: isCyber ? "rgba(0,245,255,0.08)" : "#FFF",
@@ -113,12 +151,32 @@ export function DossierEmotionalTimeline({
                   </span>
                   <span className="font-bold text-sm">{m.emotion}</span>
                 </div>
-                {m.date && (
-                  <span className="text-[10px] font-mono opacity-50 flex items-center gap-1">
-                    <Calendar size={11} />
-                    <span>{m.date}</span>
-                  </span>
-                )}
+
+                <div className="flex items-center gap-3">
+                  {m.date && (
+                    <span className="text-[10px] font-mono opacity-50 flex items-center gap-1">
+                      <Calendar size={11} />
+                      <span>{m.date}</span>
+                    </span>
+                  )}
+
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => openEditModal(idx)}
+                      className="p-1 rounded hover:bg-white/10 text-cyan-400 cursor-pointer"
+                      title="Edit milestone"
+                    >
+                      <Edit3 size={13} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(idx)}
+                      className="p-1 rounded hover:bg-white/10 text-red-400 cursor-pointer"
+                      title="Delete milestone"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <p className="text-xs leading-relaxed opacity-85 mt-1" style={{ color: isCyber ? "#94A3B8" : "#374151" }}>
@@ -129,7 +187,7 @@ export function DossierEmotionalTimeline({
         </div>
       ) : (
         <div
-          onClick={() => setShowAddModal(true)}
+          onClick={openAddModal}
           className="p-8 rounded-xl border border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-colors"
           style={{ borderColor: isCyber ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)" }}
         >
@@ -139,12 +197,14 @@ export function DossierEmotionalTimeline({
         </div>
       )}
 
-      {/* Add Milestone Modal */}
+      {/* Add / Edit Milestone Modal */}
       <AnimatePresence>
-        {showAddModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+        {showModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
             <div className="p-6 rounded-2xl max-w-md w-full border bg-slate-900 text-white relative">
-              <h3 className="font-black text-lg mb-4">Add Emotional Reaction Milestone</h3>
+              <h3 className="font-black text-lg mb-4">
+                {editingIndex !== null ? "Edit Emotional Milestone" : "Add Emotional Reaction Milestone"}
+              </h3>
               <div className="flex flex-col gap-3">
                 <div>
                   <label className="text-xs font-mono opacity-70">Episode Number / Milestone</label>
@@ -153,7 +213,7 @@ export function DossierEmotionalTimeline({
                     value={formEp}
                     onChange={(e) => setFormEp(e.target.value)}
                     placeholder="e.g. Episode 10 or Climax"
-                    className="w-full p-2 rounded-lg text-xs font-mono border bg-transparent mt-1"
+                    className="w-full p-2 rounded-lg text-xs font-mono border bg-transparent mt-1 border-white/20"
                   />
                 </div>
                 <div>
@@ -161,7 +221,7 @@ export function DossierEmotionalTimeline({
                   <select
                     value={formEmotion}
                     onChange={(e) => setFormEmotion(e.target.value)}
-                    className="w-full p-2 rounded-lg text-xs font-mono border bg-slate-800 mt-1"
+                    className="w-full p-2 rounded-lg text-xs font-mono border bg-slate-800 mt-1 border-white/20 text-white"
                   >
                     <option value="😊 Intrigued">😊 Intrigued</option>
                     <option value="😲 Shocked">😲 Shocked</option>
@@ -169,6 +229,8 @@ export function DossierEmotionalTimeline({
                     <option value="🔥 Hyped">🔥 Hyped</option>
                     <option value="❤️ Masterpiece">❤️ Masterpiece</option>
                     <option value="💔 Heartbroken">💔 Heartbroken</option>
+                    <option value="🤣 Laughed">🤣 Laughed</option>
+                    <option value="✨ Inspiring">✨ Inspiring</option>
                   </select>
                 </div>
                 <div>
@@ -177,13 +239,15 @@ export function DossierEmotionalTimeline({
                     value={formNote}
                     onChange={(e) => setFormNote(e.target.value)}
                     placeholder="What happened in this scene that moved you?"
-                    className="w-full p-2 rounded-lg text-xs font-mono border bg-transparent mt-1 h-20"
+                    className="w-full p-2 rounded-lg text-xs font-mono border bg-transparent mt-1 h-20 border-white/20"
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <button onClick={() => setShowAddModal(false)} className="px-3 py-1.5 text-xs font-mono border rounded-lg">Cancel</button>
-                <button onClick={handleAdd} className="px-4 py-1.5 text-xs font-mono font-bold rounded-lg bg-pink-600 text-white">Save Reaction</button>
+              <div className="flex justify-end gap-2 mt-5">
+                <button onClick={() => setShowModal(false)} className="px-3 py-1.5 text-xs font-mono border border-white/20 rounded-lg">Cancel</button>
+                <button onClick={handleSave} className="px-4 py-1.5 text-xs font-mono font-bold rounded-lg bg-pink-600 text-white">
+                  {editingIndex !== null ? "Update Reaction" : "Save Reaction"}
+                </button>
               </div>
             </div>
           </div>

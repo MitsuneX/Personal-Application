@@ -42,14 +42,15 @@ export function DossierEpisodeNavigator({
     return Array.from({ length: total }, (_, i) => {
       const epNum = i + 1;
       const existing = episodes.find((e) => e.number === epNum);
-      return (
-        existing || {
-          number: epNum,
-          title: `Episode ${epNum}`,
-          runtime: "24m",
-          isWatched: epNum <= episodesWatched,
-        }
-      );
+      const isWatched = epNum <= episodesWatched;
+      return existing
+        ? { ...existing, isWatched }
+        : {
+            number: epNum,
+            title: `Episode ${epNum}`,
+            runtime: "24m",
+            isWatched,
+          };
     });
   }, [total, episodes, episodesWatched]);
 

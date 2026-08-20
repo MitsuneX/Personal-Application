@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { ThemeAccentConfig } from "./DossierThemeAccent";
-import { FileText, Eye, EyeOff, Save, Check } from "lucide-react";
+import { FileText, Eye, EyeOff, Save, Check, AlertTriangle } from "lucide-react";
 
 export interface DossierReviewEditorProps {
   reviewMarkdown?: string;
@@ -23,6 +23,10 @@ export function DossierReviewEditor({
   const [text, setText] = useState(reviewMarkdown);
   const [isEditing, setIsEditing] = useState(false);
   const [hideSpoilers, setHideSpoilers] = useState(true);
+
+  useEffect(() => {
+    setText(reviewMarkdown);
+  }, [reviewMarkdown]);
 
   const handleSave = () => {
     onSaveReview?.(text);
@@ -59,9 +63,13 @@ export function DossierReviewEditor({
           <button
             onClick={() => setHideSpoilers(!hideSpoilers)}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-mono font-bold uppercase tracking-wider cursor-pointer border opacity-80"
+            style={{
+              borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#CBD5E1",
+              color: hideSpoilers ? (isCyber ? "#F59E0B" : "#D97706") : (isCyber ? "#00F5FF" : "#0284C7"),
+            }}
           >
             {hideSpoilers ? <EyeOff size={13} /> : <Eye size={13} />}
-            <span>{hideSpoilers ? "Hide Spoilers" : "Show Spoilers"}</span>
+            <span>{hideSpoilers ? "Spoilers Protected" : "Spoilers Revealed"}</span>
           </button>
 
           <button
@@ -87,7 +95,7 @@ export function DossierReviewEditor({
             onChange={(e) => setText(e.target.value)}
             className="w-full h-56 p-4 rounded-xl font-mono text-xs leading-relaxed border bg-black/10 dark:bg-white/5 outline-none resize-y"
             style={{ borderColor: themeConfig.primaryAccent }}
-            placeholder="Write your markdown review here..."
+            placeholder="Write your review, analysis, and thoughts here..."
           />
           <div className="flex justify-end">
             <button
@@ -101,17 +109,54 @@ export function DossierReviewEditor({
           </div>
         </div>
       ) : text ? (
-        <div
-          className={`p-4 rounded-xl border leading-relaxed text-sm whitespace-pre-line ${
-            hideSpoilers ? "blur-none" : ""
-          }`}
-          style={{
-            backgroundColor: isCyber ? "rgba(5,8,22,0.6)" : "#FFF5E4",
-            borderColor: isCyber ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.15)",
-            color: isCyber ? "#CBD5E1" : "#334155",
-          }}
-        >
-          {text}
+        <div className="relative rounded-xl overflow-hidden">
+          <div
+            className={`p-4 rounded-xl border leading-relaxed text-sm whitespace-pre-line transition-all duration-300 ${
+              hideSpoilers ? "blur-md select-none pointer-events-none opacity-40" : "blur-0 opacity-100"
+            }`}
+            style={{
+              backgroundColor: isCyber ? "rgba(5,8,22,0.6)" : "#FFF5E4",
+              borderColor: isCyber ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.15)",
+              color: isCyber ? "#CBD5E1" : "#334155",
+            }}
+          >
+            {text}
+          </div>
+
+          {/* Spoiler Warning Overlay */}
+          {hideSpoilers && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-black/30 backdrop-blur-[2px] z-10">
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="p-4 rounded-xl border text-center flex flex-col items-center max-w-sm"
+                style={{
+                  backgroundColor: isCyber ? "#050816" : "#FFFFFF",
+                  borderColor: isCyber ? "#F59E0B" : "#D97706",
+                  boxShadow: isCyber ? "0 0 20px rgba(245, 158, 11, 0.2)" : "4px 4px 0 #000",
+                }}
+              >
+                <AlertTriangle size={24} className="text-yellow-400 mb-2" />
+                <p className="text-xs font-mono font-black uppercase text-yellow-400 mb-1">
+                  Spoiler Warning
+                </p>
+                <p className="text-[11px] theme-text-muted mb-3">
+                  This review may contain major plot points and ending discussions.
+                </p>
+                <button
+                  onClick={() => setHideSpoilers(false)}
+                  className="px-4 py-1.5 rounded-lg text-xs font-mono font-bold uppercase tracking-wider cursor-pointer border transition-all"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(245, 158, 11, 0.2)" : "#FEF3C7",
+                    borderColor: isCyber ? "#F59E0B" : "#B45309",
+                    color: isCyber ? "#F59E0B" : "#78350F",
+                  }}
+                >
+                  Click to Reveal Review
+                </button>
+              </motion.div>
+            </div>
+          )}
         </div>
       ) : (
         <div

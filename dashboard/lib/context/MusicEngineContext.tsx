@@ -70,32 +70,87 @@ export function MusicEngineProvider({ children }: { children: ReactNode }) {
     const el = audioRef.current;
 
     const onTimeUpdate = () => setCurrentTime(el.currentTime);
-    const onDurationChange = () => setDuration(el.duration || 0);
+    const updateRealDuration = () => {
+      if (el.duration && !isNaN(el.duration) && isFinite(el.duration) && el.duration > 0) {
+        setDuration(el.duration);
+      }
+    };
     const onProgress = () => {
       if (el.buffered.length > 0) {
         setBuffered(el.buffered.end(el.buffered.length - 1));
       }
     };
-    const onEnded = () => nextTrack();
+    const onEnded = () => {
+      const state = useDashboardStore.getState();
+      if (state.loopMode === "one") {
+        el.currentTime = 0;
+        el.play().catch((err) => console.warn("[MusicEngine] Loop replay blocked:", err));
+      } else {
+        state.nextTrack();
+      }
+    };
     const onError = () => {
       console.warn("[MusicEngine] Audio playback error");
       setIsPlaying(false);
     };
 
     el.addEventListener("timeupdate", onTimeUpdate);
-    el.addEventListener("durationchange", onDurationChange);
+    el.addEventListener("durationchange", updateRealDuration);
+    el.addEventListener("loadedmetadata", updateRealDuration);
+    el.addEventListener("canplaythrough", updateRealDuration);
     el.addEventListener("progress", onProgress);
     el.addEventListener("ended", onEnded);
     el.addEventListener("error", onError);
 
     return () => {
       el.removeEventListener("timeupdate", onTimeUpdate);
-      el.removeEventListener("durationchange", onDurationChange);
+      el.removeEventListener("durationchange", updateRealDuration);
+      el.removeEventListener("loadedmetadata", updateRealDuration);
+      el.removeEventListener("canplaythrough", updateRealDuration);
       el.removeEventListener("progress", onProgress);
       el.removeEventListener("ended", onEnded);
       el.removeEventListener("error", onError);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Volume control ──────────────────────────────────────────────────────────
+  const setVolume = useCallback((v: number) => {
+    const clamped = Math.max(0, Math.min(1, v));
+    setVolumeState(clamped);
+    if (audioRef.current) {
+      audioRef.current.volume = clamped;
+    }
+    if (clamped > 0) {
+      setIsMuted(false);
+      if (audioRef.current) audioRef.current.muted = false;
+    }
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    setIsMuted((prev) => {
+      const next = !prev;
+      if (audioRef.current) audioRef.current.muted = next;
+      return next;
+    });
+  }, []);
+
+  // ── Seek ────────────────────────────────────────────────────────────────────
+  const seekTo = useCallback((seconds: number) => {
+    setCurrentTime(seconds);
+    const state = useDashboardStore.getState();
+    const track = state.activeTrack;
+    
+    if (audioRef.current && track?.audioUrl && !track?.youtubeId) {
+      audioRef.current.currentTime = seconds;
+    }
+    
+    if (iframeRef.current?.contentWindow && track?.youtubeId) {
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: "command", func: "seekTo", args: [seconds, true] }),
+        "*"
+      );
+    }
   }, []);
 
   // ── Sync YouTube player state via postMessage ──────────────────────────────
@@ -118,22 +173,52 @@ export function MusicEngineProvider({ children }: { children: ReactNode }) {
     );
   }, [isPlaying, activeTrack, volume, isMuted]);
 
-  // ── YouTube Progress Timer ─────────────────────────────────────────────────
+  // ── YouTube Message Listener & Progress Polling ─────────────────────────────
+  useEffect(() => {
+    const handleWindowMessage = (e: MessageEvent) => {
+      try {
+        const data = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
+        if (!data || typeof data !== "object") return;
+
+        if (data.event === "infoDelivery" && data.info) {
+          if (typeof data.info.duration === "number" && data.info.duration > 0) {
+            setDuration(data.info.duration);
+          }
+          if (typeof data.info.currentTime === "number") {
+            setCurrentTime(data.info.currentTime);
+          }
+          if (data.info.playerState === 0) { // 0 = YT.PlayerState.ENDED
+            const state = useDashboardStore.getState();
+            if (state.loopMode === "one") {
+              seekTo(0);
+            } else {
+              state.nextTrack();
+            }
+          }
+        }
+      } catch {}
+    };
+
+    window.addEventListener("message", handleWindowMessage);
+    return () => window.removeEventListener("message", handleWindowMessage);
+  }, [seekTo]);
+
+  // YouTube Progress Heartbeat (only updates current time if active)
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (activeTrack?.youtubeId && isPlaying) {
       interval = setInterval(() => {
-        setCurrentTime((prev) => {
-          if (duration > 0 && prev >= duration) {
-            nextTrack();
-            return 0;
-          }
-          return prev + 1;
-        });
+        // Ping YouTube iframe for current time
+        if (iframeRef.current?.contentWindow) {
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: "listening", id: 1 }),
+            "*"
+          );
+        }
       }, 1000);
     }
     return () => { if (interval) clearInterval(interval); };
-  }, [activeTrack, isPlaying, duration, nextTrack]);
+  }, [activeTrack, isPlaying]);
 
   // ── React to activeTrack changes ────────────────────────────────────────────
   const playSessionStartRef = useRef<number | null>(null);
@@ -150,19 +235,19 @@ export function MusicEngineProvider({ children }: { children: ReactNode }) {
 
     setCurrentTime(0);
     
-    // Parse duration string to seconds
+    // Parse duration string to seconds if explicitly present
+    let initialSecs = 0;
     if (activeTrack.duration) {
       const parts = activeTrack.duration.split(":");
       if (parts.length === 2) {
         const secs = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
-        if (!isNaN(secs) && secs > 0) setDuration(secs);
+        if (!isNaN(secs) && secs > 0) initialSecs = secs;
       } else if (parts.length === 3) {
         const secs = parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60 + parseInt(parts[2], 10);
-        if (!isNaN(secs) && secs > 0) setDuration(secs);
+        if (!isNaN(secs) && secs > 0) initialSecs = secs;
       }
-    } else {
-      setDuration(210); // Default fallback
     }
+    setDuration(initialSecs);
 
     // Determine audio source
     const src = activeTrack.audioUrl || "";
@@ -215,45 +300,6 @@ export function MusicEngineProvider({ children }: { children: ReactNode }) {
       }
     }
   }, [isPlaying, activeTrack, setIsPlaying, recordPlay]);
-
-  // ── Volume control ──────────────────────────────────────────────────────────
-  const setVolume = useCallback((v: number) => {
-    const clamped = Math.max(0, Math.min(1, v));
-    setVolumeState(clamped);
-    if (audioRef.current) {
-      audioRef.current.volume = clamped;
-    }
-    if (clamped > 0) {
-      setIsMuted(false);
-      if (audioRef.current) audioRef.current.muted = false;
-    }
-  }, []);
-
-  const toggleMute = useCallback(() => {
-    setIsMuted((prev) => {
-      const next = !prev;
-      if (audioRef.current) audioRef.current.muted = next;
-      return next;
-    });
-  }, []);
-
-  // ── Seek ────────────────────────────────────────────────────────────────────
-  const seekTo = useCallback((seconds: number) => {
-    setCurrentTime(seconds);
-    const state = useDashboardStore.getState();
-    const track = state.activeTrack;
-    
-    if (audioRef.current && track?.audioUrl && !track?.youtubeId) {
-      audioRef.current.currentTime = seconds;
-    }
-    
-    if (iframeRef.current?.contentWindow && track?.youtubeId) {
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: "command", func: "seekTo", args: [seconds, true] }),
-        "*"
-      );
-    }
-  }, []);
 
   // ── Session Auto-Saver (Spotify Style) ──────────────────────────────────────
   useEffect(() => {

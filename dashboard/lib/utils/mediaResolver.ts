@@ -376,3 +376,101 @@ export function mergeCharacterDictionaryMediaIntoGallery(
 
   return Array.from(new Set([...currentList, ...candidateUrls].filter(Boolean)));
 }
+
+export interface CharacterGalleryMediaItem {
+  src: string;
+  label: string;
+  type: "avatar" | "portrait" | "card" | "gallery";
+  aspect: "1:1" | "3:4";
+}
+
+/**
+ * Resolves all canonical media assets for a Character Dictionary entry:
+ * 1. Profile Avatar (1:1 square identity image)
+ * 2. Portrait Image (3:4 portrait)
+ * 3. Card Image (3:4 roster card artwork)
+ * 4. Custom Gallery Images
+ *
+ * Automatically deduplicates identical URLs while preserving role metadata and geometric aspect ratios.
+ */
+export function resolveCharacterDictionaryGallery(entry: any): CharacterGalleryMediaItem[] {
+  if (!entry) return [];
+
+  const items: CharacterGalleryMediaItem[] = [];
+  const seenUrls = new Set<string>();
+
+  const addMedia = (
+    urlCandidate: any,
+    type: "avatar" | "portrait" | "card" | "gallery",
+    defaultLabel: string,
+    aspect: "1:1" | "3:4" = "3:4"
+  ) => {
+    if (!urlCandidate || typeof urlCandidate !== "string") return;
+    const clean = urlCandidate.trim();
+    if (!clean || isVideoUrl(clean) || !isImageUrl(clean)) return;
+
+    if (!seenUrls.has(clean)) {
+      seenUrls.add(clean);
+      items.push({
+        src: clean,
+        label: defaultLabel,
+        type,
+        aspect,
+      });
+    }
+  };
+
+  // 1. Profile Avatar (Full uncropped picture prioritized over cropped thumbnail)
+  const avatar =
+    entry.stats?.cropData?.avatarCrop?.originalUrl ||
+    entry.details?.cropData?.avatarCrop?.originalUrl ||
+    entry.cropData?.avatarCrop?.originalUrl ||
+    entry.details?.avatarOriginalUrl ||
+    entry.avatarOriginalUrl ||
+    entry.avatarUrl ||
+    entry.profileAvatarUrl ||
+    entry.details?.avatarUrl ||
+    entry.details?.profileAvatarUrl ||
+    entry.details?.avatar ||
+    entry.stats?.avatarUrl;
+  addMedia(avatar, "avatar", "Profile Avatar", "3:4");
+
+  // 2. Portrait (3:4)
+  const portrait =
+    entry.portraitUrl ||
+    entry.details?.portraitUrl ||
+    entry.stats?.portraitUrl;
+  addMedia(portrait, "portrait", "Portrait Image (3:4)", "3:4");
+
+  // 3. Card Image (3:4 / Roster Card Geometry)
+  const cardImage =
+    entry.imageUrl ||
+    entry.cardImage ||
+    entry.details?.cardImage ||
+    entry.details?.imageUrl ||
+    entry.stats?.cardImage ||
+    entry.stats?.imageUrl;
+  addMedia(cardImage, "card", "Card Image (Roster)", "3:4");
+
+  // 4. Custom User Gallery Images
+  const galleryList = Array.isArray(entry.gallery)
+    ? entry.gallery
+    : Array.isArray(entry.details?.gallery)
+    ? entry.details.gallery
+    : Array.isArray(entry.stats?.gallery)
+    ? entry.stats.gallery
+    : [];
+
+  let galleryCount = 0;
+  galleryList.forEach((img: any) => {
+    if (typeof img === "string" && img.trim()) {
+      const clean = img.trim();
+      if (!seenUrls.has(clean)) {
+        galleryCount += 1;
+        addMedia(clean, "gallery", `Gallery Image ${galleryCount}`, "3:4");
+      }
+    }
+  });
+
+  return items;
+}

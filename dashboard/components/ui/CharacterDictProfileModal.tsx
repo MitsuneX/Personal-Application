@@ -10,6 +10,7 @@ import { TokusatsuProfileModal } from "@/components/ui/TokusatsuProfileModal";
 import { isTokusatsuEntry } from "@/lib/data/tokusatsuDataHelper";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { useToast } from "@/components/ui/ToastProvider";
+import { resolveCharacterDictionaryGallery, CharacterGalleryMediaItem } from "@/lib/utils/mediaResolver";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Props {
@@ -243,13 +244,8 @@ export function CharacterDictProfileModal({
   // Primary 3:4 Portrait image logic: portraitUrl takes priority, falls back to card image (imageUrl)
   const portraitImage = entry.portraitUrl || entry.imageUrl;
 
-  // Gallery Collection (manually managed gallery images, no splash art concepts)
-  const galleryImages = (entry.gallery || []).map((img, i) => ({
-    src: img,
-    label: `Gallery Image ${i + 1}`,
-  }));
-
-
+  // Canonical Media Resolver: Avatar (1:1) -> Portrait (3:4) -> Card Image (3:4) -> User Gallery Images
+  const galleryImages = resolveCharacterDictionaryGallery(entry);
 
   const handleImageContextMenu = (e: React.MouseEvent, img: { src: string; label: string }, index: number) => {
     e.preventDefault();
@@ -283,8 +279,13 @@ export function CharacterDictProfileModal({
       const src = deleteTarget.src;
       const currentGallery = entry.gallery || [];
       const updatedGallery = currentGallery.filter((url) => url !== src);
+      const updates: Partial<HallOfFameEntry> = { gallery: updatedGallery };
 
-      await updateHof(entry.id, { gallery: updatedGallery });
+      if (entry.avatarUrl === src) updates.avatarUrl = undefined;
+      if (entry.portraitUrl === src) updates.portraitUrl = undefined;
+      if (entry.imageUrl === src) updates.imageUrl = undefined;
+
+      await updateHof(entry.id, updates);
 
       try {
         await fetch(`/api/upload?url=${encodeURIComponent(src)}`, { method: "DELETE" });
@@ -972,9 +973,9 @@ export function CharacterDictProfileModal({
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
-                      {galleryImages.map(({ src, label }, i) => (
+                      {galleryImages.map(({ src, label, type, aspect }, i) => (
                         <motion.div
-                          key={i}
+                          key={`${src}-${i}`}
                           whileHover={{ scale: 1.04 }}
                           transition={{ duration: 0.2 }}
                           onClick={() => {
@@ -983,7 +984,9 @@ export function CharacterDictProfileModal({
                             setLightboxIndex(i);
                           }}
                           onContextMenu={(e) => handleImageContextMenu(e, { src, label }, i)}
-                          className={`relative aspect-[3/4] rounded-2xl overflow-hidden cursor-zoom-in border group ${
+                          className={`relative ${
+                            aspect === "1:1" ? "aspect-square" : "aspect-[3/4]"
+                          } rounded-2xl overflow-hidden cursor-zoom-in border group ${
                             isCyber ? "border-white/10 bg-black/40" : "border-black bg-gray-100 shadow-[3px_3px_0_#000]"
                           }`}
                         >
@@ -1003,8 +1006,23 @@ export function CharacterDictProfileModal({
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                           )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                            <span className="text-[10px] font-mono text-white font-bold">{label}</span>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3 justify-between">
+                            <span className="text-[10px] font-mono text-white font-bold truncate pr-1">{label}</span>
+                            {type === "avatar" && (
+                              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/40 text-cyan-300 border border-cyan-400/50 shrink-0 font-bold">
+                                Avatar
+                              </span>
+                            )}
+                            {type === "portrait" && (
+                              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-pink-500/40 text-pink-300 border border-pink-400/50 shrink-0 font-bold">
+                                Portrait
+                              </span>
+                            )}
+                            {type === "card" && (
+                              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/40 text-amber-300 border border-amber-400/50 shrink-0 font-bold">
+                                Card
+                              </span>
+                            )}
                           </div>
                         </motion.div>
                       ))}

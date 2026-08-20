@@ -13,6 +13,34 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v12.9.0",
+    date: "2026-08-20",
+    title: "Content, Music Engine & Character Dictionary Media Reliability Pass",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Comprehensive reliability, state synchronization, and media pipeline upgrade. Corrected Music Engine playback duration handling by binding directly to real audio element and YouTube player metadata, eliminating hardcoded 210s timers and premature queue transitions. Enhanced Anime/Drama Watch Journey, Episode Navigator, and Emotional Timeline with reactive prop synchronization, complete milestone CRUD workflows, and persistent client dossier caching across refreshes. Added multipart file upload support to Memory Gallery, implemented interactive spoiler warning overlays for personal reviews, streamlined OST tracks to stream directly in the Global Music Engine without triggering file downloads, and built a canonical Character Dictionary Gallery media resolver aggregating uncropped Profile Avatar, Portrait, Card Image, and custom user gallery media.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🎵 Music Engine Real Duration & Natural Queue Advancement (MusicEngineContext.tsx): Removed hardcoded 210s fallback and synthetic countdown timers, binding duration strictly to audio element metadata ('loadedmetadata', 'durationchange') and real YouTube postMessage events ('infoDelivery', playerState === 0). Queue advances naturally on track completion with loop mode support.",
+          "📺 Anime & Drama Watch Journey State Persistence (DossierMyJourney.tsx, MediaDetailsView.tsx): Added reactive prop synchronization to watch journey inputs and connected MediaDetailsView to persist extended journey fields into store state and client localStorage ('nexus_dossier_${id}') for seamless rehydration upon page reload.",
+          "🔢 Episode Navigator & Analytics Linear Synchronization (DossierEpisodeNavigator.tsx): Strictly derived episode watched states from canonical episodesWatched progress, wiring the 'Continue' action to increment progress with automatic status transitions (Watching / Completed) and reactive pace analytics.",
+          "⏱️ Emotional Journey Timeline CRUD & Persistence (DossierEmotionalTimeline.tsx, MediaDetailsView.tsx): Implemented full Create, Edit, and Delete reaction milestone workflows with persistent state updates in store and dossier storage.",
+          "🖼️ Memory Gallery Multipart File Upload & Deletion (DossierMemoryGallery.tsx): Added file picker connected to the multipart /api/upload endpoint with upload progress indicators alongside direct URL inputs and deletion support.",
+          "🙈 Personal Review Spoiler Protection Overlay (DossierReviewEditor.tsx): Implemented true backdrop-blur obfuscation with an interactive '⚠️ SPOILER WARNING — Click to Reveal Review' button when spoiler protection is active.",
+          "🎧 OST Global Music Streaming Integration (DossierExternalLinks.tsx): Replaced download anchor links with global audio player dispatch ('playTrack'), streaming OST soundtracks directly inside the Global Music Player with playback controls.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🏛️ Canonical Character Dictionary Gallery Media Resolver (mediaResolver.ts, CharacterDictProfileModal.tsx): Built a unified media resolver automatically aggregating and deduplicating uncropped Profile Avatar (full picture), Portrait (3:4), Card Image (3:4), and custom user gallery images with role badges (Avatar, Portrait, Card) and full lightbox zoom preview.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v12.8.0",
     date: "2026-08-17",
     title: "Dashboard Intelligence, Hall of Fame Live Trends & Unified Watchlist Upgrade",
