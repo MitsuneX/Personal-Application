@@ -8,17 +8,16 @@ import { useDashboardStore, HobbySkillEntry, HobbyLogEntry } from "@/lib/store/d
 import { HobbyRadialChart } from "@/components/charts/HobbyRadialChart";
 import { HobbyAreaChart } from "@/components/charts/HobbyAreaChart";
 import { HobbyHoverPopup } from "@/components/ui/HobbyHoverPopup";
-import { getLevelDetailsFromXp, formatLastLearned } from "@/lib/utils/hobbyProgression";
+import {
+  getLevelDetailsFromXp,
+  formatLastLearned,
+  getCategoryTheme,
+  CategoryTheme,
+  aggregateHobbyCategories,
+  HobbyCategoryAggregate,
+} from "@/lib/utils/hobbyProgression";
 
-// ─── Theme Color Map ───────────────────────────────────────────────────────────
-const CATEGORY_COLORS: Record<string, { cyber: string; brutal: string; glow: string }> = {
-  "Languages":    { cyber: "#00F5FF", brutal: "#FF6B35", glow: "#00F5FF" },
-  "Doctors":      { cyber: "#A855F7", brutal: "#FFD166", glow: "#A855F7" },
-  "Martial Arts": { cyber: "#10B981", brutal: "#06D6A0", glow: "#10B981" },
-};
-
-const FALLBACK_COLOR = { cyber: "#6366F1", brutal: "#8B5CF6", glow: "#6366F1" };
-
+// ─── Theme Color Resolver ──────────────────────────────────────────────────────
 const PRIORITY_BADGE: Record<string, { label: string; cyberColor: string; brutalColor: string }> = {
   "Priority":        { label: "⚡ Priority",         cyberColor: "#00F5FF", brutalColor: "#FF6B35" },
   "Haven't Started": { label: "❄️ Haven't Started",   cyberColor: "#6366F1", brutalColor: "#8A8A8A" },
@@ -53,10 +52,11 @@ function getTodaySparkData(logs: HobbyLogEntry[], skillId: string) {
 }
 
 function getCategoryColor(category: string, isCyber: boolean) {
-  const colors = CATEGORY_COLORS[category] ?? FALLBACK_COLOR;
+  const theme = getCategoryTheme(category);
   return {
-    color: isCyber ? colors.cyber : colors.brutal,
-    colors,
+    color: isCyber ? theme.cyber : theme.brutal,
+    colors: theme,
+    icon: theme.icon,
   };
 }
 
@@ -248,17 +248,34 @@ function LearnTodayModal({ skill, isCyber, onClose, onSubmit, isSubmitting }: Le
 // ─── Add Custom Skill Modal ────────────────────────────────────────────────────
 interface AddSkillModalProps {
   isCyber: boolean;
+  existingCategories: string[];
   onClose: () => void;
   onSubmit: (name: string, category: string, priority: string) => void;
 }
 
-function AddSkillModal({ isCyber, onClose, onSubmit }: AddSkillModalProps) {
+function AddSkillModal({ isCyber, existingCategories, onClose, onSubmit }: AddSkillModalProps) {
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("Languages");
+  const [category, setCategory] = useState(existingCategories[0] || "Languages");
+  const [customCategory, setCustomCategory] = useState("");
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [priority, setPriority] = useState("Priority");
 
-  const CATEGORIES = ["Languages", "Doctors", "Martial Arts", "Music", "Art", "Programming", "Other"];
+  const presetCategories = ["Languages", "Doctors", "Martial Arts", "Art", "Music", "Development", "Creative", "Science", "Fitness"];
+  const allCategoryOptions = Array.from(new Set([...existingCategories, ...presetCategories]));
+
   const PRIORITIES = ["Priority", "Haven't Started", "Manifest"];
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    if (val === "__custom__") {
+      setIsCustomCategory(true);
+    } else {
+      setIsCustomCategory(false);
+      setCategory(val);
+    }
+  };
+
+  const finalCategory = isCustomCategory ? (customCategory.trim() || "Custom") : category;
 
   return (
     <motion.div
@@ -317,8 +334,8 @@ function AddSkillModal({ isCyber, onClose, onSubmit }: AddSkillModalProps) {
               Category
             </label>
             <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              value={isCustomCategory ? "__custom__" : category}
+              onChange={handleCategoryChange}
               className="text-xs font-bold px-2 py-1.5 rounded-lg outline-none"
               style={{
                 background: isCyber ? "rgba(0,0,0,0.4)" : "#F9F9F9",
@@ -326,7 +343,8 @@ function AddSkillModal({ isCyber, onClose, onSubmit }: AddSkillModalProps) {
                 color: isCyber ? "#00F5FF" : "#1A1A1A",
               }}
             >
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              {allCategoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+              <option value="__custom__">+ Custom Category...</option>
             </select>
           </div>
 
@@ -349,16 +367,38 @@ function AddSkillModal({ isCyber, onClose, onSubmit }: AddSkillModalProps) {
           </div>
         </div>
 
+        {/* Custom Category Input if selected */}
+        {isCustomCategory && (
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest" style={{ color: isCyber ? "rgba(255,255,255,0.4)" : "#8A8A8A" }}>
+              Custom Category Name
+            </label>
+            <input
+              type="text"
+              value={customCategory}
+              onChange={(e) => setCustomCategory(e.target.value)}
+              placeholder={isCyber ? "// Type new category name..." : "e.g. Photography, Robotics..."}
+              maxLength={30}
+              className="w-full text-xs font-bold px-3 py-2 rounded-lg outline-none"
+              style={{
+                background: isCyber ? "rgba(0,0,0,0.4)" : "#F9F9F9",
+                border: isCyber ? "1px solid rgba(0,245,255,0.2)" : "1.5px solid #000",
+                color: isCyber ? "#00F5FF" : "#1A1A1A",
+              }}
+            />
+          </div>
+        )}
+
         <motion.button
-          onClick={() => { if (name.trim()) onSubmit(name.trim(), category, priority); }}
-          disabled={!name.trim()}
+          onClick={() => { if (name.trim() && finalCategory) onSubmit(name.trim(), finalCategory, priority); }}
+          disabled={!name.trim() || (isCustomCategory && !customCategory.trim())}
           className="w-full py-2 rounded-xl text-xs font-black"
           style={{
             background: isCyber ? "#00F5FF" : "#FF6B35",
             color: isCyber ? "#050816" : "#FFF",
             border: isCyber ? "none" : "2px solid #000",
             boxShadow: isCyber ? "0 0 20px rgba(0,245,255,0.3)" : "3px 3px 0 #000",
-            opacity: !name.trim() ? 0.4 : 1,
+            opacity: (!name.trim() || (isCustomCategory && !customCategory.trim())) ? 0.4 : 1,
           }}
           whileTap={{ scale: 0.97 }}
         >
@@ -750,45 +790,34 @@ export default function HobbiesPage() {
     setAddSkillOpen(false);
   }, [addCustomSkill]);
 
-  // Category aggregate data for radial chart (only fixed 3)
-  const categoryData = useMemo(() => {
-    const categories = ["Languages", "Doctors", "Martial Arts"] as const;
-    return categories.map((cat) => {
-      const catSkills = hobbySkills.filter((s) => s.category === cat);
-      const rawAvg =
-        catSkills.length > 0
-          ? catSkills.reduce((sum, s) => sum + (Number(s.progress) || 0), 0) / catSkills.length
-          : 0;
-      const avg = isFinite(rawAvg) ? rawAvg : 0;
-      const colors = CATEGORY_COLORS[cat];
-      return {
-        name: cat,
-        value: Math.round(avg * 100) / 100,
-        fill: isCyber ? colors.cyber : colors.brutal,
-        glowColor: colors.glow,
-      };
-    });
-  }, [hobbySkills, isCyber]);
+  // Single Canonical Category Aggregator — Single Source of Truth
+  const categoryAggregates = useMemo(
+    () => aggregateHobbyCategories(hobbySkills, isCyber),
+    [hobbySkills, isCyber]
+  );
 
-  // Group skills by category — include custom categories
-  const grouped = useMemo(() => {
-    const groups: Record<string, HobbySkillEntry[]> = {};
-    hobbySkills.forEach((s) => {
-      if (!groups[s.category]) groups[s.category] = [];
-      groups[s.category].push(s);
-    });
-    return groups;
-  }, [hobbySkills]);
+  // Radial chart formatted data
+  const categoryData = useMemo(() => {
+    return categoryAggregates.map((cat) => ({
+      name: cat.label,
+      value: cat.averageProgress,
+      fill: cat.color,
+      glowColor: cat.theme.glow,
+    }));
+  }, [categoryAggregates]);
+
+  const dynamicCategories = useMemo(
+    () => categoryAggregates.map((cat) => cat.label),
+    [categoryAggregates]
+  );
 
   // Popup data
   const popupSkill = popup.skill;
   const popupLogs = popupSkill ? hobbyLogs.filter((l) => l.skillId === popupSkill.id) : [];
   const popupSparkData = popupSkill ? getTodaySparkData(hobbyLogs, popupSkill.id) : [];
   const popupColor = popupSkill
-    ? isCyber
-      ? (CATEGORY_COLORS[popupSkill.category] ?? FALLBACK_COLOR).cyber
-      : (CATEGORY_COLORS[popupSkill.category] ?? FALLBACK_COLOR).brutal
-    : "#00F5FF";
+    ? getCategoryColor(popupSkill.category, isCyber).color
+    : (isCyber ? "#00F5FF" : "#FF6B35");
 
   // Global stats
   const totalMinutes = hobbySkills.reduce((s, sk) => s + (sk.totalMinutes ?? 0), 0);
@@ -920,28 +949,28 @@ export default function HobbiesPage() {
           <HobbyRadialChart data={categoryData} isCyber={isCyber} size={200} />
           {/* Legend */}
           <div className="flex flex-col gap-1.5 w-full">
-            {categoryData.map((c) => (
-              <div key={c.name} className="flex items-center justify-between">
+            {categoryAggregates.map((c) => (
+              <div key={c.key} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div
                     className="w-2 h-2 rounded-full"
                     style={{
-                      backgroundColor: c.fill,
-                      boxShadow: isCyber ? `0 0 6px ${c.fill}` : "none",
+                      backgroundColor: c.color,
+                      boxShadow: isCyber ? `0 0 6px ${c.color}` : "none",
                     }}
                   />
                   <span
                     className="text-[11px] font-bold"
                     style={{ color: isCyber ? "rgba(255,255,255,0.7)" : "#4A4A4A" }}
                   >
-                    {c.name}
+                    {c.label}
                   </span>
                 </div>
                 <span
                   className="text-[11px] font-black"
-                  style={{ color: isCyber ? c.fill : "#1A1A1A" }}
+                  style={{ color: isCyber ? c.color : "#1A1A1A" }}
                 >
-                  {c.value.toFixed(2)}%
+                  {c.averageProgress.toFixed(2)}%
                 </span>
               </div>
             ))}
@@ -949,137 +978,120 @@ export default function HobbiesPage() {
         </motion.div>
 
         {/* Category Breakdown Cards */}
-        <motion.div variants={itemVariants} className="md:col-span-2 flex flex-col gap-4">
-          {(["Languages", "Doctors", "Martial Arts"] as const).map((cat) => {
-            const catSkills = hobbySkills.filter((s) => s.category === cat);
-            const colors = CATEGORY_COLORS[cat];
-            const color = isCyber ? colors.cyber : colors.brutal;
-            const avg =
-              catSkills.length > 0
-                ? (() => {
-                    const raw = catSkills.reduce((s, sk) => s + (Number(sk.progress) || 0), 0) / catSkills.length;
-                    return isFinite(raw) ? raw : 0;
-                  })()
-                : 0;
-
-            return (
+        <motion.div variants={itemVariants} className="md:col-span-2 flex flex-col gap-3">
+          {categoryAggregates.map((cat) => (
+            <div
+              key={cat.key}
+              className="rounded-xl p-4 flex items-center gap-4"
+              style={{
+                background: isCyber ? "rgba(10,15,30,0.5)" : "#FFF9F0",
+                border: isCyber ? `1px solid ${cat.color}20` : "2px solid #000",
+                boxShadow: isCyber ? `0 0 20px ${cat.color}08` : "3px 3px 0 #000",
+              }}
+            >
               <div
-                key={cat}
-                className="rounded-xl p-4 flex items-center gap-4"
+                className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 font-black text-lg"
                 style={{
-                  background: isCyber ? "rgba(10,15,30,0.5)" : "#FFF9F0",
-                  border: isCyber ? `1px solid ${color}20` : "2px solid #000",
-                  boxShadow: isCyber ? `0 0 20px ${color}08` : "3px 3px 0 #000",
+                  background: isCyber ? `${cat.color}15` : `${cat.theme.brutal}20`,
+                  border: isCyber ? `1px solid ${cat.color}30` : `2px solid ${cat.theme.brutal}`,
                 }}
               >
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 font-black text-lg"
-                  style={{
-                    background: isCyber ? `${color}15` : `${colors.brutal}20`,
-                    border: isCyber ? `1px solid ${color}30` : `2px solid ${colors.brutal}`,
-                  }}
-                >
-                  {cat === "Languages" ? "🗣️" : cat === "Doctors" ? "🧠" : "🥊"}
+                {cat.theme.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1.5">
+                  <h3
+                    className="font-black text-sm"
+                    style={{ color: isCyber ? "#fff" : "#1A1A1A" }}
+                  >
+                    {cat.label}
+                  </h3>
+                  <span
+                    className="font-black text-sm"
+                    style={{ color: isCyber ? cat.color : "#1A1A1A" }}
+                  >
+                    {cat.averageProgress.toFixed(2)}% avg
+                  </span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <h3
-                      className="font-black text-sm"
-                      style={{ color: isCyber ? "#fff" : "#1A1A1A" }}
-                    >
-                      {cat}
-                    </h3>
+                <div className="flex gap-1 flex-wrap">
+                  {cat.skills.map((s) => (
                     <span
-                      className="font-black text-sm"
-                      style={{ color: isCyber ? color : "#1A1A1A" }}
+                      key={s.id}
+                      className="text-[9px] font-black px-1.5 py-0.5 rounded-full"
+                      style={{
+                        background: isCyber ? `${cat.color}15` : `${cat.theme.brutal}15`,
+                        color: isCyber ? cat.color : cat.theme.brutal,
+                        border: isCyber ? `1px solid ${cat.color}30` : `1px solid ${cat.theme.brutal}50`,
+                      }}
                     >
-                      {avg.toFixed(2)}% avg
+                      {s.name}: Lv.{s.level ?? 1}
                     </span>
-                  </div>
-                  <div className="flex gap-1 flex-wrap">
-                    {catSkills.map((s) => (
-                      <span
-                        key={s.id}
-                        className="text-[9px] font-black px-1.5 py-0.5 rounded-full"
-                        style={{
-                          background: isCyber ? `${color}15` : `${colors.brutal}15`,
-                          color: isCyber ? color : colors.brutal,
-                          border: isCyber ? `1px solid ${color}30` : `1px solid ${colors.brutal}50`,
-                        }}
-                      >
-                        {s.name}: Lv.{s.level ?? 1}
-                      </span>
-                    ))}
-                  </div>
+                  ))}
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </motion.div>
       </motion.div>
 
       {/* ── Individual Skill Cards Grid ── */}
-      {Object.entries(grouped).map(([category, skills]) => {
-        const { color } = getCategoryColor(category, isCyber);
-
-        return (
-          <motion.section
-            key={category}
-            className="mb-8"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* Section Header */}
-            <div className="flex items-center gap-3 mb-4">
-              <div
-                className="w-1 h-6 rounded-full"
-                style={{
-                  background: isCyber ? `linear-gradient(180deg, ${color}, transparent)` : color,
-                  boxShadow: isCyber ? `0 0 8px ${color}` : "none",
-                }}
-              />
-              <h2
-                className="font-black text-base uppercase tracking-wider"
-                style={{
-                  color: isCyber ? "#fff" : "#1A1A1A",
-                  fontFamily: isCyber ? "var(--font-orbitron, monospace)" : "inherit",
-                }}
-              >
-                {category}
-              </h2>
-              <div
-                className="flex-1 h-px"
-                style={{ background: isCyber ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.12)" }}
-              />
-              <span
-                className="text-[10px] font-bold"
-                style={{ color: isCyber ? "rgba(255,255,255,0.3)" : "#8A8A8A" }}
-              >
-                {skills.length} skills
-              </span>
-            </div>
-
-            <motion.div
-              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
-              variants={containerVariants}
+      {categoryAggregates.map((cat) => (
+        <motion.section
+          key={cat.key}
+          className="mb-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {/* Section Header */}
+          <div className="flex items-center gap-3 mb-4">
+            <div
+              className="w-1 h-6 rounded-full"
+              style={{
+                background: isCyber ? `linear-gradient(180deg, ${cat.color}, transparent)` : cat.color,
+                boxShadow: isCyber ? `0 0 8px ${cat.color}` : "none",
+              }}
+            />
+            <h2
+              className="font-black text-base uppercase tracking-wider"
+              style={{
+                color: isCyber ? "#fff" : "#1A1A1A",
+                fontFamily: isCyber ? "var(--font-orbitron, monospace)" : "inherit",
+              }}
             >
-              {skills.map((skill) => (
-                <motion.div key={skill.id} variants={itemVariants}>
-                  <SkillCard
-                    skill={skill}
-                    logs={hobbyLogs}
-                    isCyber={isCyber}
-                    onHover={handleHover}
-                    onLeave={handleLeave}
-                    onLearnToday={handleLearnToday}
-                  />
-                </motion.div>
-              ))}
-            </motion.div>
-          </motion.section>
-        );
-      })}
+              {cat.label}
+            </h2>
+            <div
+              className="flex-1 h-px"
+              style={{ background: isCyber ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.12)" }}
+            />
+            <span
+              className="text-[10px] font-bold"
+              style={{ color: isCyber ? "rgba(255,255,255,0.3)" : "#8A8A8A" }}
+            >
+              {cat.skillCount} skills
+            </span>
+          </div>
+
+          <motion.div
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
+            variants={containerVariants}
+          >
+            {cat.skills.map((skill) => (
+              <motion.div key={skill.id} variants={itemVariants}>
+                <SkillCard
+                  skill={skill}
+                  logs={hobbyLogs}
+                  isCyber={isCyber}
+                  onHover={handleHover}
+                  onLeave={handleLeave}
+                  onLearnToday={handleLearnToday}
+                />
+              </motion.div>
+            ))}
+          </motion.div>
+        </motion.section>
+      ))}
 
       {/* ── XP Note Form ── */}
       <motion.div
@@ -1123,6 +1135,7 @@ export default function HobbiesPage() {
         {addSkillOpen && (
           <AddSkillModal
             isCyber={isCyber}
+            existingCategories={dynamicCategories}
             onClose={() => setAddSkillOpen(false)}
             onSubmit={handleAddSkill}
           />

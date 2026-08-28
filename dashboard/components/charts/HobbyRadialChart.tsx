@@ -22,21 +22,25 @@ interface HobbyRadialChartProps {
 }
 
 export function HobbyRadialChart({ data, isCyber, size = 220 }: HobbyRadialChartProps) {
+  const ringCount = Math.max(1, data.length);
+  const innerRadius = ringCount <= 3 ? "28%" : ringCount <= 5 ? "20%" : "14%";
+  const barSize = ringCount <= 3 ? (isCyber ? 12 : 14) : ringCount <= 5 ? (isCyber ? 9 : 11) : (isCyber ? 6 : 8);
+
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <ResponsiveContainer width="100%" height="100%">
         <RadialBarChart
           cx="50%"
           cy="50%"
-          innerRadius="28%"
+          innerRadius={innerRadius}
           outerRadius="95%"
-          barSize={isCyber ? 12 : 14}
+          barSize={barSize}
           data={data}
           startAngle={90}
           endAngle={-270}
         >
           <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-          {data.map((entry, index) => (
+          {data.map((entry) => (
             <RadialBar
               key={entry.name}
               dataKey="value"

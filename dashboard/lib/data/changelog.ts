@@ -13,6 +13,38 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v12.10.0",
+    date: "2026-08-28",
+    title: "Hobbies & Skill Progression Dynamic Category & Canonical Analytics Upgrade",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Transformed the Hobbies and Skill Progression system into a fully dynamic, canonical category-driven engine. Eliminated hardcoded category arrays and decoupled analytics pipelines in favor of a single source of truth aggregator (`aggregateHobbyCategories`). The Category Overview radial chart, legend, summary cards, and category sections now dynamically discover, normalize, and render all active user categories (including Art and user-created custom domains) with adaptive radial ring scaling, deterministic theme palettes, and instant live CRUD reactivity.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🎯 Canonical Category Aggregator & Normalizer (hobbyProgression.ts): Introduced `aggregateHobbyCategories()` and `normalizeCategoryKey()` to extract, normalize, and calculate skill counts, total XP, minutes studied, and average progression across all active categories with zero hardcoded definitions.",
+          "🎨 Dynamic Category Theme & Palette Resolver (hobbyProgression.ts): Added `getCategoryTheme()` supporting curated domain palettes (Languages, Doctors, Martial Arts, Art, Music, Development, Creative, Science, Fitness, Philosophy) and deterministic hash-based palette/icon generation for arbitrary custom categories.",
+          "➕ On-The-Fly Custom Category Creation (page.tsx): Upgraded the Add Skill modal with existing category auto-discovery and a '+ Custom Category...' input to allow defining new hobby categories on the fly with instantaneous UI reflection.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "📊 Dynamic Category Overview & Analytics Alignment (page.tsx, HobbyRadialChart.tsx): Resolved category mismatch where Art and future categories were omitted from Category Overview; unified the radial donut chart, legend, summary cards, and section grids under the single canonical category aggregator.",
+          "🔄 Adaptive Radial Donut Chart Scaling (HobbyRadialChart.tsx): Dynamically scaled radial bar width (`barSize`) and inner radius (`innerRadius`) based on the active ring count to cleanly render 1 to 7+ category rings without clipping or collision.",
+          "⚡ Live Reactivity & State Synchronization: Real-time update of Category Overview, summary cards, and section grids upon adding, editing, or deleting skills with zero ghost rings or manual page reloads.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "✨ Dual-Theme Consistency & Layout Integrity: Perfect visual alignment in both Cyberpunk (neon cyan/magenta glow, dark glass) and Neo-Brutalism (stark black borders, bold drop shadows, high contrast) modes across all dynamic category cards, badges, and headers.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v12.9.0",
     date: "2026-08-20",
     title: "Content, Music Engine & Character Dictionary Media Reliability Pass",
