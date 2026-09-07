@@ -34,8 +34,14 @@ const NAV_SECTIONS = [
       { href: "/anime", icon: "⛩️", label: "Anime" },
       { href: "/drama", icon: "🎬", label: "Drama" },
       { href: "/music", icon: "🎵", label: "Music" },
+    ],
+  },
+  {
+    label: "Favourite",
+    items: [
       { href: "/hall-of-fame", icon: "🏆", label: "Hall of Fame" },
       { href: "/characters", icon: "📖", label: "Characters" },
+      { href: "/couples", icon: "💑", label: "Couples" },
     ],
   },
   {

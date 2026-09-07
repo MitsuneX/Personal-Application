@@ -13,6 +13,40 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v13.0.0",
+    date: "2026-09-07",
+    title: "Couples & Romance Archive Standalone System & In-Modal JSON Workspace",
+    badge: "MAJOR",
+    type: "major",
+    summary: "Introduced the standalone Couples & Romance Archive collection system (`/couples`), purpose-built for cataloging, ranking, browsing, analyzing, and preserving fictional pairings across Anime, Drama, Movies, Manga, and Games. Features 1-way read-only integration with the Character Dictionary, radar-based 8-dimension chemistry matrices, relationship milestones progression timelines, categorized iconic moments, and personal romance notes. Deeply integrated an in-modal JSON Workspace with live bidirectional synchronization inside the Couple Editor, streamlined the Dossier header, and added an application-wide custom right-click context menu engine with rich quick actions. Hardened database pool resiliency and resolved dev-mode Prisma caching.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "💑 Standalone Couples & Romance Archive System (app/couples/page.tsx): Dedicated archive with romance stats overview, multi-tier ranking (SSS/S/A/B/C/D), canon/fanon status, dynamic trope filters, sorting, and responsive layout.",
+          "📖 Deep Relationship Dossier Modal (CoupleDossierModal.tsx): 6-tab inspection modal with Partner hero cards, 8-dimension chemistry radar overview, green flags & dynamic tags, chronological milestones timeline, categorized iconic moments, personal analysis notes, and media gallery with lightbox modal.",
+          "✎ Unified Couple Profile & Form Editor (CoupleEditorModal.tsx): Full profile management with Character Dictionary auto-fill dropdowns, 8 chemistry dimension sliders, and dynamic timeline/moments managers.",
+          "📂 In-Modal JSON Workspace (CoupleEditorModal.tsx, CoupleJsonEditorModal.tsx): Directly embedded a high-fidelity monospace JSON editor inside the Edit modal with live bidirectional synchronization, syntax formatting, schema validation, diff inspection, clipboard copy, and file import/export.",
+          "🖱️ Rich Right-Click Context Menu Engine (CoupleCard.tsx, CoupleDossierModal.tsx, app/couples/page.tsx): Right-click context menus with instantaneous actions (View Dossier, Edit Profile, Pin Favorite, Like, Copy Couple Name, View Partner in Character Dictionary, and Delete Profile with confirmation).",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "⚡ Prisma Delegate Dynamic Resolution & Dev Caching (prisma.ts): Updated dev-mode Prisma client validation to dynamically discover model delegates ('couple', 'coupleLike') without stale singleton conflicts during hot reload.",
+          "🛡️ Database Pool Resiliency & Query Safeguards (prisma.ts, route.ts): Optimized connection pool configuration (max: 10, 30s timeouts) with automated pool retirement and graceful query fallbacks in /api/dashboard and /api/action.",
+          "🧩 Global Workspace Loader Hydration Alignment (GlobalWorkspaceLoader.tsx): Added client mount guard to eliminate React hydration mismatch warnings during initial SSR rehydration.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "✨ Dual-Theme Parity & Navigation Integration: Implemented full Cyberpunk (neon cyan/magenta glow, dark glassmorphism) and Neo-Brutalism (stark black borders, bold drop shadows, high contrast) styling across all couple cards, dossier tabs, editors, and context menus. Integrated Couples navigation into the sidebar with active route tracking.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v12.10.0",
     date: "2026-08-28",
     title: "Hobbies & Skill Progression Dynamic Category & Canonical Analytics Upgrade",

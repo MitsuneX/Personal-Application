@@ -22,6 +22,7 @@ import {
   GUEST_HOBBY_SESSIONS,
   GUEST_PROJECTS,
   GUEST_GALLERY,
+  GUEST_COUPLES,
 } from "@/lib/data/guestSeedData";
 import { DEFAULT_AI_TOOLS } from "@/lib/data/initialAiTools";
 import { DEFAULT_GAMES } from "@/lib/data/initialGames";
@@ -63,6 +64,8 @@ export async function GET() {
         hobbyLogs: GUEST_HOBBY_LOGS,
         hobbySessions: GUEST_HOBBY_SESSIONS,
         profileHistory: [],
+        couples: GUEST_COUPLES,
+        userLikedCoupleIds: ["guest-couple-1", "guest-couple-2"],
       });
     }
 
@@ -71,8 +74,8 @@ export async function GET() {
     const safeQuery = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
       try {
         return await fn();
-      } catch (err) {
-        console.warn("[Dashboard API] Query fallback:", err);
+      } catch (err: any) {
+        console.warn("[Dashboard API] Query fallback:", err?.message || err);
         return fallback;
       }
     };
@@ -107,6 +110,8 @@ export async function GET() {
       dbHobbySessions,
       dbNotifications,
       dbGameCharacters,
+      dbCouples,
+      dbCoupleLikes,
     ] = await Promise.all([
       safeQuery(() => prisma.profile.findFirst({ where: { OR: [{ userId }, { id: userId }] } }), null),
       safeQuery(() => prisma.aiToolItem.findMany({ where: { userId }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] }), []),
@@ -136,6 +141,8 @@ export async function GET() {
       safeQuery(() => prisma.hobbySession.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
       safeQuery(() => prisma.notification.findMany({ where: { userId, isDismissed: false }, orderBy: { createdAt: "desc" }, take: 20 }), []),
       safeQuery(() => prisma.gameCharacter.findMany({ where: { userId }, orderBy: { rank: "asc" } }), []),
+      safeQuery(() => (prisma.couple?.findMany ? prisma.couple.findMany({ where: { userId }, orderBy: [{ isFavorite: "desc" }, { createdAt: "desc" }] }) : Promise.resolve([])), []),
+      safeQuery(() => (prisma.coupleLike?.findMany ? prisma.coupleLike.findMany({ where: { userId } }) : Promise.resolve([])), []),
     ]);
 
     let dbProfile = rawProfile;
@@ -264,6 +271,47 @@ export async function GET() {
       hobbySessions: dbHobbySessions,
       notifications: dbNotifications,
       profileHistory: dbProfileHistory,
+      couples: dbCouples.map((c: any) => ({
+        id: c.id,
+        userId: c.userId,
+        coupleName: c.coupleName,
+        partnerA: {
+          characterId: c.partnerAId || null,
+          name: c.partnerAName || "",
+          avatar: c.partnerAAvatar || null,
+          role: c.partnerARole || "",
+        },
+        partnerB: {
+          characterId: c.partnerBId || null,
+          name: c.partnerBName || "",
+          avatar: c.partnerBAvatar || null,
+          role: c.partnerBRole || "",
+        },
+        source: {
+          title: c.sourceTitle,
+          mediaType: c.mediaType,
+          country: c.country || undefined,
+          year: c.year || undefined,
+        },
+        relationship: {
+          status: c.status,
+          ending: c.ending || undefined,
+          dynamics: Array.isArray(c.dynamics) ? c.dynamics : [],
+          description: c.description || "",
+        },
+        tier: c.tier,
+        isFavorite: Boolean(c.isFavorite),
+        likes: c.likes || 0,
+        greenFlags: c.greenFlags || { partnerA: [], partnerB: [] },
+        chemistry: c.chemistry || { communication: 8, trust: 8, loyalty: 9, support: 8, compatibility: 8, growth: 8, affection: 8, humor: 7 },
+        timeline: c.timeline || [],
+        favouriteMoments: c.favouriteMoments || [],
+        personalNotes: c.personalNotes || { whyILoveThem: "", relationshipAnalysis: "" },
+        media: c.media || { cover: null, card: null, gallery: [] },
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+      })),
+      userLikedCoupleIds: dbCoupleLikes.map((l: any) => l.coupleId),
     });
   } catch (error: any) {
     console.error("API GET Dashboard Error:", error);

@@ -1406,6 +1406,124 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true, data: updated });
       }
 
+      case "UPDATE_COUPLE": {
+        const {
+          id, coupleName, partnerA, partnerB, source, relationship,
+          tier, isFavorite, likes, greenFlags, chemistry, timeline,
+          favouriteMoments, personalNotes, media
+        } = payload;
+
+        if (!prisma.couple) {
+          return NextResponse.json(
+            { error: "Couple model not loaded on Prisma client. Please restart dev server." },
+            { status: 503 }
+          );
+        }
+
+        const couple = await prisma.couple.upsert({
+          where: { id },
+          update: {
+            userId,
+            coupleName: coupleName || "Untitled Couple",
+            partnerAId: partnerA?.characterId || null,
+            partnerBId: partnerB?.characterId || null,
+            partnerAName: partnerA?.name || null,
+            partnerBName: partnerB?.name || null,
+            partnerAAvatar: partnerA?.avatar || null,
+            partnerBAvatar: partnerB?.avatar || null,
+            partnerARole: partnerA?.role || null,
+            partnerBRole: partnerB?.role || null,
+            sourceTitle: source?.title || "Untitled Work",
+            mediaType: source?.mediaType || "Anime",
+            country: source?.country || null,
+            year: source?.year || null,
+            status: relationship?.status || "canon",
+            ending: relationship?.ending || null,
+            dynamics: Array.isArray(relationship?.dynamics) ? relationship.dynamics : [],
+            description: relationship?.description || null,
+            tier: tier || "S",
+            isFavorite: Boolean(isFavorite),
+            likes: typeof likes === "number" ? likes : undefined,
+            greenFlags: greenFlags !== undefined ? greenFlags : undefined,
+            chemistry: chemistry !== undefined ? chemistry : undefined,
+            timeline: timeline !== undefined ? timeline : undefined,
+            favouriteMoments: favouriteMoments !== undefined ? favouriteMoments : undefined,
+            personalNotes: personalNotes !== undefined ? personalNotes : undefined,
+            media: media !== undefined ? media : undefined,
+          },
+          create: {
+            id,
+            userId,
+            coupleName: coupleName || "Untitled Couple",
+            partnerAId: partnerA?.characterId || null,
+            partnerBId: partnerB?.characterId || null,
+            partnerAName: partnerA?.name || null,
+            partnerBName: partnerB?.name || null,
+            partnerAAvatar: partnerA?.avatar || null,
+            partnerBAvatar: partnerB?.avatar || null,
+            partnerARole: partnerA?.role || null,
+            partnerBRole: partnerB?.role || null,
+            sourceTitle: source?.title || "Untitled Work",
+            mediaType: source?.mediaType || "Anime",
+            country: source?.country || null,
+            year: source?.year || null,
+            status: relationship?.status || "canon",
+            ending: relationship?.ending || null,
+            dynamics: Array.isArray(relationship?.dynamics) ? relationship.dynamics : [],
+            description: relationship?.description || null,
+            tier: tier || "S",
+            isFavorite: Boolean(isFavorite),
+            likes: typeof likes === "number" ? likes : 0,
+            greenFlags: greenFlags || { partnerA: [], partnerB: [] },
+            chemistry: chemistry || { communication: 8, trust: 8, loyalty: 9, support: 8, compatibility: 8, growth: 8, affection: 8, humor: 7 },
+            timeline: timeline || [],
+            favouriteMoments: favouriteMoments || [],
+            personalNotes: personalNotes || {},
+            media: media || {},
+          },
+        });
+        return NextResponse.json({ success: true, data: couple });
+      }
+
+      case "DELETE_COUPLE": {
+        if (!prisma.couple) {
+          return NextResponse.json({ error: "Couple model not available." }, { status: 503 });
+        }
+        const existing = await prisma.couple.findUnique({ where: { id: payload.id } });
+        if (!existing || (existing.userId && existing.userId !== userId)) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+        await prisma.couple.delete({ where: { id: payload.id } });
+        return NextResponse.json({ success: true });
+      }
+
+      case "LIKE_COUPLE": {
+        if (!prisma.couple || !prisma.coupleLike) {
+          return NextResponse.json({ error: "Couple models not available." }, { status: 503 });
+        }
+        const { coupleId } = payload;
+        const existingLike = await prisma.coupleLike.findUnique({
+          where: { userId_coupleId: { userId, coupleId } },
+        });
+        let liked = false;
+        if (existingLike) {
+          await prisma.coupleLike.delete({
+            where: { id: existingLike.id },
+          });
+          liked = false;
+        } else {
+          await prisma.coupleLike.create({
+            data: { userId, coupleId },
+          });
+          liked = true;
+        }
+        const couple = await prisma.couple.update({
+          where: { id: coupleId },
+          data: { likes: { [liked ? "increment" : "decrement"]: 1 } },
+        });
+        return NextResponse.json({ success: true, liked, likesCount: Math.max(0, couple.likes) });
+      }
+
       default:
         return NextResponse.json({ error: "Unknown action" }, { status: 400 });
     }

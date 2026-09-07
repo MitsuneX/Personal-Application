@@ -7,10 +7,17 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { RefreshCw, AlertTriangle } from "lucide-react";
 
 export function GlobalWorkspaceLoader({ forceShow }: { forceShow?: boolean } = {}) {
+  const [mounted, setMounted] = React.useState(false);
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
 
   const { isHydrated, isLoading, fetchError, fetchDashboard } = useDashboardStore();
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   // Reveal dashboard ONLY when workspace data is completely hydrated and not fetching initial load
   const isVisible = forceShow || !isHydrated || (isLoading && !isHydrated);

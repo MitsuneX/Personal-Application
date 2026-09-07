@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { DEFAULT_AI_TOOLS } from "@/lib/data/initialAiTools";
 import { INITIAL_DOSSIER_CHARACTERS } from "@/lib/data/initialDossierCharacters";
+import { CoupleEntry, normalizeCoupleJson } from "@/lib/data/coupleSchema";
 
 // ─── Shared Types ─────────────────────────────────────────────────────────────
 
@@ -881,6 +882,8 @@ interface DashboardState {
   links: LinkEntry[];
   gallery: GalleryEntry[];
   savedPrompts: SavedPromptEntry[];
+  couples: CoupleEntry[];
+  userLikedCoupleIds: string[];
   historyItems: SoftDeleteHistoryEntry[];
   gameSyncMetadata: Record<string, GameSyncMetadataEntry>;
   requestSequenceId: number;
@@ -1018,6 +1021,13 @@ interface DashboardState {
     nameplate?: string | null;
     borderStyle?: string;
   }) => Promise<void>;
+
+  // Couples System Actions
+  addCouple: (item: Partial<CoupleEntry>) => Promise<CoupleEntry | null>;
+  updateCouple: (id: string, data: Partial<CoupleEntry>) => Promise<void>;
+  deleteCouple: (id: string) => Promise<void>;
+  toggleFavoriteCouple: (id: string) => Promise<void>;
+  likeCouple: (coupleId: string) => Promise<{ liked: boolean; likesCount: number }>;
 }
 
 // ─── Seed Data (Fallback) ──────────────────────────────────────────────────────
@@ -1176,6 +1186,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   loopMode: "off",
   dramaLog: [],
   savedPrompts: [],
+  couples: [],
+  userLikedCoupleIds: [],
   historyItems: [],
   gameSyncMetadata: {},
   hobbySkills: [],
@@ -1223,6 +1235,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       playlistQueue: [],
       dramaLog: [],
       savedPrompts: [],
+      couples: [],
+      userLikedCoupleIds: [],
       hobbySkills: [],
       hobbyLogs: [],
       hobbySessions: [],
@@ -1283,6 +1297,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
             mainActors: Array.isArray(d.mainActors) ? d.mainActors : [],
           })),
           savedPrompts: data.savedPrompts || [],
+          couples: (data.couples || []).map((c: any) => normalizeCoupleJson(c)),
+          userLikedCoupleIds: data.userLikedCoupleIds || [],
           hobbySkills: (data.hobbySkills || []).map((s: any) => ({
             ...s,
             level: s.level ?? 1,
@@ -3166,6 +3182,131 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       }
     } catch (err) {
       console.error("Failed to save aesthetics:", err);
+    }
+  },
+
+  // ─── Couples System Actions ──────────────────────────────────────────────────
+
+  addCouple: async (itemData) => {
+    const newCouple = normalizeCoupleJson(itemData);
+    set((s) => ({ couples: [newCouple, ...s.couples] }));
+
+    try {
+      const res = await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "UPDATE_COUPLE", payload: newCouple }),
+      });
+      const result = await res.json();
+      if (result.success && result.data) {
+        const normalizedServer = normalizeCoupleJson(result.data);
+        set((s) => ({
+          couples: s.couples.map((c) => (c.id === newCouple.id ? normalizedServer : c)),
+        }));
+        return normalizedServer;
+      }
+      return newCouple;
+    } catch (err) {
+      console.error("Failed to add couple:", err);
+      return newCouple;
+    }
+  },
+
+  updateCouple: async (id, data) => {
+    set((s) => ({
+      couples: s.couples.map((c) => (c.id === id ? { ...c, ...data } : c)),
+    }));
+
+    try {
+      const target = get().couples.find((c) => c.id === id);
+      if (target) {
+        await fetch("/api/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "UPDATE_COUPLE", payload: target }),
+        });
+      }
+    } catch (err) {
+      console.error("Failed to sync couple update:", err);
+    }
+  },
+
+  deleteCouple: async (id) => {
+    set((s) => ({
+      couples: s.couples.filter((c) => c.id !== id),
+    }));
+
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_COUPLE", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to delete couple:", err);
+    }
+  },
+
+  toggleFavoriteCouple: async (id) => {
+    const target = get().couples.find((c) => c.id === id);
+    if (!target) return;
+    const nextVal = !target.isFavorite;
+
+    set((s) => ({
+      couples: s.couples.map((c) => (c.id === id ? { ...c, isFavorite: nextVal } : c)),
+    }));
+
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "UPDATE_COUPLE",
+          payload: { ...target, isFavorite: nextVal },
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to toggle couple favorite:", err);
+    }
+  },
+
+  likeCouple: async (coupleId) => {
+    const couple = get().couples.find((c) => c.id === coupleId);
+    if (!couple) return { liked: false, likesCount: 0 };
+
+    const isLiked = get().userLikedCoupleIds.includes(coupleId);
+    const nextLiked = !isLiked;
+    const nextCount = Math.max(0, (couple.likes || 0) + (nextLiked ? 1 : -1));
+
+    // Optimistic store update
+    set((s) => ({
+      couples: s.couples.map((c) => (c.id === coupleId ? { ...c, likes: nextCount } : c)),
+      userLikedCoupleIds: nextLiked
+        ? [...s.userLikedCoupleIds, coupleId]
+        : s.userLikedCoupleIds.filter((id) => id !== coupleId),
+    }));
+
+    try {
+      const res = await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "LIKE_COUPLE", payload: { coupleId } }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        return { liked: result.liked, likesCount: result.likesCount ?? nextCount };
+      }
+      return { liked: nextLiked, likesCount: nextCount };
+    } catch (err) {
+      console.error("Failed to like couple:", err);
+      // Revert on failure
+      set((s) => ({
+        couples: s.couples.map((c) => (c.id === coupleId ? { ...c, likes: couple.likes } : c)),
+        userLikedCoupleIds: isLiked
+          ? [...s.userLikedCoupleIds, coupleId]
+          : s.userLikedCoupleIds.filter((id) => id !== coupleId),
+      }));
+      return { liked: isLiked, likesCount: couple.likes };
     }
   },
 }));

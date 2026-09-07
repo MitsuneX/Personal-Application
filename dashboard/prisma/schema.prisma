@@ -732,3 +732,52 @@ model SoftDeleteHistory {
   @@index([originalRecordId])
 }
 
+model Couple {
+  id               String   @id @default(uuid())
+  userId           String?
+  coupleName       String
+  partnerAId       String?  // Reference to Character Dictionary (HallOfFame) or GameDossierCharacter
+  partnerBId       String?  // Reference to Character Dictionary (HallOfFame) or GameDossierCharacter
+  partnerAName     String?  // Fallback / custom display name
+  partnerBName     String?  // Fallback / custom display name
+  partnerAAvatar   String?  // Custom / fallback media
+  partnerBAvatar   String?  // Custom / fallback media
+  partnerARole     String?  // Custom / fallback role
+  partnerBRole     String?  // Custom / fallback role
+  sourceTitle      String
+  mediaType        String   // "anime" | "drama" | "movie" | "game" | "manga" | "other"
+  country          String?  // "Japan" | "South Korea" | "China" | "Hollywood" | "Indonesia" | etc.
+  year             Int?
+  status           String   @default("canon") // "canon" | "endgame" | "developing" | "slow_burn" | "ambiguous" | "separated" | "unresolved"
+  ending           String?  // "endgame" | "happy" | "open" | "tragic" | "unresolved"
+  dynamics         String[] @default([]) // e.g. ["Friends to Lovers", "Slow Burn"]
+  description      String?
+  tier             String   @default("S") // "SS" | "S" | "A" | "B" | "C"
+  isFavorite       Boolean  @default(false)
+  likes            Int      @default(0)
+  greenFlags       Json?    // { partnerA: string[], partnerB: string[] }
+  chemistry        Json?    // { communication: 5, trust: 5, ..., description: "" }
+  timeline         Json?    // Array of CoupleTimelineEvent
+  favouriteMoments Json?    // Array of CoupleMoment
+  personalNotes    Json?    // { whyILoveThem: "", relationshipAnalysis: "" }
+  media            Json?    // { cover: string | null, card: string | null, gallery: string[] }
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+  @@index([partnerAId])
+  @@index([partnerBId])
+}
+
+model CoupleLike {
+  id        String   @id @default(uuid())
+  userId    String
+  coupleId  String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, coupleId])
+  @@index([userId])
+  @@index([coupleId])
+}
+
+
