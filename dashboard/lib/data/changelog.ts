@@ -13,6 +13,30 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v13.1.0",
+    date: "2026-09-07",
+    title: "Couples Media & Cover Upload Pipeline (Character Dictionary Parity)",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Integrated permanent media upload, image cropping, and gallery management capabilities into the Couples & Romance Archive editor, matching the battle-tested Character Dictionary media pipeline. Enabled interactive drag-and-drop file picking, zoom and aspect-ratio crop modals (ImageCropModal), and disk/CDN storage via /api/upload for 16:9 Cover Artworks, 3:4 Card Posters, 1:1 Partner A & B Avatars, and multi-file relationship galleries.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🖼️ CharacterImageUploader Cover & Card Integration (CoupleEditorModal.tsx): Upgraded Cover/Banner (16:9) and Card Poster (3:4) settings to use CharacterImageUploader with drag-and-drop file upload, custom framing/crop controls, image clearing, and fallback direct URL pasting.",
+          "👥 Partner Avatars Interactive Upload (CoupleEditorModal.tsx): Replaced plain text URL inputs for Partner A and Partner B with dedicated 1:1 square CharacterImageUploader primitives, enabling custom avatar cropping and permanent server persistence.",
+          "📸 Multi-File Relationship Gallery Vault (CoupleEditorModal.tsx): Integrated GalleryUploader supporting simultaneous multi-image file uploads, automated /api/upload processing, hover deletion actions, and direct URL additions.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "✨ Seamless Dual-Theme Alignment: Full Cyberpunk and Neo-Brutalism theme styling across dashed drag-and-drop dropzones, upload spinners, crop dialogs, and gallery thumbnail grids with zero layout breaking.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v13.0.0",
     date: "2026-09-07",
     title: "Couples & Romance Archive Standalone System & In-Modal JSON Workspace",

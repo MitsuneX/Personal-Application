@@ -29,6 +29,7 @@ import {
   CHEMISTRY_DIMENSIONS,
 } from "@/lib/data/coupleSchema";
 import { CoupleJsonEditorView } from "@/components/ui/CoupleJsonEditorModal";
+import { CharacterImageUploader, GalleryUploader } from "@/components/ui/CharacterImageUploader";
 
 interface CoupleEditorModalProps {
   isOpen: boolean;
@@ -997,31 +998,24 @@ export function CoupleEditorModal({ isOpen, onClose, coupleToEdit }: CoupleEdito
                     />
                   </div>
 
-                  <div>
-                    <label className={labelStyle}>Avatar Image URL</label>
+                  <div className="space-y-2">
+                    <CharacterImageUploader
+                      label="Partner A Avatar (1:1 Square)"
+                      value={partnerA.avatar || ""}
+                      onChange={(url) => setPartnerA((prev) => ({ ...prev, avatar: url }))}
+                      onClear={() => setPartnerA((prev) => ({ ...prev, avatar: null }))}
+                      aspect={1}
+                      hint="Square profile avatar artwork."
+                      previewClass="h-28 w-28"
+                    />
                     <input
                       type="text"
-                      value={partnerA.avatar || ""}
-                      onChange={(e) => setPartnerA({ ...partnerA, avatar: e.target.value })}
-                      placeholder="https://..."
+                      value={(partnerA.avatar || "").startsWith("data:") ? "" : (partnerA.avatar || "")}
+                      onChange={(e) => setPartnerA((prev) => ({ ...prev, avatar: e.target.value }))}
+                      placeholder="Or paste avatar URL (https://...)"
                       className={inputStyle}
                     />
                   </div>
-
-                  {partnerA.avatar && (
-                    <div className="flex items-center gap-3 pt-1">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={partnerA.avatar}
-                        alt={partnerA.name || "Partner A"}
-                        className="w-12 h-12 rounded-full object-cover border-2 border-rose-500"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLElement).style.display = "none";
-                        }}
-                      />
-                      <span className="text-xs font-mono opacity-60">Avatar Preview</span>
-                    </div>
-                  )}
 
                   {/* Green Flags Partner A */}
                   <div className="pt-2">
@@ -1129,31 +1123,24 @@ export function CoupleEditorModal({ isOpen, onClose, coupleToEdit }: CoupleEdito
                     />
                   </div>
 
-                  <div>
-                    <label className={labelStyle}>Avatar Image URL</label>
+                  <div className="space-y-2">
+                    <CharacterImageUploader
+                      label="Partner B Avatar (1:1 Square)"
+                      value={partnerB.avatar || ""}
+                      onChange={(url) => setPartnerB((prev) => ({ ...prev, avatar: url }))}
+                      onClear={() => setPartnerB((prev) => ({ ...prev, avatar: null }))}
+                      aspect={1}
+                      hint="Square profile avatar artwork."
+                      previewClass="h-28 w-28"
+                    />
                     <input
                       type="text"
-                      value={partnerB.avatar || ""}
-                      onChange={(e) => setPartnerB({ ...partnerB, avatar: e.target.value })}
-                      placeholder="https://..."
+                      value={(partnerB.avatar || "").startsWith("data:") ? "" : (partnerB.avatar || "")}
+                      onChange={(e) => setPartnerB((prev) => ({ ...prev, avatar: e.target.value }))}
+                      placeholder="Or paste avatar URL (https://...)"
                       className={inputStyle}
                     />
                   </div>
-
-                  {partnerB.avatar && (
-                    <div className="flex items-center gap-3 pt-1">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={partnerB.avatar}
-                        alt={partnerB.name || "Partner B"}
-                        className="w-12 h-12 rounded-full object-cover border-2 border-purple-500"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLElement).style.display = "none";
-                        }}
-                      />
-                      <span className="text-xs font-mono opacity-60">Avatar Preview</span>
-                    </div>
-                  )}
 
                   {/* Green Flags Partner B */}
                   <div className="pt-2">
@@ -1505,62 +1492,63 @@ export function CoupleEditorModal({ isOpen, onClose, coupleToEdit }: CoupleEdito
           {/* TAB 5: MEDIA & COVER */}
           {activeTab === "media" && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className={labelStyle}>Cover / Banner Image URL</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* 1. Cover / Banner Image */}
+                <div className="space-y-2">
+                  <CharacterImageUploader
+                    label="Cover / Banner Artwork (16:9)"
+                    value={media.cover || ""}
+                    onChange={(url) => setMedia((prev) => ({ ...prev, cover: url }))}
+                    onClear={() => setMedia((prev) => ({ ...prev, cover: "" }))}
+                    aspect={16 / 9}
+                    hint="Supports widescreen landscape banner and header art."
+                    previewClass="h-44 w-full"
+                  />
                   <input
                     type="text"
-                    value={media.cover || ""}
-                    onChange={(e) => setMedia({ ...media, cover: e.target.value })}
-                    placeholder="https://..."
+                    value={(media.cover || "").startsWith("data:") ? "" : (media.cover || "")}
+                    onChange={(e) => setMedia((prev) => ({ ...prev, cover: e.target.value }))}
+                    placeholder="Or paste cover / banner URL (https://...)"
                     className={inputStyle}
                   />
-                  {media.cover && (
-                    <div className="mt-2 rounded-lg overflow-hidden border border-white/10 h-36 relative">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={media.cover}
-                        alt="Cover preview"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLElement).style.display = "none";
-                        }}
-                      />
-                    </div>
-                  )}
                 </div>
 
-                <div>
-                  <label className={labelStyle}>Card Miniature / Poster URL</label>
+                {/* 2. Card Miniature / Poster */}
+                <div className="space-y-2">
+                  <CharacterImageUploader
+                    label="Card Poster / Thumbnail (3:4)"
+                    value={media.card || ""}
+                    onChange={(url) => setMedia((prev) => ({ ...prev, card: url }))}
+                    onClear={() => setMedia((prev) => ({ ...prev, card: "" }))}
+                    aspect={3 / 4}
+                    hint="Supports 3:4 portrait poster and card thumbnail art."
+                    previewClass="h-44 w-full"
+                  />
                   <input
                     type="text"
-                    value={media.card || ""}
-                    onChange={(e) => setMedia({ ...media, card: e.target.value })}
-                    placeholder="https://..."
+                    value={(media.card || "").startsWith("data:") ? "" : (media.card || "")}
+                    onChange={(e) => setMedia((prev) => ({ ...prev, card: e.target.value }))}
+                    placeholder="Or paste card / poster URL (https://...)"
                     className={inputStyle}
                   />
-                  {media.card && (
-                    <div className="mt-2 rounded-lg overflow-hidden border border-white/10 h-36 relative">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={media.card}
-                        alt="Card preview"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLElement).style.display = "none";
-                        }}
-                      />
-                    </div>
-                  )}
                 </div>
               </div>
 
-              {/* Gallery Images */}
+              {/* 3. Additional Gallery Images */}
               <div className={cardContainerStyle}>
-                <span className={labelStyle}>🖼 Additional Gallery Images</span>
-                <div className="flex gap-2">
+                <span className={labelStyle}>🖼 Relationship Gallery & Media Vault</span>
+                <p className="text-xs font-mono opacity-60 mb-2">
+                  Upload multiple photos directly, crop, or paste online image links.
+                </p>
+
+                <GalleryUploader
+                  images={media.gallery || []}
+                  onChange={(newGallery) => setMedia((prev) => ({ ...prev, gallery: newGallery }))}
+                />
+
+                <div className="flex gap-2 pt-2 border-t border-white/10">
                   <input
-                    type="text"
+                    type="url"
                     value={galleryInput}
                     onChange={(e) => setGalleryInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -1569,7 +1557,7 @@ export function CoupleEditorModal({ isOpen, onClose, coupleToEdit }: CoupleEdito
                         handleAddGalleryImage();
                       }
                     }}
-                    placeholder="Add image URL (https://...)"
+                    placeholder="Or paste artwork URL directly (https://...)"
                     className={inputStyle}
                   />
                   <button
@@ -1577,42 +1565,13 @@ export function CoupleEditorModal({ isOpen, onClose, coupleToEdit }: CoupleEdito
                     onClick={handleAddGalleryImage}
                     className={`px-4 py-2 rounded-lg text-xs font-bold font-mono cursor-pointer shrink-0 ${
                       isCyber
-                        ? "bg-rose-500/20 text-rose-300 border border-rose-500/50"
-                        : "bg-black text-white font-black"
+                        ? "bg-rose-500/20 text-rose-300 border border-rose-500/50 hover:bg-rose-500/30"
+                        : "bg-black text-white font-black hover:bg-neutral-800"
                     }`}
                   >
-                    + Add Image
+                    + Add URL
                   </button>
                 </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                  {(media.gallery || []).map((imgUrl, idx) => (
-                    <div
-                      key={idx}
-                      className="relative rounded-lg overflow-hidden border border-white/15 h-24 group"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={imgUrl}
-                        alt={`Gallery ${idx}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveGalleryImage(idx)}
-                        className="absolute top-1 right-1 bg-black/80 text-white rounded p-1 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer font-mono"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                {(media.gallery || []).length === 0 && (
-                  <p className="text-xs font-mono opacity-50 italic py-1 text-center">
-                    No extra gallery images added.
-                  </p>
-                )}
               </div>
             </div>
           )}
