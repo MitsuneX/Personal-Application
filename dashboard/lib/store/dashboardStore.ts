@@ -1028,6 +1028,7 @@ interface DashboardState {
   deleteCouple: (id: string) => Promise<void>;
   toggleFavoriteCouple: (id: string) => Promise<void>;
   likeCouple: (coupleId: string) => Promise<{ liked: boolean; likesCount: number }>;
+  loveCouple: (coupleId: string) => Promise<number>;
 }
 
 // ─── Seed Data (Fallback) ──────────────────────────────────────────────────────
@@ -3307,6 +3308,38 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           : s.userLikedCoupleIds.filter((id) => id !== coupleId),
       }));
       return { liked: isLiked, likesCount: couple.likes };
+    }
+  },
+
+  loveCouple: async (coupleId) => {
+    const couple = get().couples.find((c) => c.id === coupleId);
+    if (!couple) return 0;
+
+    // Optimistic +1 immediately
+    const nextCount = (couple.likes || 0) + 1;
+    set((s) => ({
+      couples: s.couples.map((c) => (c.id === coupleId ? { ...c, likes: nextCount } : c)),
+    }));
+
+    try {
+      const res = await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "LOVE_COUPLE", payload: { coupleId } }),
+      });
+      const result = await res.json();
+      if (result.success && typeof result.likesCount === "number") {
+        // Reconcile with server's authoritative count
+        set((s) => ({
+          couples: s.couples.map((c) => (c.id === coupleId ? { ...c, likes: result.likesCount } : c)),
+        }));
+        return result.likesCount;
+      }
+      return nextCount;
+    } catch (err) {
+      console.error("Failed to persist love count:", err);
+      // Keep optimistic update — don't revert on network error
+      return nextCount;
     }
   },
 }));

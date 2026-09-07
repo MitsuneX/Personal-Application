@@ -1497,6 +1497,21 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true });
       }
 
+      // Cumulative Love Match counter — always increments by 1, never decrements
+      case "LOVE_COUPLE": {
+        if (!prisma.couple) {
+          return NextResponse.json({ error: "Couple model not available." }, { status: 503 });
+        }
+        const { coupleId } = payload;
+        // Atomic increment — safe for rapid clicks
+        const updatedCouple = await prisma.couple.update({
+          where: { id: coupleId },
+          data: { likes: { increment: 1 } },
+        });
+        return NextResponse.json({ success: true, likesCount: updatedCouple.likes });
+      }
+
+      // Legacy toggle like (kept for backward compatibility)
       case "LIKE_COUPLE": {
         if (!prisma.couple || !prisma.coupleLike) {
           return NextResponse.json({ error: "Couple models not available." }, { status: 503 });
@@ -1507,21 +1522,17 @@ export async function POST(req: Request) {
         });
         let liked = false;
         if (existingLike) {
-          await prisma.coupleLike.delete({
-            where: { id: existingLike.id },
-          });
+          await prisma.coupleLike.delete({ where: { id: existingLike.id } });
           liked = false;
         } else {
-          await prisma.coupleLike.create({
-            data: { userId, coupleId },
-          });
+          await prisma.coupleLike.create({ data: { userId, coupleId } });
           liked = true;
         }
-        const couple = await prisma.couple.update({
+        const updatedLike = await prisma.couple.update({
           where: { id: coupleId },
           data: { likes: { [liked ? "increment" : "decrement"]: 1 } },
         });
-        return NextResponse.json({ success: true, liked, likesCount: Math.max(0, couple.likes) });
+        return NextResponse.json({ success: true, liked, likesCount: Math.max(0, updatedLike.likes) });
       }
 
       default:

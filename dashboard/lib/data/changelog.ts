@@ -13,6 +13,32 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v13.2.0",
+    date: "2026-09-07",
+    title: "Premium Full-Art Couple Card & Cumulative Love Match Engine",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Elevated the Couples & Romance Archive collection cards into an immersive 100% full-art presentation featuring the Couple's Card Poster as the artwork background, floating lover avatars positioned strictly above partner names with desynchronized gentle animation, and a central beating heart connection node. Transformed the Love Match interaction into a strictly cumulative (+1) engine with atomic database increments (LOVE_COUPLE) and zero decrement toggling. Added a prominent large artwork centerpiece to the Relationship Dossier Overview and revamped Tab 5 (Media & Cover) of the Couple Editor with architectural role guides and live in-situ previews for Overview Covers and Card Posters.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🎴 Full-Art Couple Collection Card (CoupleCard.tsx): Replaced split image/database layout with a unified 100% full-art card background using the Couple's Card Poster (couple.media.card), layered with subtle bottom-up dark gradient overlays for maximum contrast and readability without overpowering the artwork.",
+          "👥 Vertical Floating Lovers Presentation (CoupleCard.tsx): Positioned Partner A & B avatars strictly above their respective names around a central beating heart node. Implemented desynchronized gentle floating keyframes (3.6s vs 4.2s offset) with full prefers-reduced-motion accessibility support.",
+          "❤️ Cumulative Love Match Engine (CoupleCard.tsx, CoupleDossierModal.tsx, action/route.ts, dashboardStore.ts): Upgraded Love Match from a boolean toggle to a strictly cumulative (+1) counter backed by atomic database increments (likes: { increment: 1 }). Every click adds +1 love with tactile rotation/scale tap shake, particle bursts, and persistent cross-session synchronization.",
+          "🖼️ Large Overview Artwork Centerpiece (CoupleDossierModal.tsx): Prominently integrated a widescreen 16:9 hero artwork banner into the Relationship Dossier Overview tab featuring subtle hover zoom, source subtitle, and pulsing love match chip.",
+          "🎨 Media Role Architecture & Live Previews (CoupleEditorModal.tsx): Clarified the functional separation between Overview Cover (16:9 landscape for dossier overview), Card Poster (3:4 portrait for full-art collection card), and Gallery Vault with live in-situ preview mockups in the editor.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "✨ Dual-Theme Perfection (Cyberpunk & Neo-Brutalism): Verified seamless contrast, neon glow borders (rgba(0, 245, 255, 0.25) / rose favorite glow) in Cyberpunk mode and crisp #000000 borders with 5px 5px 0 #000 drop-shadows in Neo-Brutalism mode across both cards and editor previews.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v13.1.0",
     date: "2026-09-07",
     title: "Couples Media & Cover Upload Pipeline (Character Dictionary Parity)",

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import {
@@ -14,6 +14,8 @@ import { useDashboardStore, HallOfFameEntry } from "@/lib/store/dashboardStore";
 import { ImageLightboxModal } from "@/components/ui/ImageLightboxModal";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { useToast } from "@/components/ui/ToastProvider";
+import { RomanticLoveBurst, type RomanticLoveBurstHandle } from "@/components/ui/RomanticLoveBurst";
+import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
 import type { ContextMenuItem } from "@/components/ui/ContextMenu";
 
 interface CoupleDossierModalProps {
@@ -39,12 +41,35 @@ export function CoupleDossierModal({
     hallOfFame = [],
     dossierCharacters = [],
     toggleFavoriteCouple,
-    likeCouple,
-    userLikedCoupleIds,
+    loveCouple,
   } = useDashboardStore();
 
   const [activeTab, setActiveTab] = useState<"overview" | "dynamics" | "timeline" | "moments" | "notes" | "gallery">("overview");
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
+  // Romantic interaction states & refs
+  const loveBurstRef = useRef<RomanticLoveBurstHandle>(null);
+  const headerLikeBurstRef = useRef<RomanticLoveBurstHandle>(null);
+  const [hoveredPartner, setHoveredPartner] = useState<"partnerA" | "partnerB" | "center" | null>(null);
+  const [isCelebrating, setIsCelebrating] = useState(false);
+
+  const handleCenterHeartClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!couple) return;
+    loveBurstRef.current?.trigger();
+    triggerHeartEffect(e.clientX, e.clientY);
+    loveCouple(couple.id);
+    setIsCelebrating(true);
+    setTimeout(() => setIsCelebrating(false), 850);
+  };
+
+  const handleHeaderLike = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!couple) return;
+    headerLikeBurstRef.current?.trigger();
+    triggerHeartEffect(e.clientX, e.clientY);
+    loveCouple(couple.id);
+  };
 
   // Resolve Partner A
   const canonicalA = useMemo(() => {
@@ -68,7 +93,6 @@ export function CoupleDossierModal({
 
   if (!isOpen || !couple) return null;
 
-  const isLiked = userLikedCoupleIds.includes(couple.id);
   const tierConfig = TIER_COLORS[couple.tier] || TIER_COLORS.S;
   const statusConfig = RELATIONSHIP_STATUS_OPTIONS.find((s) => s.id === couple.relationship.status) || {
     label: couple.relationship.status || "Canon",
@@ -111,6 +135,8 @@ export function CoupleDossierModal({
     8
   ).toFixed(1);
 
+  const coverImage = couple.media.cover || couple.media.card || couple.media.gallery?.[0] || null;
+
   const allGalleryImages = [
     ...(couple.media.cover ? [couple.media.cover] : []),
     ...(couple.media.card ? [couple.media.card] : []),
@@ -146,10 +172,10 @@ export function CoupleDossierModal({
         onClick: () => toggleFavoriteCouple(couple.id),
       },
       {
-        id: "like-couple",
-        label: isLiked ? `Unlike (${couple.likes || 0})` : `Like (${couple.likes || 0})`,
-        icon: isLiked ? "❤️" : "🤍",
-        onClick: () => likeCouple(couple.id),
+        id: "love-couple",
+        label: `Love Match (+1) — ${couple.likes || 0} total`,
+        icon: "❤️",
+        onClick: () => loveCouple(couple.id),
       },
       {
         id: "copy-name",
@@ -246,30 +272,42 @@ export function CoupleDossierModal({
 
             {/* Header Action Tools */}
             <div className="flex items-center gap-2 shrink-0">
-              {/* Like */}
-              <button
-                type="button"
-                onClick={() => likeCouple(couple.id)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-mono font-bold transition-transform active:scale-95"
-                style={{
-                  backgroundColor: isLiked ? (isCyber ? "rgba(236,72,153,0.2)" : "#FCE7F3") : "transparent",
-                  borderColor: isLiked ? "#EC4899" : isCyber ? "rgba(255,255,255,0.2)" : "#000",
-                  color: isLiked ? "#EC4899" : isCyber ? "#E0E8FF" : "#1A1A1A",
-                }}
-              >
-                <span>{isLiked ? "❤️" : "🤍"}</span>
-                <span>{couple.likes || 0}</span>
-              </button>
+              {/* Love Match counter — always pink, cumulative +1 */}
+              <div className="relative">
+                <RomanticLoveBurst ref={headerLikeBurstRef} />
+                <button
+                  type="button"
+                  onClick={handleHeaderLike}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-mono font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer select-none"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(236,72,153,0.18)" : "#FCE7F3",
+                    borderColor: "#EC4899",
+                    color: "#EC4899",
+                    boxShadow: isCyber ? "0 0 10px rgba(236,72,153,0.3)" : "1px 1px 0 #000",
+                  }}
+                  title="Love Match — click to add +1"
+                  aria-label={`Love count: ${couple.likes || 0}. Click to add love.`}
+                >
+                  <motion.span
+                    animate={{ scale: [1, 1.15, 1] }}
+                    transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
+                  >
+                    ❤️
+                  </motion.span>
+                  <span>{couple.likes || 0}</span>
+                </button>
+              </div>
 
               {/* Favorite */}
               <button
                 type="button"
                 onClick={() => toggleFavoriteCouple(couple.id)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center border text-sm transition-transform active:scale-95"
+                className="w-8 h-8 rounded-lg flex items-center justify-center border text-sm transition-all hover:scale-110 active:scale-95 cursor-pointer"
                 style={{
                   backgroundColor: couple.isFavorite ? (isCyber ? "rgba(255,0,127,0.25)" : "#FFE4E6") : "transparent",
                   borderColor: couple.isFavorite ? "#EC4899" : isCyber ? "rgba(255,255,255,0.2)" : "#000",
                   color: couple.isFavorite ? "#EC4899" : isCyber ? "#94A3B8" : "#4A4A4A",
+                  boxShadow: couple.isFavorite && !isCyber ? "1px 1px 0 #000" : undefined,
                 }}
                 title={couple.isFavorite ? "Unfavorite" : "Favorite"}
               >
@@ -296,7 +334,7 @@ export function CoupleDossierModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm transition-transform hover:scale-110 active:scale-95 border"
+                className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm transition-transform hover:scale-110 active:scale-95 border cursor-pointer"
                 style={{
                   backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#FFF",
                   borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000",
@@ -308,31 +346,72 @@ export function CoupleDossierModal({
             </div>
           </div>
 
-          {/* ── Hero Banner: Partner A ❤️ Partner B ── */}
+          {/* ── Hero Banner: Partner A ❤️ Partner B with Romantic Connection Bridge ── */}
           <div
-            className="p-4 sm:p-6 border-b relative overflow-hidden shrink-0"
+            className="p-4 sm:p-6 border-b relative overflow-hidden shrink-0 select-none"
             style={{
-              backgroundColor: isCyber ? "rgba(10, 18, 38, 0.6)" : "#FFFFFF",
+              backgroundColor: isCyber ? "rgba(10, 18, 38, 0.65)" : "#FFFFFF",
               borderColor: isCyber ? "rgba(0,245,255,0.15)" : "rgba(0,0,0,0.1)",
             }}
           >
-            {/* Ambient background glow */}
-            <div className="absolute top-0 right-1/4 w-64 h-64 rounded-full bg-pink-500/10 blur-3xl pointer-events-none" />
+            {/* Ambient background glow that intensifies during celebration */}
+            <div
+              className="absolute top-0 right-1/4 w-72 h-72 rounded-full blur-3xl pointer-events-none transition-all duration-700"
+              style={{
+                backgroundColor: isCelebrating
+                  ? "rgba(236,72,153,0.3)"
+                  : isCyber
+                  ? "rgba(236,72,153,0.12)"
+                  : "rgba(244,114,182,0.16)",
+              }}
+            />
 
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-              {/* Partners Presentation */}
-              <div className="flex items-center gap-4 sm:gap-6 w-full md:w-auto justify-center">
+              {/* Partners Presentation with Romantic Connection Bridge */}
+              <div className="flex items-center justify-center w-full md:w-auto relative py-1">
                 {/* Partner A */}
-                <div className="flex flex-col items-center text-center max-w-[140px] sm:max-w-[160px]">
-                  <div
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 shadow-lg mb-2 relative group"
+                <div
+                  className="flex flex-col items-center text-center max-w-[130px] sm:max-w-[155px] z-10 cursor-pointer"
+                  onMouseEnter={() => setHoveredPartner("partnerA")}
+                  onMouseLeave={() => setHoveredPartner(null)}
+                >
+                  <motion.div
+                    animate={
+                      isCelebrating
+                        ? { scale: [1, 1.1, 1], y: [0, -8, 0] }
+                        : hoveredPartner === "partnerA" || hoveredPartner === "center"
+                        ? { scale: 1.06, y: -2 }
+                        : { scale: 1, y: 0 }
+                    }
+                    transition={{ duration: 0.35, ease: "easeOut" }}
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 shadow-lg mb-2 relative group transition-colors duration-300"
                     style={{
-                      borderColor: isCyber ? "#00F5FF" : "#000000",
-                      boxShadow: isCyber ? "0 0 15px rgba(0,245,255,0.4)" : "3px 3px 0 #000",
+                      borderColor:
+                        isCelebrating || hoveredPartner === "center"
+                          ? "#EC4899"
+                          : hoveredPartner === "partnerA"
+                          ? isCyber
+                            ? "#00F5FF"
+                            : "#000000"
+                          : isCyber
+                          ? "#00F5FF"
+                          : "#000000",
+                      boxShadow:
+                        isCelebrating || hoveredPartner === "center"
+                          ? isCyber
+                            ? "0 0 24px rgba(236,72,153,0.65)"
+                            : "0 0 0 3px #F472B6, 3px 3px 0 #000"
+                          : isCyber
+                          ? "0 0 15px rgba(0,245,255,0.4)"
+                          : "3px 3px 0 #000",
                     }}
                   >
-                    <img src={partnerAAvatar} alt={partnerAName} className="w-full h-full object-cover" />
-                  </div>
+                    <img
+                      src={partnerAAvatar}
+                      alt={partnerAName}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </motion.div>
                   <h4 className="font-black text-sm sm:text-base leading-tight truncate w-full mb-0.5">
                     {partnerAName}
                   </h4>
@@ -350,36 +429,156 @@ export function CoupleDossierModal({
                   )}
                 </div>
 
-                {/* Heart Center Node */}
-                <div className="flex flex-col items-center justify-center shrink-0">
-                  <motion.div
-                    animate={{ scale: [1, 1.15, 1] }}
-                    transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                    className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-lg sm:text-xl border shadow-lg"
+                {/* Connection Beam Left */}
+                <div className="flex-1 min-w-[24px] sm:min-w-[44px] max-w-[65px] h-[3px] mx-1 sm:mx-2 relative overflow-hidden rounded-full">
+                  <div
+                    className="w-full h-full transition-all duration-300"
                     style={{
-                      backgroundColor: isCyber ? "rgba(236,72,153,0.2)" : "#FCE7F3",
+                      background: isCyber
+                        ? hoveredPartner === "partnerA" || hoveredPartner === "center" || isCelebrating
+                          ? "linear-gradient(90deg, #00F5FF 0%, #EC4899 100%)"
+                          : "linear-gradient(90deg, rgba(0,245,255,0.4) 0%, rgba(236,72,153,0.3) 100%)"
+                        : hoveredPartner === "partnerA" || hoveredPartner === "center" || isCelebrating
+                        ? "linear-gradient(90deg, #000 0%, #EC4899 100%)"
+                        : "linear-gradient(90deg, rgba(0,0,0,0.3) 0%, rgba(236,72,153,0.4) 100%)",
+                      boxShadow:
+                        isCyber && (hoveredPartner === "partnerA" || hoveredPartner === "center" || isCelebrating)
+                          ? "0 0 10px rgba(0,245,255,0.8)"
+                          : "none",
+                    }}
+                  />
+                </div>
+
+                {/* Central Heart Interactive Node */}
+                <div
+                  className="relative flex flex-col items-center justify-center shrink-0 z-20 group"
+                  onMouseEnter={() => setHoveredPartner("center")}
+                  onMouseLeave={() => setHoveredPartner(null)}
+                >
+                  <RomanticLoveBurst ref={loveBurstRef} />
+
+                  {/* Pulse Ring Behind Heart */}
+                  <motion.div
+                    animate={{
+                      scale: hoveredPartner === "center" || isCelebrating ? [1, 1.35, 1] : [1, 1.2, 1],
+                      opacity: hoveredPartner === "center" || isCelebrating ? [0.6, 0, 0.6] : [0.35, 0, 0.35],
+                    }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: hoveredPartner === "center" || isCelebrating ? 1.1 : 2,
+                      ease: "easeInOut",
+                    }}
+                    className="absolute -inset-1.5 rounded-full pointer-events-none"
+                    style={{
+                      border: isCyber ? "1.5px solid #EC4899" : "2px solid #F472B6",
+                      boxShadow: isCyber ? "0 0 16px rgba(236,72,153,0.5)" : "none",
+                    }}
+                  />
+
+                  <motion.button
+                    type="button"
+                    onClick={handleCenterHeartClick}
+                    whileHover={{ scale: 1.14 }}
+                    whileTap={{ scale: 0.9 }}
+                    animate={isCelebrating ? { rotate: [0, -12, 12, -8, 8, 0], scale: [1, 1.25, 1] } : {}}
+                    className="w-11 h-11 sm:w-13 sm:h-13 rounded-full flex items-center justify-center text-lg sm:text-xl border shadow-lg cursor-pointer transition-colors relative z-10"
+                    style={{
+                      backgroundColor: isCyber
+                        ? isCelebrating
+                          ? "rgba(236,72,153,0.4)"
+                          : "rgba(236,72,153,0.2)"
+                        : isCelebrating
+                        ? "#FBCFE8"
+                        : "#FCE7F3",
                       borderColor: "#EC4899",
-                      boxShadow: isCyber ? "0 0 15px rgba(236,72,153,0.5)" : "2px 2px 0 #000",
+                      borderWidth: isCyber ? "1.5px" : "2.5px",
+                      boxShadow: isCyber
+                        ? "0 0 20px rgba(236,72,153,0.6)"
+                        : "2px 2px 0 #000",
+                    }}
+                    title="Celebrate love (click for romantic burst)"
+                  >
+                    <motion.span
+                      animate={{ scale: hoveredPartner ? [1, 1.18, 1] : [1, 1.08, 1] }}
+                      transition={{ repeat: Infinity, duration: hoveredPartner ? 1 : 1.8, ease: "easeInOut" }}
+                    >
+                      ❤️
+                    </motion.span>
+                  </motion.button>
+
+                  <span
+                    className="text-[9px] font-mono font-bold tracking-widest uppercase mt-1 transition-colors duration-200"
+                    style={{
+                      color: hoveredPartner === "center" || isCelebrating ? "#EC4899" : isCyber ? "#94A3B8" : "#6B7280",
                     }}
                   >
-                    ❤️
-                  </motion.div>
-                  <span className="text-[10px] font-mono font-bold tracking-widest uppercase mt-1 opacity-60">
-                    MATCH
+                    {isCelebrating ? "LOVE!" : "MATCH"}
                   </span>
                 </div>
 
-                {/* Partner B */}
-                <div className="flex flex-col items-center text-center max-w-[140px] sm:max-w-[160px]">
+                {/* Connection Beam Right */}
+                <div className="flex-1 min-w-[24px] sm:min-w-[44px] max-w-[65px] h-[3px] mx-1 sm:mx-2 relative overflow-hidden rounded-full">
                   <div
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 shadow-lg mb-2 relative group"
+                    className="w-full h-full transition-all duration-300"
                     style={{
-                      borderColor: isCyber ? "#FF007F" : "#000000",
-                      boxShadow: isCyber ? "0 0 15px rgba(255,0,127,0.4)" : "3px 3px 0 #000",
+                      background: isCyber
+                        ? hoveredPartner === "partnerB" || hoveredPartner === "center" || isCelebrating
+                          ? "linear-gradient(90deg, #EC4899 0%, #FF007F 100%)"
+                          : "linear-gradient(90deg, rgba(236,72,153,0.3) 0%, rgba(255,0,127,0.4) 100%)"
+                        : hoveredPartner === "partnerB" || hoveredPartner === "center" || isCelebrating
+                        ? "linear-gradient(90deg, #EC4899 0%, #000 100%)"
+                        : "linear-gradient(90deg, rgba(236,72,153,0.4) 0%, rgba(0,0,0,0.3) 100%)",
+                      boxShadow:
+                        isCyber && (hoveredPartner === "partnerB" || hoveredPartner === "center" || isCelebrating)
+                          ? "0 0 10px rgba(255,0,127,0.8)"
+                          : "none",
+                    }}
+                  />
+                </div>
+
+                {/* Partner B */}
+                <div
+                  className="flex flex-col items-center text-center max-w-[130px] sm:max-w-[155px] z-10 cursor-pointer"
+                  onMouseEnter={() => setHoveredPartner("partnerB")}
+                  onMouseLeave={() => setHoveredPartner(null)}
+                >
+                  <motion.div
+                    animate={
+                      isCelebrating
+                        ? { scale: [1, 1.1, 1], y: [0, -8, 0] }
+                        : hoveredPartner === "partnerB" || hoveredPartner === "center"
+                        ? { scale: 1.06, y: -2 }
+                        : { scale: 1, y: 0 }
+                    }
+                    transition={{ duration: 0.35, ease: "easeOut" }}
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 shadow-lg mb-2 relative group transition-colors duration-300"
+                    style={{
+                      borderColor:
+                        isCelebrating || hoveredPartner === "center"
+                          ? "#EC4899"
+                          : hoveredPartner === "partnerB"
+                          ? isCyber
+                            ? "#FF007F"
+                            : "#000000"
+                          : isCyber
+                          ? "#FF007F"
+                          : "#000000",
+                      boxShadow:
+                        isCelebrating || hoveredPartner === "center"
+                          ? isCyber
+                            ? "0 0 24px rgba(236,72,153,0.65)"
+                            : "0 0 0 3px #F472B6, 3px 3px 0 #000"
+                          : isCyber
+                          ? "0 0 15px rgba(255,0,127,0.4)"
+                          : "3px 3px 0 #000",
                     }}
                   >
-                    <img src={partnerBAvatar} alt={partnerBName} className="w-full h-full object-cover" />
-                  </div>
+                    <img
+                      src={partnerBAvatar}
+                      alt={partnerBName}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </motion.div>
                   <h4 className="font-black text-sm sm:text-base leading-tight truncate w-full mb-0.5">
                     {partnerBName}
                   </h4>
@@ -492,6 +691,69 @@ export function CoupleDossierModal({
             {/* 1. OVERVIEW TAB */}
             {activeTab === "overview" && (
               <div className="space-y-6">
+                {/* ── Large Couple Artwork (visual centerpiece) ── */}
+                {coverImage && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45, ease: "easeOut" }}
+                    className="relative w-full overflow-hidden rounded-xl border group"
+                    style={{
+                      borderColor: isCyber ? "rgba(236,72,153,0.3)" : "#000",
+                      boxShadow: isCyber
+                        ? "0 0 30px rgba(236,72,153,0.18), 0 8px 32px rgba(0,0,0,0.5)"
+                        : "4px 4px 0 #000",
+                    }}
+                  >
+                    {/* Aspect ratio wrapper — 16:9 for wide art, max 380px tall */}
+                    <div className="relative w-full" style={{ paddingTop: "min(55%, 380px)" }}>
+                      <motion.img
+                        src={coverImage}
+                        alt={couple.coupleName}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                        loading="lazy"
+                      />
+                      {/* Bottom gradient overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+
+                      {/* Couple name & tier badge over image */}
+                      <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between pointer-events-none">
+                        <div>
+                          <p
+                            className="text-[10px] font-mono font-bold uppercase tracking-wider text-pink-400 mb-0.5"
+                            style={{ textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}
+                          >
+                            {couple.source.title}
+                          </p>
+                          <h3
+                            className="font-black text-lg sm:text-xl text-white leading-tight drop-shadow-lg"
+                            style={{
+                              fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
+                              textShadow: "0 2px 8px rgba(0,0,0,0.9)",
+                            }}
+                          >
+                            {couple.coupleName}
+                          </h3>
+                        </div>
+                        {/* Pulsing love count chip */}
+                        <motion.div
+                          animate={{ scale: [1, 1.08, 1] }}
+                          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md border font-mono font-black text-xs text-pink-300"
+                          style={{
+                            backgroundColor: "rgba(0,0,0,0.6)",
+                            borderColor: "rgba(236,72,153,0.5)",
+                            boxShadow: isCyber ? "0 0 12px rgba(236,72,153,0.4)" : "none",
+                          }}
+                        >
+                          <span>❤️</span>
+                          <span>{couple.likes || 0}</span>
+                        </motion.div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
                 {/* Relationship Description */}
                 {couple.relationship.description && (
                   <div
@@ -651,8 +913,16 @@ export function CoupleDossierModal({
                       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
                       .map((evt, idx) => (
                         <div key={evt.id || idx} className="relative group">
-                          {/* Dot marker */}
-                          <div className="absolute -left-[27px] top-1.5 w-3.5 h-3.5 rounded-full bg-pink-500 border-2 border-black shadow-md" />
+                          {/* Romantic Heart Dot marker */}
+                          <div
+                            className="absolute -left-[27px] top-1.5 w-4 h-4 rounded-full bg-pink-500 border-2 shadow-md flex items-center justify-center text-[8px] transition-transform group-hover:scale-125"
+                            style={{
+                              borderColor: isCyber ? "#00F5FF" : "#000",
+                              boxShadow: isCyber ? "0 0 8px rgba(236,72,153,0.6)" : "1px 1px 0 #000",
+                            }}
+                          >
+                            ❤️
+                          </div>
                           <div
                             className="p-3.5 rounded-xl border"
                             style={{
@@ -688,14 +958,15 @@ export function CoupleDossierModal({
                   couple.favouriteMoments.map((m, idx) => (
                     <div
                       key={m.id || idx}
-                      className="p-4 rounded-xl border flex flex-col justify-between"
+                      className="p-4 rounded-xl border flex flex-col justify-between transition-all duration-200 hover:border-pink-500/50 hover:shadow-lg group"
                       style={{
                         backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#FFFFFF",
                         borderColor: isCyber ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)",
+                        boxShadow: isCyber ? undefined : "2px 2px 0 rgba(0,0,0,0.08)",
                       }}
                     >
                       <div>
-                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-pink-400 block mb-1">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-pink-400 block mb-1 group-hover:text-pink-300 transition-colors">
                           {m.category || "Moment"}
                         </span>
                         <h5 className="font-black text-sm mb-1">{m.title}</h5>
@@ -717,20 +988,22 @@ export function CoupleDossierModal({
             {/* 5. NOTES & ANALYSIS TAB */}
             {activeTab === "notes" && (
               <div className="space-y-5">
-                {/* Why I love them */}
+                {/* Why I love them - Romantic Quote Styling */}
                 <div
-                  className="p-4 sm:p-5 rounded-xl border"
+                  className="p-4 sm:p-5 rounded-xl border border-l-4 transition-colors"
                   style={{
-                    backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#FFFFFF",
+                    backgroundColor: isCyber ? "rgba(236,72,153,0.04)" : "#FFF7F7",
                     borderColor: isCyber ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)",
+                    borderLeftColor: "#EC4899",
+                    boxShadow: isCyber ? "0 0 15px rgba(236,72,153,0.08)" : "2px 2px 0 rgba(0,0,0,0.06)",
                   }}
                 >
-                  <span className="text-xs font-mono font-black uppercase tracking-wider text-cyan-400 flex items-center gap-1.5 mb-2">
+                  <span className="text-xs font-mono font-black uppercase tracking-wider text-pink-500 flex items-center gap-1.5 mb-2">
                     <span>❤️</span>
                     <span>Why I Love This Couple</span>
                   </span>
-                  <p className="text-xs sm:text-sm leading-relaxed opacity-90 whitespace-pre-wrap">
-                    {couple.personalNotes.whyILoveThem || "No personal commentary added yet."}
+                  <p className="text-xs sm:text-sm leading-relaxed opacity-95 whitespace-pre-wrap italic">
+                    "{couple.personalNotes.whyILoveThem || "No personal commentary added yet."}"
                   </p>
                 </div>
 

@@ -1492,54 +1492,293 @@ export function CoupleEditorModal({ isOpen, onClose, coupleToEdit }: CoupleEdito
           {/* TAB 5: MEDIA & COVER */}
           {activeTab === "media" && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* 1. Cover / Banner Image */}
-                <div className="space-y-2">
-                  <CharacterImageUploader
-                    label="Cover / Banner Artwork (16:9)"
-                    value={media.cover || ""}
-                    onChange={(url) => setMedia((prev) => ({ ...prev, cover: url }))}
-                    onClear={() => setMedia((prev) => ({ ...prev, cover: "" }))}
-                    aspect={16 / 9}
-                    hint="Supports widescreen landscape banner and header art."
-                    previewClass="h-44 w-full"
-                  />
-                  <input
-                    type="text"
-                    value={(media.cover || "").startsWith("data:") ? "" : (media.cover || "")}
-                    onChange={(e) => setMedia((prev) => ({ ...prev, cover: e.target.value }))}
-                    placeholder="Or paste cover / banner URL (https://...)"
-                    className={inputStyle}
-                  />
+              {/* Media Role Architecture Guide Banner */}
+              <div
+                className={`p-4 rounded-xl border ${
+                  isCyber
+                    ? "bg-gradient-to-r from-cyan-950/40 via-purple-950/30 to-pink-950/40 border-cyan-500/30 text-slate-200"
+                    : "bg-gradient-to-r from-rose-50 via-pink-50 to-purple-50 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] text-slate-900"
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-base">🎨</span>
+                  <h3 className="font-black text-xs sm:text-sm uppercase tracking-wider font-mono">
+                    Media Architecture & Artwork Guide
+                  </h3>
                 </div>
-
-                {/* 2. Card Miniature / Poster */}
-                <div className="space-y-2">
-                  <CharacterImageUploader
-                    label="Card Poster / Thumbnail (3:4)"
-                    value={media.card || ""}
-                    onChange={(url) => setMedia((prev) => ({ ...prev, card: url }))}
-                    onClear={() => setMedia((prev) => ({ ...prev, card: "" }))}
-                    aspect={3 / 4}
-                    hint="Supports 3:4 portrait poster and card thumbnail art."
-                    previewClass="h-44 w-full"
-                  />
-                  <input
-                    type="text"
-                    value={(media.card || "").startsWith("data:") ? "" : (media.card || "")}
-                    onChange={(e) => setMedia((prev) => ({ ...prev, card: e.target.value }))}
-                    placeholder="Or paste card / poster URL (https://...)"
-                    className={inputStyle}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs font-mono">
+                  <div className={`p-2.5 rounded-lg border ${isCyber ? "bg-black/30 border-cyan-500/20" : "bg-white border border-black/20"}`}>
+                    <span className="font-bold text-cyan-400 block mb-0.5">1. OVERVIEW COVER (16:9)</span>
+                    <p className="opacity-75 leading-relaxed text-[11px]">
+                      Hero artwork displayed across the top of the Couple Overview in the Relationship Dossier.
+                    </p>
+                  </div>
+                  <div className={`p-2.5 rounded-lg border ${isCyber ? "bg-black/30 border-pink-500/20" : "bg-white border border-black/20"}`}>
+                    <span className="font-bold text-pink-400 block mb-0.5">2. CARD POSTER (3:4)</span>
+                    <p className="opacity-75 leading-relaxed text-[11px]">
+                      Portrait artwork filling the full background of the Couple Collection Card.
+                    </p>
+                  </div>
+                  <div className={`p-2.5 rounded-lg border ${isCyber ? "bg-black/30 border-purple-500/20" : "bg-white border border-black/20"}`}>
+                    <span className="font-bold text-purple-400 block mb-0.5">3. GALLERY VAULT</span>
+                    <p className="opacity-75 leading-relaxed text-[11px]">
+                      Additional high-res media, iconic scenes, manga spreads, and photos.
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              {/* 3. Additional Gallery Images */}
+              {/* SECTION 1: OVERVIEW COVER */}
               <div className={cardContainerStyle}>
-                <span className={labelStyle}>🖼 Relationship Gallery & Media Vault</span>
-                <p className="text-xs font-mono opacity-60 mb-2">
-                  Upload multiple photos directly, crop, or paste online image links.
-                </p>
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3 mb-3 border-white/10">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black font-mono uppercase bg-cyan-500/20 text-cyan-400 border border-cyan-500/40">
+                        Slot A
+                      </span>
+                      <h4 className="font-black text-sm font-mono tracking-wide text-cyan-300">
+                        OVERVIEW COVER (Landscape / 16:9)
+                      </h4>
+                    </div>
+                    <p className="text-xs font-mono opacity-70 mt-1">
+                      The main Couple artwork displayed in the Couple Overview / dossier banner.
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 opacity-75">
+                    Used in: Couple Overview / Dossier
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                  {/* Left: Upload & URL controls */}
+                  <div className="lg:col-span-7 space-y-3">
+                    <CharacterImageUploader
+                      label="Upload Overview Cover (16:9 Widescreen)"
+                      value={media.cover || ""}
+                      onChange={(url) => setMedia((prev) => ({ ...prev, cover: url }))}
+                      onClear={() => setMedia((prev) => ({ ...prev, cover: "" }))}
+                      aspect={16 / 9}
+                      hint="Widescreen 16:9 landscape image recommended for the large dossier hero header."
+                      previewClass="h-44 w-full"
+                    />
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-mono opacity-70 block">
+                        Or paste direct Image URL:
+                      </label>
+                      <input
+                        type="text"
+                        value={(media.cover || "").startsWith("data:") ? "" : (media.cover || "")}
+                        onChange={(e) => setMedia((prev) => ({ ...prev, cover: e.target.value }))}
+                        placeholder="https://... (Overview cover URL)"
+                        className={inputStyle}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Right: Live In-Situ Preview Box */}
+                  <div className="lg:col-span-5 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-cyan-400">
+                          Live Overview Preview:
+                        </span>
+                        <span className="text-[10px] font-mono opacity-60">Dossier Hero Banner</span>
+                      </div>
+                      <div
+                        className={`relative w-full h-44 rounded-xl overflow-hidden border ${
+                          isCyber ? "border-cyan-500/30 bg-black/60" : "border-2 border-black bg-slate-100 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                        }`}
+                      >
+                        {media.cover ? (
+                          <>
+                            <img
+                              src={media.cover}
+                              alt="Overview Cover Preview"
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                            <div className="absolute bottom-2.5 left-3 right-3 flex items-end justify-between pointer-events-none">
+                              <div className="min-w-0">
+                                <span className="text-[9px] font-mono font-bold text-cyan-400 uppercase tracking-wider block">
+                                  {source.title || "Source Title"}
+                                </span>
+                                <span className="text-xs font-black text-white truncate block">
+                                  {coupleName || "Couple Profile"}
+                                </span>
+                              </div>
+                              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-pink-500/30 border border-pink-400/50 text-pink-300">
+                                ❤️ Dossier
+                              </span>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
+                            <span className="text-2xl mb-1.5 opacity-50">🖼️</span>
+                            <span className="text-xs font-mono font-bold opacity-75">
+                              No Overview Cover Selected
+                            </span>
+                            <span className="text-[10px] font-mono opacity-50 mt-1 max-w-[200px]">
+                              Will fall back to Card Poster or primary gallery image
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 2: CARD POSTER */}
+              <div className={cardContainerStyle}>
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3 mb-3 border-white/10">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black font-mono uppercase bg-rose-500/20 text-rose-400 border border-rose-500/40">
+                        Slot B
+                      </span>
+                      <h4 className="font-black text-sm font-mono tracking-wide text-rose-300">
+                        CARD POSTER (Portrait / 3:4)
+                      </h4>
+                    </div>
+                    <p className="text-xs font-mono opacity-70 mt-1">
+                      Portrait artwork used as the full-art background of the Couple collection card.
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 opacity-75">
+                    Used in: Couple Collection Card
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                  {/* Left: Upload & URL controls */}
+                  <div className="lg:col-span-7 space-y-3">
+                    <CharacterImageUploader
+                      label="Upload Card Poster (3:4 Portrait)"
+                      value={media.card || ""}
+                      onChange={(url) => setMedia((prev) => ({ ...prev, card: url }))}
+                      onClear={() => setMedia((prev) => ({ ...prev, card: "" }))}
+                      aspect={3 / 4}
+                      hint="Portrait 3:4 orientation recommended for optimal display on the full-art collection card."
+                      previewClass="h-44 w-full"
+                    />
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-mono opacity-70 block">
+                        Or paste direct Image URL:
+                      </label>
+                      <input
+                        type="text"
+                        value={(media.card || "").startsWith("data:") ? "" : (media.card || "")}
+                        onChange={(e) => setMedia((prev) => ({ ...prev, card: e.target.value }))}
+                        placeholder="https://... (Card poster URL)"
+                        className={inputStyle}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Right: Live In-Situ Card Preview Box */}
+                  <div className="lg:col-span-5 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-rose-400">
+                          Live Card Preview:
+                        </span>
+                        <span className="text-[10px] font-mono opacity-60">Collection Card View</span>
+                      </div>
+                      <div
+                        className={`relative w-full max-w-[240px] mx-auto h-52 rounded-xl overflow-hidden border flex flex-col justify-between p-2.5 ${
+                          isCyber ? "border-pink-500/40 bg-[#080c1a]" : "border-2 border-black bg-rose-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                        }`}
+                      >
+                        {/* Background */}
+                        {media.card || media.cover ? (
+                          <>
+                            <img
+                              src={media.card || media.cover || ""}
+                              alt="Card Poster Preview"
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/30 pointer-events-none" />
+                          </>
+                        ) : (
+                          <div
+                            className="absolute inset-0 w-full h-full"
+                            style={{
+                              background: isCyber
+                                ? "linear-gradient(135deg, rgba(8,12,28,0.95), rgba(30,10,45,0.95))"
+                                : "linear-gradient(135deg, #FFF0F5, #F5F0FF)",
+                            }}
+                          />
+                        )}
+
+                        {/* Top bar */}
+                        <div className="relative z-10 flex items-center justify-between">
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-black font-mono bg-pink-500/40 text-pink-200 border border-pink-400/50">
+                            {tier}
+                          </span>
+                          <span className="text-[10px] text-pink-400">★</span>
+                        </div>
+
+                        {/* Center lovers mockup */}
+                        <div className="relative z-10 flex items-center justify-center gap-2">
+                          <div className="flex flex-col items-center max-w-[60px]">
+                            <div className="w-8 h-8 rounded-full overflow-hidden border border-cyan-400 bg-black/60 shadow">
+                              <img
+                                src={partnerA.avatar || "/avatar.png"}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <span className="text-[8px] font-black text-white truncate w-full text-center mt-0.5 drop-shadow">
+                              {partnerA.name || "Partner A"}
+                            </span>
+                          </div>
+
+                          <span className="text-xs text-pink-400">❤️</span>
+
+                          <div className="flex flex-col items-center max-w-[60px]">
+                            <div className="w-8 h-8 rounded-full overflow-hidden border border-pink-400 bg-black/60 shadow">
+                              <img
+                                src={partnerB.avatar || "/avatar.png"}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <span className="text-[8px] font-black text-white truncate w-full text-center mt-0.5 drop-shadow">
+                              {partnerB.name || "Partner B"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Bottom */}
+                        <div className="relative z-10 text-center">
+                          <span className="text-[10px] font-black text-white truncate block drop-shadow">
+                            {coupleName || "Couple Profile"}
+                          </span>
+                          <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[8px] font-mono font-bold bg-pink-500/40 text-pink-200 border border-pink-400/50">
+                            ❤️ MATCH
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: GALLERY & MEDIA VAULT */}
+              <div className={cardContainerStyle}>
+                <div className="border-b pb-3 mb-3 border-white/10">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-black font-mono uppercase bg-purple-500/20 text-purple-400 border border-purple-500/40">
+                      Slot C
+                    </span>
+                    <h4 className="font-black text-sm font-mono tracking-wide text-purple-300">
+                      GALLERY & RELATIONSHIP VAULT
+                    </h4>
+                  </div>
+                  <p className="text-xs font-mono opacity-70 mt-1">
+                    Upload multiple photos directly, crop, or paste online image links for the relationship dossier gallery.
+                  </p>
+                </div>
 
                 <GalleryUploader
                   images={media.gallery || []}
