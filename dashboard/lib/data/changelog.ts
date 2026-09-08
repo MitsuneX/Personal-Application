@@ -13,6 +13,30 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v13.2.1",
+    date: "2026-09-08",
+    title: "Couple Dossier Overview Reset & Gallery Avatar Integration",
+    badge: "PATCH",
+    type: "patch",
+    summary: "Refined the Couples & Romance System with guaranteed Overview tab defaulting upon opening relationship dossiers and automated gallery synchronization for custom 1:1 partner avatars. Avatars uploaded or pasted manually for Partner A and Partner B are now automatically preserved in the Couple's Gallery, while avatars originating from the Character Dictionary are cleanly excluded to eliminate duplication. Reopening a couple card always defaults to the Overview tab rather than resuming on previously viewed tabs.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🔄 Default Overview Tab on Card Open (app/couples/page.tsx, CoupleDossierModal.tsx): Remounted CoupleDossierModal on card selection with a dedicated key and reset effect, ensuring that clicking any couple card always initializes directly to the 'Overview' tab instead of persisting the last viewed tab (e.g. Gallery).",
+          "🖼️ Automatic Gallery Inclusion for Custom 1:1 Avatars (CoupleEditorModal.tsx, CoupleDossierModal.tsx): Configured custom Partner A and Partner B 1:1 avatars to automatically synchronize into the Couple's Gallery (media.gallery) on upload, paste, and save, while strictly excluding avatars sourced from the Character Dictionary (avatar, avatarUrl, imageUrl, portraitUrl) to prevent duplication.",
+          "🛡️ Partner Avatar Preservation on Dictionary Link (CoupleEditorModal.tsx): Fixed auto-fill logic so that selecting a character from the Character Dictionary preserves any existing custom 1:1 avatar already provided by the user, only auto-populating when no avatar picture is set.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "✨ Dual-Theme Verification: Verified smooth transitions, clean modal state resets, and seamless gallery rendering across both Cyberpunk and Neo-Brutalism themes.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v13.2.0",
     date: "2026-09-07",
     title: "Premium Full-Art Couple Card & Cumulative Love Match Engine",

@@ -295,21 +295,29 @@ export function CoupleEditorModal({ isOpen, onClose, coupleToEdit }: CoupleEdito
     if (!found) return;
 
     if (partnerKey === "A") {
-      setPartnerA((prev) => ({
-        ...prev,
-        characterId: found.id,
-        name: prev.name || found.name,
-        avatar: prev.avatar || found.avatar || null,
-        role: prev.role || found.role || "",
-      }));
+      setPartnerA((prev) => {
+        // If user already put a 1:1 avatar picture, keep it unchanged. Only fill from Character Dictionary if there is none!
+        const hasExistingAvatar = Boolean(prev.avatar && prev.avatar.trim() !== "");
+        return {
+          ...prev,
+          characterId: found.id,
+          name: prev.name?.trim() ? prev.name : found.name,
+          avatar: hasExistingAvatar ? prev.avatar : (found.avatar || null),
+          role: prev.role?.trim() ? prev.role : (found.role || ""),
+        };
+      });
     } else {
-      setPartnerB((prev) => ({
-        ...prev,
-        characterId: found.id,
-        name: prev.name || found.name,
-        avatar: prev.avatar || found.avatar || null,
-        role: prev.role || found.role || "",
-      }));
+      setPartnerB((prev) => {
+        // If user already put a 1:1 avatar picture, keep it unchanged. Only fill from Character Dictionary if there is none!
+        const hasExistingAvatar = Boolean(prev.avatar && prev.avatar.trim() !== "");
+        return {
+          ...prev,
+          characterId: found.id,
+          name: prev.name?.trim() ? prev.name : found.name,
+          avatar: hasExistingAvatar ? prev.avatar : (found.avatar || null),
+          role: prev.role?.trim() ? prev.role : (found.role || ""),
+        };
+      });
     }
   };
 
@@ -328,6 +336,57 @@ export function CoupleEditorModal({ isOpen, onClose, coupleToEdit }: CoupleEdito
       ...relationship,
       dynamics: relationship.dynamics.filter((d) => d !== tag),
     });
+  };
+
+  // Avatar change handlers that also automatically add custom 1:1 images to Gallery (unless from Character Dictionary)
+  const handlePartnerAAvatarChange = (url: string) => {
+    setPartnerA((prev) => ({ ...prev, avatar: url || null }));
+    const trimmed = url?.trim();
+    if (trimmed) {
+      const charA = characterDictOptions.find((c) => c.id === partnerA.characterId);
+      const isFromDictA = Boolean(
+        charA && (
+          charA.avatar === trimmed ||
+          (charA as any)?.avatarUrl === trimmed ||
+          (charA as any)?.imageUrl === trimmed ||
+          (charA as any)?.portraitUrl === trimmed
+        )
+      );
+      if (!isFromDictA) {
+        setMedia((prev) => {
+          const gallery = prev.gallery || [];
+          if (!gallery.includes(trimmed)) {
+            return { ...prev, gallery: [...gallery, trimmed] };
+          }
+          return prev;
+        });
+      }
+    }
+  };
+
+  const handlePartnerBAvatarChange = (url: string) => {
+    setPartnerB((prev) => ({ ...prev, avatar: url || null }));
+    const trimmed = url?.trim();
+    if (trimmed) {
+      const charB = characterDictOptions.find((c) => c.id === partnerB.characterId);
+      const isFromDictB = Boolean(
+        charB && (
+          charB.avatar === trimmed ||
+          (charB as any)?.avatarUrl === trimmed ||
+          (charB as any)?.imageUrl === trimmed ||
+          (charB as any)?.portraitUrl === trimmed
+        )
+      );
+      if (!isFromDictB) {
+        setMedia((prev) => {
+          const gallery = prev.gallery || [];
+          if (!gallery.includes(trimmed)) {
+            return { ...prev, gallery: [...gallery, trimmed] };
+          }
+          return prev;
+        });
+      }
+    }
   };
 
   // Green flag handlers
@@ -455,6 +514,33 @@ export function CoupleEditorModal({ isOpen, onClose, coupleToEdit }: CoupleEdito
 
     setIsSaving(true);
     try {
+      // Both avatar 1:1 images are also saved in Gallery in Couples unless they are from Character Dictionary
+      const charA = characterDictOptions.find((c) => c.id === partnerA.characterId);
+      const isFromDictA = Boolean(
+        charA && (
+          charA.avatar === partnerA.avatar?.trim() ||
+          (charA as any)?.avatarUrl === partnerA.avatar?.trim() ||
+          (charA as any)?.imageUrl === partnerA.avatar?.trim()
+        )
+      );
+
+      const charB = characterDictOptions.find((c) => c.id === partnerB.characterId);
+      const isFromDictB = Boolean(
+        charB && (
+          charB.avatar === partnerB.avatar?.trim() ||
+          (charB as any)?.avatarUrl === partnerB.avatar?.trim() ||
+          (charB as any)?.imageUrl === partnerB.avatar?.trim()
+        )
+      );
+
+      const finalGallery = [...(media.gallery || []).filter((g) => g.trim())];
+      if (partnerA.avatar?.trim() && !isFromDictA && !finalGallery.includes(partnerA.avatar.trim())) {
+        finalGallery.push(partnerA.avatar.trim());
+      }
+      if (partnerB.avatar?.trim() && !isFromDictB && !finalGallery.includes(partnerB.avatar.trim())) {
+        finalGallery.push(partnerB.avatar.trim());
+      }
+
       const payload: Partial<CoupleEntry> = {
         coupleName: coupleName.trim(),
         source: {
@@ -497,7 +583,7 @@ export function CoupleEditorModal({ isOpen, onClose, coupleToEdit }: CoupleEdito
         media: {
           cover: media.cover?.trim() || null,
           card: media.card?.trim() || null,
-          gallery: (media.gallery || []).filter((g) => g.trim()),
+          gallery: finalGallery,
         },
       };
 
@@ -1002,16 +1088,17 @@ export function CoupleEditorModal({ isOpen, onClose, coupleToEdit }: CoupleEdito
                     <CharacterImageUploader
                       label="Partner A Avatar (1:1 Square)"
                       value={partnerA.avatar || ""}
-                      onChange={(url) => setPartnerA((prev) => ({ ...prev, avatar: url }))}
+                      onChange={handlePartnerAAvatarChange}
                       onClear={() => setPartnerA((prev) => ({ ...prev, avatar: null }))}
                       aspect={1}
-                      hint="Square profile avatar artwork."
+                      hint="Custom 1:1 square avatar. When set, linking with Character Dictionary will preserve this picture."
                       previewClass="h-28 w-28"
                     />
                     <input
                       type="text"
                       value={(partnerA.avatar || "").startsWith("data:") ? "" : (partnerA.avatar || "")}
                       onChange={(e) => setPartnerA((prev) => ({ ...prev, avatar: e.target.value }))}
+                      onBlur={(e) => handlePartnerAAvatarChange(e.target.value)}
                       placeholder="Or paste avatar URL (https://...)"
                       className={inputStyle}
                     />
@@ -1127,16 +1214,17 @@ export function CoupleEditorModal({ isOpen, onClose, coupleToEdit }: CoupleEdito
                     <CharacterImageUploader
                       label="Partner B Avatar (1:1 Square)"
                       value={partnerB.avatar || ""}
-                      onChange={(url) => setPartnerB((prev) => ({ ...prev, avatar: url }))}
+                      onChange={handlePartnerBAvatarChange}
                       onClear={() => setPartnerB((prev) => ({ ...prev, avatar: null }))}
                       aspect={1}
-                      hint="Square profile avatar artwork."
+                      hint="Custom 1:1 square avatar. When set, linking with Character Dictionary will preserve this picture."
                       previewClass="h-28 w-28"
                     />
                     <input
                       type="text"
                       value={(partnerB.avatar || "").startsWith("data:") ? "" : (partnerB.avatar || "")}
                       onChange={(e) => setPartnerB((prev) => ({ ...prev, avatar: e.target.value }))}
+                      onBlur={(e) => handlePartnerBAvatarChange(e.target.value)}
                       placeholder="Or paste avatar URL (https://...)"
                       className={inputStyle}
                     />
@@ -1723,7 +1811,11 @@ export function CoupleEditorModal({ isOpen, onClose, coupleToEdit }: CoupleEdito
                           <div className="flex flex-col items-center max-w-[60px]">
                             <div className="w-8 h-8 rounded-full overflow-hidden border border-cyan-400 bg-black/60 shadow">
                               <img
-                                src={partnerA.avatar || "/avatar.png"}
+                                src={
+                                  partnerA.avatar?.trim() ||
+                                  characterDictOptions.find((c) => c.id === partnerA.characterId)?.avatar ||
+                                  "/avatar.png"
+                                }
                                 alt=""
                                 className="w-full h-full object-cover"
                               />
@@ -1738,7 +1830,11 @@ export function CoupleEditorModal({ isOpen, onClose, coupleToEdit }: CoupleEdito
                           <div className="flex flex-col items-center max-w-[60px]">
                             <div className="w-8 h-8 rounded-full overflow-hidden border border-pink-400 bg-black/60 shadow">
                               <img
-                                src={partnerB.avatar || "/avatar.png"}
+                                src={
+                                  partnerB.avatar?.trim() ||
+                                  characterDictOptions.find((c) => c.id === partnerB.characterId)?.avatar ||
+                                  "/avatar.png"
+                                }
                                 alt=""
                                 className="w-full h-full object-cover"
                               />

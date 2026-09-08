@@ -76,7 +76,7 @@ export function SettingsDropdown({ onOpenAesthetics, onOpenHistory }: SettingsDr
                 <span>Log Updates</span>
               </div>
               <span className="text-[9px] font-mono px-1.5 py-0.5 rounded font-bold uppercase bg-cyan-500/20 text-cyan-300">
-                v13.2.0
+                v13.2.1
               </span>
             </button>
 

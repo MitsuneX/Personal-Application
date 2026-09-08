@@ -776,20 +776,23 @@ export default function CouplesPage() {
       </div>
 
       {/* MODAL 1: Full Relationship Dossier */}
-      <CoupleDossierModal
-        isOpen={isDossierOpen}
-        couple={selectedCouple}
-        onClose={() => {
-          setIsDossierOpen(false);
-          setSelectedCouple(null);
-        }}
-        onEdit={(couple) => {
-          setIsDossierOpen(false);
-          setEditingCouple(couple);
-          setIsEditorOpen(true);
-        }}
-        onOpenCharacterDictionary={handleOpenCharacter}
-      />
+      {isDossierOpen && selectedCouple && (
+        <CoupleDossierModal
+          key={`${selectedCouple.id}-${isDossierOpen}`}
+          isOpen={isDossierOpen}
+          couple={selectedCouple}
+          onClose={() => {
+            setIsDossierOpen(false);
+            setSelectedCouple(null);
+          }}
+          onEdit={(couple) => {
+            setIsDossierOpen(false);
+            setEditingCouple(couple);
+            setIsEditorOpen(true);
+          }}
+          onOpenCharacterDictionary={handleOpenCharacter}
+        />
+      )}
 
       {/* MODAL 2: Couple Editor (Create / Edit) */}
       <CoupleEditorModal

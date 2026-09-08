@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import {
@@ -46,6 +46,15 @@ export function CoupleDossierModal({
 
   const [activeTab, setActiveTab] = useState<"overview" | "dynamics" | "timeline" | "moments" | "notes" | "gallery">("overview");
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
+  // Always reset to "overview" tab when the modal opens on card click
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab("overview");
+      setHoveredPartner(null);
+      setIsCelebrating(false);
+    }
+  }, [isOpen, couple?.id]);
 
   // Romantic interaction states & refs
   const loveBurstRef = useRef<RomanticLoveBurstHandle>(null);
@@ -106,17 +115,19 @@ export function CoupleDossierModal({
   const partnerBName = canonicalB?.name || couple.partnerB.name || "Partner B";
 
   const partnerAAvatar =
+    couple.partnerA.avatar?.trim() ||
+    (canonicalA as any)?.avatar ||
     (canonicalA as any)?.avatarUrl ||
     (canonicalA as any)?.imageUrl ||
     (canonicalA as any)?.portraitUrl ||
-    couple.partnerA.avatar ||
     "/avatar.png";
 
   const partnerBAvatar =
+    couple.partnerB.avatar?.trim() ||
+    (canonicalB as any)?.avatar ||
     (canonicalB as any)?.avatarUrl ||
     (canonicalB as any)?.imageUrl ||
     (canonicalB as any)?.portraitUrl ||
-    couple.partnerB.avatar ||
     "/avatar.png";
 
   const partnerARole = (canonicalA as any)?.role || couple.partnerA.role || "Main Character";
@@ -137,11 +148,36 @@ export function CoupleDossierModal({
 
   const coverImage = couple.media.cover || couple.media.card || couple.media.gallery?.[0] || null;
 
-  const allGalleryImages = [
-    ...(couple.media.cover ? [couple.media.cover] : []),
-    ...(couple.media.card ? [couple.media.card] : []),
-    ...(couple.media.gallery || []),
-  ];
+  // Both avatar 1:1 images are saved/displayed in Gallery unless they are from Character Dictionary
+  const isDictAvatarA = Boolean(
+    canonicalA && (
+      (canonicalA as any)?.avatar === couple.partnerA.avatar ||
+      (canonicalA as any)?.avatarUrl === couple.partnerA.avatar ||
+      (canonicalA as any)?.imageUrl === couple.partnerA.avatar ||
+      (canonicalA as any)?.portraitUrl === couple.partnerA.avatar
+    )
+  );
+  const isDictAvatarB = Boolean(
+    canonicalB && (
+      (canonicalB as any)?.avatar === couple.partnerB.avatar ||
+      (canonicalB as any)?.avatarUrl === couple.partnerB.avatar ||
+      (canonicalB as any)?.imageUrl === couple.partnerB.avatar ||
+      (canonicalB as any)?.portraitUrl === couple.partnerB.avatar
+    )
+  );
+
+  const customPartnerAAvatar = couple.partnerA.avatar?.trim() && !isDictAvatarA ? couple.partnerA.avatar.trim() : null;
+  const customPartnerBAvatar = couple.partnerB.avatar?.trim() && !isDictAvatarB ? couple.partnerB.avatar.trim() : null;
+
+  const allGalleryImages = Array.from(
+    new Set([
+      ...(couple.media.cover ? [couple.media.cover] : []),
+      ...(couple.media.card ? [couple.media.card] : []),
+      ...(customPartnerAAvatar ? [customPartnerAAvatar] : []),
+      ...(customPartnerBAvatar ? [customPartnerBAvatar] : []),
+      ...(couple.media.gallery || []),
+    ])
+  );
 
   const { openContextMenu } = useContextMenu();
   const { success: toastSuccess } = useToast();

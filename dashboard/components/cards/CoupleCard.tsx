@@ -78,17 +78,17 @@ export function CoupleCard({
   const partnerBName = canonicalB?.name || couple.partnerB.name || "Partner B";
 
   const partnerAAvatar =
+    couple.partnerA.avatar?.trim() ||
     (canonicalA as any)?.avatarUrl ||
     (canonicalA as any)?.imageUrl ||
     (canonicalA as any)?.portraitUrl ||
-    couple.partnerA.avatar ||
     "/avatar.png";
 
   const partnerBAvatar =
+    couple.partnerB.avatar?.trim() ||
     (canonicalB as any)?.avatarUrl ||
     (canonicalB as any)?.imageUrl ||
     (canonicalB as any)?.portraitUrl ||
-    couple.partnerB.avatar ||
     "/avatar.png";
 
   const tierConfig = TIER_COLORS[couple.tier] || TIER_COLORS.S;
