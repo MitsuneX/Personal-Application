@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HallOfFameEntry, useDashboardStore } from "@/lib/store/dashboardStore";
 import { HofEntryCard, getGroupForEntry, getGroupDetails, getTypeLabel } from "@/components/cards/HofEntryCard";
+import { HofCoupleCard } from "@/components/cards/HofCoupleCard";
+import { CoupleEntry, TIER_COLORS } from "@/lib/data/coupleSchema";
 import { getPrestigeTier, getRankMovement } from "@/lib/utils/hofEngine";
 import { getLeaderboardRowAvatarUrl } from "@/lib/utils/mediaResolver";
 import { useContextMenu } from "@/hooks/useContextMenu";
@@ -14,6 +16,7 @@ interface HofLiveLeaderboardProps {
   entries: HallOfFameEntry[]; // Ranks #4 to #N
   isCyber: boolean;
   onOpenProfile: (entry: HallOfFameEntry) => void;
+  onOpenCoupleProfile?: (couple: CoupleEntry) => void;
   onCompare: (entry: HallOfFameEntry) => void;
 }
 
@@ -21,9 +24,10 @@ export function HofLiveLeaderboard({
   entries,
   isCyber,
   onOpenProfile,
+  onOpenCoupleProfile,
   onCompare,
 }: HofLiveLeaderboardProps) {
-  const { likeHof } = useDashboardStore();
+  const { likeHof, loveCouple } = useDashboardStore();
   const { openContextMenu } = useContextMenu();
   const router = useRouter();
   const [viewStyle, setViewStyle] = useState<"table" | "grid">("table");
@@ -110,8 +114,41 @@ export function HofLiveLeaderboard({
                 rowHighlightBorder = isCyber ? "rgba(180,83,9,0.3)" : "#B45309";
               }
 
+              const isCouple = (entry as any)?.isCoupleEntry && (entry as any)?.coupleData;
+              const couple: CoupleEntry | null = isCouple ? (entry as any).coupleData : null;
+
               const handleContextMenu = (e: React.MouseEvent) => {
                 e.preventDefault();
+                if (couple) {
+                  openContextMenu(
+                    e,
+                    [
+                      {
+                        id: "row-dossier",
+                        label: `Open ${couple.coupleName} Dossier`,
+                        icon: "📖",
+                        onClick: () => (onOpenCoupleProfile ? onOpenCoupleProfile(couple) : onOpenProfile(entry)),
+                      },
+                      {
+                        id: "row-love",
+                        label: `Love Match (+1) — ${couple.likes || 0}`,
+                        icon: "❤️",
+                        onClick: () => loveCouple(couple.id),
+                      },
+                      {
+                        id: "row-copy",
+                        label: "Copy Couple Name",
+                        icon: "📋",
+                        onClick: () => {
+                          navigator.clipboard.writeText(couple.coupleName);
+                        },
+                      },
+                    ],
+                    couple.coupleName
+                  );
+                  return;
+                }
+
                 openContextMenu(
                   e,
                   [
@@ -146,6 +183,136 @@ export function HofLiveLeaderboard({
                 );
               };
 
+              // Couple Table Row
+              if (couple) {
+                const tierCfg = TIER_COLORS[couple.tier] || TIER_COLORS.S;
+                return (
+                  <motion.div
+                    key={entry.id}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    onContextMenu={handleContextMenu}
+                    onClick={() => (onOpenCoupleProfile ? onOpenCoupleProfile(couple) : onOpenProfile(entry))}
+                    className="p-3.5 sm:p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer transition-all hover:translate-x-1 shadow-md font-mono"
+                    style={{
+                      backgroundColor: rowHighlightBg,
+                      borderColor: rowHighlightBorder,
+                      borderWidth: isCyber ? "1px" : "2px",
+                    }}
+                  >
+                    {/* Left: Rank + Movement + Dual Avatars + Info */}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className={`w-9 h-9 rounded-xl border flex items-center justify-center text-xs font-black shrink-0 ${rankBadgeStyle}`}>
+                        #{actualRank}
+                      </span>
+
+                      <span className={`px-2 py-1 rounded-lg border text-[10px] font-black shrink-0 flex items-center gap-1 ${movement.badgeBg}`}>
+                        <span>{movement.icon}</span>
+                        <span>{movement.label}</span>
+                      </span>
+
+                      {/* Dual Partner Avatars */}
+                      <div className="flex items-center -space-x-2 shrink-0">
+                        <div
+                          className="w-10 h-10 rounded-full border-2 overflow-hidden relative z-10 bg-slate-900"
+                          style={{ borderColor: isCyber ? "#00F5FF" : "#000" }}
+                        >
+                          <img
+                            src={couple.partnerA.avatar || "/avatar.png"}
+                            alt={couple.partnerA.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] z-20 shadow"
+                          style={{
+                            backgroundColor: isCyber ? "rgba(236, 72, 153, 0.3)" : "#FCE7F3",
+                            border: isCyber ? "1px solid #EC4899" : "1.5px solid #000",
+                          }}
+                        >
+                          ❤️
+                        </div>
+                        <div
+                          className="w-10 h-10 rounded-full border-2 overflow-hidden relative z-10 bg-slate-900"
+                          style={{ borderColor: isCyber ? "#EC4899" : "#000" }}
+                        >
+                          <img
+                            src={couple.partnerB.avatar || "/avatar.png"}
+                            alt={couple.partnerB.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Info */}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <strong className="text-sm font-black theme-text-primary hover:underline truncate">
+                            {couple.coupleName}
+                          </strong>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/10 dark:bg-white/10 theme-text-muted">
+                            🌍 {couple.source.country || "Global"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] theme-text-muted truncate mt-0.5">
+                          <span className="text-pink-400 font-bold">💞 Couple</span>
+                          <span>·</span>
+                          <span className="truncate">
+                            {couple.partnerA.name} × {couple.partnerB.name}
+                          </span>
+                          <span>·</span>
+                          <span className="truncate opacity-75">
+                            {couple.source.title} {couple.source.year ? `(${couple.source.year})` : ""}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: Tier Badge + Love Matches + Inspect */}
+                    <div
+                      className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-0"
+                      style={{ borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#E2E8F0" }}
+                    >
+                      <span
+                        className="px-2.5 py-1 rounded-xl border text-[10px] font-black uppercase"
+                        style={{
+                          backgroundColor: isCyber ? tierCfg.bgCyber : tierCfg.bgNeo,
+                          borderColor: tierCfg.color,
+                          color: isCyber ? tierCfg.color : "#000000",
+                        }}
+                      >
+                        {couple.tier} TIER
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          loveCouple(couple.id);
+                        }}
+                        className="px-3 py-1.5 rounded-xl border text-xs font-black bg-pink-500/10 text-pink-500 border-pink-500/30 hover:bg-pink-500/20 transition-all flex items-center gap-1 cursor-pointer"
+                        title="Love Match (+1)"
+                      >
+                        <span>❤️</span>
+                        <span>{couple.likes || 0}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => (onOpenCoupleProfile ? onOpenCoupleProfile(couple) : onOpenProfile(entry))}
+                        className="w-8 h-8 rounded-xl border bg-black/5 dark:bg-white/5 flex items-center justify-center text-xs hover:bg-black/10 transition-all cursor-pointer"
+                        title="Inspect Relationship Dossier"
+                      >
+                        📖
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              }
+
+              // Standard Character Table Row
               return (
                 <motion.div
                   key={entry.id}
@@ -257,23 +424,34 @@ export function HofLiveLeaderboard({
           </AnimatePresence>
         </div>
       ) : (
-        /* Cards View (Grid) — 100% Unified with 3:4 Media System & LazyCardVideo */
+        /* Cards View (Grid) */
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center">
           {entries.map((entry, idx) => {
             const actualRank = idx + 4;
             const group = getGroupDetails(getGroupForEntry(entry));
+            const isCouple = (entry as any)?.isCoupleEntry && (entry as any)?.coupleData;
 
             return (
               <div key={entry.id} className="w-full flex justify-center max-w-[280px]">
-                <HofEntryCard
-                  entry={entry}
-                  idx={actualRank - 1}
-                  isCyber={isCyber}
-                  group={group}
-                  podiumRank={actualRank}
-                  onOpenProfile={onOpenProfile}
-                  onCompare={onCompare}
-                />
+                {isCouple ? (
+                  <HofCoupleCard
+                    couple={(entry as any).coupleData}
+                    rank={actualRank}
+                    isCyber={isCyber}
+                    onOpenProfile={(c) => (onOpenCoupleProfile ? onOpenCoupleProfile(c) : onOpenProfile(entry))}
+                    onCompare={() => onCompare(entry)}
+                  />
+                ) : (
+                  <HofEntryCard
+                    entry={entry}
+                    idx={actualRank - 1}
+                    isCyber={isCyber}
+                    group={group}
+                    podiumRank={actualRank}
+                    onOpenProfile={onOpenProfile}
+                    onCompare={onCompare}
+                  />
+                )}
               </div>
             );
           })}

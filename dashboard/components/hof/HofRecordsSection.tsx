@@ -4,6 +4,7 @@ import React, { useMemo } from "react";
 import Image from "next/image";
 import { HallRecord, computeHallRecords } from "@/lib/utils/hofEngine";
 import { HallOfFameEntry } from "@/lib/store/dashboardStore";
+import { CoupleEntry } from "@/lib/data/coupleSchema";
 import { useContextMenu } from "@/hooks/useContextMenu";
 
 interface HofRecordsSectionProps {
@@ -13,6 +14,7 @@ interface HofRecordsSectionProps {
   hallEvents?: any[];
   gameCharacters?: any[];
   games?: any[];
+  couples?: CoupleEntry[];
   isCyber: boolean;
   /** The raw category key from the master Museum Showcase filter (e.g. "all", "game", "actor") */
   activeCategoryFilter?: string;
@@ -26,6 +28,7 @@ export function HofRecordsSection({
   hallEvents = [],
   gameCharacters = [],
   games = [],
+  couples = [],
   isCyber,
   activeCategoryFilter = "all",
   activeCategoryLabel = "Overall Showcase",
@@ -74,8 +77,28 @@ export function HofRecordsSection({
         undefined,
     }));
 
-    return [...normalizedHall, ...gameEntries];
-  }, [hallList, gameCharacters]);
+    const coupleEntries: any[] = couples.map((c) => ({
+      ...c,
+      id: `couple-${c.id}`,
+      name: c.coupleName || `${c.partnerA.name || "Partner A"} & ${c.partnerB.name || "Partner B"}`,
+      type: "none" as const,
+      status: (c.tier === "SS" ? "GOAT Status" : c.tier === "S" ? "Legend" : "Completed") as any,
+      knownFor: [c.source.title || "Romance", c.relationship.status || ""].filter(Boolean),
+      nationality: c.source.country || "Global",
+      avatarUrl: c.media.card || c.media.cover || c.media.gallery?.[0] || c.partnerA.avatar || undefined,
+      imageUrl: c.media.card || c.media.cover || c.media.gallery?.[0] || undefined,
+      portraitUrl: c.media.card || undefined,
+      rank: null,
+      likes: c.likes || 0,
+      isChampion: false,
+      isFavorite: c.isFavorite,
+      badges: [c.tier ? `${c.tier} TIER` : "", c.isFavorite ? "⭐ FAVORITE" : ""].filter(Boolean),
+      isCoupleEntry: true,
+      coupleData: c,
+    }));
+
+    return [...normalizedHall, ...gameEntries, ...coupleEntries];
+  }, [hallList, gameCharacters, couples]);
 
   // Compute records dynamically using the master page-level category filter
   const computedRecords = useMemo(() => {

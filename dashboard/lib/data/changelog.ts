@@ -13,6 +13,38 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v13.3.0",
+    date: "2026-09-09",
+    title: "Hall of Fame Couples Category, Full-Card Hero Artwork & Modernized Filter Hierarchy",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Expanded the Hall of Fame Digital Museum with an official, prestigious Couples category showcasing romantic pairings on the Gold, Silver, and Bronze Championship Podiums and Live Leaderboard. Upgraded the Hall of Fame Couple Card with an expansive full-card 3:4 hero artwork presentation, ambient blurred backdrop, and floating animated 1:1 partner avatars with gentle out-of-phase floating and pulsing MATCH node. Modernized the Hall of Fame filter bar into clean primary controls and an adaptive contextual drawer, and streamlined the main Couples page header by removing duplicate JSON controls while preserving them in Edit Mode.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "💞 Hall of Fame Couples Category (app/hall-of-fame/page.tsx, components/hof/HofPodiumSection.tsx, HofLiveLeaderboard.tsx): Enshrined Couples as an official, first-class, 100% read-only category within the Hall of Fame museum and live rankings. Integrated couple entries seamlessly into the Gold (#1), Silver (#2), and Bronze (#3) championship podiums and the live leaderboard table/grid views.",
+          "🖼️ Full-Card Hero Artwork & Floating Partner Avatars (components/cards/HofCoupleCard.tsx): Upgraded the Hall of Fame Couple card to showcase the full artwork as an expansive 3:4 hero backdrop with ambient blur scaling to prevent letterbox voids on wide or portrait art. Introduced a floating glassmorphic dock featuring the Couple's canonical 1:1 partner avatars with gentle vertical floating motion ([-3, 3, -3] and [3, -3, 3] with natural phase difference), beating-heart MATCH node, and prefers-reduced-motion compliance.",
+          "📖 Read-Only Couple Dossier Inspection (app/hall-of-fame/page.tsx, components/ui/CoupleDossierModal.tsx): Enabled deep inspection of any Hall of Fame couple card via the rich romance dossier modal, with Edit and JSON modification buttons strictly omitted to maintain museum integrity.",
+          "⚙️ Modernized Museum Filter Hierarchy (components/hof/HofFilterToolbar.tsx): Reorganized Hall of Fame filtering into primary controls (Search with clear button, Category dropdown, Sort, and Filter drawer toggle) and a collapsible contextual drawer that dynamically shows Country, Season, and Couple Tier (SS–C) when in Couples mode while suppressing unrelated filters.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🧹 Couples Header Streamlining (app/couples/page.tsx): Removed the redundant '{ } JSON Import / Export' button from the main Couples System page header, cleanly closing spacing while preserving full JSON import/export workflows inside Couple Edit Mode.",
+          "📊 Museum Records & Distribution Handling (lib/utils/hofEngine.ts, components/hof/HofRecordsSection.tsx): Added couples category support to historical record computations, category distributions, and museum statistics without schema disruption.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "✨ Comprehensive Dual-Theme Verification: Rigorously validated visual contrast, glowing neon accents, and crisp brutalist drop shadows across both Cyberpunk and Neo-Brutalism themes on desktop and mobile.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v13.2.1",
     date: "2026-09-08",
     title: "Couple Dossier Overview Reset & Gallery Avatar Integration",

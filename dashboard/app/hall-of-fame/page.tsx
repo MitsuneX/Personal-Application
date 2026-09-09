@@ -8,6 +8,8 @@ import { useDashboardStore, HallOfFameEntry } from "@/lib/store/dashboardStore";
 
 import { HofProfileModal } from "@/components/ui/HofProfileModal";
 import { HofCompareModal } from "@/components/ui/HofCompareModal";
+import { CoupleDossierModal } from "@/components/ui/CoupleDossierModal";
+import { CoupleEntry } from "@/lib/data/coupleSchema";
 import { HofPodiumSection } from "@/components/hof/HofPodiumSection";
 import { HofFilterToolbar } from "@/components/hof/HofFilterToolbar";
 import { HofRecordsSection } from "@/components/hof/HofRecordsSection";
@@ -28,7 +30,15 @@ import {
 export default function HallOfFamePage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { hallOfFame = [], games = [], gameCharacters = [], hallEvents = [], championshipHistory = [], likeHof } = useDashboardStore();
+  const {
+    hallOfFame = [],
+    games = [],
+    gameCharacters = [],
+    couples = [],
+    hallEvents = [],
+    championshipHistory = [],
+    likeHof,
+  } = useDashboardStore();
   const router = useRouter();
   const { openContextMenu } = useContextMenu();
 
@@ -45,6 +55,8 @@ export default function HallOfFamePage() {
 
   // Modals State
   const [profileModalEntry, setProfileModalEntry] = useState<HallOfFameEntry | null>(null);
+  const [selectedCouple, setSelectedCouple] = useState<CoupleEntry | null>(null);
+  const [isCoupleModalOpen, setIsCoupleModalOpen] = useState(false);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [comparedEntries, setComparedEntries] = useState<HallOfFameEntry[]>([]);
 
@@ -119,6 +131,33 @@ export default function HallOfFamePage() {
     }));
   }, [gameCharacters]);
 
+  // Map Couples to HallOfFameEntry interface for Couples category rankings
+  const coupleHofEntries = useMemo(() => {
+    return couples.map((c) => ({
+      ...c,
+      id: `couple-${c.id}`,
+      coupleId: c.id,
+      name: c.coupleName || `${c.partnerA?.name || "Partner A"} & ${c.partnerB?.name || "Partner B"}`,
+      type: "none" as const,
+      status: (c.tier === "SS" ? "GOAT Status" : c.tier === "S" ? "Legend" : "Completed") as any,
+      knownFor: [c.source?.title || "Romance", c.relationship?.status || ""].filter(Boolean),
+      nationality: c.source?.country || "Global",
+      avatarUrl: c.media?.card || c.media?.cover || c.media?.gallery?.[0] || c.partnerA?.avatar || undefined,
+      imageUrl: c.media?.card || c.media?.cover || c.media?.gallery?.[0] || undefined,
+      portraitUrl: c.media?.card || undefined,
+      rank: null,
+      likes: c.likes || 0,
+      isChampion: false,
+      isFavorite: c.isFavorite,
+      badges: [
+        c.tier ? `${c.tier} TIER` : "",
+        c.isFavorite ? "⭐ FAVORITE" : "",
+      ].filter(Boolean),
+      isCoupleEntry: true,
+      coupleData: c,
+    }));
+  }, [couples]);
+
   // Helper filters
   const sortedList = useMemo(() => {
     const normalizedHall = hallOfFame.map((h) => ({
@@ -136,7 +175,9 @@ export default function HallOfFamePage() {
     let list: any[] = [...normalizedHall];
 
     // Category filter
-    if (categoryFilter === "game") {
+    if (categoryFilter === "couples") {
+      list = [...coupleHofEntries];
+    } else if (categoryFilter === "game") {
       // Combine game characters with game-related hall of fame entries
       list = [
         ...gameHofEntries,
@@ -195,9 +236,13 @@ export default function HallOfFamePage() {
         list = list.filter((e) => e.type === "tokusatsu" || !!e.tokusatsuFranchise);
     }
 
-    // Prestige filter
+    // Prestige / Tier filter
     if (prestigeFilter !== "all") {
-      list = list.filter((e, idx) => getPrestigeTier(e, idx).name === prestigeFilter);
+      if (categoryFilter === "couples") {
+        list = list.filter((e) => (e as any).coupleData?.tier === prestigeFilter || (e as any).tier === prestigeFilter);
+      } else {
+        list = list.filter((e, idx) => getPrestigeTier(e, idx).name === prestigeFilter);
+      }
     }
 
     // Featured Only filter
@@ -209,6 +254,15 @@ export default function HallOfFamePage() {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       list = list.filter((item) => {
+        if ((item as any).isCoupleEntry && (item as any).coupleData) {
+          const c: CoupleEntry = (item as any).coupleData;
+          const matchName = (item.name || "").toLowerCase().includes(q);
+          const matchPartnerA = (c.partnerA?.name || "").toLowerCase().includes(q);
+          const matchPartnerB = (c.partnerB?.name || "").toLowerCase().includes(q);
+          const matchSource = (c.source?.title || "").toLowerCase().includes(q);
+          const matchDynamics = (c.relationship?.dynamics || []).some((d: string) => d.toLowerCase().includes(q));
+          return matchName || matchPartnerA || matchPartnerB || matchSource || matchDynamics;
+        }
         const matchName = (item.name || "").toLowerCase().includes(q);
         const matchKnown = (Array.isArray(item.knownFor) ? item.knownFor.join(" ") : item.knownFor || "")
           .toLowerCase()
@@ -232,6 +286,7 @@ export default function HallOfFamePage() {
   }, [
     hallOfFame,
     gameHofEntries,
+    coupleHofEntries,
     games,
     categoryFilter,
     selectedGames,
@@ -245,15 +300,24 @@ export default function HallOfFamePage() {
 
   // Derived Statistics & Records (100% Live & Reactive)
   const statsOverview = useMemo(() => {
+    if (categoryFilter === "couples") {
+      const total = couples.length;
+      const goat = couples.filter((c) => c.tier === "SS").length;
+      const champions = couples.filter((c) => c.tier === "SS" || c.tier === "S").length;
+      const nations = new Set(couples.map((c) => c.source?.country || "Global")).size;
+      const categories = new Set(couples.map((c) => c.source?.mediaType || "Romance")).size;
+      const totalVotes = couples.reduce((acc, c) => acc + (c.likes || 0), 0);
+      return { total, goat, champions, nations, categories, totalVotes };
+    }
     const total = hallOfFame.length;
     const goat = hallOfFame.filter((h) => h.status === "GOAT Status").length;
     const champions = hallOfFame.filter((h) => h.isChampion || h.rank === 1).length || 1;
     const nations = new Set(hallOfFame.map((h) => h.nationality || "Global")).size;
-    const categories = new Set(hallOfFame.map((h) => h.type)).size;
+    const categories = new Set(hallOfFame.map((h) => h.type)).size + (couples.length > 0 ? 1 : 0);
     const totalVotes = hallOfFame.reduce((acc, h) => acc + (h.likes || 0), 0);
 
     return { total, goat, champions, nations, categories, totalVotes };
-  }, [hallOfFame]);
+  }, [hallOfFame, couples, categoryFilter]);
 
   const hallRecords = useMemo(
     () => computeHallRecords(hallOfFame, championshipHistory, hallEvents, categoryFilter),
@@ -436,6 +500,10 @@ export default function HallOfFamePage() {
             top3={top3}
             isCyber={isCyber}
             onOpenProfile={(e) => setProfileModalEntry(e)}
+            onOpenCoupleProfile={(c) => {
+              setSelectedCouple(c);
+              setIsCoupleModalOpen(true);
+            }}
             onCompare={(e) => handleAddToCompare(e)}
             onContextMenu={handlePageContextMenu}
           />
@@ -448,6 +516,7 @@ export default function HallOfFamePage() {
           championshipHistory={championshipHistory}
           hallEvents={hallEvents}
           gameCharacters={gameCharacters}
+          couples={couples}
           isCyber={isCyber}
           activeCategoryFilter={categoryFilter}
           activeCategoryLabel={categoryFilter !== "all" ? (categoryFilter.charAt(0).toUpperCase() + categoryFilter.slice(1)) : "Overall Showcase"}
@@ -475,6 +544,10 @@ export default function HallOfFamePage() {
           entries={restOfList}
           isCyber={isCyber}
           onOpenProfile={(e) => setProfileModalEntry(e)}
+          onOpenCoupleProfile={(c) => {
+            setSelectedCouple(c);
+            setIsCoupleModalOpen(true);
+          }}
           onCompare={(e) => handleAddToCompare(e)}
         />
 
@@ -484,6 +557,17 @@ export default function HallOfFamePage() {
           onClose={() => setProfileModalEntry(null)}
           entry={profileModalEntry}
           onLike={(id) => likeHof(id)}
+        />
+
+        <CoupleDossierModal
+          isOpen={isCoupleModalOpen}
+          couple={selectedCouple}
+          onClose={() => {
+            setIsCoupleModalOpen(false);
+            setSelectedCouple(null);
+          }}
+          onEdit={undefined}
+          onOpenJson={undefined}
         />
 
         <HofCompareModal

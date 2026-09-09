@@ -4,6 +4,8 @@ import React from "react";
 import { motion } from "framer-motion";
 import { HallOfFameEntry } from "@/lib/store/dashboardStore";
 import { HofEntryCard, getGroupForEntry, getGroupDetails } from "@/components/cards/HofEntryCard";
+import { HofCoupleCard } from "@/components/cards/HofCoupleCard";
+import { CoupleEntry } from "@/lib/data/coupleSchema";
 import { getPrestigeTier } from "@/lib/utils/hofEngine";
 
 interface HofPodiumSectionProps {
@@ -12,6 +14,7 @@ interface HofPodiumSectionProps {
   top3?: HallOfFameEntry;
   isCyber: boolean;
   onOpenProfile: (entry: HallOfFameEntry) => void;
+  onOpenCoupleProfile?: (couple: CoupleEntry) => void;
   onCompare: (entry: HallOfFameEntry) => void;
   onContextMenu: (e: React.MouseEvent) => void;
 }
@@ -22,6 +25,7 @@ export function HofPodiumSection({
   top3,
   isCyber,
   onOpenProfile,
+  onOpenCoupleProfile,
   onCompare,
   onContextMenu,
 }: HofPodiumSectionProps) {
@@ -84,15 +88,26 @@ export function HofPodiumSection({
                 {/* Floating Diamond Sparkles */}
                 <span className="absolute -top-2 -right-2 text-base animate-bounce z-20">💎</span>
 
-                <HofEntryCard
-                  entry={top2}
-                  idx={1}
-                  isCyber={isCyber}
-                  group={getGroupDetails(getGroupForEntry(top2))}
-                  podiumRank={2}
-                  onOpenProfile={onOpenProfile}
-                  onCompare={onCompare}
-                />
+                {(top2 as any)?.isCoupleEntry && (top2 as any)?.coupleData ? (
+                  <HofCoupleCard
+                    couple={(top2 as any).coupleData}
+                    rank={2}
+                    podiumRank={2}
+                    isCyber={isCyber}
+                    onOpenProfile={(c) => (onOpenCoupleProfile ? onOpenCoupleProfile(c) : onOpenProfile(top2))}
+                    onCompare={() => onCompare(top2)}
+                  />
+                ) : (
+                  <HofEntryCard
+                    entry={top2}
+                    idx={1}
+                    isCyber={isCyber}
+                    group={getGroupDetails(getGroupForEntry(top2))}
+                    podiumRank={2}
+                    onOpenProfile={onOpenProfile}
+                    onCompare={onCompare}
+                  />
+                )}
               </div>
 
               {/* 3D Engraved Silver Podium Base */}
@@ -154,15 +169,26 @@ export function HofPodiumSection({
                 <span className="absolute -top-3 -left-3 text-lg animate-spin z-20">✨</span>
                 <span className="absolute -bottom-3 -right-3 text-lg animate-pulse z-20">🌟</span>
 
-                <HofEntryCard
-                  entry={top1}
-                  idx={0}
-                  isCyber={isCyber}
-                  group={getGroupDetails(getGroupForEntry(top1))}
-                  podiumRank={1}
-                  onOpenProfile={onOpenProfile}
-                  onCompare={onCompare}
-                />
+                {(top1 as any)?.isCoupleEntry && (top1 as any)?.coupleData ? (
+                  <HofCoupleCard
+                    couple={(top1 as any).coupleData}
+                    rank={1}
+                    podiumRank={1}
+                    isCyber={isCyber}
+                    onOpenProfile={(c) => (onOpenCoupleProfile ? onOpenCoupleProfile(c) : onOpenProfile(top1))}
+                    onCompare={() => onCompare(top1)}
+                  />
+                ) : (
+                  <HofEntryCard
+                    entry={top1}
+                    idx={0}
+                    isCyber={isCyber}
+                    group={getGroupDetails(getGroupForEntry(top1))}
+                    podiumRank={1}
+                    onOpenProfile={onOpenProfile}
+                    onCompare={onCompare}
+                  />
+                )}
               </div>
 
               {/* 3D Engraved Gold Podium Base */}
@@ -211,15 +237,26 @@ export function HofPodiumSection({
                   borderWidth: "2px",
                 }}
               >
-                <HofEntryCard
-                  entry={top3}
-                  idx={2}
-                  isCyber={isCyber}
-                  group={getGroupDetails(getGroupForEntry(top3))}
-                  podiumRank={3}
-                  onOpenProfile={onOpenProfile}
-                  onCompare={onCompare}
-                />
+                {(top3 as any)?.isCoupleEntry && (top3 as any)?.coupleData ? (
+                  <HofCoupleCard
+                    couple={(top3 as any).coupleData}
+                    rank={3}
+                    podiumRank={3}
+                    isCyber={isCyber}
+                    onOpenProfile={(c) => (onOpenCoupleProfile ? onOpenCoupleProfile(c) : onOpenProfile(top3))}
+                    onCompare={() => onCompare(top3)}
+                  />
+                ) : (
+                  <HofEntryCard
+                    entry={top3}
+                    idx={2}
+                    isCyber={isCyber}
+                    group={getGroupDetails(getGroupForEntry(top3))}
+                    podiumRank={3}
+                    onOpenProfile={onOpenProfile}
+                    onCompare={onCompare}
+                  />
+                )}
               </div>
 
               {/* 3D Engraved Bronze Podium Base */}

@@ -110,7 +110,9 @@ export function filterHallEntriesByCategory(
   const cat = (category || "all").toLowerCase();
   let list = [...entries];
 
-  if (cat === "game") {
+  if (cat === "couples") {
+    list = list.filter((e) => e.isCoupleEntry || (e as any).coupleData);
+  } else if (cat === "game") {
     list = list.filter((e) => e.isGameCharacterEntry || (e as any).gameName || e.type === "game character");
   } else if (cat === "actor") {
     list = list.filter((e) => (e.type || "").toLowerCase() === "actor");

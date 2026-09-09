@@ -412,21 +412,6 @@ export default function CouplesPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setJsonCouple(null);
-                  setIsJsonOpen(true);
-                }}
-                className={`px-3.5 py-2.5 rounded-xl text-xs font-bold font-mono cursor-pointer transition-all ${
-                  isCyber
-                    ? "border border-cyan-500/40 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20 shadow-[0_0_12px_rgba(0,245,255,0.15)]"
-                    : "border-2 border-black bg-white text-black hover:bg-slate-100 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                }`}
-              >
-                {"{ }"} JSON Import / Export
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
                   setEditingCouple(null);
                   setIsEditorOpen(true);
                 }}
