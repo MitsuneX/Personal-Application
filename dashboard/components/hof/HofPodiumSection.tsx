@@ -5,7 +5,9 @@ import { motion } from "framer-motion";
 import { HallOfFameEntry } from "@/lib/store/dashboardStore";
 import { HofEntryCard, getGroupForEntry, getGroupDetails } from "@/components/cards/HofEntryCard";
 import { HofCoupleCard } from "@/components/cards/HofCoupleCard";
+import { HofCreatureCard } from "@/components/cards/HofCreatureCard";
 import { CoupleEntry } from "@/lib/data/coupleSchema";
+import { CreatureEntry } from "@/lib/data/creatureSchema";
 import { getPrestigeTier } from "@/lib/utils/hofEngine";
 
 interface HofPodiumSectionProps {
@@ -15,6 +17,7 @@ interface HofPodiumSectionProps {
   isCyber: boolean;
   onOpenProfile: (entry: HallOfFameEntry) => void;
   onOpenCoupleProfile?: (couple: CoupleEntry) => void;
+  onOpenCreatureProfile?: (creature: CreatureEntry) => void;
   onCompare: (entry: HallOfFameEntry) => void;
   onContextMenu: (e: React.MouseEvent) => void;
 }
@@ -26,6 +29,7 @@ export function HofPodiumSection({
   isCyber,
   onOpenProfile,
   onOpenCoupleProfile,
+  onOpenCreatureProfile,
   onCompare,
   onContextMenu,
 }: HofPodiumSectionProps) {
@@ -88,7 +92,15 @@ export function HofPodiumSection({
                 {/* Floating Diamond Sparkles */}
                 <span className="absolute -top-2 -right-2 text-base animate-bounce z-20">💎</span>
 
-                {(top2 as any)?.isCoupleEntry && (top2 as any)?.coupleData ? (
+                {(top2 as any)?.isCreatureEntry && (top2 as any)?.creatureData ? (
+                  <HofCreatureCard
+                    creature={(top2 as any).creatureData}
+                    rank={2}
+                    podiumRank={2}
+                    isCyber={isCyber}
+                    onOpenProfile={(c) => (onOpenCreatureProfile ? onOpenCreatureProfile(c) : undefined)}
+                  />
+                ) : (top2 as any)?.isCoupleEntry && (top2 as any)?.coupleData ? (
                   <HofCoupleCard
                     couple={(top2 as any).coupleData}
                     rank={2}
@@ -169,7 +181,15 @@ export function HofPodiumSection({
                 <span className="absolute -top-3 -left-3 text-lg animate-spin z-20">✨</span>
                 <span className="absolute -bottom-3 -right-3 text-lg animate-pulse z-20">🌟</span>
 
-                {(top1 as any)?.isCoupleEntry && (top1 as any)?.coupleData ? (
+                {(top1 as any)?.isCreatureEntry && (top1 as any)?.creatureData ? (
+                  <HofCreatureCard
+                    creature={(top1 as any).creatureData}
+                    rank={1}
+                    podiumRank={1}
+                    isCyber={isCyber}
+                    onOpenProfile={(c) => (onOpenCreatureProfile ? onOpenCreatureProfile(c) : undefined)}
+                  />
+                ) : (top1 as any)?.isCoupleEntry && (top1 as any)?.coupleData ? (
                   <HofCoupleCard
                     couple={(top1 as any).coupleData}
                     rank={1}
@@ -237,7 +257,15 @@ export function HofPodiumSection({
                   borderWidth: "2px",
                 }}
               >
-                {(top3 as any)?.isCoupleEntry && (top3 as any)?.coupleData ? (
+                {(top3 as any)?.isCreatureEntry && (top3 as any)?.creatureData ? (
+                  <HofCreatureCard
+                    creature={(top3 as any).creatureData}
+                    rank={3}
+                    podiumRank={3}
+                    isCyber={isCyber}
+                    onOpenProfile={(c) => (onOpenCreatureProfile ? onOpenCreatureProfile(c) : undefined)}
+                  />
+                ) : (top3 as any)?.isCoupleEntry && (top3 as any)?.coupleData ? (
                   <HofCoupleCard
                     couple={(top3 as any).coupleData}
                     rank={3}

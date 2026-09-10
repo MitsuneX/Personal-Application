@@ -13,6 +13,42 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v13.5.0",
+    date: "2026-09-10",
+    title: "Creatures Hall of Fame Integration, Conditional Bestiary Tabs & Connected Character Enrichment",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Completed the full Creature Archive ecosystem by integrating creatures as a first-class, read-only category throughout the Hall of Fame Digital Museum — appearing on the Championship Podium, Live Leaderboard, and a new dedicated Bestiary Canonical Tier List (SS → C). Introduced conditional 🐾 Creatures tabs on both Game Character and Character Dictionary profile modals via cross-system reverse-lookup, surfacing every creature bonded to a given character without any manual mapping. Expanded the Creature Archive itself with a fully-featured auto-rotation Spotlight engine, upgraded full-art Editor and Dossier modals, and a robust new-user auto-seeding pipeline ensuring authenticated users always receive sample bestiary entries on first login.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🏛️ Hall of Fame Creatures Category (app/hall-of-fame/page.tsx, components/hof/HofPodiumSection.tsx, HofLiveLeaderboard.tsx): Enshrined Creatures as a fully read-only, first-class category within the Hall of Fame Digital Museum. Creatures appear on the Championship Gold/Silver/Bronze podium, Live Leaderboard grid/table views, and a new Bestiary Canonical Tier List section ranked SS → C, all gated with museum archive protection.",
+          "🐾 Bestiary Canonical Tier List (components/hof/HofCreatureTierList.tsx): Added a dedicated tier-grouped creature showcase under the Hall of Fame Creatures filter, sorting entries within each tier by affection bond count and labelling the section 'Museum Archive Protected — Read-Only Showcase'.",
+          "🔗 Conditional Creatures Tab on Game Character Profiles (components/game/CharacterProfileModal.tsx): Added dynamic 🐾 Creatures tab that auto-appears on any Game Character profile when at least one creature's connectedCharacters reverse-lookup matches by characterId or normalized name. Clicking a creature card opens the read-only Creature Dossier directly from the profile.",
+          "🔗 Conditional Creatures Tab on Character Dictionary Profiles (components/ui/CharacterDictProfileModal.tsx): Same conditional reverse-lookup pattern on Character Dictionary / Hall of Fame person profiles — tab renders only when connected creatures exist, fully read-only with no edit controls.",
+          "🌟 Enhanced Creature Spotlight Engine (components/creatures/CreatureSpotlight.tsx): Rebuilt the spotlight with an anti-repeat history buffer, automatic randomized rotation, pause-on-hover, keyboard arrow navigation, and thumbnail strip for instant creature switching.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🛡️ Creature Auto-Seeding for New Users (app/api/dashboard/route.ts): Implemented an automatic first-login seeding pipeline that populates fresh authenticated accounts with the curated SAMPLE_CREATURES collection (Toothless, Appa, Chopper, Kurama, Haku) so the Creature Archive is never empty on first visit.",
+          "🔄 Dashboard Hydration Fallback (app/api/dashboard/route.ts): Added SAMPLE_CREATURES fallback in the authenticated dashboard response so the creature section renders even when the database query returns an empty set, preventing blank archive states.",
+          "📊 Hall of Fame Creatures Filter Contextual Drawer (components/hof/HofFilterToolbar.tsx): Extended the filter toolbar with creature-specific country filter (maps to classification rather than nationality) and Tier filter (SS/S/A/B/C) in the contextual drawer when the Creatures category is active.",
+          "🔍 HoF Search Cross-Creature Fields (app/hall-of-fame/page.tsx): Creature search now matches against species, classification, originWork, and connectedCharacters[].name in addition to creature name.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "✨ Connected Character Enrichment in Sample Data (lib/data/creatureSchema.ts): Linked SAMPLE_CREATURES entries to guest-context characters (Toothless → Acheron / Hiccup, Appa → Tao Tsuchiya / Aang) enabling live demonstration of the conditional Creatures tab and connected character chips in both Cyberpunk and Neo-Brutalism themes.",
+          "🎨 HofCreatureCard & Dossier Read-Only Polish: Verified HofCreatureCard has zero edit/delete controls; CreatureDossierModal Edit button strictly gated by optional onEdit prop — omitted in all HoF and profile contexts, present only on the Creatures archive page.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v13.4.0",
     date: "2026-09-10",
     title: "Creature Archive System, Full-Art Bestiary Cards & Restructured Favourite Navigation",
@@ -20,6 +56,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
     type: "minor",
     summary: "Introduced the autonomous Creature Archive collection system under ⭐ FAVOURITES for beloved pets, dragons, beasts, familiars, companions, mascots, monsters, and non-human creatures. Restructured the Favourite navigation group into the exact requested hierarchy (Characters → Couples → Hall of Fame → Creatures). Built the full-stack Creature subsystem featuring extensible classifications, dynamic live collection counters, hero Creature Spotlight showcase, image-focused full-art cards with intelligent aspect ratio fit and ambient backdrop blur, rich Creature Dossier inspection view with prominent 'Why I Love This Creature' personal scrapbook notes, and a focused Creature Editor equipped with an embedded In-Editor JSON Workspace to keep the primary collection header clean.",
     categories: [
+
       {
         name: "New Features",
         items: [

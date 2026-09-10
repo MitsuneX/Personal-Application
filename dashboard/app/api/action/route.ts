@@ -1539,7 +1539,7 @@ export async function POST(req: Request) {
       case "UPDATE_CREATURE": {
         const {
           id, name, classification, species, sourceTitle, mediaType,
-          sourceYear, description, personalNote, isFavorite, likes, media, tags
+          sourceYear, description, personalNote, tier, isFavorite, likes, media, tags, connectedCharacters
         } = payload;
 
         if (!prisma.creature) {
@@ -1561,10 +1561,12 @@ export async function POST(req: Request) {
             sourceYear: sourceYear ? Number(sourceYear) : null,
             description: description || null,
             personalNote: personalNote || null,
+            tier: tier || "S",
             isFavorite: Boolean(isFavorite),
             likes: typeof likes === "number" ? likes : undefined,
             media: media !== undefined ? media : undefined,
             tags: Array.isArray(tags) ? tags : undefined,
+            connectedCharacters: Array.isArray(connectedCharacters) ? connectedCharacters : undefined,
           },
           create: {
             id,
@@ -1577,10 +1579,12 @@ export async function POST(req: Request) {
             sourceYear: sourceYear ? Number(sourceYear) : null,
             description: description || null,
             personalNote: personalNote || null,
+            tier: tier || "S",
             isFavorite: Boolean(isFavorite),
             likes: typeof likes === "number" ? likes : 0,
             media: media || null,
             tags: Array.isArray(tags) ? tags : [],
+            connectedCharacters: Array.isArray(connectedCharacters) ? connectedCharacters : [],
           },
         });
         return NextResponse.json({ success: true, data: creature });

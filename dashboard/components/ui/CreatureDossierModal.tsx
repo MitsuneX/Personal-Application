@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
-import { CreatureEntry, getClassificationMeta } from "@/lib/data/creatureSchema";
+import { CreatureEntry, getClassificationMeta, CREATURE_TIER_META } from "@/lib/data/creatureSchema";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { RomanticLoveBurst, RomanticLoveBurstHandle } from "@/components/ui/RomanticLoveBurst";
 import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
@@ -54,6 +54,7 @@ export function CreatureDossierModal({
   if (!isOpen || !creature) return null;
 
   const classificationMeta = getClassificationMeta(creature.classification);
+  const tierMeta = CREATURE_TIER_META[creature.tier] || CREATURE_TIER_META.S;
 
   // Gather all available media URLs for gallery strip
   const allMedia: { label: string; url: string }[] = [];
@@ -263,6 +264,18 @@ export function CreatureDossierModal({
                     <span>{classificationMeta.label}</span>
                   </div>
 
+                  {/* Canonical Tier badge */}
+                  <div
+                    className="px-2.5 py-1 rounded-full text-xs font-mono font-black tracking-wider uppercase border shadow-sm"
+                    style={{
+                      backgroundColor: isCyber ? tierMeta.bgCyber : tierMeta.bgNeo,
+                      borderColor: isCyber ? tierMeta.borderCyber : "#000000",
+                      color: isCyber ? tierMeta.color : "#000000",
+                    }}
+                  >
+                    {tierMeta.badgeLabel}
+                  </div>
+
                   {creature.species && (
                     <span
                       className={`text-xs font-mono font-bold px-3 py-1 rounded-full border ${
@@ -355,6 +368,130 @@ export function CreatureDossierModal({
                 )}
               </div>
             </div>
+
+            {/* CONNECTED CHARACTERS (CHARACTER DICTIONARY) */}
+            {(() => {
+              const dictConnections = (creature.connectedCharacters || []).filter(
+                (c) => c.characterType !== "game_character"
+              );
+              if (dictConnections.length === 0) return null;
+
+              return (
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">👤</span>
+                    <h4 className="text-xs font-mono font-black tracking-wider uppercase text-cyan-400">
+                      Connected Characters ({dictConnections.length})
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {dictConnections.map((conn, idx) => (
+                      <div
+                        key={idx}
+                        className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
+                          isCyber
+                            ? "bg-white/[0.04] border-white/10 hover:border-cyan-500/40"
+                            : "bg-white border-2 border-black shadow-[2px_2px_0px_#000]"
+                        }`}
+                      >
+                        {conn.avatar ? (
+                          <img
+                            src={conn.avatar}
+                            alt={conn.name}
+                            className="w-12 h-12 rounded-xl object-cover shrink-0 border border-black/20"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 text-xl">
+                            👤
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <strong className="block text-sm font-bold truncate">
+                            {conn.name}
+                          </strong>
+                          <div className="flex items-center gap-1.5 text-[11px] opacity-75 mt-0.5 flex-wrap">
+                            <span
+                              className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                                isCyber
+                                  ? "bg-cyan-500/20 text-cyan-300"
+                                  : "bg-cyan-100 text-cyan-900 border border-cyan-300"
+                              }`}
+                            >
+                              {conn.relationshipType || "Companion"}
+                            </span>
+                            {conn.sourceTitle && (
+                              <span className="truncate opacity-75">{conn.sourceTitle}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* CONNECTED GAME CHARACTERS */}
+            {(() => {
+              const gameConnections = (creature.connectedCharacters || []).filter(
+                (c) => c.characterType === "game_character"
+              );
+              if (gameConnections.length === 0) return null;
+
+              return (
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🎮</span>
+                    <h4 className="text-xs font-mono font-black tracking-wider uppercase text-purple-400">
+                      Connected Game Characters ({gameConnections.length})
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {gameConnections.map((conn, idx) => (
+                      <div
+                        key={idx}
+                        className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
+                          isCyber
+                            ? "bg-white/[0.04] border-white/10 hover:border-purple-500/40"
+                            : "bg-white border-2 border-black shadow-[2px_2px_0px_#000]"
+                        }`}
+                      >
+                        {conn.avatar ? (
+                          <img
+                            src={conn.avatar}
+                            alt={conn.name}
+                            className="w-12 h-12 rounded-xl object-cover shrink-0 border border-black/20"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 text-xl">
+                            🎮
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <strong className="block text-sm font-bold truncate">
+                            {conn.name}
+                          </strong>
+                          <div className="flex items-center gap-1.5 text-[11px] opacity-75 mt-0.5 flex-wrap">
+                            <span
+                              className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                                isCyber
+                                  ? "bg-purple-500/20 text-purple-300"
+                                  : "bg-purple-100 text-purple-900 border border-purple-300"
+                              }`}
+                            >
+                              {conn.relationshipType || "Companion"}
+                            </span>
+                            {conn.sourceTitle && (
+                              <span className="truncate opacity-75">{conn.sourceTitle}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* TAGS */}
             {creature.tags && creature.tags.length > 0 && (

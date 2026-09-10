@@ -6,12 +6,18 @@ import { useTheme } from "@/lib/theme";
 import {
   CreatureEntry,
   CreatureMedia,
+  CreatureTier,
+  CreatureCharacterRef,
   CLASSIFICATION_PRESETS,
   CREATURE_MEDIA_TYPES,
+  CREATURE_TIERS,
+  CREATURE_TIER_META,
+  CREATURE_RELATIONSHIP_TYPES,
   validateCreatureJson,
   normalizeCreatureJson,
   exportCreatureToJson,
 } from "@/lib/data/creatureSchema";
+import { CharacterSearchResult } from "@/app/api/characters/search/route";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -23,7 +29,7 @@ interface CreatureEditorModalProps {
   creatureToEdit?: CreatureEntry | null;
 }
 
-type TabKey = "basic" | "lore" | "media";
+type TabKey = "basic" | "lore" | "media" | "connections";
 
 export function CreatureEditorModal({
   isOpen,
@@ -41,7 +47,7 @@ export function CreatureEditorModal({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Form states
+  // Form states matching CreatureEntry schema
   const [name, setName] = useState("");
   const [classification, setClassification] = useState("Dragon");
   const [customClassification, setCustomClassification] = useState("");
@@ -51,9 +57,16 @@ export function CreatureEditorModal({
   const [sourceYear, setSourceYear] = useState<number | "">(new Date().getFullYear());
   const [description, setDescription] = useState("");
   const [personalNote, setPersonalNote] = useState("");
+  const [tier, setTier] = useState<CreatureTier>("S");
   const [isFavorite, setIsFavorite] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+
+  // Connected Characters
+  const [connectedCharacters, setConnectedCharacters] = useState<CreatureCharacterRef[]>([]);
+  const [charSearchQuery, setCharSearchQuery] = useState("");
+  const [charSearchResults, setCharSearchResults] = useState<CharacterSearchResult[]>([]);
+  const [isSearchingChars, setIsSearchingChars] = useState(false);
 
   // Media states
   const [media, setMedia] = useState<CreatureMedia>({
@@ -89,8 +102,10 @@ export function CreatureEditorModal({
       setSourceYear(creatureToEdit.sourceYear || "");
       setDescription(creatureToEdit.description || "");
       setPersonalNote(creatureToEdit.personalNote || "");
+      setTier(creatureToEdit.tier || "S");
       setIsFavorite(Boolean(creatureToEdit.isFavorite));
       setTags(creatureToEdit.tags || []);
+      setConnectedCharacters(creatureToEdit.connectedCharacters || []);
       setMedia(creatureToEdit.media || { primary: null, card: null, gallery: [], favouriteMoment: null });
       setJsonText(JSON.stringify(exportCreatureToJson(creatureToEdit), null, 2));
     } else {
@@ -103,8 +118,10 @@ export function CreatureEditorModal({
       setSourceYear(new Date().getFullYear());
       setDescription("");
       setPersonalNote("");
+      setTier("S");
       setIsFavorite(false);
       setTags([]);
+      setConnectedCharacters([]);
       setMedia({ primary: null, card: null, gallery: [], favouriteMoment: null });
       setJsonText(
         JSON.stringify(
@@ -115,6 +132,7 @@ export function CreatureEditorModal({
             sourceTitle: "How to Train Your Dragon",
             mediaType: "Movie",
             sourceYear: 2010,
+            tier: "SS",
             description: "The rarest dragon species, playful and fiercely loyal.",
             personalNote: "The golden standard of mythical companions.",
             isFavorite: true,
@@ -123,16 +141,57 @@ export function CreatureEditorModal({
               card: "https://...",
             },
             tags: ["Night Fury", "Alpha"],
+            connectedCharacters: [
+              {
+                characterId: "sample-hiccup",
+                characterType: "character_dict",
+                name: "Hiccup",
+                sourceTitle: "How to Train Your Dragon",
+                relationshipType: "Partner",
+              },
+            ],
           },
           null,
           2
         )
       );
     }
-    setEditorMode("form");
     setActiveTab("basic");
+    setEditorMode("form");
     setJsonErrors([]);
+    setCharSearchQuery("");
+    setCharSearchResults([]);
   }, [isOpen, creatureToEdit]);
+
+  // Debounced search for characters
+  useEffect(() => {
+    const q = charSearchQuery.trim();
+    if (!q || q.length < 2) {
+      setCharSearchResults([]);
+      setIsSearchingChars(false);
+      return;
+    }
+
+    setIsSearchingChars(true);
+    const handler = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/characters/search?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setCharSearchResults(data);
+        } else {
+          setCharSearchResults([]);
+        }
+      } catch (err) {
+        console.error("Character search query error:", err);
+        setCharSearchResults([]);
+      } finally {
+        setIsSearchingChars(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [charSearchQuery]);
 
   if (!isOpen) return null;
 
@@ -151,6 +210,38 @@ export function CreatureEditorModal({
 
   const handleRemoveTag = (tagToRemove: string) => {
     setTags(tags.filter((t) => t !== tagToRemove));
+  };
+
+  // ── Connection Management ──
+  const handleConnectCharacter = (char: CharacterSearchResult) => {
+    if (connectedCharacters.some((c) => c.characterId === char.id)) {
+      toastWarning(`"${char.name}" is already connected.`);
+      return;
+    }
+
+    const newRef: CreatureCharacterRef = {
+      characterId: char.id,
+      characterType: char.characterType,
+      name: char.name,
+      avatar: char.avatar || null,
+      sourceTitle: char.sourceTitle,
+      relationshipType: "Companion",
+    };
+
+    setConnectedCharacters((prev) => [...prev, newRef]);
+    toastSuccess(`Connected "${char.name}" as Companion!`);
+    setCharSearchQuery("");
+    setCharSearchResults([]);
+  };
+
+  const handleRemoveConnection = (characterId: string) => {
+    setConnectedCharacters((prev) => prev.filter((c) => c.characterId !== characterId));
+  };
+
+  const handleUpdateRelationshipType = (characterId: string, relType: string) => {
+    setConnectedCharacters((prev) =>
+      prev.map((c) => (c.characterId === characterId ? { ...c, relationshipType: relType } : c))
+    );
   };
 
   // ── Save Creature Form ──
@@ -177,6 +268,7 @@ export function CreatureEditorModal({
         sourceYear: sourceYear ? Number(sourceYear) : undefined,
         description: description.trim() || undefined,
         personalNote: personalNote.trim() || undefined,
+        tier,
         isFavorite,
         media: {
           primary: media.primary || null,
@@ -185,6 +277,7 @@ export function CreatureEditorModal({
           favouriteMoment: media.favouriteMoment || null,
         },
         tags,
+        connectedCharacters,
       };
 
       if (creatureToEdit?.id) {
@@ -218,15 +311,14 @@ export function CreatureEditorModal({
 
       if (creatureToEdit?.id) {
         await updateCreature(creatureToEdit.id, normalized);
-        toastSuccess(`Applied JSON updates to "${normalized.name}"!`);
+        toastSuccess(`Updated creature from JSON!`);
       } else {
         await addCreature(normalized);
-        toastSuccess(`Imported creature "${normalized.name}" from JSON!`);
+        toastSuccess(`Created creature from JSON!`);
       }
       onClose();
     } catch (err: any) {
-      setJsonErrors([err.message || "Invalid JSON syntax."]);
-      toastError("Failed to parse JSON.");
+      toastError("Invalid JSON syntax: " + err.message);
     }
   };
 
@@ -234,10 +326,12 @@ export function CreatureEditorModal({
   const handleDelete = () => {
     if (!creatureToEdit) return;
     confirm({
-      title: `Delete Creature "${creatureToEdit.name}"?`,
-      message: `Are you sure you want to remove ${creatureToEdit.name} from your personal Creature Archive?`,
+      title: `Delete ${creatureToEdit.name}?`,
+      message: `Are you sure you want to delete "${creatureToEdit.name}" from your creature collection? This action cannot be undone.`,
       confirmText: "Delete Creature",
+      cancelText: "Cancel",
       variant: "danger",
+      actionType: "delete",
       onConfirm: async () => {
         setIsDeleting(true);
         try {
@@ -245,7 +339,7 @@ export function CreatureEditorModal({
           toastSuccess(`Deleted creature "${creatureToEdit.name}".`);
           onClose();
         } catch (err: any) {
-          toastError("Failed to delete creature.");
+          toastError("Failed to delete creature: " + err.message);
         } finally {
           setIsDeleting(false);
         }
@@ -253,13 +347,13 @@ export function CreatureEditorModal({
     });
   };
 
-  const inputStyle = `w-full px-3.5 py-2 rounded-xl text-xs font-mono transition-all border outline-none ${
+  const inputStyle = `w-full px-3.5 py-2 rounded-xl text-xs font-mono border transition-all focus:outline-none ${
     isCyber
-      ? "bg-black/40 border-cyan-500/30 text-slate-100 placeholder-slate-500 focus:border-cyan-400 focus:shadow-[0_0_12px_rgba(0,245,255,0.25)]"
-      : "bg-white border-2 border-black text-black placeholder-slate-400 shadow-[2px_2px_0px_#000000] focus:bg-amber-50"
+      ? "bg-white/5 border-white/10 text-white focus:border-cyan-400 focus:bg-white/10"
+      : "bg-white border-2 border-black text-black focus:bg-amber-50"
   }`;
 
-  const labelStyle = "block text-xs font-mono font-bold uppercase tracking-wider mb-1 opacity-75";
+  const labelStyle = "block text-xs font-mono font-bold uppercase tracking-wider mb-1 opacity-80";
 
   return (
     <AnimatePresence>
@@ -273,30 +367,29 @@ export function CreatureEditorModal({
           className="fixed inset-0 bg-black/80 backdrop-blur-md"
         />
 
-        {/* Modal Window */}
+        {/* Modal Container */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 15 }}
+          initial={{ opacity: 0, scale: 0.96, y: 12 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-          className={`relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-3xl overflow-hidden border z-10 ${
+          exit={{ opacity: 0, scale: 0.96, y: 12 }}
+          className={`relative z-10 w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl overflow-hidden border shadow-2xl transition-all ${
             isCyber
-              ? "bg-[#050816] border-cyan-500/40 text-slate-100 shadow-[0_0_50px_rgba(0,245,255,0.2)]"
-              : "bg-[#FFFBF5] border-3 border-black text-black shadow-[8px_8px_0px_0px_#000000]"
+              ? "bg-[#060914] border-cyan-500/40 text-slate-100 shadow-[0_0_50px_rgba(0,245,255,0.2)]"
+              : "bg-[#FFFDF9] border-3 border-black text-black shadow-[8px_8px_0px_0px_#000000]"
           }`}
         >
           {/* ── MODAL HEADER ── */}
           <div
             className={`flex items-center justify-between px-6 py-4 border-b shrink-0 ${
               isCyber
-                ? "bg-[#080c1a]/90 border-cyan-500/20"
+                ? "bg-[#080c1a]/95 border-cyan-500/20"
                 : "bg-white border-black"
             }`}
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">🐾</span>
               <div>
-                <h3 className="text-base font-black font-mono uppercase tracking-wider">
+                <h3 className="text-base sm:text-lg font-black font-mono tracking-tight leading-none">
                   {creatureToEdit ? `Edit: ${creatureToEdit.name}` : "Archive New Creature"}
                 </h3>
                 <span className="text-[11px] font-mono opacity-60">
@@ -327,7 +420,27 @@ export function CreatureEditorModal({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setEditorMode("json")}
+                  onClick={() => {
+                    // Update JSON preview before switching
+                    const liveState: Partial<CreatureEntry> = {
+                      id: creatureToEdit?.id,
+                      name,
+                      classification: currentClassification,
+                      species: species || undefined,
+                      sourceTitle,
+                      mediaType,
+                      sourceYear: sourceYear ? Number(sourceYear) : undefined,
+                      description: description || undefined,
+                      personalNote: personalNote || undefined,
+                      tier,
+                      isFavorite,
+                      media,
+                      tags,
+                      connectedCharacters,
+                    };
+                    setJsonText(JSON.stringify(exportCreatureToJson(liveState), null, 2));
+                    setEditorMode("json");
+                  }}
                   className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                     editorMode === "json"
                       ? isCyber
@@ -356,13 +469,13 @@ export function CreatureEditorModal({
           {/* ── FORM TABS (When in Form Mode) ── */}
           {editorMode === "form" && (
             <div
-              className={`flex items-center gap-2 px-6 py-2 border-b shrink-0 text-xs font-mono font-bold ${
+              className={`flex items-center gap-2 px-6 py-2 border-b shrink-0 text-xs font-mono font-bold overflow-x-auto ${
                 isCyber ? "bg-[#080c1a]/50 border-white/10" : "bg-amber-50/50 border-black/10"
               }`}
             >
               <button
                 onClick={() => setActiveTab("basic")}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer shrink-0 ${
                   activeTab === "basic"
                     ? isCyber
                       ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400"
@@ -370,31 +483,48 @@ export function CreatureEditorModal({
                     : "opacity-60 hover:opacity-100"
                 }`}
               >
-                1. Identity & Classification
+                1. Identity & Tier
               </button>
               <button
                 onClick={() => setActiveTab("lore")}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer shrink-0 ${
                   activeTab === "lore"
                     ? isCyber
-                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400"
+                      ? "bg-pink-500/20 text-pink-300 border border-pink-400"
                       : "bg-black text-white"
                     : "opacity-60 hover:opacity-100"
                 }`}
               >
-                2. Lore & Personal Note
+                2. Lore & Scrapbook
               </button>
               <button
                 onClick={() => setActiveTab("media")}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer shrink-0 ${
                   activeTab === "media"
                     ? isCyber
-                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400"
+                      ? "bg-purple-500/20 text-purple-300 border border-purple-400"
                       : "bg-black text-white"
                     : "opacity-60 hover:opacity-100"
                 }`}
               >
                 3. Artwork & Media
+              </button>
+              <button
+                onClick={() => setActiveTab("connections")}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
+                  activeTab === "connections"
+                    ? isCyber
+                      ? "bg-amber-500/20 text-amber-300 border border-amber-400"
+                      : "bg-black text-white"
+                    : "opacity-60 hover:opacity-100"
+                }`}
+              >
+                <span>4. Connected Characters</span>
+                {connectedCharacters.length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-cyan-500 text-black font-black">
+                    {connectedCharacters.length}
+                  </span>
+                )}
               </button>
             </div>
           )}
@@ -411,7 +541,7 @@ export function CreatureEditorModal({
                       : "bg-blue-50 border-blue-400 text-blue-950"
                   }`}
                 >
-                  💻 <strong>In-Editor JSON Workspace:</strong> Directly import, export, or edit creature records as JSON. This keeps the primary collection header clean while empowering full JSON backups and imports.
+                  💻 <strong>In-Editor JSON Workspace:</strong> Directly import, export, or edit creature records as JSON. Tiers and character connections are fully supported.
                 </div>
 
                 <div className="space-y-1">
@@ -574,6 +704,36 @@ export function CreatureEditorModal({
                           placeholder="e.g. 2010"
                           className={inputStyle}
                         />
+                      </div>
+                    </div>
+
+                    {/* Canonical Creature Tier */}
+                    <div className="space-y-2 pt-1">
+                      <label className={labelStyle}>Canonical Tier / Ranking *</label>
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                        {CREATURE_TIERS.map((t) => {
+                          const meta = CREATURE_TIER_META[t];
+                          const isSelected = tier === t;
+                          return (
+                            <button
+                              key={t}
+                              type="button"
+                              onClick={() => setTier(t)}
+                              className={`p-2.5 rounded-xl border text-center font-mono transition-all cursor-pointer ${
+                                isSelected
+                                  ? isCyber
+                                    ? "bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_15px_rgba(255,215,0,0.35)]"
+                                    : "bg-black text-white border-2 border-black shadow-[2px_2px_0px_#000]"
+                                  : isCyber
+                                  ? "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"
+                                  : "bg-white border border-black/20 text-slate-800 hover:bg-slate-100"
+                              }`}
+                            >
+                              <span className="block text-base font-black">{t}</span>
+                              <span className="text-[10px] opacity-75 block truncate">{meta.label.split(" ")[0]}</span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -801,6 +961,229 @@ export function CreatureEditorModal({
                         images={media.gallery || []}
                         onChange={(images) => setMedia((prev) => ({ ...prev, gallery: images }))}
                       />
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 4: CONNECTED CHARACTERS */}
+                {activeTab === "connections" && (
+                  <div className="space-y-5">
+                    {/* Header & Description */}
+                    <div
+                      className={`p-3.5 rounded-2xl border text-xs font-mono leading-relaxed ${
+                        isCyber
+                          ? "bg-amber-500/10 border-amber-500/30 text-amber-200"
+                          : "bg-amber-50 border-2 border-black shadow-[2px_2px_0px_#000]"
+                      }`}
+                    >
+                      🔗 <strong>Relational Character Connections:</strong> Connect this creature to characters from your <strong>Character Dictionary</strong> or <strong>Game Characters</strong>. When connected, this creature will dynamically appear in that character&apos;s information profile!
+                    </div>
+
+                    {/* Searchable Character Connection Picker */}
+                    <div className="space-y-2">
+                      <label className={labelStyle}>Search & Connect Characters</label>
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-2.5 text-xs opacity-60 pointer-events-none">🔎</span>
+                        <input
+                          type="text"
+                          value={charSearchQuery}
+                          onChange={(e) => setCharSearchQuery(e.target.value)}
+                          placeholder="Type character name, alias, or source work..."
+                          className={`${inputStyle} pl-9`}
+                        />
+                        {isSearchingChars && (
+                          <span className="absolute right-3 top-2.5 text-xs opacity-60 animate-spin">⏳</span>
+                        )}
+                      </div>
+
+                      {/* Search Results Dropdown / Picker List */}
+                      {charSearchResults.length > 0 && (
+                        <div
+                          className={`rounded-2xl border p-2 space-y-1 max-h-60 overflow-y-auto ${
+                            isCyber
+                              ? "bg-[#0b1026] border-cyan-500/30"
+                              : "bg-white border-2 border-black shadow-[4px_4px_0px_#000]"
+                          }`}
+                        >
+                          {charSearchResults.map((res) => {
+                            const isAlreadyConnected = connectedCharacters.some(
+                              (c) => c.characterId === res.id
+                            );
+                            const isDict = res.characterType === "character_dict";
+
+                            return (
+                              <div
+                                key={res.id}
+                                className={`flex items-center justify-between p-2 rounded-xl border text-xs font-mono transition-all ${
+                                  isCyber
+                                    ? "bg-white/5 border-white/10 hover:border-cyan-400/50"
+                                    : "bg-slate-50 border-black/15 hover:bg-amber-50"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  {res.avatar ? (
+                                    <img
+                                      src={res.avatar}
+                                      alt={res.name}
+                                      className="w-8 h-8 rounded-lg object-cover shrink-0"
+                                    />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">
+                                      👤
+                                    </div>
+                                  )}
+                                  <div className="min-w-0">
+                                    <strong className="block truncate font-bold">{res.name}</strong>
+                                    <div className="flex items-center gap-1.5 text-[10px] opacity-75">
+                                      <span
+                                        className={`px-1.5 py-0.2 rounded font-bold ${
+                                          isDict
+                                            ? isCyber
+                                              ? "bg-amber-500/20 text-amber-300"
+                                              : "bg-amber-200 text-amber-900"
+                                            : isCyber
+                                            ? "bg-purple-500/20 text-purple-300"
+                                            : "bg-purple-200 text-purple-900"
+                                        }`}
+                                      >
+                                        {isDict ? "Character Dict" : "Game Character"}
+                                      </span>
+                                      <span className="truncate">{res.sourceTitle}</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  disabled={isAlreadyConnected}
+                                  onClick={() => handleConnectCharacter(res)}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold shrink-0 transition-all cursor-pointer ${
+                                    isAlreadyConnected
+                                      ? "opacity-40 cursor-not-allowed bg-gray-500/20"
+                                      : isCyber
+                                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400 hover:bg-cyan-500/30"
+                                      : "bg-black text-white hover:bg-slate-800"
+                                  }`}
+                                >
+                                  {isAlreadyConnected ? "Connected" : "+ Connect"}
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* List of Connected Characters */}
+                    <div className="space-y-3 pt-2">
+                      <div className="flex items-center justify-between border-b pb-1.5" style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0" }}>
+                        <span className="text-xs font-mono font-bold uppercase tracking-wider">
+                          Active Connections ({connectedCharacters.length})
+                        </span>
+                        {connectedCharacters.length > 0 && (
+                          <span className="text-[11px] font-mono opacity-60">
+                            Configure relationship type per character
+                          </span>
+                        )}
+                      </div>
+
+                      {connectedCharacters.length === 0 ? (
+                        <div className="p-6 rounded-2xl border border-dashed text-center font-mono text-xs opacity-60 space-y-1">
+                          <p>No characters connected yet.</p>
+                          <p className="text-[10px]">Use the search bar above to link this creature to characters.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {connectedCharacters.map((conn) => {
+                            const isDict = conn.characterType === "character_dict";
+                            return (
+                              <div
+                                key={conn.characterId}
+                                className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl border ${
+                                  isCyber
+                                    ? "bg-white/5 border-white/10"
+                                    : "bg-white border-2 border-black shadow-[2px_2px_0px_#000]"
+                                }`}
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  {conn.avatar ? (
+                                    <img
+                                      src={conn.avatar}
+                                      alt={conn.name}
+                                      className="w-10 h-10 rounded-xl object-cover shrink-0 border border-black/20"
+                                    />
+                                  ) : (
+                                    <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 text-base">
+                                      👤
+                                    </div>
+                                  )}
+                                  <div className="min-w-0">
+                                    <strong className="block text-sm font-bold truncate">
+                                      {conn.name}
+                                    </strong>
+                                    <div className="flex items-center gap-2 text-[11px] opacity-75 flex-wrap">
+                                      <span
+                                        className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                                          isDict
+                                            ? isCyber
+                                              ? "bg-amber-500/20 text-amber-300"
+                                              : "bg-amber-100 text-amber-900 border border-amber-300"
+                                            : isCyber
+                                            ? "bg-purple-500/20 text-purple-300"
+                                            : "bg-purple-100 text-purple-900 border border-purple-300"
+                                        }`}
+                                      >
+                                        {isDict ? "Character Dict" : "Game Character"}
+                                      </span>
+                                      {conn.sourceTitle && (
+                                        <span className="truncate">{conn.sourceTitle}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 shrink-0">
+                                  {/* Relationship type dropdown */}
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[10px] font-mono opacity-60 uppercase">Role:</span>
+                                    <select
+                                      value={conn.relationshipType || "Companion"}
+                                      onChange={(e) =>
+                                        handleUpdateRelationshipType(conn.characterId, e.target.value)
+                                      }
+                                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border cursor-pointer ${
+                                        isCyber
+                                          ? "bg-black/60 border-white/20 text-cyan-300"
+                                          : "bg-slate-100 border-black text-black"
+                                      }`}
+                                    >
+                                      {CREATURE_RELATIONSHIP_TYPES.map((type) => (
+                                        <option key={type} value={type}>
+                                          {type}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+
+                                  {/* Remove Button */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveConnection(conn.characterId)}
+                                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-all border cursor-pointer ${
+                                      isCyber
+                                        ? "bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20"
+                                        : "bg-red-100 text-red-700 border border-red-300 hover:bg-red-200"
+                                    }`}
+                                    title="Remove character connection"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

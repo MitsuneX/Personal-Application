@@ -11,6 +11,8 @@ import { isTokusatsuEntry } from "@/lib/data/tokusatsuDataHelper";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { useToast } from "@/components/ui/ToastProvider";
 import { resolveCharacterDictionaryGallery, CharacterGalleryMediaItem } from "@/lib/utils/mediaResolver";
+import { CreatureEntry, getClassificationMeta } from "@/lib/data/creatureSchema";
+import { CreatureDossierModal } from "@/components/ui/CreatureDossierModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Props {
@@ -21,13 +23,7 @@ interface Props {
   onLike?: (id: string) => void;
 }
 
-const TABS = [
-  { id: "overview", label: "OVERVIEW", icon: "🏛️" },
-  { id: "gallery", label: "GALLERY", icon: "🖼️" },
-  { id: "profile", label: "PERSONAL / LORE", icon: "📖" },
-  { id: "appearances", label: "APPEARANCES", icon: "🎬" },
-] as const;
-type TabId = (typeof TABS)[number]["id"];
+type TabId = "overview" | "gallery" | "profile" | "appearances" | "creatures";
 
 // ─── Sub-Components & Theme Helpers ─────────────────────────────────────────
 
@@ -149,7 +145,7 @@ export function CharacterDictProfileModal({
   }
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { hallOfFame = [], gameCharacters = [], dossierCharacters = [], likeHof } = useDashboardStore();
+  const { hallOfFame = [], gameCharacters = [], dossierCharacters = [], creatures = [], likeHof } = useDashboardStore();
   const liveEntry = (entry ? hallOfFame.find((h) => h.id === entry.id) : null) || entry;
 
   const [activeTab, setActiveTab] = useState<TabId>("overview");
@@ -157,9 +153,42 @@ export function CharacterDictProfileModal({
   const [lightboxTitle, setLightboxTitle] = useState("");
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
+  // Creature Dossier Modal State
+  const [selectedCreature, setSelectedCreature] = useState<CreatureEntry | null>(null);
+  const [isCreatureModalOpen, setIsCreatureModalOpen] = useState(false);
+
   // Cross-Navigation Game Character Modal State
   const [gameCharModalOpen, setGameCharModalOpen] = useState(false);
   const [targetGameChar, setTargetGameChar] = useState<GameCharacterEntry | null>(null);
+
+  // Compute connected creatures
+  const connectedCreatures = useMemo(() => {
+    if (!liveEntry) return [];
+    const charId = liveEntry.id;
+    const charName = liveEntry.name.toLowerCase().trim();
+
+    return creatures.filter((c) =>
+      (c.connectedCharacters || []).some(
+        (ref) =>
+          ref.characterId === charId ||
+          (ref.name && ref.name.toLowerCase().trim() === charName)
+      )
+    );
+  }, [creatures, liveEntry]);
+
+  // Dynamic tabs: only show "creatures" if connectedCreatures.length > 0
+  const dynamicTabs = useMemo(() => {
+    const tabs: Array<{ id: TabId; label: string; icon: string }> = [
+      { id: "overview", label: "OVERVIEW", icon: "🏛️" },
+      { id: "gallery", label: "GALLERY", icon: "🖼️" },
+      { id: "profile", label: "PERSONAL / LORE", icon: "📖" },
+      { id: "appearances", label: "APPEARANCES", icon: "🎬" },
+    ];
+    if (connectedCreatures.length > 0) {
+      tabs.push({ id: "creatures", label: "CREATURES", icon: "🐾" });
+    }
+    return tabs;
+  }, [connectedCreatures]);
 
   // Gallery deletion state — MUST be above early return to satisfy Rules of Hooks
   const updateHof = useDashboardStore((s) => s.updateHof);
@@ -672,7 +701,7 @@ export function CharacterDictProfileModal({
 
               {/* Navigation Tabs Bar */}
               <div className="flex items-center gap-2 mt-3 pt-2.5 border-t border-white/10 overflow-x-auto scrollbar-none text-xs font-mono font-bold">
-                {TABS.map((t) => {
+                {dynamicTabs.map((t) => {
                   const isActive = activeTab === t.id;
                   return (
                     <button
@@ -1126,6 +1155,101 @@ export function CharacterDictProfileModal({
                   </InformationSection>
                 </div>
               )}
+
+              {/* TAB 5: CREATURES (Only rendered when activeTab === "creatures" AND connectedCreatures.length > 0) */}
+              {activeTab === "creatures" && connectedCreatures.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0" }}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🐾</span>
+                      <h3 className="text-sm sm:text-base font-black font-mono theme-text-primary tracking-tight uppercase">
+                        Connected Creatures & Companions ({connectedCreatures.length})
+                      </h3>
+                    </div>
+                    <span className="text-[11px] font-mono theme-text-muted">
+                      Click any creature to inspect full bestiary dossier
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {connectedCreatures.map((cr) => {
+                      const meta = getClassificationMeta(cr.classification);
+                      const myConnection = (cr.connectedCharacters || []).find(
+                        (ref) =>
+                          ref.characterId === liveEntry?.id ||
+                          (ref.name && ref.name.toLowerCase().trim() === liveEntry?.name?.toLowerCase().trim())
+                      );
+                      const art = cr.media.card || cr.media.primary || cr.media.gallery?.[0];
+
+                      return (
+                        <div
+                          key={cr.id}
+                          onClick={() => {
+                            setSelectedCreature(cr);
+                            setIsCreatureModalOpen(true);
+                          }}
+                          className={`group relative rounded-2xl overflow-hidden border cursor-pointer transition-all duration-300 ${
+                            isCyber
+                              ? "bg-white/[0.04] border-white/10 hover:border-cyan-400/60 hover:shadow-[0_0_20px_rgba(0,245,255,0.25)]"
+                              : "bg-white border-2 border-black shadow-[3px_3px_0px_#000] hover:translate-y-[-2px]"
+                          }`}
+                        >
+                          {/* Image Container (3:4 ratio) */}
+                          <div className="relative aspect-[3/4] w-full overflow-hidden bg-slate-900">
+                            {art ? (
+                              <img
+                                src={art}
+                                alt={cr.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-5xl">
+                                {meta.icon}
+                              </div>
+                            )}
+
+                            {/* Classification Badge (Top Right) */}
+                            <div
+                              className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-black uppercase border shadow-md flex items-center gap-1"
+                              style={{
+                                backgroundColor: isCyber ? meta.bgCyber : meta.bgNeo,
+                                borderColor: isCyber ? meta.borderCyber : meta.borderNeo,
+                                color: isCyber ? meta.color : "#000000",
+                              }}
+                            >
+                              <span>{meta.icon}</span>
+                              <span>{meta.label}</span>
+                            </div>
+
+                            {/* Relationship Role Badge (Top Left) */}
+                            {myConnection?.relationshipType && (
+                              <div
+                                className={`absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black uppercase border shadow-md ${
+                                  isCyber
+                                    ? "bg-black/70 border-cyan-400/50 text-cyan-300"
+                                    : "bg-amber-300 border-black text-black"
+                                }`}
+                              >
+                                {myConnection.relationshipType}
+                              </div>
+                            )}
+
+                            {/* Bottom Gradient Overlay */}
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/60 to-transparent p-3 pt-8 text-white space-y-0.5">
+                              <h4 className="text-sm font-black font-mono tracking-tight truncate">
+                                {cr.name}
+                              </h4>
+                              <p className="text-[10px] font-mono opacity-75 truncate">
+                                {cr.species ? `${cr.species} · ` : ""}{cr.sourceTitle}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>
@@ -1213,6 +1337,19 @@ export function CharacterDictProfileModal({
           onClose={() => setGameCharModalOpen(false)}
           onEdit={() => {}}
           onDelete={() => {}}
+        />
+      )}
+
+      {/* Creature Dossier Modal */}
+      {selectedCreature && (
+        <CreatureDossierModal
+          isOpen={isCreatureModalOpen}
+          creature={selectedCreature}
+          onClose={() => {
+            setIsCreatureModalOpen(false);
+            setSelectedCreature(null);
+          }}
+          onEdit={undefined}
         />
       )}
     </>

@@ -59,7 +59,7 @@ export function HofFilterToolbar({
   const secondaryActiveCount = useMemo(() => {
     let count = 0;
     if (countryFilter !== "all") count++;
-    if (professionFilter !== "all" && categoryFilter !== "game" && categoryFilter !== "couples") count++;
+    if (professionFilter !== "all" && categoryFilter !== "game" && categoryFilter !== "couples" && categoryFilter !== "creatures") count++;
     if (seasonFilter !== "all") count++;
     if (prestigeFilter !== "all") count++;
     if (featuredOnly) count++;
@@ -169,6 +169,8 @@ export function HofFilterToolbar({
               placeholder={
                 categoryFilter === "couples"
                   ? "Search couples by name, partners, or source work..."
+                  : categoryFilter === "creatures"
+                  ? "Search creatures by name, classification, species, work..."
                   : "Search museum archives for legend or masterpiece..."
               }
               className="w-full pl-9 pr-8 py-2 rounded-xl border text-xs font-mono focus:outline-none transition-all"
@@ -207,6 +209,7 @@ export function HofFilterToolbar({
           >
             <option value="all">🌟 All Categories</option>
             <option value="couples">💞 Couples</option>
+            <option value="creatures">🐾 Creatures</option>
             <option value="drama">🎭 Drama</option>
             <option value="anime">⛩️ Anime</option>
             <option value="movie">🎬 Movie</option>
@@ -231,12 +234,20 @@ export function HofFilterToolbar({
             }}
           >
             <option value="likes">
-              {categoryFilter === "couples" ? "❤️ Most Loves" : "❤️ Most Liked"}
+              {categoryFilter === "couples"
+                ? "❤️ Most Loves"
+                : categoryFilter === "creatures"
+                ? "❤️ Most Bonds"
+                : "❤️ Most Liked"}
             </option>
             <option value="name">
-              {categoryFilter === "couples" ? "🔤 Couple Name (A-Z)" : "🔤 Name (A-Z)"}
+              {categoryFilter === "couples"
+                ? "🔤 Couple Name (A-Z)"
+                : categoryFilter === "creatures"
+                ? "🔤 Creature Name (A-Z)"
+                : "🔤 Name (A-Z)"}
             </option>
-            {categoryFilter !== "couples" && <option value="works">🎬 Most Works</option>}
+            {categoryFilter !== "couples" && categoryFilter !== "creatures" && <option value="works">🎬 Most Works</option>}
           </select>
         </div>
       </div>
@@ -253,30 +264,58 @@ export function HofFilterToolbar({
             style={{ borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#E2E8F0" }}
           >
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {/* 1. Country / Region Dropdown */}
+              {/* 1. Country / Classification Dropdown */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase theme-text-muted block">Country ▼</label>
-                <select
-                  value={countryFilter}
-                  onChange={(e) => setCountryFilter(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-xl border text-xs font-mono font-bold cursor-pointer"
-                  style={{
-                    backgroundColor: isCyber ? "rgba(255,255,255,0.08)" : "#F8FAFC",
-                    color: isCyber ? "#FFF" : "#000",
-                    borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000",
-                  }}
-                >
-                  <option value="all">All Countries</option>
-                  <option value="Japan">🇯🇵 Japan</option>
-                  <option value="Korea">🇰🇷 Korea</option>
-                  <option value="China">🇨🇳 China</option>
-                  <option value="Hollywood">🎬 Hollywood</option>
-                  <option value="Indonesia">🇮🇩 Indonesia</option>
-                </select>
+                <label className="text-[10px] font-bold uppercase theme-text-muted block">
+                  {categoryFilter === "creatures" ? "Classification ▼" : "Country ▼"}
+                </label>
+                {categoryFilter === "creatures" ? (
+                  <select
+                    value={countryFilter}
+                    onChange={(e) => setCountryFilter(e.target.value)}
+                    className="w-full px-2.5 py-1.5 rounded-xl border text-xs font-mono font-bold cursor-pointer"
+                    style={{
+                      backgroundColor: isCyber ? "rgba(255,255,255,0.08)" : "#F8FAFC",
+                      color: isCyber ? "#FFF" : "#000",
+                      borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000",
+                    }}
+                  >
+                    <option value="all">All Classifications</option>
+                    <option value="dragon">🐉 Dragon</option>
+                    <option value="familiar">✨ Familiar</option>
+                    <option value="beast">🐾 Beast</option>
+                    <option value="spirit">👻 Spirit</option>
+                    <option value="mount">🐎 Mount</option>
+                    <option value="monster">👾 Monster</option>
+                    <option value="construct">🤖 Construct</option>
+                    <option value="alien">🛸 Alien</option>
+                    <option value="mythical">🌟 Mythical</option>
+                    <option value="undead">💀 Undead</option>
+                    <option value="other">🔮 Other</option>
+                  </select>
+                ) : (
+                  <select
+                    value={countryFilter}
+                    onChange={(e) => setCountryFilter(e.target.value)}
+                    className="w-full px-2.5 py-1.5 rounded-xl border text-xs font-mono font-bold cursor-pointer"
+                    style={{
+                      backgroundColor: isCyber ? "rgba(255,255,255,0.08)" : "#F8FAFC",
+                      color: isCyber ? "#FFF" : "#000",
+                      borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000",
+                    }}
+                  >
+                    <option value="all">All Countries</option>
+                    <option value="Japan">🇯🇵 Japan</option>
+                    <option value="Korea">🇰🇷 Korea</option>
+                    <option value="China">🇨🇳 China</option>
+                    <option value="Hollywood">🎬 Hollywood</option>
+                    <option value="Indonesia">🇮🇩 Indonesia</option>
+                  </select>
+                )}
               </div>
 
-              {/* 2. Profession (Hidden in Game and Couples mode) */}
-              {categoryFilter !== "game" && categoryFilter !== "couples" && (
+              {/* 2. Profession (Hidden in Game, Couples, and Creatures mode) */}
+              {categoryFilter !== "game" && categoryFilter !== "couples" && categoryFilter !== "creatures" && (
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase theme-text-muted block">Profession ▼</label>
                   <select
@@ -321,10 +360,14 @@ export function HofFilterToolbar({
                 </select>
               </div>
 
-              {/* 4. Prestige / Tier Dropdown (Contextual: Couple Tiers vs Hall Prestige) */}
+              {/* 4. Prestige / Tier Dropdown (Contextual: Couple Tiers vs Creature Tiers vs Hall Prestige) */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold uppercase theme-text-muted block">
-                  {categoryFilter === "couples" ? "Couple Tier ▼" : "Prestige ▼"}
+                  {categoryFilter === "couples"
+                    ? "Couple Tier ▼"
+                    : categoryFilter === "creatures"
+                    ? "Creature Tier ▼"
+                    : "Prestige ▼"}
                 </label>
                 <select
                   value={prestigeFilter}
@@ -339,6 +382,15 @@ export function HofFilterToolbar({
                   {categoryFilter === "couples" ? (
                     <>
                       <option value="all">All Couple Tiers</option>
+                      <option value="SS">💎 SS Tier</option>
+                      <option value="S">👑 S Tier</option>
+                      <option value="A">✨ A Tier</option>
+                      <option value="B">🌸 B Tier</option>
+                      <option value="C">🌱 C Tier</option>
+                    </>
+                  ) : categoryFilter === "creatures" ? (
+                    <>
+                      <option value="all">All Creature Tiers</option>
                       <option value="SS">💎 SS Tier</option>
                       <option value="S">👑 S Tier</option>
                       <option value="A">✨ A Tier</option>

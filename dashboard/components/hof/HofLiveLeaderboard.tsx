@@ -5,7 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { HallOfFameEntry, useDashboardStore } from "@/lib/store/dashboardStore";
 import { HofEntryCard, getGroupForEntry, getGroupDetails, getTypeLabel } from "@/components/cards/HofEntryCard";
 import { HofCoupleCard } from "@/components/cards/HofCoupleCard";
+import { HofCreatureCard } from "@/components/cards/HofCreatureCard";
 import { CoupleEntry, TIER_COLORS } from "@/lib/data/coupleSchema";
+import { CreatureEntry, CREATURE_TIER_META, getClassificationMeta } from "@/lib/data/creatureSchema";
 import { getPrestigeTier, getRankMovement } from "@/lib/utils/hofEngine";
 import { getLeaderboardRowAvatarUrl } from "@/lib/utils/mediaResolver";
 import { useContextMenu } from "@/hooks/useContextMenu";
@@ -17,6 +19,7 @@ interface HofLiveLeaderboardProps {
   isCyber: boolean;
   onOpenProfile: (entry: HallOfFameEntry) => void;
   onOpenCoupleProfile?: (couple: CoupleEntry) => void;
+  onOpenCreatureProfile?: (creature: CreatureEntry) => void;
   onCompare: (entry: HallOfFameEntry) => void;
 }
 
@@ -25,9 +28,10 @@ export function HofLiveLeaderboard({
   isCyber,
   onOpenProfile,
   onOpenCoupleProfile,
+  onOpenCreatureProfile,
   onCompare,
 }: HofLiveLeaderboardProps) {
-  const { likeHof, loveCouple } = useDashboardStore();
+  const { likeHof, loveCouple, bondCreature } = useDashboardStore();
   const { openContextMenu } = useContextMenu();
   const router = useRouter();
   const [viewStyle, setViewStyle] = useState<"table" | "grid">("table");
@@ -117,8 +121,41 @@ export function HofLiveLeaderboard({
               const isCouple = (entry as any)?.isCoupleEntry && (entry as any)?.coupleData;
               const couple: CoupleEntry | null = isCouple ? (entry as any).coupleData : null;
 
+              const isCreature = (entry as any)?.isCreatureEntry && (entry as any)?.creatureData;
+              const creature: CreatureEntry | null = isCreature ? (entry as any).creatureData : null;
+
               const handleContextMenu = (e: React.MouseEvent) => {
                 e.preventDefault();
+                if (creature) {
+                  openContextMenu(
+                    e,
+                    [
+                      {
+                        id: "row-creature-dossier",
+                        label: `Open ${creature.name} Dossier`,
+                        icon: "🐾",
+                        onClick: () => (onOpenCreatureProfile ? onOpenCreatureProfile(creature) : onOpenProfile(entry)),
+                      },
+                      {
+                        id: "row-creature-bond",
+                        label: `Bond (+1) — ${creature.likes || 0} Affection`,
+                        icon: "❤️",
+                        onClick: () => bondCreature(creature.id),
+                      },
+                      {
+                        id: "row-creature-copy",
+                        label: "Copy Creature Name",
+                        icon: "📋",
+                        onClick: () => {
+                          navigator.clipboard.writeText(creature.name);
+                        },
+                      },
+                    ],
+                    creature.name
+                  );
+                  return;
+                }
+
                 if (couple) {
                   openContextMenu(
                     e,
@@ -182,6 +219,123 @@ export function HofLiveLeaderboard({
                   entry.name
                 );
               };
+
+              // Creature Table Row
+              if (creature) {
+                const classMeta = getClassificationMeta(creature.classification);
+                const tierMeta = CREATURE_TIER_META[creature.tier || "S"] || CREATURE_TIER_META.S;
+                const connectedCount = (creature.connectedCharacters || []).length;
+                const avatar = creature.avatarUrl || creature.media?.card || creature.media?.primary || "";
+
+                return (
+                  <motion.div
+                    key={entry.id}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    onContextMenu={handleContextMenu}
+                    onClick={() => (onOpenCreatureProfile ? onOpenCreatureProfile(creature) : onOpenProfile(entry))}
+                    className="p-3.5 sm:p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer transition-all hover:translate-x-1 shadow-md font-mono"
+                    style={{
+                      backgroundColor: rowHighlightBg,
+                      borderColor: rowHighlightBorder,
+                      borderWidth: isCyber ? "1px" : "2px",
+                    }}
+                  >
+                    {/* Left: Rank + Movement + Avatar + Info */}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className={`w-9 h-9 rounded-xl border flex items-center justify-center text-xs font-black shrink-0 ${rankBadgeStyle}`}>
+                        #{actualRank}
+                      </span>
+
+                      <span className={`px-2 py-1 rounded-lg border text-[10px] font-black shrink-0 flex items-center gap-1 ${movement.badgeBg}`}>
+                        <span>{movement.icon}</span>
+                        <span>{movement.label}</span>
+                      </span>
+
+                      {/* Creature Avatar */}
+                      <div
+                        className="w-10 h-10 rounded-full border-2 overflow-hidden shrink-0 relative bg-slate-900 flex items-center justify-center text-base"
+                        style={{ borderColor: isCyber ? tierMeta.color : "#000" }}
+                      >
+                        {avatar ? (
+                          <img src={avatar} alt={creature.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span>{classMeta.icon}</span>
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <strong
+                            onClick={() => (onOpenCreatureProfile ? onOpenCreatureProfile(creature) : onOpenProfile(entry))}
+                            className="text-sm font-black theme-text-primary hover:underline truncate"
+                          >
+                            {creature.name}
+                          </strong>
+                          <span
+                            className="px-2 py-0.5 rounded-md text-[9px] font-bold border truncate"
+                            style={{
+                              backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#E0F2FE",
+                              borderColor: isCyber ? "rgba(0,245,255,0.4)" : "#000000",
+                              color: isCyber ? "#00F5FF" : "#0369A1",
+                            }}
+                          >
+                            {classMeta.icon} {classMeta.label}
+                          </span>
+                          {connectedCount > 0 && (
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-400/30">
+                              🐾 {connectedCount} Connected
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] theme-text-muted truncate mt-0.5">
+                          <span>{creature.species || "Creature"}</span>
+                          <span>·</span>
+                          <span className="truncate">{creature.originWork || "Bestiary"}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: Tier Badge + Affection + Quick Profile */}
+                    <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-0" style={{ borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#E2E8F0" }}>
+                      <div
+                        className="px-2.5 py-1 rounded-xl text-[10px] font-black border uppercase tracking-wider shrink-0"
+                        style={{
+                          backgroundColor: isCyber ? tierMeta.bgCyber : tierMeta.bgNeo,
+                          borderColor: tierMeta.color,
+                          color: isCyber ? tierMeta.color : "#000000",
+                          boxShadow: isCyber ? `0 0 10px ${tierMeta.color}40` : "none",
+                        }}
+                      >
+                        {creature.tier || "S"} TIER
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          bondCreature(creature.id);
+                        }}
+                        className="px-3 py-1.5 rounded-xl border text-xs font-black bg-pink-500/10 text-pink-500 border-pink-500/30 hover:bg-pink-500/20 transition-all flex items-center gap-1 cursor-pointer"
+                        title="Form affection bond (+1)"
+                      >
+                        <span>❤️</span>
+                        <span>{creature.likes || 0}</span>
+                      </button>
+
+                      <button
+                        onClick={() => (onOpenCreatureProfile ? onOpenCreatureProfile(creature) : onOpenProfile(entry))}
+                        className="w-8 h-8 rounded-xl border bg-black/5 dark:bg-white/5 flex items-center justify-center text-xs hover:bg-black/10 transition-all cursor-pointer"
+                        title="Inspect Creature Dossier"
+                      >
+                        🐾
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              }
 
               // Couple Table Row
               if (couple) {
@@ -430,10 +584,19 @@ export function HofLiveLeaderboard({
             const actualRank = idx + 4;
             const group = getGroupDetails(getGroupForEntry(entry));
             const isCouple = (entry as any)?.isCoupleEntry && (entry as any)?.coupleData;
+            const isCreature = (entry as any)?.isCreatureEntry && (entry as any)?.creatureData;
 
             return (
               <div key={entry.id} className="w-full flex justify-center max-w-[280px]">
-                {isCouple ? (
+                {isCreature ? (
+                  <HofCreatureCard
+                    creature={(entry as any).creatureData}
+                    rank={actualRank}
+                    isCyber={isCyber}
+                    onOpenProfile={(c) => (onOpenCreatureProfile ? onOpenCreatureProfile(c) : onOpenProfile(entry))}
+                    onCompare={() => onCompare(entry)}
+                  />
+                ) : isCouple ? (
                   <HofCoupleCard
                     couple={(entry as any).coupleData}
                     rank={actualRank}

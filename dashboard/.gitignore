@@ -45,4 +45,8 @@ scratch/
 scratch_*
 implementation_plan.md
 
-
+# gallery & large binary assets (never commit these)
+../gallery/
+*.zip
+*.apk
+*.mp4

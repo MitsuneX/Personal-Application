@@ -11,6 +11,78 @@ export interface CreatureMedia {
   favouriteMoment?: string | null; // Special memory scene / emotional moment
 }
 
+export const CREATURE_TIERS = ["SS", "S", "A", "B", "C"] as const;
+export type CreatureTier = (typeof CREATURE_TIERS)[number];
+
+export const CREATURE_TIER_META: Record<
+  CreatureTier,
+  { label: string; badgeLabel: string; color: string; bgCyber: string; bgNeo: string; borderCyber: string }
+> = {
+  SS: {
+    label: "Mythic / Supreme Bestiary",
+    badgeLabel: "SS TIER",
+    color: "#FFD700",
+    bgCyber: "rgba(255, 215, 0, 0.15)",
+    bgNeo: "#FEF08A",
+    borderCyber: "rgba(255, 215, 0, 0.6)",
+  },
+  S: {
+    label: "Legendary / Apex",
+    badgeLabel: "S TIER",
+    color: "#00F5FF",
+    bgCyber: "rgba(0, 245, 255, 0.15)",
+    bgNeo: "#BAE6FD",
+    borderCyber: "rgba(0, 245, 255, 0.6)",
+  },
+  A: {
+    label: "Great Beast / Noble",
+    badgeLabel: "A TIER",
+    color: "#A855F7",
+    bgCyber: "rgba(168, 85, 247, 0.15)",
+    bgNeo: "#E9D5FF",
+    borderCyber: "rgba(168, 85, 247, 0.6)",
+  },
+  B: {
+    label: "Valued Companion",
+    badgeLabel: "B TIER",
+    color: "#10B981",
+    bgCyber: "rgba(16, 185, 129, 0.15)",
+    bgNeo: "#BBF7D0",
+    borderCyber: "rgba(16, 185, 129, 0.6)",
+  },
+  C: {
+    label: "Familiar / Pet",
+    badgeLabel: "C TIER",
+    color: "#94A3B8",
+    bgCyber: "rgba(148, 163, 184, 0.15)",
+    bgNeo: "#E2E8F0",
+    borderCyber: "rgba(148, 163, 184, 0.6)",
+  },
+};
+
+export const CREATURE_RELATIONSHIP_TYPES = [
+  "Partner",
+  "Companion",
+  "Owner",
+  "Summon",
+  "Trainer",
+  "Mount",
+  "Familiar",
+  "Associated",
+  "Other",
+] as const;
+export type CreatureRelationshipType = (typeof CREATURE_RELATIONSHIP_TYPES)[number];
+
+export interface CreatureCharacterRef {
+  characterId: string;
+  characterType: "character_dict" | "game_character";
+  name: string;
+  avatar?: string | null;
+  avatarUrl?: string | null;
+  sourceTitle?: string;
+  relationshipType?: string; // "Partner" | "Companion" | "Owner" | "Summon" | "Trainer" | "Mount" | "Familiar" | "Associated" | "Other"
+}
+
 export interface CreatureEntry {
   id: string;
   userId?: string | null;
@@ -18,14 +90,18 @@ export interface CreatureEntry {
   classification: string;        // e.g. "Dragon", "Familiar", "Pet", "Beast", "Companion", "Monster", "Mascot", "Spirit", "Animal", "Other"
   species?: string;              // e.g. "Night Fury", "Flying Bison", "Fox Spirit", "Kitsune"
   sourceTitle: string;           // e.g. "How to Train Your Dragon", "Avatar: The Last Airbender"
+  originWork?: string;           // Convenience alias for sourceTitle
   mediaType: string;             // "Anime" | "Game" | "Movie" | "Drama" | "Book" | "Manga" | "Mythology" | "Other"
   sourceYear?: number;
   description?: string;          // Canonical lore / official about
   personalNote?: string;         // Personal favourite scrapbook note: "Why I Love This Creature"
+  tier: CreatureTier;            // Canonical ranking tier ("SS" | "S" | "A" | "B" | "C")
   isFavorite: boolean;
   likes: number;                 // Bond / Affection count
   media: CreatureMedia;
+  avatarUrl?: string | null;     // Convenience alias for media.card || media.primary
   tags: string[];
+  connectedCharacters?: CreatureCharacterRef[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -229,6 +305,7 @@ export function normalizeCreatureJson(raw: any, fallbackId?: string): CreatureEn
     sourceYear: typeof raw.sourceYear === "number" ? raw.sourceYear : raw.sourceYear ? parseInt(String(raw.sourceYear), 10) || undefined : undefined,
     description: raw.description ? String(raw.description).trim() : "",
     personalNote: raw.personalNote ? String(raw.personalNote).trim() : "",
+    tier: (["SS", "S", "A", "B", "C"].includes(raw.tier) ? raw.tier : "S") as CreatureTier,
     isFavorite: Boolean(raw.isFavorite ?? raw.favourite ?? false),
     likes: typeof raw.likes === "number" ? raw.likes : 0,
     media: {
@@ -238,6 +315,18 @@ export function normalizeCreatureJson(raw: any, fallbackId?: string): CreatureEn
       favouriteMoment: media.favouriteMoment || null,
     },
     tags: Array.isArray(raw.tags) ? raw.tags.map((t: any) => String(t).trim()).filter(Boolean) : [],
+    connectedCharacters: Array.isArray(raw.connectedCharacters)
+      ? raw.connectedCharacters
+          .map((c: any) => ({
+            characterId: String(c.characterId || c.id || "").trim(),
+            characterType: c.characterType === "game_character" ? ("game_character" as const) : ("character_dict" as const),
+            name: String(c.name || "Unknown Character").trim(),
+            avatar: c.avatar || c.avatarUrl || c.imageUrl || null,
+            sourceTitle: c.sourceTitle ? String(c.sourceTitle).trim() : undefined,
+            relationshipType: c.relationshipType ? String(c.relationshipType).trim() : "Companion",
+          }))
+          .filter((c: any) => c.characterId)
+      : [],
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
   };
@@ -254,6 +343,7 @@ export function exportCreatureToJson(creature: Partial<CreatureEntry>) {
     sourceYear: creature.sourceYear || undefined,
     description: creature.description || undefined,
     personalNote: creature.personalNote || undefined,
+    tier: creature.tier || "S",
     isFavorite: Boolean(creature.isFavorite),
     likes: creature.likes || 0,
     media: {
@@ -263,6 +353,10 @@ export function exportCreatureToJson(creature: Partial<CreatureEntry>) {
       favouriteMoment: creature.media?.favouriteMoment || undefined,
     },
     tags: creature.tags && creature.tags.length > 0 ? creature.tags : undefined,
+    connectedCharacters:
+      creature.connectedCharacters && creature.connectedCharacters.length > 0
+        ? creature.connectedCharacters
+        : undefined,
   };
 }
 
@@ -280,6 +374,7 @@ export const SAMPLE_CREATURES: CreatureEntry[] = [
     sourceYear: 2010,
     description: "The rarest and most intelligent dragon species, known as the 'unholy offspring of lightning and death'. In reality, he is intensely loyal, playful as a giant feline, and shares an unbreakable bond with Hiccup.",
     personalNote: "The gold standard of mythical companions. The way his body language alternates between lethal apex predator and goofy puppy captures pure cinematic magic.",
+    tier: "SS",
     isFavorite: true,
     likes: 128,
     media: {
@@ -291,6 +386,23 @@ export const SAMPLE_CREATURES: CreatureEntry[] = [
       favouriteMoment: "The iconic touch test where Hiccup turns away and Toothless leans into his hand.",
     },
     tags: ["Night Fury", "Alpha", "Plasma Blast", "True Friend"],
+    connectedCharacters: [
+      {
+        characterId: "guest-char-1",
+        characterType: "game_character",
+        name: "Acheron",
+        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300",
+        sourceTitle: "Honkai: Star Rail",
+        relationshipType: "Companion",
+      },
+      {
+        characterId: "sample-hiccup",
+        characterType: "character_dict",
+        name: "Hiccup Horrendous Haddock III",
+        sourceTitle: "How to Train Your Dragon",
+        relationshipType: "Partner",
+      },
+    ],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -305,6 +417,7 @@ export const SAMPLE_CREATURES: CreatureEntry[] = [
     sourceYear: 2005,
     description: "A ten-ton flying bison with six legs and an airbending tail who served as the faithful spirit guide and primary transport of Avatar Aang and Team Avatar throughout the Hundred Year War.",
     personalNote: "Appa's Lost Days is one of the most heartbreaking, emotionally resonant episodes in television history. 'Yip Yip' carries immense warmth.",
+    tier: "SS",
     isFavorite: true,
     likes: 95,
     media: {
@@ -314,6 +427,22 @@ export const SAMPLE_CREATURES: CreatureEntry[] = [
       favouriteMoment: "Aang reuniting with Appa in Lake Laogai.",
     },
     tags: ["Airbender", "Sky Bison", "Team Avatar", "Gentle Giant"],
+    connectedCharacters: [
+      {
+        characterId: "guest-hof-1",
+        characterType: "character_dict",
+        name: "Tao Tsuchiya",
+        sourceTitle: "Alice in Borderland",
+        relationshipType: "Companion",
+      },
+      {
+        characterId: "sample-aang",
+        characterType: "character_dict",
+        name: "Avatar Aang",
+        sourceTitle: "Avatar: The Last Airbender",
+        relationshipType: "Companion",
+      },
+    ],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -328,6 +457,7 @@ export const SAMPLE_CREATURES: CreatureEntry[] = [
     sourceYear: 1999,
     description: "The doctor of the Straw Hat Pirates. After consuming the Human-Human Fruit, he gained human intelligence, speech, and multiple transformation points, dreaming of curing every disease in the world.",
     personalNote: "He hides behind walls backwards when praised and screams at people for complimenting him while dancing with pure joy. An absolute national treasure.",
+    tier: "S",
     isFavorite: true,
     likes: 84,
     media: {
@@ -337,6 +467,15 @@ export const SAMPLE_CREATURES: CreatureEntry[] = [
       favouriteMoment: "The cherry blossom fireworks cure over Drum Island.",
     },
     tags: ["Doctor", "Cotton Candy Lover", "Monster Point", "Straw Hat"],
+    connectedCharacters: [
+      {
+        characterId: "sample-luffy",
+        characterType: "character_dict",
+        name: "Monkey D. Luffy",
+        sourceTitle: "One Piece",
+        relationshipType: "Companion",
+      },
+    ],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -351,6 +490,7 @@ export const SAMPLE_CREATURES: CreatureEntry[] = [
     sourceYear: 2002,
     description: "One of the nine Tailed Beasts born of the Ten-Tails chakra. Initially viewing humanity with deep cynicism and hatred, his decade-long bond with Naruto transformed him into an unyielding protector.",
     personalNote: "The moment Naruto freed Kurama from his torii gates and called him a comrade from the Hidden Leaf still gives me goosebumps every single time.",
+    tier: "S",
     isFavorite: false,
     likes: 67,
     media: {
@@ -360,6 +500,15 @@ export const SAMPLE_CREATURES: CreatureEntry[] = [
       favouriteMoment: "Baryon Mode final fist bump.",
     },
     tags: ["Tailed Beast", "Kitsune", "Chakra", "Baryon Mode"],
+    connectedCharacters: [
+      {
+        characterId: "sample-naruto",
+        characterType: "character_dict",
+        name: "Naruto Uzumaki",
+        sourceTitle: "Naruto Shippuden",
+        relationshipType: "Partner",
+      },
+    ],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -374,6 +523,7 @@ export const SAMPLE_CREATURES: CreatureEntry[] = [
     sourceYear: 2001,
     description: "The spirit of the Kohaku River who takes the form of a white, serpentine dragon with emerald mane and piercing eyes. He helps Chihiro survive Yubaba's bathhouse.",
     personalNote: "The aesthetic of the Eastern serpentine river dragon gliding through the evening clouds with flower petals remains visually peak Ghibli.",
+    tier: "A",
     isFavorite: false,
     likes: 53,
     media: {
@@ -383,6 +533,15 @@ export const SAMPLE_CREATURES: CreatureEntry[] = [
       favouriteMoment: "Chihiro remembering his real name as they fall through the sky.",
     },
     tags: ["River Spirit", "Ghibli", "Dragon", "Kohaku"],
+    connectedCharacters: [
+      {
+        characterId: "sample-chihiro",
+        characterType: "character_dict",
+        name: "Chihiro Ogino",
+        sourceTitle: "Spirited Away",
+        relationshipType: "Companion",
+      },
+    ],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },

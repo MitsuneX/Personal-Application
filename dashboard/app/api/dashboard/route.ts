@@ -25,7 +25,7 @@ import {
   GUEST_COUPLES,
   GUEST_CREATURES,
 } from "@/lib/data/guestSeedData";
-import { normalizeCreatureJson } from "@/lib/data/creatureSchema";
+import { normalizeCreatureJson, SAMPLE_CREATURES } from "@/lib/data/creatureSchema";
 import { DEFAULT_AI_TOOLS } from "@/lib/data/initialAiTools";
 import { DEFAULT_GAMES } from "@/lib/data/initialGames";
 import { ensureInitialHallHistory } from "@/lib/utils/hofEventEngine";
@@ -242,6 +242,40 @@ export async function GET() {
       }
     }
 
+    // Auto-seed Creatures for NEW registered user if empty
+    if (dbCreatures.length === 0 && prisma.creature?.create) {
+      try {
+        console.log(`[Creatures Library] Seeding default creatures for user ${userId}...`);
+        for (const c of SAMPLE_CREATURES) {
+          await prisma.creature.create({
+            data: {
+              userId,
+              name: c.name,
+              classification: c.classification || "Other",
+              species: c.species || null,
+              sourceTitle: c.sourceTitle,
+              mediaType: c.mediaType || "Anime",
+              sourceYear: c.sourceYear || null,
+              description: c.description || null,
+              personalNote: c.personalNote || null,
+              tier: c.tier || "S",
+              isFavorite: c.isFavorite || false,
+              likes: c.likes || 0,
+              media: (c.media as any) || null,
+              tags: c.tags || [],
+              connectedCharacters: (c.connectedCharacters as any) || [],
+            },
+          });
+        }
+        dbCreatures = await prisma.creature.findMany({
+          where: { userId },
+          orderBy: [{ isFavorite: "desc" }, { createdAt: "desc" }],
+        });
+      } catch (creatureSeedErr) {
+        console.error("[Creatures Library] User auto-seed error:", creatureSeedErr);
+      }
+    }
+
     // Ensure initial event history & baseline championship records exist for existing HOF items
     if (dbHOF.length > 0 && dbHallEvents.length === 0) {
       await ensureInitialHallHistory(prisma, userId, dbHOF);
@@ -318,7 +352,7 @@ export async function GET() {
         updatedAt: c.updatedAt,
       })),
       userLikedCoupleIds: dbCoupleLikes.map((l: any) => l.coupleId),
-      creatures: dbCreatures.map((c: any) => normalizeCreatureJson(c)),
+      creatures: (dbCreatures && dbCreatures.length > 0 ? dbCreatures : SAMPLE_CREATURES).map((c: any) => normalizeCreatureJson(c)),
       userLikedCreatureIds: [],
     });
   } catch (error: any) {

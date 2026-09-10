@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { GameCharacterEntry, useDashboardStore } from "@/lib/store/dashboardStore";
@@ -9,6 +9,8 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { getElementTheme, ElementTheme } from "@/lib/utils/elementTheme";
 import { ElementParticles } from "@/components/game/ElementParticles";
 import { useContextMenu } from "@/hooks/useContextMenu";
+import { CreatureEntry, getClassificationMeta } from "@/lib/data/creatureSchema";
+import { CreatureDossierModal } from "@/components/ui/CreatureDossierModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Props {
@@ -24,7 +26,7 @@ const TABS = [
   { id: "gallery",  label: "Gallery",  icon: "🖼️" },
   { id: "personal", label: "Personal", icon: "💜" },
 ] as const;
-type TabId = (typeof TABS)[number]["id"];
+type TabId = "overview" | "gallery" | "personal" | "creatures";
 
 function rarityStars(r?: string) {
   if (!r) return null;
@@ -345,6 +347,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
   const {
     games,
     dossierCharacters,
+    creatures = [],
     userLikedGameCharacterIds = [],
     likeGameCharacter,
     updateGameCharacter,
@@ -353,9 +356,39 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
   } = useDashboardStore();
 
   const [activeTab, setActiveTab] = useState<TabId>("overview");
+  const [selectedCreature, setSelectedCreature] = useState<CreatureEntry | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [lightboxTitle, setLightboxTitle] = useState("");
   const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  // Connected creatures for this game character
+  const connectedCreatures = useMemo(() => {
+    if (!character) return [];
+    const charId = character.id;
+    const legacyCharId = character.characterId;
+    const charName = character.name.toLowerCase().trim();
+    return creatures.filter((c) =>
+      (c.connectedCharacters || []).some(
+        (ref) =>
+          ref.characterId === charId ||
+          (legacyCharId && ref.characterId === legacyCharId) ||
+          (ref.name && ref.name.toLowerCase().trim() === charName)
+      )
+    );
+  }, [creatures, character]);
+
+  // Dynamic tabs: show creatures tab only if connectedCreatures.length > 0
+  const dynamicTabs = useMemo(() => {
+    const tabs: Array<{ id: TabId; label: string; icon: string }> = [
+      { id: "overview", label: "Overview", icon: "📋" },
+      { id: "gallery",  label: "Gallery",  icon: "🖼️" },
+      { id: "personal", label: "Personal", icon: "💜" },
+    ];
+    if (connectedCreatures.length > 0) {
+      tabs.push({ id: "creatures", label: "Creatures", icon: "🐾" });
+    }
+    return tabs;
+  }, [connectedCreatures]);
 
   // Personal fields
   const [personalRating, setPersonalRating] = useState(0);
@@ -953,6 +986,122 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
             </button>
           </div>
         );
+
+      case "creatures":
+        return (
+          <div className="space-y-4">
+            <div
+              className="flex items-center justify-between border-b pb-2 select-none"
+              style={{ borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0" }}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🐾</span>
+                <h3
+                  className={`text-sm sm:text-base font-black font-mono tracking-tight uppercase ${
+                    isCyber ? "text-white" : "text-black"
+                  }`}
+                >
+                  Connected Creatures & Companions ({connectedCreatures.length})
+                </h3>
+              </div>
+              <span className={`text-[11px] font-mono ${isCyber ? "text-white/40" : "text-gray-500"}`}>
+                Click any creature to inspect full bestiary dossier
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 pt-2">
+              {connectedCreatures.map((creature) => {
+                const classMeta = getClassificationMeta(creature.classification);
+                const relRef = (creature.connectedCharacters || []).find(
+                  (r) =>
+                    r.characterId === character.id ||
+                    (character.characterId && r.characterId === character.characterId) ||
+                    (r.name && r.name.toLowerCase().trim() === character.name.toLowerCase().trim())
+                );
+                const relType = relRef?.relationshipType || "Companion";
+
+                return (
+                  <motion.div
+                    key={creature.id}
+                    whileHover={{ scale: 1.03, y: -2 }}
+                    transition={{ duration: 0.18 }}
+                    onClick={() => setSelectedCreature(creature)}
+                    className={`group relative flex flex-col rounded-2xl overflow-hidden cursor-pointer border transition-all ${
+                      isCyber
+                        ? "bg-[#060a17]/90 border-white/10 hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(0,245,255,0.2)]"
+                        : "bg-white border-2 border-black shadow-[3px_3px_0_#000] hover:shadow-[5px_5px_0_#000]"
+                    }`}
+                  >
+                    <div className="relative aspect-[3/4] w-full overflow-hidden bg-black/40">
+                      {creature.avatarUrl ? (
+                        <img
+                          src={creature.avatarUrl}
+                          alt={creature.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-3xl opacity-30">
+                          {classMeta.icon}
+                        </div>
+                      )}
+                      <div className="absolute top-2 left-2 z-10">
+                        <span
+                          className="px-2 py-0.5 rounded-md text-[10px] font-mono font-black border uppercase tracking-wider"
+                          style={{
+                            backgroundColor: isCyber ? "rgba(5,8,20,0.85)" : "#FFFFFF",
+                            borderColor: isCyber ? "rgba(0,245,255,0.4)" : "#000000",
+                            color: isCyber ? "#00F5FF" : "#000000",
+                          }}
+                        >
+                          {classMeta.icon} {classMeta.label}
+                        </span>
+                      </div>
+                      {creature.tier && (
+                        <div className="absolute top-2 right-2 z-10">
+                          <span
+                            className="px-2 py-0.5 rounded-md text-[10px] font-mono font-black border"
+                            style={{
+                              backgroundColor: isCyber ? "rgba(5,8,20,0.85)" : "#000000",
+                              borderColor: isCyber ? "rgba(255,215,0,0.5)" : "#000000",
+                              color: isCyber ? "#FFD700" : "#FFFFFF",
+                            }}
+                          >
+                            {creature.tier} TIER
+                          </span>
+                        </div>
+                      )}
+                      <div className="absolute bottom-2 left-2 z-10">
+                        <span
+                          className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold border"
+                          style={{
+                            backgroundColor: isCyber ? "rgba(168,85,247,0.25)" : "#F3E8FF",
+                            borderColor: isCyber ? "rgba(168,85,247,0.5)" : "#000000",
+                            color: isCyber ? "#D8B4FE" : "#6B21A8",
+                          }}
+                        >
+                          🔗 {relType}
+                        </span>
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent pointer-events-none" />
+                    </div>
+                    <div className="p-2.5 flex flex-col gap-0.5">
+                      <h4
+                        className={`text-xs font-bold truncate font-mono ${
+                          isCyber ? "text-white group-hover:text-cyan-300" : "text-black"
+                        }`}
+                      >
+                        {creature.name}
+                      </h4>
+                      <p className={`text-[10px] truncate ${isCyber ? "text-white/50" : "text-gray-600"}`}>
+                        {creature.species || creature.originWork || "Unknown"}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        );
       default: return null;
     }
   };
@@ -1339,7 +1488,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                     </div>
                   </div>
 
-                  {/* ── Sticky Tab Bar (Overview, Gallery, Personal) ──────────── */}
+                  {/* ── Sticky Tab Bar (Overview, Gallery, Personal, Creatures) ──────────── */}
                   <div
                     className="sticky top-0 z-20 flex items-center px-6 border-b select-none"
                     style={{
@@ -1349,7 +1498,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                       backdropFilter: "blur(12px)",
                     }}
                   >
-                    {TABS.map((tab) => {
+                    {dynamicTabs.map((tab) => {
                       const isActive = activeTab === tab.id;
                       return (
                         <button
@@ -1495,6 +1644,13 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
         initialIndex={lightboxIndex}
         title={lightboxTitle}
         onClose={() => setLightboxSrc(null)}
+      />
+
+      <CreatureDossierModal
+        isOpen={Boolean(selectedCreature)}
+        creature={selectedCreature}
+        onClose={() => setSelectedCreature(null)}
+        onEdit={undefined}
       />
     </>
   );

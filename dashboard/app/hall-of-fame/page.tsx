@@ -10,6 +10,9 @@ import { HofProfileModal } from "@/components/ui/HofProfileModal";
 import { HofCompareModal } from "@/components/ui/HofCompareModal";
 import { CoupleDossierModal } from "@/components/ui/CoupleDossierModal";
 import { CoupleEntry } from "@/lib/data/coupleSchema";
+import { CreatureDossierModal } from "@/components/ui/CreatureDossierModal";
+import { CreatureEntry } from "@/lib/data/creatureSchema";
+import { HofCreatureTierList } from "@/components/hof/HofCreatureTierList";
 import { HofPodiumSection } from "@/components/hof/HofPodiumSection";
 import { HofFilterToolbar } from "@/components/hof/HofFilterToolbar";
 import { HofRecordsSection } from "@/components/hof/HofRecordsSection";
@@ -35,6 +38,7 @@ export default function HallOfFamePage() {
     games = [],
     gameCharacters = [],
     couples = [],
+    creatures = [],
     hallEvents = [],
     championshipHistory = [],
     likeHof,
@@ -57,6 +61,7 @@ export default function HallOfFamePage() {
   const [profileModalEntry, setProfileModalEntry] = useState<HallOfFameEntry | null>(null);
   const [selectedCouple, setSelectedCouple] = useState<CoupleEntry | null>(null);
   const [isCoupleModalOpen, setIsCoupleModalOpen] = useState(false);
+  const [selectedCreature, setSelectedCreature] = useState<CreatureEntry | null>(null);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [comparedEntries, setComparedEntries] = useState<HallOfFameEntry[]>([]);
 
@@ -158,6 +163,33 @@ export default function HallOfFamePage() {
     }));
   }, [couples]);
 
+  // Map Creatures to HallOfFameEntry interface for Creatures category rankings
+  const creatureHofEntries = useMemo(() => {
+    return creatures.map((c) => ({
+      ...c,
+      id: `creature-${c.id}`,
+      creatureId: c.id,
+      name: c.name,
+      type: "none" as const,
+      status: (c.tier === "SS" ? "GOAT Status" : c.tier === "S" ? "Legend" : "Completed") as any,
+      knownFor: [c.classification || "Creature", c.species || "", c.originWork || ""].filter(Boolean),
+      nationality: c.originWork || "Bestiary",
+      avatarUrl: c.media?.card || c.media?.primary || c.media?.gallery?.[0] || c.avatarUrl || undefined,
+      imageUrl: c.media?.card || c.media?.primary || c.media?.gallery?.[0] || undefined,
+      portraitUrl: c.media?.card || undefined,
+      rank: null,
+      likes: c.likes || 0,
+      isChampion: false,
+      isFavorite: c.isFavorite,
+      badges: [
+        c.tier ? `${c.tier} TIER` : "S TIER",
+        c.isFavorite ? "⭐ FAVORITE" : "",
+      ].filter(Boolean),
+      isCreatureEntry: true,
+      creatureData: c,
+    }));
+  }, [creatures]);
+
   // Helper filters
   const sortedList = useMemo(() => {
     const normalizedHall = hallOfFame.map((h) => ({
@@ -175,7 +207,9 @@ export default function HallOfFamePage() {
     let list: any[] = [...normalizedHall];
 
     // Category filter
-    if (categoryFilter === "couples") {
+    if (categoryFilter === "creatures") {
+      list = [...creatureHofEntries];
+    } else if (categoryFilter === "couples") {
       list = [...coupleHofEntries];
     } else if (categoryFilter === "game") {
       // Combine game characters with game-related hall of fame entries
@@ -222,7 +256,14 @@ export default function HallOfFamePage() {
 
     // Country filter
     if (countryFilter !== "all") {
-      list = list.filter((e) => (e.nationality || "").toLowerCase().includes(countryFilter.toLowerCase()));
+      if (categoryFilter === "creatures") {
+        list = list.filter((e) =>
+          ((e as any).creatureData?.classification || (e as any).classification || "")
+            .toLowerCase() === countryFilter.toLowerCase()
+        );
+      } else {
+        list = list.filter((e) => (e.nationality || "").toLowerCase().includes(countryFilter.toLowerCase()));
+      }
     }
 
     // Profession filter
@@ -240,6 +281,8 @@ export default function HallOfFamePage() {
     if (prestigeFilter !== "all") {
       if (categoryFilter === "couples") {
         list = list.filter((e) => (e as any).coupleData?.tier === prestigeFilter || (e as any).tier === prestigeFilter);
+      } else if (categoryFilter === "creatures") {
+        list = list.filter((e) => (e as any).creatureData?.tier === prestigeFilter || (e as any).tier === prestigeFilter);
       } else {
         list = list.filter((e, idx) => getPrestigeTier(e, idx).name === prestigeFilter);
       }
@@ -254,6 +297,17 @@ export default function HallOfFamePage() {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       list = list.filter((item) => {
+        if ((item as any).isCreatureEntry && (item as any).creatureData) {
+          const cr: CreatureEntry = (item as any).creatureData;
+          const matchName = (item.name || "").toLowerCase().includes(q);
+          const matchSpecies = (cr.species || "").toLowerCase().includes(q);
+          const matchClassification = (cr.classification || "").toLowerCase().includes(q);
+          const matchOrigin = (cr.originWork || "").toLowerCase().includes(q);
+          const matchConnected = (cr.connectedCharacters || []).some((ref) =>
+            (ref.name || "").toLowerCase().includes(q)
+          );
+          return matchName || matchSpecies || matchClassification || matchOrigin || matchConnected;
+        }
         if ((item as any).isCoupleEntry && (item as any).coupleData) {
           const c: CoupleEntry = (item as any).coupleData;
           const matchName = (item.name || "").toLowerCase().includes(q);
@@ -287,6 +341,7 @@ export default function HallOfFamePage() {
     hallOfFame,
     gameHofEntries,
     coupleHofEntries,
+    creatureHofEntries,
     games,
     categoryFilter,
     selectedGames,
@@ -300,6 +355,15 @@ export default function HallOfFamePage() {
 
   // Derived Statistics & Records (100% Live & Reactive)
   const statsOverview = useMemo(() => {
+    if (categoryFilter === "creatures") {
+      const total = creatures.length;
+      const goat = creatures.filter((c) => c.tier === "SS").length;
+      const champions = creatures.filter((c) => c.tier === "SS" || c.tier === "S").length;
+      const nations = new Set(creatures.map((c) => c.originWork || "Bestiary")).size;
+      const categories = new Set(creatures.map((c) => c.classification)).size;
+      const totalVotes = creatures.reduce((acc, c) => acc + (c.likes || 0), 0);
+      return { total, goat, champions, nations, categories, totalVotes };
+    }
     if (categoryFilter === "couples") {
       const total = couples.length;
       const goat = couples.filter((c) => c.tier === "SS").length;
@@ -317,7 +381,7 @@ export default function HallOfFamePage() {
     const totalVotes = hallOfFame.reduce((acc, h) => acc + (h.likes || 0), 0);
 
     return { total, goat, champions, nations, categories, totalVotes };
-  }, [hallOfFame, couples, categoryFilter]);
+  }, [hallOfFame, couples, creatures, categoryFilter]);
 
   const hallRecords = useMemo(
     () => computeHallRecords(hallOfFame, championshipHistory, hallEvents, categoryFilter),
@@ -504,10 +568,20 @@ export default function HallOfFamePage() {
               setSelectedCouple(c);
               setIsCoupleModalOpen(true);
             }}
+            onOpenCreatureProfile={(c) => setSelectedCreature(c)}
             onCompare={(e) => handleAddToCompare(e)}
             onContextMenu={handlePageContextMenu}
           />
         </div>
+
+        {/* ── DEDICATED CREATURE TIER LIST (Only shown when category is Creatures) ── */}
+        {categoryFilter === "creatures" && (
+          <HofCreatureTierList
+            creatures={creatures}
+            isCyber={isCyber}
+            onOpenCreatureProfile={(c) => setSelectedCreature(c)}
+          />
+        )}
 
         {/* ── 4. HALL ACHIEVEMENTS & RECORDS SHOWCASE ── */}
         <HofRecordsSection
@@ -548,6 +622,7 @@ export default function HallOfFamePage() {
             setSelectedCouple(c);
             setIsCoupleModalOpen(true);
           }}
+          onOpenCreatureProfile={(c) => setSelectedCreature(c)}
           onCompare={(e) => handleAddToCompare(e)}
         />
 
@@ -568,6 +643,13 @@ export default function HallOfFamePage() {
           }}
           onEdit={undefined}
           onOpenJson={undefined}
+        />
+
+        <CreatureDossierModal
+          isOpen={Boolean(selectedCreature)}
+          creature={selectedCreature}
+          onClose={() => setSelectedCreature(null)}
+          onEdit={undefined}
         />
 
         <HofCompareModal
