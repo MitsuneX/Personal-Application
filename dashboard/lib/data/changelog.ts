@@ -13,6 +13,40 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v13.4.0",
+    date: "2026-09-10",
+    title: "Creature Archive System, Full-Art Bestiary Cards & Restructured Favourite Navigation",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Introduced the autonomous Creature Archive collection system under ⭐ FAVOURITES for beloved pets, dragons, beasts, familiars, companions, mascots, monsters, and non-human creatures. Restructured the Favourite navigation group into the exact requested hierarchy (Characters → Couples → Hall of Fame → Creatures). Built the full-stack Creature subsystem featuring extensible classifications, dynamic live collection counters, hero Creature Spotlight showcase, image-focused full-art cards with intelligent aspect ratio fit and ambient backdrop blur, rich Creature Dossier inspection view with prominent 'Why I Love This Creature' personal scrapbook notes, and a focused Creature Editor equipped with an embedded In-Editor JSON Workspace to keep the primary collection header clean.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🐾 Autonomous Creature Archive System (app/creatures/page.tsx, lib/data/creatureSchema.ts, prisma/schema.prisma): Created an independent personal collection system for favourite pets, dragons, beasts, familiars, companions, mascots, spirits, and non-human creatures, isolated from Character Dictionary and Hall of Fame.",
+          "⭐ Restructured Favourite Navigation Hierarchy (components/layout/Sidebar.tsx, components/layout/Header.tsx): Reorganized sidebar navigation under ⭐ FAVOURITES into the exact hierarchy: Characters → Couples → Hall of Fame → Creatures, with route title registry in Header.",
+          "🌟 Hero Creature Spotlight Showcase (components/creatures/CreatureSpotlight.tsx): Created a visual hero showcase near the top of the archive highlighting featured creatures with dominant artwork, classification badge, species, source work, and personal scrapbook quote, with graceful empty-state handling.",
+          "🖼️ Full-Art Bestiary Collection Cards (components/cards/CreatureCard.tsx): Built image-focused cards with intelligent artwork fit and ambient blur backdrop, supporting portrait, landscape, and square art without clipping, alongside classification badges, interactive Bond (+1 affection) button, and context menu.",
+          "📖 Rich Creature Dossier Modal (components/ui/CreatureDossierModal.tsx): Built an inspection modal featuring high-res artwork viewer, gallery strip, canonical lore description, bond affection counter, and a dedicated 'Why I Love This Creature' personal note section.",
+          "✏️ Focused Creature Editor & In-Editor JSON Workspace (components/ui/CreatureEditorModal.tsx): Provided a multi-tab editor with image uploaders for Primary Artwork, Card Poster (3:4), Favourite Moment, and Gallery, plus an embedded JSON workspace with copy and apply capabilities, preventing main header clutter.",
+          "📊 Dynamic Live Collection Counters (app/creatures/page.tsx): Added real-time counters near the header (total creatures + category breakdown by dragons, pets, familiars, etc.) calculated dynamically from active records without hardcoding.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🛡️ Multi-User PostgreSQL/Supabase Persistence & Guest Sandbox (prisma/schema.prisma, app/api/dashboard/route.ts, app/api/action/route.ts, lib/store/dashboardStore.ts): Implemented user-scoped Prisma Creature model with indexed userId/classification, dashboard data hydration, UPDATE_CREATURE, DELETE_CREATURE, and BOND_CREATURE action handlers, and guest sandbox isolation.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "✨ Dual-Theme & Accessibility Excellence: Verified crisp brutalist 3px borders with solid drop-shadows in Neo-Brutalism mode, glowing cyan neon borders in Cyberpunk mode, and prefers-reduced-motion compliance.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v13.3.0",
     date: "2026-09-09",
     title: "Hall of Fame Couples Category, Full-Card Hero Artwork & Modernized Filter Hierarchy",

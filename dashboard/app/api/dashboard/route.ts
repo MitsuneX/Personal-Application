@@ -23,7 +23,9 @@ import {
   GUEST_PROJECTS,
   GUEST_GALLERY,
   GUEST_COUPLES,
+  GUEST_CREATURES,
 } from "@/lib/data/guestSeedData";
+import { normalizeCreatureJson } from "@/lib/data/creatureSchema";
 import { DEFAULT_AI_TOOLS } from "@/lib/data/initialAiTools";
 import { DEFAULT_GAMES } from "@/lib/data/initialGames";
 import { ensureInitialHallHistory } from "@/lib/utils/hofEventEngine";
@@ -66,6 +68,8 @@ export async function GET() {
         profileHistory: [],
         couples: GUEST_COUPLES,
         userLikedCoupleIds: ["guest-couple-1", "guest-couple-2"],
+        creatures: GUEST_CREATURES,
+        userLikedCreatureIds: [],
       });
     }
 
@@ -112,6 +116,7 @@ export async function GET() {
       dbGameCharacters,
       dbCouples,
       dbCoupleLikes,
+      dbCreatures,
     ] = await Promise.all([
       safeQuery(() => prisma.profile.findFirst({ where: { OR: [{ userId }, { id: userId }] } }), null),
       safeQuery(() => prisma.aiToolItem.findMany({ where: { userId }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] }), []),
@@ -143,6 +148,7 @@ export async function GET() {
       safeQuery(() => prisma.gameCharacter.findMany({ where: { userId }, orderBy: { rank: "asc" } }), []),
       safeQuery(() => (prisma.couple?.findMany ? prisma.couple.findMany({ where: { userId }, orderBy: [{ isFavorite: "desc" }, { createdAt: "desc" }] }) : Promise.resolve([])), []),
       safeQuery(() => (prisma.coupleLike?.findMany ? prisma.coupleLike.findMany({ where: { userId } }) : Promise.resolve([])), []),
+      safeQuery(() => (prisma.creature?.findMany ? prisma.creature.findMany({ where: { userId }, orderBy: [{ isFavorite: "desc" }, { createdAt: "desc" }] }) : Promise.resolve([])), []),
     ]);
 
     let dbProfile = rawProfile;
@@ -312,6 +318,8 @@ export async function GET() {
         updatedAt: c.updatedAt,
       })),
       userLikedCoupleIds: dbCoupleLikes.map((l: any) => l.coupleId),
+      creatures: dbCreatures.map((c: any) => normalizeCreatureJson(c)),
+      userLikedCreatureIds: [],
     });
   } catch (error: any) {
     console.error("API GET Dashboard Error:", error);

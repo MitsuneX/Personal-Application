@@ -1535,6 +1535,76 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true, liked, likesCount: Math.max(0, updatedLike.likes) });
       }
 
+      // ─── Creature Actions ────────────────────────────────────────────────────────
+      case "UPDATE_CREATURE": {
+        const {
+          id, name, classification, species, sourceTitle, mediaType,
+          sourceYear, description, personalNote, isFavorite, likes, media, tags
+        } = payload;
+
+        if (!prisma.creature) {
+          return NextResponse.json(
+            { error: "Creature model not loaded on Prisma client. Please restart dev server." },
+            { status: 503 }
+          );
+        }
+
+        const creature = await prisma.creature.upsert({
+          where: { id },
+          update: {
+            userId,
+            name: name || "Unnamed Creature",
+            classification: classification || "Other",
+            species: species || null,
+            sourceTitle: sourceTitle || "Unknown Work",
+            mediaType: mediaType || "Anime",
+            sourceYear: sourceYear ? Number(sourceYear) : null,
+            description: description || null,
+            personalNote: personalNote || null,
+            isFavorite: Boolean(isFavorite),
+            likes: typeof likes === "number" ? likes : undefined,
+            media: media !== undefined ? media : undefined,
+            tags: Array.isArray(tags) ? tags : undefined,
+          },
+          create: {
+            id,
+            userId,
+            name: name || "Unnamed Creature",
+            classification: classification || "Other",
+            species: species || null,
+            sourceTitle: sourceTitle || "Unknown Work",
+            mediaType: mediaType || "Anime",
+            sourceYear: sourceYear ? Number(sourceYear) : null,
+            description: description || null,
+            personalNote: personalNote || null,
+            isFavorite: Boolean(isFavorite),
+            likes: typeof likes === "number" ? likes : 0,
+            media: media || null,
+            tags: Array.isArray(tags) ? tags : [],
+          },
+        });
+        return NextResponse.json({ success: true, data: creature });
+      }
+
+      case "DELETE_CREATURE": {
+        if (!prisma.creature) {
+          return NextResponse.json({ error: "Creature model not available" }, { status: 503 });
+        }
+        await prisma.creature.delete({ where: { id: payload.id } });
+        return NextResponse.json({ success: true });
+      }
+
+      case "BOND_CREATURE": {
+        if (!prisma.creature) {
+          return NextResponse.json({ error: "Creature model not available" }, { status: 503 });
+        }
+        const updated = await prisma.creature.update({
+          where: { id: payload.id },
+          data: { likes: { increment: 1 } },
+        });
+        return NextResponse.json({ success: true, likesCount: updated.likes });
+      }
+
       default:
         return NextResponse.json({ error: "Unknown action" }, { status: 400 });
     }

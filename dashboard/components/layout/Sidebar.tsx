@@ -39,9 +39,10 @@ const NAV_SECTIONS = [
   {
     label: "Favourite",
     items: [
-      { href: "/hall-of-fame", icon: "🏆", label: "Hall of Fame" },
       { href: "/characters", icon: "📖", label: "Characters" },
       { href: "/couples", icon: "💑", label: "Couples" },
+      { href: "/hall-of-fame", icon: "🏆", label: "Hall of Fame" },
+      { href: "/creatures", icon: "🐾", label: "Creatures" },
     ],
   },
   {

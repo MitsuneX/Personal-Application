@@ -967,3 +967,7 @@ export const GUEST_COUPLES = [
   },
 ];
 
+import { SAMPLE_CREATURES } from "./creatureSchema";
+export const GUEST_CREATURES = SAMPLE_CREATURES;
+
+

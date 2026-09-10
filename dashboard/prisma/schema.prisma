@@ -780,4 +780,27 @@ model CoupleLike {
   @@index([coupleId])
 }
 
+model Creature {
+  id             String   @id @default(uuid())
+  userId         String?
+  name           String
+  classification String   @default("Other")
+  species        String?
+  sourceTitle    String
+  mediaType      String   @default("Anime")
+  sourceYear     Int?
+  description    String?
+  personalNote   String?
+  isFavorite     Boolean  @default(false)
+  likes          Int      @default(0)
+  media          Json?
+  tags           String[] @default([])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@index([classification])
+}
+
+
 

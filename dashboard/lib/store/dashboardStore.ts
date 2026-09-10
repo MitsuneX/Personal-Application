@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { DEFAULT_AI_TOOLS } from "@/lib/data/initialAiTools";
 import { INITIAL_DOSSIER_CHARACTERS } from "@/lib/data/initialDossierCharacters";
 import { CoupleEntry, normalizeCoupleJson } from "@/lib/data/coupleSchema";
+import { CreatureEntry, normalizeCreatureJson } from "@/lib/data/creatureSchema";
 
 // ─── Shared Types ─────────────────────────────────────────────────────────────
 
@@ -884,6 +885,8 @@ interface DashboardState {
   savedPrompts: SavedPromptEntry[];
   couples: CoupleEntry[];
   userLikedCoupleIds: string[];
+  creatures: CreatureEntry[];
+  userLikedCreatureIds: string[];
   historyItems: SoftDeleteHistoryEntry[];
   gameSyncMetadata: Record<string, GameSyncMetadataEntry>;
   requestSequenceId: number;
@@ -1029,6 +1032,13 @@ interface DashboardState {
   toggleFavoriteCouple: (id: string) => Promise<void>;
   likeCouple: (coupleId: string) => Promise<{ liked: boolean; likesCount: number }>;
   loveCouple: (coupleId: string) => Promise<number>;
+
+  // Creatures System Actions
+  addCreature: (item: Partial<CreatureEntry>) => Promise<CreatureEntry | null>;
+  updateCreature: (id: string, data: Partial<CreatureEntry>) => Promise<void>;
+  deleteCreature: (id: string) => Promise<void>;
+  toggleFavoriteCreature: (id: string) => Promise<void>;
+  bondCreature: (creatureId: string) => Promise<{ liked: boolean; likesCount: number }>;
 }
 
 // ─── Seed Data (Fallback) ──────────────────────────────────────────────────────
@@ -1189,6 +1199,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   savedPrompts: [],
   couples: [],
   userLikedCoupleIds: [],
+  creatures: [],
+  userLikedCreatureIds: [],
   historyItems: [],
   gameSyncMetadata: {},
   hobbySkills: [],
@@ -1238,6 +1250,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       savedPrompts: [],
       couples: [],
       userLikedCoupleIds: [],
+      creatures: [],
+      userLikedCreatureIds: [],
       hobbySkills: [],
       hobbyLogs: [],
       hobbySessions: [],
@@ -1300,6 +1314,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           savedPrompts: data.savedPrompts || [],
           couples: (data.couples || []).map((c: any) => normalizeCoupleJson(c)),
           userLikedCoupleIds: data.userLikedCoupleIds || [],
+          creatures: (data.creatures || []).map((c: any) => normalizeCreatureJson(c)),
+          userLikedCreatureIds: data.userLikedCreatureIds || [],
           hobbySkills: (data.hobbySkills || []).map((s: any) => ({
             ...s,
             level: s.level ?? 1,
@@ -3340,6 +3356,120 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       console.error("Failed to persist love count:", err);
       // Keep optimistic update — don't revert on network error
       return nextCount;
+    }
+  },
+
+  // ─── Creatures System Actions ────────────────────────────────────────────────
+
+  addCreature: async (itemData) => {
+    const newCreature = normalizeCreatureJson(itemData);
+    set((s) => ({ creatures: [newCreature, ...s.creatures] }));
+
+    try {
+      const res = await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "UPDATE_CREATURE", payload: newCreature }),
+      });
+      const result = await res.json();
+      if (result.success && result.data) {
+        const normalizedServer = normalizeCreatureJson(result.data);
+        set((s) => ({
+          creatures: s.creatures.map((c) => (c.id === newCreature.id ? normalizedServer : c)),
+        }));
+        return normalizedServer;
+      }
+      return newCreature;
+    } catch (err) {
+      console.error("Failed to add creature:", err);
+      return newCreature;
+    }
+  },
+
+  updateCreature: async (id, data) => {
+    set((s) => ({
+      creatures: s.creatures.map((c) => (c.id === id ? { ...c, ...data } : c)),
+    }));
+
+    try {
+      const target = get().creatures.find((c) => c.id === id);
+      if (target) {
+        await fetch("/api/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "UPDATE_CREATURE", payload: target }),
+        });
+      }
+    } catch (err) {
+      console.error("Failed to sync creature update:", err);
+    }
+  },
+
+  deleteCreature: async (id) => {
+    set((s) => ({
+      creatures: s.creatures.filter((c) => c.id !== id),
+    }));
+
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_CREATURE", payload: { id } }),
+      });
+    } catch (err) {
+      console.error("Failed to delete creature:", err);
+    }
+  },
+
+  toggleFavoriteCreature: async (id) => {
+    const target = get().creatures.find((c) => c.id === id);
+    if (!target) return;
+    const nextVal = !target.isFavorite;
+
+    set((s) => ({
+      creatures: s.creatures.map((c) => (c.id === id ? { ...c, isFavorite: nextVal } : c)),
+    }));
+
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "UPDATE_CREATURE",
+          payload: { ...target, isFavorite: nextVal },
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to toggle creature favorite:", err);
+    }
+  },
+
+  bondCreature: async (creatureId) => {
+    const target = get().creatures.find((c) => c.id === creatureId);
+    const prevCount = target?.likes || 0;
+    const nextCount = prevCount + 1;
+
+    set((s) => ({
+      creatures: s.creatures.map((c) => (c.id === creatureId ? { ...c, likes: nextCount } : c)),
+    }));
+
+    try {
+      const res = await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "BOND_CREATURE", payload: { id: creatureId } }),
+      });
+      const result = await res.json();
+      if (result.success && typeof result.likesCount === "number") {
+        set((s) => ({
+          creatures: s.creatures.map((c) => (c.id === creatureId ? { ...c, likes: result.likesCount } : c)),
+        }));
+        return { liked: true, likesCount: result.likesCount };
+      }
+      return { liked: true, likesCount: nextCount };
+    } catch (err) {
+      console.error("Failed to bond creature:", err);
+      return { liked: true, likesCount: nextCount };
     }
   },
 }));
