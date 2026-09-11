@@ -1095,6 +1095,11 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                       <p className={`text-[10px] truncate ${isCyber ? "text-white/50" : "text-gray-600"}`}>
                         {creature.species || creature.originWork || "Unknown"}
                       </p>
+                      {creature.forms && creature.forms.length > 0 && (
+                        <p className="text-[10px] font-mono text-violet-400 truncate">
+                          ✦ {creature.forms.map((f) => f.displayName || f.name).join(" · ")}
+                        </p>
+                      )}
                     </div>
                   </motion.div>
                 );

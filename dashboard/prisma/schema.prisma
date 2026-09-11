@@ -797,6 +797,7 @@ model Creature {
   media               Json?
   tags                String[] @default([])
   connectedCharacters Json?    // Array of CreatureCharacterRef
+  forms               Json?    // Array of CreatureForm (optional: alternate forms, evolutions, transformations)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 

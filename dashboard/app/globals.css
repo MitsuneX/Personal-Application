@@ -360,7 +360,6 @@ body {
 [data-theme="cyber"] .border-adaptive-unique {
   border: 1px solid rgba(0, 245, 255, 0.3) !important;
   box-shadow: 0 0 20px rgba(0, 245, 255, 0.15) !important;
-  position: relative;
 }
 
 /* ── Custom Loading Animation & Scanline Overlay ── */

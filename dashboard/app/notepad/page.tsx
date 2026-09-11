@@ -737,11 +737,15 @@ function NotepadPageContent() {
                 💾 Save
               </button>
 
-              {/* Settings button to trigger drawer tab */}
+              {/* Settings button to trigger drawer tab (toggle behavior) */}
               <button
                 onClick={() => {
-                  setDrawerTab("settings");
-                  setIsDrawerOpen(true);
+                  if (isDrawerOpen && drawerTab === "settings") {
+                    setIsDrawerOpen(false);
+                  } else {
+                    setDrawerTab("settings");
+                    setIsDrawerOpen(true);
+                  }
                 }}
                 className="p-1.5 rounded-lg border-adaptive-unique text-xs font-bold opacity-80 hover:opacity-100 transition-opacity"
                 title="Note Settings & Metadata"

@@ -13,6 +13,39 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v13.7.0",
+    date: "2026-09-11",
+    title: "Creature Forms System, Notepad Cyberpunk Settings Fix & Creature Data Hygiene",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Implemented persistent database-backed Creature Forms supporting multiple transformations, evolutions, variants, and modes with a dedicated Forms tab in the Creature Editor and rich visual card showcase in the Creature Dossier. Connected Character profiles dynamically display canonical creature forms without data duplication. Resolved the root cause of the Notepad Cyberpunk Settings drawer bug by removing position: relative from [data-theme='cyber'] .border-adaptive-unique, ensuring smooth drawer toggling across both themes. Conducted a multi-signal data audit on the Creature database, safely purging 10 confirmed sample duplicate test records while fully preserving all genuine user data, and eliminated sample auto-seeding in authenticated mode to guarantee zero future database pollution.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🐉 Database-Backed Creature Forms (prisma/schema.prisma, lib/data/creatureSchema.ts): Added optional forms Json column to Creature model, defining CreatureForm with support for transformations, evolutions, variants, and modes without creating redundant tables or duplicating data across models.",
+          "🎨 Creature Forms Editor & Dossier Showcase (components/ui/CreatureEditorModal.tsx, CreatureDossierModal.tsx): Added a dedicated '5. Forms & Variants' tab in the Creature Editor with live preview, reordering controls, and form CRUD, plus a rich visual card showcase in the Creature Dossier that conditionally appears only when forms exist.",
+          "🔗 Dynamic Forms Integration in Character Profiles (components/ui/CharacterDictProfileModal.tsx, components/game/CharacterProfileModal.tsx): Surfaced connected creature forms dynamically across Character Dictionary and Game Character profile modals directly from the canonical store.",
+          "🗑️ Right-Click Context Menu Delete (app/creatures/page.tsx, components/cards/CreatureCard.tsx): Connected the creature context menu Delete action with the callback-based GlobalConfirmModal pattern for safe, non-destructive deletion with confirmation.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "⚙️ Notepad Cyberpunk Settings Drawer Root Cause Fix (app/globals.css, app/notepad/page.tsx): Diagnosed and resolved the root cause of the Settings drawer failure under Cyberpunk by removing position: relative from [data-theme='cyber'] .border-adaptive-unique, which previously hijacked the slide-out drawer's absolute positioning and dropped it into normal flow below the writing canvas inside an overflow-hidden container. Added clean toggle behavior on click.",
+          "🧹 Creature Database Hygiene & Test Data Purge (scripts/cleanup_test_creatures.ts): Safely audited and purged 10 confirmed AI test/sample duplicate records generated during automated testing while strictly preserving 100% of authentic user-created dragons and relationships.",
+          "🛡️ Elimination of Authenticated Auto-Seed Pollution (app/api/dashboard/route.ts): Removed the auto-seeding routine that injected SAMPLE_CREATURES into authenticated user databases and removed the dashboard response fallback, ensuring only genuine user data persists in production while preserving guest sandbox isolation.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🎨 Dual-Theme Parity Across All Updated Systems: Verified complete Cyberpunk (neon cyan/violet glow, Orbitron typography) and Neo-Brutalism (high-contrast black borders, warm card backgrounds) theme parity across Notepad editor, drawer, forms builder, dossier, and creature cards.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v13.6.0",
     date: "2026-09-11",
     title: "Notepad Mobile-Notes UX Overhaul & Gallery Windows Explorer Hierarchy",

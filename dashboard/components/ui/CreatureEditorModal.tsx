@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import {
   CreatureEntry,
+  CreatureForm,
   CreatureMedia,
   CreatureTier,
   CreatureCharacterRef,
@@ -29,7 +30,7 @@ interface CreatureEditorModalProps {
   creatureToEdit?: CreatureEntry | null;
 }
 
-type TabKey = "basic" | "lore" | "media" | "connections";
+type TabKey = "basic" | "lore" | "media" | "connections" | "forms";
 
 export function CreatureEditorModal({
   isOpen,
@@ -67,6 +68,12 @@ export function CreatureEditorModal({
   const [charSearchQuery, setCharSearchQuery] = useState("");
   const [charSearchResults, setCharSearchResults] = useState<CharacterSearchResult[]>([]);
   const [isSearchingChars, setIsSearchingChars] = useState(false);
+
+  // Forms
+  const [forms, setForms] = useState<CreatureForm[]>([]);
+  // Editing state for an in-progress form (null = not editing)
+  const [editingFormIdx, setEditingFormIdx] = useState<number | null>(null);
+  const [formDraft, setFormDraft] = useState<Partial<CreatureForm>>({});
 
   // Media states
   const [media, setMedia] = useState<CreatureMedia>({
@@ -107,6 +114,7 @@ export function CreatureEditorModal({
       setTags(creatureToEdit.tags || []);
       setConnectedCharacters(creatureToEdit.connectedCharacters || []);
       setMedia(creatureToEdit.media || { primary: null, card: null, gallery: [], favouriteMoment: null });
+      setForms(creatureToEdit.forms || []);
       setJsonText(JSON.stringify(exportCreatureToJson(creatureToEdit), null, 2));
     } else {
       setName("");
@@ -123,6 +131,7 @@ export function CreatureEditorModal({
       setTags([]);
       setConnectedCharacters([]);
       setMedia({ primary: null, card: null, gallery: [], favouriteMoment: null });
+      setForms([]);
       setJsonText(
         JSON.stringify(
           {
@@ -161,6 +170,8 @@ export function CreatureEditorModal({
     setJsonErrors([]);
     setCharSearchQuery("");
     setCharSearchResults([]);
+    setEditingFormIdx(null);
+    setFormDraft({});
   }, [isOpen, creatureToEdit]);
 
   // Debounced search for characters
@@ -278,6 +289,7 @@ export function CreatureEditorModal({
         },
         tags,
         connectedCharacters,
+        forms: forms.length > 0 ? forms : [],
       };
 
       if (creatureToEdit?.id) {
@@ -523,6 +535,23 @@ export function CreatureEditorModal({
                 {connectedCharacters.length > 0 && (
                   <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-cyan-500 text-black font-black">
                     {connectedCharacters.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab("forms")}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
+                  activeTab === "forms"
+                    ? isCyber
+                      ? "bg-violet-500/20 text-violet-300 border border-violet-400"
+                      : "bg-black text-white"
+                    : "opacity-60 hover:opacity-100"
+                }`}
+              >
+                <span>5. Forms &amp; Variants</span>
+                {forms.length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-violet-500 text-black font-black">
+                    {forms.length}
                   </span>
                 )}
               </button>
@@ -1188,6 +1217,237 @@ export function CreatureEditorModal({
                   </div>
                 )}
               </>
+            )}
+
+            {/* ── TAB 5: FORMS & VARIANTS ── */}
+            {editorMode === "form" && activeTab === "forms" && (
+              <div className="space-y-5">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className={`text-sm font-black font-mono uppercase ${isCyber ? "text-violet-300" : "text-black"}`}>
+                      ✦ Forms &amp; Variants
+                    </h4>
+                    <p className={`text-[11px] font-mono mt-0.5 ${isCyber ? "text-slate-400" : "text-slate-600"}`}>
+                      Optional — add alternate forms, evolutions, or transformations unique to this creature.
+                      Each form belongs exclusively to this creature and is displayed in its Dossier.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newForm: CreatureForm = {
+                        id: `form-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                        name: "",
+                        order: forms.length,
+                      };
+                      setForms((prev) => [...prev, newForm]);
+                      setEditingFormIdx(forms.length);
+                      setFormDraft(newForm);
+                    }}
+                    className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-mono font-black border transition-all cursor-pointer ${
+                      isCyber
+                        ? "bg-violet-500/20 text-violet-300 border-violet-500/40 hover:bg-violet-500/30"
+                        : "bg-black text-white border-2 border-black shadow-[2px_2px_0px_#000000]"
+                    }`}
+                  >
+                    + Add Form
+                  </button>
+                </div>
+
+                {/* Empty state */}
+                {forms.length === 0 && (
+                  <div className={`p-8 rounded-2xl border text-center ${
+                    isCyber ? "bg-white/[0.02] border-white/10 text-slate-500" : "bg-slate-50 border-2 border-dashed border-black/30 text-slate-500"
+                  }`}>
+                    <span className="text-3xl block mb-2">✦</span>
+                    <p className="text-xs font-mono">No forms defined. Click &ldquo;+ Add Form&rdquo; to define alternate variants for this creature.</p>
+                    <p className="text-[10px] font-mono opacity-60 mt-1">Forms section will only appear in the Dossier when at least one form exists.</p>
+                  </div>
+                )}
+
+                {/* Form list */}
+                {forms.length > 0 && (
+                  <div className="space-y-3">
+                    {forms.map((form, idx) => {
+                      const isEditing = editingFormIdx === idx;
+                      return (
+                        <div
+                          key={form.id || idx}
+                          className={`rounded-2xl border transition-all ${
+                            isEditing
+                              ? isCyber
+                                ? "bg-violet-950/30 border-violet-500/50"
+                                : "bg-violet-50 border-2 border-black shadow-[3px_3px_0px_#000000]"
+                              : isCyber
+                              ? "bg-white/[0.03] border-white/10"
+                              : "bg-white border-2 border-black shadow-[2px_2px_0px_#000000]"
+                          }`}
+                        >
+                          {/* Form header row */}
+                          <div className="flex items-center gap-2 p-3">
+                            {/* Reorder */}
+                            <div className="flex flex-col gap-0.5">
+                              <button
+                                type="button"
+                                disabled={idx === 0}
+                                onClick={() => {
+                                  const next = [...forms];
+                                  [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                                  next.forEach((f, i) => (f.order = i));
+                                  setForms(next);
+                                  if (editingFormIdx === idx) setEditingFormIdx(idx - 1);
+                                }}
+                                className={`text-[10px] px-1 rounded cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed ${isCyber ? "hover:text-violet-300" : "hover:bg-slate-200"}`}
+                              >▲</button>
+                              <button
+                                type="button"
+                                disabled={idx === forms.length - 1}
+                                onClick={() => {
+                                  const next = [...forms];
+                                  [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                                  next.forEach((f, i) => (f.order = i));
+                                  setForms(next);
+                                  if (editingFormIdx === idx) setEditingFormIdx(idx + 1);
+                                }}
+                                className={`text-[10px] px-1 rounded cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed ${isCyber ? "hover:text-violet-300" : "hover:bg-slate-200"}`}
+                              >▼</button>
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-black font-mono truncate">
+                                {form.name || <span className="opacity-40">Unnamed Form</span>}
+                              </p>
+                              {form.variantType && (
+                                <p className={`text-[10px] font-mono opacity-60`}>{form.variantType}</p>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (isEditing) {
+                                    // Commit draft
+                                    setForms((prev) => prev.map((f, i) => i === idx ? { ...f, ...formDraft, updatedAt: new Date().toISOString() } : f));
+                                    setEditingFormIdx(null);
+                                    setFormDraft({});
+                                  } else {
+                                    setEditingFormIdx(idx);
+                                    setFormDraft({ ...form });
+                                  }
+                                }}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold border transition-all cursor-pointer ${
+                                  isEditing
+                                    ? isCyber ? "bg-violet-500 text-black border-violet-400" : "bg-black text-white border-black"
+                                    : isCyber ? "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10" : "bg-white text-black border border-black hover:bg-slate-100"
+                                }`}
+                              >
+                                {isEditing ? "✓ Done" : "✎ Edit"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setForms((prev) => prev.filter((_, i) => i !== idx));
+                                  if (editingFormIdx === idx) { setEditingFormIdx(null); setFormDraft({}); }
+                                }}
+                                className="px-2 py-1 rounded-lg text-[10px] font-mono text-red-400 hover:bg-red-500/20 transition-all border border-transparent cursor-pointer"
+                              >
+                                🗑
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Inline edit panel */}
+                          {isEditing && (
+                            <div className={`px-4 pb-4 space-y-3 border-t ${
+                              isCyber ? "border-violet-500/20" : "border-black/10"
+                            }`}>
+                              <div className="pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {/* Name */}
+                                <div className="space-y-1">
+                                  <label className={`text-[10px] font-mono font-bold uppercase tracking-wider ${
+                                    isCyber ? "text-violet-300" : "text-slate-600"
+                                  }`}>Form Name *</label>
+                                  <input
+                                    type="text"
+                                    value={formDraft.name || ""}
+                                    onChange={(e) => setFormDraft((d) => ({ ...d, name: e.target.value }))}
+                                    placeholder="e.g. Standard Form, Arc-V Form"
+                                    className={`w-full px-3 py-2 rounded-xl text-xs font-mono border ${
+                                      isCyber
+                                        ? "bg-white/5 border-violet-500/30 text-white placeholder-slate-500 focus:border-violet-400"
+                                        : "bg-white border-2 border-black text-black placeholder-slate-400 focus:border-violet-500"
+                                    } outline-none transition-all`}
+                                  />
+                                </div>
+                                {/* Variant Type */}
+                                <div className="space-y-1">
+                                  <label className={`text-[10px] font-mono font-bold uppercase tracking-wider ${
+                                    isCyber ? "text-violet-300" : "text-slate-600"
+                                  }`}>Variant Type</label>
+                                  <input
+                                    type="text"
+                                    value={formDraft.variantType || ""}
+                                    onChange={(e) => setFormDraft((d) => ({ ...d, variantType: e.target.value }))}
+                                    placeholder="e.g. Powered Form, Evolution, Transformation"
+                                    className={`w-full px-3 py-2 rounded-xl text-xs font-mono border ${
+                                      isCyber
+                                        ? "bg-white/5 border-violet-500/30 text-white placeholder-slate-500 focus:border-violet-400"
+                                        : "bg-white border-2 border-black text-black placeholder-slate-400 focus:border-violet-500"
+                                    } outline-none transition-all`}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Artwork URL */}
+                              <div className="space-y-1">
+                                <label className={`text-[10px] font-mono font-bold uppercase tracking-wider ${
+                                  isCyber ? "text-violet-300" : "text-slate-600"
+                                }`}>Form Artwork URL</label>
+                                <input
+                                  type="url"
+                                  value={formDraft.artwork || ""}
+                                  onChange={(e) => setFormDraft((d) => ({ ...d, artwork: e.target.value || null }))}
+                                  placeholder="https://..."
+                                  className={`w-full px-3 py-2 rounded-xl text-xs font-mono border ${
+                                    isCyber
+                                      ? "bg-white/5 border-violet-500/30 text-white placeholder-slate-500 focus:border-violet-400"
+                                      : "bg-white border-2 border-black text-black placeholder-slate-400 focus:border-violet-500"
+                                  } outline-none transition-all`}
+                                />
+                                {formDraft.artwork && (
+                                  <div className="mt-1.5 h-20 rounded-xl overflow-hidden border border-black/10">
+                                    <img src={formDraft.artwork} alt="preview" className="w-full h-full object-contain bg-black/20" />
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Description */}
+                              <div className="space-y-1">
+                                <label className={`text-[10px] font-mono font-bold uppercase tracking-wider ${
+                                  isCyber ? "text-violet-300" : "text-slate-600"
+                                }`}>Description</label>
+                                <textarea
+                                  value={formDraft.description || ""}
+                                  onChange={(e) => setFormDraft((d) => ({ ...d, description: e.target.value }))}
+                                  rows={3}
+                                  placeholder="What makes this form distinct?"
+                                  className={`w-full px-3 py-2 rounded-xl text-xs font-mono border resize-none ${
+                                    isCyber
+                                      ? "bg-white/5 border-violet-500/30 text-white placeholder-slate-500 focus:border-violet-400"
+                                      : "bg-white border-2 border-black text-black placeholder-slate-400 focus:border-violet-500"
+                                  } outline-none transition-all`}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

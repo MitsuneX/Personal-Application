@@ -11,11 +11,15 @@ import { CreatureSpotlight } from "@/components/creatures/CreatureSpotlight";
 import { CreatureFilterBar, CreatureSortOption } from "@/components/creatures/CreatureFilterBar";
 import { CreatureDossierModal } from "@/components/ui/CreatureDossierModal";
 import { CreatureEditorModal } from "@/components/ui/CreatureEditorModal";
+import { useConfirm } from "@/lib/context/ConfirmContext";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export default function CreaturesPage() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { creatures = [] } = useDashboardStore();
+  const { creatures = [], deleteCreature } = useDashboardStore();
+  const { confirm } = useConfirm();
+  const { success: toastSuccess, error: toastError } = useToast();
 
   // ── Filters & Search State ──
   const [searchQuery, setSearchQuery] = useState("");
@@ -190,6 +194,29 @@ export default function CreaturesPage() {
     setIsEditorOpen(true);
   };
 
+  const handleDelete = (creature: CreatureEntry) => {
+    confirm({
+      title: `Delete Creature — "${creature.name}"`,
+      message: `This will permanently remove ${creature.name} and all its associated forms. Connected characters will NOT be deleted.`,
+      variant: "danger",
+      actionType: "delete",
+      confirmText: "Delete",
+      onConfirm: async () => {
+        try {
+          await deleteCreature(creature.id);
+          toastSuccess(`Deleted "${creature.name}" from your archive.`);
+          // Close dossier if the deleted creature is currently open
+          if (selectedCreature?.id === creature.id) {
+            setIsDossierOpen(false);
+            setSelectedCreature(null);
+          }
+        } catch (err: any) {
+          toastError("Failed to delete creature: " + (err?.message || err));
+        }
+      },
+    });
+  };
+
   return (
     <AppShell>
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -303,6 +330,7 @@ export default function CreaturesPage() {
                 creature={creature}
                 onSelect={handleOpenDossier}
                 onEdit={handleOpenEdit}
+                onDelete={handleDelete}
               />
             ))}
           </div>

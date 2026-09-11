@@ -1242,6 +1242,11 @@ export function CharacterDictProfileModal({
                               <p className="text-[10px] font-mono opacity-75 truncate">
                                 {cr.species ? `${cr.species} · ` : ""}{cr.sourceTitle}
                               </p>
+                              {cr.forms && cr.forms.length > 0 && (
+                                <p className="text-[10px] font-mono text-violet-300 truncate pt-0.5">
+                                  ✦ {cr.forms.map((f) => f.displayName || f.name).join(" · ")}
+                                </p>
+                              )}
                             </div>
                           </div>
                         </div>

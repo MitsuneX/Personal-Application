@@ -11,6 +11,25 @@ export interface CreatureMedia {
   favouriteMoment?: string | null; // Special memory scene / emotional moment
 }
 
+/**
+ * A single canonical Form variant belonging to a parent Creature.
+ * Forms represent alternate states, evolutions, transformations, powered modes,
+ * elemental variants, or other recognized distinct forms of the same Creature.
+ * They are NOT separate Creatures — they live under the parent Creature record.
+ */
+export interface CreatureForm {
+  id: string;                    // Unique form id (uuid or generated slug)
+  name: string;                  // e.g. "Standard Form", "Arc-V Form", "Monster Point"
+  displayName?: string;          // Optional alternate display label
+  description?: string;          // What makes this form distinct
+  artwork?: string | null;       // Form-specific artwork URL (does not replace parent media)
+  variantType?: string;          // e.g. "Evolution", "Powered Form", "Transformation", "Regional"
+  tags?: string[];
+  order?: number;                // Sort order for display
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export const CREATURE_TIERS = ["SS", "S", "A", "B", "C"] as const;
 export type CreatureTier = (typeof CREATURE_TIERS)[number];
 
@@ -102,6 +121,7 @@ export interface CreatureEntry {
   avatarUrl?: string | null;     // Convenience alias for media.card || media.primary
   tags: string[];
   connectedCharacters?: CreatureCharacterRef[];
+  forms?: CreatureForm[];        // Optional alternate forms/transformations (canonical, single-source)
   createdAt?: string;
   updatedAt?: string;
 }
@@ -327,6 +347,22 @@ export function normalizeCreatureJson(raw: any, fallbackId?: string): CreatureEn
           }))
           .filter((c: any) => c.characterId)
       : [],
+    forms: Array.isArray(raw.forms)
+      ? raw.forms
+          .map((f: any, idx: number): CreatureForm => ({
+            id: String(f.id || `form-${idx}-${Date.now()}`).trim(),
+            name: String(f.name || "Unnamed Form").trim(),
+            displayName: f.displayName ? String(f.displayName).trim() : undefined,
+            description: f.description ? String(f.description).trim() : undefined,
+            artwork: f.artwork || null,
+            variantType: f.variantType ? String(f.variantType).trim() : undefined,
+            tags: Array.isArray(f.tags) ? f.tags.map((t: any) => String(t).trim()).filter(Boolean) : [],
+            order: typeof f.order === "number" ? f.order : idx,
+            createdAt: f.createdAt,
+            updatedAt: f.updatedAt,
+          }))
+          .filter((f: any) => f.name)
+      : [],
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
   };
@@ -356,6 +392,10 @@ export function exportCreatureToJson(creature: Partial<CreatureEntry>) {
     connectedCharacters:
       creature.connectedCharacters && creature.connectedCharacters.length > 0
         ? creature.connectedCharacters
+        : undefined,
+    forms:
+      creature.forms && creature.forms.length > 0
+        ? creature.forms
         : undefined,
   };
 }

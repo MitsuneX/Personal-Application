@@ -1587,7 +1587,7 @@ export async function POST(req: Request) {
       case "UPDATE_CREATURE": {
         const {
           id, name, classification, species, sourceTitle, mediaType,
-          sourceYear, description, personalNote, tier, isFavorite, likes, media, tags, connectedCharacters
+          sourceYear, description, personalNote, tier, isFavorite, likes, media, tags, connectedCharacters, forms
         } = payload;
 
         if (!prisma.creature) {
@@ -1615,6 +1615,7 @@ export async function POST(req: Request) {
             media: media !== undefined ? media : undefined,
             tags: Array.isArray(tags) ? tags : undefined,
             connectedCharacters: Array.isArray(connectedCharacters) ? connectedCharacters : undefined,
+            forms: Array.isArray(forms) ? forms : undefined,
           },
           create: {
             id,
@@ -1633,6 +1634,7 @@ export async function POST(req: Request) {
             media: media || null,
             tags: Array.isArray(tags) ? tags : [],
             connectedCharacters: Array.isArray(connectedCharacters) ? connectedCharacters : [],
+            forms: Array.isArray(forms) ? forms : [],
           },
         });
         return NextResponse.json({ success: true, data: creature });
