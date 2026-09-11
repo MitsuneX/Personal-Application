@@ -1,35 +1,64 @@
 "use client";
+
 import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
-import { useDashboardStore } from "@/lib/store/dashboardStore";
+import { useDashboardStore, GalleryEntry } from "@/lib/store/dashboardStore";
 import { Modal } from "@/components/ui/modal";
 import { ImageCropModal } from "@/components/ui/ImageCropModal";
+import { MoveToFolderModal } from "@/components/gallery/MoveToFolderModal";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 import { useContextMenu } from "@/hooks/useContextMenu";
 
-// ─── Interfaces ──────────────────────────────────────────────────────────────
-interface FolderTreeNode {
+interface ChildFolderInfo {
   name: string;
   fullPath: string;
-  children: { [key: string]: FolderTreeNode };
   itemCount: number;
+  subfolderCount: number;
+  coverUrl?: string;
 }
 
 function GalleryPageContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { gallery, addGalleryItem, deleteGalleryItem } = useDashboardStore();
+  const {
+    gallery,
+    addGalleryItem,
+    updateGalleryItem,
+    moveGalleryItem,
+    renameGalleryFolder,
+    deleteGalleryItem,
+  } = useDashboardStore();
   const { confirm } = useConfirm();
+  const { openContextMenu } = useContextMenu();
 
-  // Navigation & Filtering state
-  const [selectedFolder, setSelectedFolder] = useState<string>("All Folders");
-  const [selectedCategory, setSelectedCategory] = useState<string>("All Categories");
+  // ─── Windows Explorer Navigation & Folder Hierarchy State ──────────────────
+  const [currentFolder, setCurrentFolder] = useState<string>("Root");
   const [searchQuery, setSearchQuery] = useState("");
-  const [includeSubfolders, setIncludeSubfolders] = useState(true);
+  const [searchScope, setSearchScope] = useState<"current" | "all">("current");
+  const [viewMode, setViewMode] = useState<"grid" | "masonry" | "timeline">("grid");
+  const [localFolders, setLocalFolders] = useState<string[]>([]);
 
-  // Form Modal state
+  // Drag-and-drop state
+  const [draggedPhotoId, setDraggedPhotoId] = useState<string | null>(null);
+  const [dragTargetFolder, setDragTargetFolder] = useState<string | null>(null);
+  const [isDropActiveCanvas, setIsDropActiveCanvas] = useState(false);
+
+  // Move-to-Folder modal state (Mobile and keyboard alternative)
+  const [moveModalItem, setMoveModalItem] = useState<GalleryEntry | null>(null);
+  const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
+
+  // Edit photo metadata modal state
+  const [editItem, setEditItem] = useState<GalleryEntry | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editCaption, setEditCaption] = useState("");
+  const [editCategory, setEditCategory] = useState("General");
+  const [editTags, setEditTags] = useState<string[]>([]);
+  const [editTagInput, setEditTagInput] = useState("");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Add / Import Virtual Asset modal state
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [caption, setCaption] = useState("");
@@ -37,12 +66,6 @@ function GalleryPageContent() {
   const [tags, setTags] = useState<string[]>([]);
   const [categoryInput, setCategoryInput] = useState("General");
   const [folderInput, setFolderInput] = useState("Root");
-
-  // Custom Inline Folder Creation State
-  const [inlineFolderParent, setInlineFolderParent] = useState("Root");
-  const [newFolderName, setNewFolderName] = useState("");
-  const [showFolderCreator, setShowFolderCreator] = useState(false);
-  const [localFolders, setLocalFolders] = useState<string[]>([]);
 
   // Upload state
   const [uploadTab, setUploadTab] = useState<"upload" | "url">("upload");
@@ -54,170 +77,503 @@ function GalleryPageContent() {
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
   const [isCropOpen, setIsCropOpen] = useState(false);
 
-  // Autocomplete state
-  const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
-  const [showFolderSuggestions, setShowFolderSuggestions] = useState(false);
-  const categoryRef = useRef<HTMLDivElement>(null);
-  const folderRef = useRef<HTMLDivElement>(null);
+  // New folder prompt state
+  const [isNewFolderModalOpen, setIsNewFolderModalOpen] = useState(false);
+  const [newFolderNameInput, setNewFolderNameInput] = useState("");
+  const [newFolderParentPath, setNewFolderParentPath] = useState("Root");
 
-  // View Mode
-  const [viewMode, setViewMode] = useState<"masonry" | "grid" | "timeline">("masonry");
+  // Rename folder prompt state
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [folderToRename, setFolderToRename] = useState<string | null>(null);
+  const [renamedFolderNameInput, setRenamedFolderNameInput] = useState("");
 
-  // Lightbox state
+  // Lightbox preview state
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [lightboxTitle, setLightboxTitle] = useState("");
   const [lightboxCaption, setLightboxCaption] = useState<string | null>(null);
   const [lightboxTags, setLightboxTags] = useState<string[]>([]);
   const [lightboxCategory, setLightboxCategory] = useState<string | null>(null);
   const [lightboxFolder, setLightboxFolder] = useState<string | null>(null);
-  const [lightboxIndex, setLightboxIndex] = useState<number>(-1);
 
-  // Context Menu state
-  const { openContextMenu } = useContextMenu();
+  const openLightbox = useCallback(
+    (item: { url: string; title: string; caption?: string | null; tags?: string[] | null; category?: string; folder?: string }) => {
+      setLightboxUrl(item.url);
+      setLightboxTitle(item.title);
+      setLightboxCaption(item.caption || null);
+      setLightboxTags((item.tags?.filter(Boolean) as string[]) || []);
+      setLightboxCategory(item.category || "General");
+      setLightboxFolder(item.folder || "Root");
+    },
+    []
+  );
 
-  const openLightbox = useCallback((item: { url: string; title: string; caption?: string | null; tags?: string[] | null; category?: string; folder?: string }, idx: number) => {
-    setLightboxUrl(item.url);
-    setLightboxTitle(item.title);
-    setLightboxCaption(item.caption || null);
-    setLightboxTags(item.tags?.filter(Boolean) as string[] || []);
-    setLightboxCategory(item.category || "General");
-    setLightboxFolder(item.folder || "Root");
-    setLightboxIndex(idx);
-  }, []);
+  // ─── Folders & Hierarchy Resolution ─────────────────────────────────────────
 
-  // Close suggestions on outside click
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (categoryRef.current && !categoryRef.current.contains(event.target as Node)) {
-        setShowCategorySuggestions(false);
-      }
-      if (folderRef.current && !folderRef.current.contains(event.target as Node)) {
-        setShowFolderSuggestions(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // ─── Unique Lists & Statistics ──────────────────────────────────────────────
-  const uniqueCategories = useMemo(() => {
-    const list = gallery.map((item) => item.category || "General");
-    return Array.from(new Set(list)).sort();
-  }, [gallery]);
-
-  const uniqueFolders = useMemo(() => {
-    const databaseFolders = gallery.map((item) => item.folder || "Root");
-    const combined = [...databaseFolders, ...localFolders];
-    return Array.from(new Set(combined)).sort();
+  // All known folder paths across database records and local sessions
+  const allUniqueFolders = useMemo(() => {
+    const fromGallery = gallery.map((g) => g.folder || "Root");
+    const combined = Array.from(new Set(["Root", ...fromGallery, ...localFolders])).filter(Boolean);
+    return combined.sort();
   }, [gallery, localFolders]);
 
-  // Dynamically build recursive folder tree
-  const folderTree = useMemo(() => {
-    const root: FolderTreeNode = { name: "Root", fullPath: "Root", children: {}, itemCount: 0 };
-    
-    uniqueFolders.forEach((path) => {
-      if (path === "Root") return;
-      const parts = path.split("/");
-      let current = root;
-      let currentPath = "";
-      
-      parts.forEach((part) => {
-        currentPath = currentPath ? `${currentPath}/${part}` : part;
-        if (!current.children[part]) {
-          current.children[part] = {
-            name: part,
-            fullPath: currentPath,
-            children: {},
-            itemCount: 0,
-          };
-        }
-        current = current.children[part];
-      });
-    });
-
-    // Populate Item Counts accurately
-    gallery.forEach((item) => {
-      const path = item.folder || "Root";
-      if (path === "Root") {
-        root.itemCount++;
-        return;
-      }
-      root.itemCount++;
-      const parts = path.split("/");
-      let current = root;
-      parts.forEach((part) => {
-        if (current.children[part]) {
-          current.children[part].itemCount++;
-          current = current.children[part];
-        }
-      });
-    });
-
-    return root;
-  }, [gallery, uniqueFolders]);
-
-  // ─── Handlers ──────────────────────────────────────────────────────────────
-  const handleCreateFolderInline = (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanName = newFolderName.trim().replace(/\//g, "");
-    if (!cleanName) return;
-    
-    const targetPath = inlineFolderParent === "Root" 
-      ? cleanName 
-      : `${inlineFolderParent}/${cleanName}`;
-      
-    if (!localFolders.includes(targetPath)) {
-      setLocalFolders([...localFolders, targetPath]);
+  // Clickable Breadcrumb Trail for currentFolder
+  const breadcrumbTrail = useMemo(() => {
+    if (currentFolder === "Root") {
+      return [{ name: "Gallery Root", path: "Root" }];
     }
-    setNewFolderName("");
-    setShowFolderCreator(false);
-  };
+    const parts = currentFolder.split("/");
+    const crumbs = [{ name: "Gallery Root", path: "Root" }];
+    let acc = "";
+    parts.forEach((part) => {
+      acc = acc ? `${acc}/${part}` : part;
+      crumbs.push({ name: part, path: acc });
+    });
+    return crumbs;
+  }, [currentFolder]);
 
-  // ─── Filter Logic ──────────────────────────────────────────────────────────
-  const filteredGallery = useMemo(() => {
-    return gallery.filter((item) => {
-      if (selectedCategory !== "All Categories") {
-        const itemCat = item.category || "General";
-        if (itemCat !== selectedCategory) return false;
-      }
-      if (selectedFolder !== "All Folders") {
-        const itemFolder = item.folder || "Root";
-        if (includeSubfolders) {
-          if (selectedFolder === "Root") {
-            // Root shows everything
-          } else if (
-            itemFolder !== selectedFolder &&
-            !itemFolder.startsWith(selectedFolder + "/")
-          ) {
-            return false;
-          }
-        } else {
-          if (itemFolder !== selectedFolder) return false;
+  // Immediate child folders inside currentFolder
+  const childFolders = useMemo((): ChildFolderInfo[] => {
+    const childMap = new Map<string, { fullPath: string; subfolders: Set<string> }>();
+
+    allUniqueFolders.forEach((folderPath) => {
+      if (folderPath === "Root") return;
+
+      if (currentFolder === "Root") {
+        const topSegment = folderPath.split("/")[0];
+        if (!childMap.has(topSegment)) {
+          childMap.set(topSegment, { fullPath: topSegment, subfolders: new Set() });
+        }
+        if (folderPath.includes("/")) {
+          childMap.get(topSegment)!.subfolders.add(folderPath);
+        }
+      } else if (folderPath.startsWith(currentFolder + "/")) {
+        const sub = folderPath.slice(currentFolder.length + 1);
+        const nextSegment = sub.split("/")[0];
+        const nextFullPath = `${currentFolder}/${nextSegment}`;
+        if (!childMap.has(nextSegment)) {
+          childMap.set(nextSegment, { fullPath: nextFullPath, subfolders: new Set() });
+        }
+        if (sub.includes("/")) {
+          childMap.get(nextSegment)!.subfolders.add(folderPath);
         }
       }
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        const matchesTitle = item.title.toLowerCase().includes(query);
-        const matchesCaption = (item.caption || "").toLowerCase().includes(query);
-        const matchesTags = (item.tags || []).some((tag) => tag.toLowerCase().includes(query));
-        if (!matchesTitle && !matchesCaption && !matchesTags) return false;
+    });
+
+    const result: ChildFolderInfo[] = [];
+    childMap.forEach((val, name) => {
+      // Calculate item count (all items residing in this folder or its subfolders)
+      const matchingItems = gallery.filter((item) => {
+        const itemFolder = item.folder || "Root";
+        return itemFolder === val.fullPath || itemFolder.startsWith(val.fullPath + "/");
+      });
+
+      result.push({
+        name,
+        fullPath: val.fullPath,
+        itemCount: matchingItems.length,
+        subfolderCount: val.subfolders.size,
+        coverUrl: matchingItems.find((i) => i.url)?.url,
+      });
+    });
+
+    return result.sort((a, b) => a.name.localeCompare(b.name));
+  }, [allUniqueFolders, currentFolder, gallery]);
+
+  // Direct media items stored strictly inside currentFolder (or all if searchScope === "all")
+  const displayedMedia = useMemo(() => {
+    return gallery.filter((item) => {
+      const itemFolder = item.folder || "Root";
+
+      // Folder filtering:
+      // If searching across all folders, do not restrict folder
+      if (!searchQuery.trim() || searchScope === "current") {
+        if (itemFolder !== currentFolder) return false;
       }
+
+      // Search query filtering:
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchTitle = (item.title || "").toLowerCase().includes(q);
+        const matchCaption = (item.caption || "").toLowerCase().includes(q);
+        const matchCategory = (item.category || "").toLowerCase().includes(q);
+        const matchTags = (item.tags || []).some((t) => t.toLowerCase().includes(q));
+        const matchFolder = itemFolder.toLowerCase().includes(q);
+        return matchTitle || matchCaption || matchCategory || matchTags || matchFolder;
+      }
+
       return true;
     });
-  }, [gallery, selectedCategory, selectedFolder, includeSubfolders, searchQuery]);
+  }, [gallery, currentFolder, searchQuery, searchScope]);
 
-  const handleAddTag = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const clean = tagInput.trim().replace(/#/g, "");
-    if (clean && !tags.includes(clean)) {
-      setTags([...tags, clean]);
+  // Navigate up one folder level
+  const handleNavigateUp = () => {
+    if (currentFolder === "Root") return;
+    if (currentFolder.includes("/")) {
+      const parent = currentFolder.slice(0, currentFolder.lastIndexOf("/"));
+      setCurrentFolder(parent || "Root");
+    } else {
+      setCurrentFolder("Root");
     }
-    setTagInput("");
   };
 
-  const handleRemoveTag = (index: number) => {
-    setTags(tags.filter((_, i) => i !== index));
+  // ─── Drag-and-Drop Handlers ────────────────────────────────────────────────
+
+  const handlePhotoDragStart = (e: React.DragEvent, item: GalleryEntry) => {
+    setDraggedPhotoId(item.id);
+    e.dataTransfer.setData("text/plain", item.id);
+    e.dataTransfer.setData("application/gallery-photo-id", item.id);
+    e.dataTransfer.effectAllowed = "move";
   };
+
+  const handlePhotoDragEnd = () => {
+    setDraggedPhotoId(null);
+    setDragTargetFolder(null);
+  };
+
+  const handleFolderDragOver = (e: React.DragEvent, folderPath: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+    if (dragTargetFolder !== folderPath) {
+      setDragTargetFolder(folderPath);
+    }
+  };
+
+  const handleFolderDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragTargetFolder(null);
+  };
+
+  const handleFolderDrop = async (e: React.DragEvent, targetFolderPath: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragTargetFolder(null);
+
+    const photoId =
+      e.dataTransfer.getData("application/gallery-photo-id") ||
+      e.dataTransfer.getData("text/plain");
+
+    if (!photoId) return;
+    const photo = gallery.find((g) => g.id === photoId);
+    if (!photo) return;
+    const currentPhotoFolder = photo.folder || "Root";
+
+    if (currentPhotoFolder === targetFolderPath) {
+      return; // Already in destination folder
+    }
+
+    await moveGalleryItem(photo.id, targetFolderPath);
+  };
+
+  // Drag external files from OS onto canvas to upload directly into current folder
+  const handleCanvasDragOver = (e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes("Files")) {
+      e.preventDefault();
+      setIsDropActiveCanvas(true);
+    }
+  };
+
+  const handleCanvasDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDropActiveCanvas(false);
+  };
+
+  const handleCanvasDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDropActiveCanvas(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCropImageSrc(reader.result as string);
+        setIsCropOpen(true);
+        setFolderInput(currentFolder);
+        setIsOpen(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // ─── Folder Creation, Renaming, and Deletion ───────────────────────────────
+
+  const handlePromptCreateSubfolder = (parentPath: string) => {
+    setNewFolderParentPath(parentPath);
+    setNewFolderNameInput("");
+    setIsNewFolderModalOpen(true);
+  };
+
+  const handleConfirmCreateFolder = (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = newFolderNameInput.trim().replace(/^\/+|\/+$/g, "");
+    if (!clean) return;
+
+    const fullPath = newFolderParentPath === "Root" ? clean : `${newFolderParentPath}/${clean}`;
+    if (!allUniqueFolders.includes(fullPath)) {
+      setLocalFolders((prev) => [...prev, fullPath]);
+    }
+    setIsNewFolderModalOpen(false);
+    setNewFolderNameInput("");
+  };
+
+  const handlePromptRenameFolder = (folderPath: string) => {
+    const parts = folderPath.split("/");
+    setFolderToRename(folderPath);
+    setRenamedFolderNameInput(parts[parts.length - 1]);
+    setIsRenameModalOpen(true);
+  };
+
+  const handleConfirmRenameFolder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!folderToRename) return;
+    const cleanNewName = renamedFolderNameInput.trim().replace(/\//g, "");
+    if (!cleanNewName) return;
+
+    const parts = folderToRename.split("/");
+    parts[parts.length - 1] = cleanNewName;
+    const newFullPath = parts.join("/");
+
+    if (newFullPath === folderToRename) {
+      setIsRenameModalOpen(false);
+      return;
+    }
+
+    await renameGalleryFolder(folderToRename, newFullPath);
+
+    // Update local folders list if tracked
+    setLocalFolders((prev) =>
+      prev.map((f) => {
+        if (f === folderToRename) return newFullPath;
+        if (f.startsWith(folderToRename + "/")) {
+          return newFullPath + f.slice(folderToRename.length);
+        }
+        return f;
+      })
+    );
+
+    // If currently inside renamed folder, update currentFolder
+    if (currentFolder === folderToRename) {
+      setCurrentFolder(newFullPath);
+    } else if (currentFolder.startsWith(folderToRename + "/")) {
+      setCurrentFolder(newFullPath + currentFolder.slice(folderToRename.length));
+    }
+
+    setIsRenameModalOpen(false);
+    setFolderToRename(null);
+  };
+
+  const handleDeleteFolder = (folderPath: string) => {
+    const itemsInFolder = gallery.filter((item) => {
+      const fold = item.folder || "Root";
+      return fold === folderPath || fold.startsWith(folderPath + "/");
+    });
+
+    confirm({
+      title: "Delete Gallery Folder",
+      message: `Are you sure you want to delete folder "${folderPath}"? ${
+        itemsInFolder.length > 0
+          ? `It contains ${itemsInFolder.length} media item(s) which will be moved to Root Base.`
+          : ""
+      }`,
+      confirmText: "Delete Folder",
+      variant: "danger",
+      itemPreview: {
+        title: folderPath,
+        subtitle: `${itemsInFolder.length} assets`,
+        icon: "📁",
+      },
+      successToast: `✓ Folder "${folderPath}" removed.`,
+      onConfirm: async () => {
+        // Safely move contained items to Root before removing folder reference
+        for (const it of itemsInFolder) {
+          await moveGalleryItem(it.id, "Root");
+        }
+        setLocalFolders((prev) => prev.filter((f) => f !== folderPath && !f.startsWith(folderPath + "/")));
+        if (currentFolder === folderPath || currentFolder.startsWith(folderPath + "/")) {
+          setCurrentFolder("Root");
+        }
+      },
+    });
+  };
+
+  // ─── Photo Operations (Edit info, Move, Delete) ────────────────────────────
+
+  const handlePromptMovePhoto = (item: GalleryEntry) => {
+    setMoveModalItem(item);
+    setIsMoveModalOpen(true);
+  };
+
+  const handlePromptEditPhoto = (item: GalleryEntry) => {
+    setEditItem(item);
+    setEditTitle(item.title || "");
+    setEditCaption(item.caption || "");
+    setEditCategory(item.category || "General");
+    setEditTags(item.tags || []);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSavePhotoEdits = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editItem) return;
+    await updateGalleryItem(editItem.id, {
+      title: editTitle.trim() || "Untitled",
+      caption: editCaption.trim() || null,
+      category: editCategory.trim() || "General",
+      tags: editTags,
+    });
+    setIsEditModalOpen(false);
+    setEditItem(null);
+  };
+
+  const handleDeletePhoto = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const item = gallery.find((g) => g.id === id);
+    confirm({
+      title: "Remove Gallery Asset",
+      message: `Are you sure you want to remove asset "${item?.title || "Gallery Image"}"?`,
+      confirmText: "Remove Image",
+      variant: "danger",
+      itemPreview: {
+        title: item?.title || "Gallery Image",
+        subtitle: `${item?.category || "General"} · 📁 ${item?.folder || "Root"}`,
+        imageUrl: item?.url,
+        icon: "🖼️",
+        category: item?.category,
+      },
+      successToast: `✓ Gallery asset "${item?.title || "Image"}" removed.`,
+      onConfirm: async () => {
+        await deleteGalleryItem(id);
+      },
+    });
+  };
+
+  // ─── Context Menus ─────────────────────────────────────────────────────────
+
+  const handlePhotoContextMenu = (e: React.MouseEvent, item: GalleryEntry) => {
+    e.preventDefault();
+    openContextMenu(
+      e,
+      [
+        {
+          id: "preview",
+          label: "Open Full Preview",
+          icon: "🔍",
+          onClick: () => openLightbox(item),
+        },
+        {
+          id: "move",
+          label: "Move to Folder...",
+          icon: "📁",
+          onClick: () => handlePromptMovePhoto(item),
+        },
+        {
+          id: "edit",
+          label: "Edit Metadata & Tags",
+          icon: "✏️",
+          onClick: () => handlePromptEditPhoto(item),
+        },
+        {
+          id: "copy-url",
+          label: "Copy Image URL",
+          icon: "📋",
+          onClick: () => {
+            if (typeof window !== "undefined" && item.url) {
+              navigator.clipboard.writeText(item.url).catch(() => {});
+            }
+          },
+        },
+        {
+          id: "delete",
+          label: "Delete Image",
+          icon: "🗑️",
+          danger: true,
+          divider: true,
+          onClick: () => handleDeletePhoto(item.id),
+        },
+      ],
+      item.title || "Asset Menu"
+    );
+  };
+
+  const handleFolderContextMenu = (e: React.MouseEvent, folder: ChildFolderInfo) => {
+    e.preventDefault();
+    openContextMenu(
+      e,
+      [
+        {
+          id: "open",
+          label: `Open Folder "${folder.name}"`,
+          icon: "📂",
+          onClick: () => setCurrentFolder(folder.fullPath),
+        },
+        {
+          id: "new-subfolder",
+          label: "New Subfolder Here",
+          icon: "➕",
+          onClick: () => handlePromptCreateSubfolder(folder.fullPath),
+        },
+        {
+          id: "rename",
+          label: "Rename Folder",
+          icon: "✏️",
+          onClick: () => handlePromptRenameFolder(folder.fullPath),
+        },
+        {
+          id: "delete",
+          label: "Delete Folder",
+          icon: "🗑️",
+          danger: true,
+          divider: true,
+          onClick: () => handleDeleteFolder(folder.fullPath),
+        },
+      ],
+      `📁 ${folder.name}`
+    );
+  };
+
+  const handleCanvasContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    openContextMenu(
+      e,
+      [
+        {
+          id: "upload",
+          label: "Import Asset to Current Folder",
+          icon: "➕",
+          onClick: () => {
+            setFolderInput(currentFolder);
+            setIsOpen(true);
+          },
+        },
+        {
+          id: "new-folder",
+          label: "New Subfolder Here",
+          icon: "📁",
+          onClick: () => handlePromptCreateSubfolder(currentFolder),
+        },
+        ...(currentFolder !== "Root"
+          ? [
+              {
+                id: "up",
+                label: "Navigate Up",
+                icon: "↑",
+                onClick: handleNavigateUp,
+              },
+              {
+                id: "root",
+                label: "Return to Root Base",
+                icon: "🏠",
+                divider: true,
+                onClick: () => setCurrentFolder("Root"),
+              },
+            ]
+          : []),
+      ],
+      currentFolder === "Root" ? "📁 Gallery Root" : `📁 ${currentFolder}`
+    );
+  };
+
+  // ─── Upload Asset Handlers ─────────────────────────────────────────────────
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -280,7 +636,7 @@ function GalleryPageContent() {
       const cat = categoryInput.trim() || "General";
       const fold = folderInput.trim() || "Root";
       await addGalleryItem(newId, title.trim(), finalUrl, caption.trim(), tags, cat, fold);
-      
+
       setTitle("");
       setUrl("");
       setCaption("");
@@ -296,948 +652,913 @@ function GalleryPageContent() {
     }
   };
 
-  const handleDelete = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const item = gallery.find((g) => g.id === id);
-    confirm({
-      title: "Remove Gallery Image",
-      message: `Are you sure you want to remove image "${item?.title || "Gallery Image"}"?`,
-      confirmText: "Remove Image",
-      variant: "danger",
-      itemPreview: {
-        title: item?.title || "Gallery Image",
-        subtitle: `${item?.category || "General"} · ${item?.folder || "Default Folder"}`,
-        imageUrl: item?.url,
-        icon: "🖼️",
-        category: item?.category,
-      },
-      successToast: `✓ Gallery image "${item?.title || "Image"}" removed.`,
-      onConfirm: async () => {
-        await deleteGalleryItem(id);
-      },
-    });
-  };
-
-  const [dragActive, setDragActive] = useState(false);
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setSelectedFile(e.dataTransfer.files[0]);
-      setUploadError(null);
-    }
-  };
-
-  const filteredCategorySuggestions = useMemo(() => {
-    const query = categoryInput.toLowerCase();
-    return uniqueCategories.filter((cat) => cat.toLowerCase().includes(query));
-  }, [categoryInput, uniqueCategories]);
-
-  const filteredFolderSuggestions = useMemo(() => {
-    const query = folderInput.toLowerCase();
-    return uniqueFolders.filter((f) => f.toLowerCase().includes(query));
-  }, [folderInput, uniqueFolders]);
-
-  // ─── Dynamic Folder Tree Navigation Component ────────────────────────────────
-  const FolderTreeNavigation = ({
-    node,
-    depth = 0,
-  }: {
-    node: FolderTreeNode;
-    depth: number;
-  }) => {
-    const hasChildren = Object.keys(node.children).length > 0;
-    const isSelected = selectedFolder === node.fullPath;
-    const [collapsed, setCollapsed] = useState(false);
-    return (
-      <div className="flex flex-col">
+  return (
+    <div
+      onDragOver={handleCanvasDragOver}
+      onDragLeave={handleCanvasDragLeave}
+      onDrop={handleCanvasDrop}
+      className="space-y-6 relative min-h-[calc(100vh-140px)]"
+    >
+      {/* Visual drop indicator overlay when dropping external files */}
+      {isDropActiveCanvas && (
         <div
-          onClick={() => setSelectedFolder(node.fullPath)}
-          className="group flex items-center justify-between py-2 px-2.5 rounded-xl cursor-pointer transition-all duration-200 select-none mb-1 hover:bg-black/5 dark:hover:bg-white/5"
+          className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center backdrop-blur-sm"
           style={{
-            marginLeft: `${depth * 10}px`,
-            backgroundColor: isSelected
-              ? isCyber
-                ? "rgba(0, 245, 255, 0.15)"
-                : "#FF3366"
-              : "transparent",
-            borderLeft: isSelected
-              ? isCyber
-                ? "4px solid #00F5FF"
-                : "4px solid #000"
-              : "4px solid transparent",
-            border: !isCyber && isSelected ? "3px solid #000" : undefined,
-            boxShadow: !isCyber && isSelected ? "3px 3px 0px #000" : undefined,
+            backgroundColor: isCyber ? "rgba(0, 245, 255, 0.15)" : "rgba(255, 209, 102, 0.4)",
+            border: isCyber ? "4px dashed #00F5FF" : "6px dashed #000",
           }}
         >
-          <div className="flex items-center gap-2 min-w-0">
-            {hasChildren && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCollapsed(!collapsed);
-                }}
-                className="text-[10px] font-bold opacity-70 hover:opacity-100 p-0.5 transition-transform"
-                style={{ transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)" }}
-              >
-                ▼
-              </button>
-            )}
-            <span className="text-sm shrink-0">{isSelected ? "📂" : "📁"}</span>
-            <span
-              className="text-xs truncate font-black tracking-wide"
-              style={{
-                color: isSelected
-                  ? isCyber
-                    ? "#00F5FF"
-                    : "#FFF"
-                  : isCyber
-                  ? "#94A3B8"
-                  : "#000",
-              }}
-            >
-              {node.name}
-            </span>
+          <div className="p-6 rounded-2xl bg-black text-white font-mono text-base font-bold shadow-2xl animate-pulse">
+            📥 Drop image here to import into 📁 {currentFolder}
           </div>
-          <span
-            className="text-[9px] font-black px-2 py-0.5 rounded-md border shrink-0 transition-colors"
-            style={{
-              backgroundColor: isSelected && !isCyber ? "#000" : isCyber ? "rgba(255,255,255,0.02)" : "#FFF",
-              borderColor: isCyber ? "rgba(255,255,255,0.1)" : "#000",
-              color: isSelected && !isCyber ? "#FFF" : isCyber ? "#00F5FF" : "#000",
-            }}
-          >
-            {node.itemCount}
-          </span>
         </div>
-        {hasChildren && !collapsed && (
-          <div className="flex flex-col mt-0.5">
-            {Object.values(node.children).map((child) => (
-              <FolderTreeNavigation key={child.fullPath} node={child} depth={depth + 1} />
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
+      )}
 
-  return (
-    <>
-      {/* ── Page Header ── */}
+      {/* ── Page Header Banner ── */}
       <motion.div
-        className="mb-8 p-8 rounded-2xl relative overflow-hidden flex flex-col sm:flex-row justify-between sm:items-center gap-6"
-        initial={{ opacity: 0, y: -20 }}
+        className="p-6 md:p-8 rounded-2xl relative overflow-hidden flex flex-col sm:flex-row justify-between sm:items-center gap-6"
+        initial={{ opacity: 0, y: -15 }}
         animate={{ opacity: 1, y: 0 }}
         style={{
           background: isCyber
             ? "linear-gradient(135deg, #060b24, rgba(0,245,255,0.08), rgba(255,51,102,0.04))"
             : "linear-gradient(135deg, #FFDEE9, #B5FFFC)",
           border: isCyber ? "1px solid rgba(0,245,255,0.25)" : "4px solid #000",
-          boxShadow: isCyber ? "0 0 40px rgba(0,245,255,0.2)" : "8px 8px 0 #000",
+          boxShadow: isCyber ? "0 0 40px rgba(0,245,255,0.2)" : "6px 6px 0 #000",
         }}
       >
         <div>
           <h1
-            className="font-black text-4xl font-mono tracking-wider uppercase"
+            className="font-black text-3xl md:text-4xl font-mono tracking-wider uppercase"
             style={{
               fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
               color: isCyber ? "#00F5FF" : "#000",
               textShadow: isCyber ? "0 0 15px rgba(0,245,255,0.6)" : "none",
             }}
           >
-            {isCyber ? "MEDIA_VAULT.SYS" : "⚡ Media Hub Gallery"}
+            {isCyber ? "MEDIA_EXPLORER.SYS" : "⚡ Media Hub Explorer"}
           </h1>
-          <p className="text-xs mt-1.5 max-w-xl font-black opacity-80 uppercase tracking-wide">
-            Dynamic repository matrix. Structured categorization across virtual drives, directories, and tagging protocols.
+          <p className="text-xs mt-1.5 max-w-xl font-bold opacity-80 uppercase tracking-wide">
+            Windows Explorer-style repository matrix. True nested folder containment, direct asset placement, and drag-and-drop relocation.
           </p>
         </div>
-        <button
-          onClick={() => setIsOpen(true)}
-          className="px-5 py-3 text-xs font-black rounded-xl transition-all active:scale-95 shrink-0 uppercase tracking-widest hover:-translate-y-0.5"
-          style={{
-            backgroundColor: isCyber ? "#00F5FF" : "#000",
-            color: isCyber ? "#050816" : "#FFF",
-            border: isCyber ? "1px solid #00F5FF" : "3px solid #000",
-            boxShadow: isCyber ? "0 0 20px rgba(0, 245, 255, 0.5)" : "4px 4px 0 #FF3366",
-          }}
-        >
-          ➕ Import Asset
-        </button>
-      </motion.div>
 
-      {/* ── Toolbar Search + View Mode ── */}
-      <div
-        className="mb-8 p-5 rounded-2xl flex flex-col md:flex-row gap-4 items-center"
-        style={{
-          backgroundColor: isCyber ? "rgba(5,8,22,0.6)" : "#FFF",
-          borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000",
-          borderWidth: isCyber ? "1px" : "4px",
-          boxShadow: isCyber ? "0 0 25px rgba(0,245,255,0.05)" : "5px 5px 0 #000",
-          backdropFilter: isCyber ? "blur(12px)" : "none",
-        }}
-      >
-        <div className="flex-1 w-full relative">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={isCyber ? "SEARCH // title, tags, metadata..." : "Search images by title, tag, or caption..."}
-            className="w-full px-5 py-3 text-xs font-black rounded-xl outline-none border transition-all uppercase tracking-wider"
+        <div className="flex items-center gap-3 shrink-0">
+          <button
+            onClick={() => handlePromptCreateSubfolder(currentFolder)}
+            className="px-4 py-2.5 text-xs font-black rounded-xl transition-all active:scale-95 uppercase tracking-wider border-adaptive-unique"
             style={{
-              backgroundColor: isCyber ? "rgba(255,255,255,0.02)" : "#F3F4F6",
-              borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000",
-              borderWidth: isCyber ? "1px" : "3px",
+              backgroundColor: isCyber ? "rgba(0,245,255,0.12)" : "#FFD166",
               color: isCyber ? "#00F5FF" : "#000",
             }}
-          />
+          >
+            📁 New Folder
+          </button>
+
+          <button
+            onClick={() => {
+              setFolderInput(currentFolder);
+              setIsOpen(true);
+            }}
+            className="px-5 py-2.5 text-xs font-black rounded-xl transition-all active:scale-95 uppercase tracking-widest"
+            style={{
+              backgroundColor: isCyber ? "#00F5FF" : "#000",
+              color: isCyber ? "#050816" : "#FFF",
+              border: isCyber ? "1px solid #00F5FF" : "3px solid #000",
+              boxShadow: isCyber ? "0 0 20px rgba(0, 245, 255, 0.5)" : "4px 4px 0 #FF3366",
+            }}
+          >
+            ➕ Import Asset
+          </button>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          {/* View Mode Toggle */}
+      </motion.div>
+
+      {/* ── Explorer Toolbar: Breadcrumbs + Search + View Modes ── */}
+      <div
+        className="p-4 rounded-2xl flex flex-col md:flex-row gap-4 items-center justify-between border-adaptive-unique"
+        style={{
+          backgroundColor: isCyber ? "rgba(6,11,30,0.7)" : "#FFF",
+          boxShadow: isCyber ? "none" : "4px 4px 0 #000",
+        }}
+      >
+        {/* Search Bar + Scope Selector */}
+        <div className="flex items-center gap-2 w-full md:max-w-md">
+          <div className="relative flex-1">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs opacity-50">🔍</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={
+                searchScope === "current"
+                  ? `Search inside 📁 ${currentFolder}...`
+                  : "Search across all folders..."
+              }
+              className="w-full pl-9 pr-3 py-2 text-xs font-mono font-bold rounded-xl outline-none border"
+              style={{
+                backgroundColor: isCyber ? "rgba(0,0,0,0.3)" : "#F9FAFB",
+                borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000",
+                color: isCyber ? "#00F5FF" : "#1A1A1A",
+              }}
+            />
+          </div>
+
+          <select
+            value={searchScope}
+            onChange={(e) => setSearchScope(e.target.value as any)}
+            className="text-[10px] font-black uppercase px-2 py-2 rounded-xl outline-none border-adaptive-unique shrink-0"
+            style={{
+              backgroundColor: isCyber ? "rgba(0,0,0,0.4)" : "#FFF",
+              color: isCyber ? "#00F5FF" : "#000",
+            }}
+          >
+            <option value="current">📂 In Folder</option>
+            <option value="all">🌍 All Folders</option>
+          </select>
+        </div>
+
+        {/* View Mode Toggle */}
+        <div className="flex items-center gap-3 shrink-0 w-full md:w-auto justify-end">
           <div
             className="flex items-center rounded-xl overflow-hidden border"
-            style={{ borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#000", borderWidth: isCyber ? "1px" : "2.5px" }}
+            style={{
+              borderColor: isCyber ? "rgba(0,245,255,0.25)" : "#000",
+              borderWidth: isCyber ? "1px" : "2px",
+            }}
           >
-            {(["masonry", "grid", "timeline"] as const).map((mode) => (
+            {(["grid", "masonry", "timeline"] as const).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
-                className="px-3 py-2 text-[10px] font-black uppercase tracking-wider transition-all"
+                className="px-3 py-1.5 text-xs font-black uppercase tracking-wider transition-all"
                 style={{
-                  backgroundColor: viewMode === mode
-                    ? (isCyber ? "rgba(0,245,255,0.2)" : "#000")
-                    : "transparent",
-                  color: viewMode === mode
-                    ? (isCyber ? "#00F5FF" : "#FFF")
-                    : (isCyber ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.5)"),
+                  backgroundColor:
+                    viewMode === mode
+                      ? isCyber
+                        ? "rgba(0,245,255,0.2)"
+                        : "#FFD166"
+                      : "transparent",
+                  color:
+                    viewMode === mode
+                      ? isCyber
+                        ? "#00F5FF"
+                        : "#000"
+                      : isCyber
+                      ? "rgba(255,255,255,0.4)"
+                      : "#6B7280",
                 }}
-                title={mode.charAt(0).toUpperCase() + mode.slice(1) + " View"}
+                title={`${mode} View`}
               >
-                {mode === "masonry" ? "⊞" : mode === "grid" ? "▦" : "📅"}
+                {mode === "grid" ? "▦ Grid" : mode === "masonry" ? "⊞ Masonry" : "📅 Timeline"}
               </button>
             ))}
           </div>
-
-          <label className="flex items-center gap-2.5 text-xs font-black select-none cursor-pointer uppercase tracking-wider">
-            <input
-              type="checkbox"
-              checked={includeSubfolders}
-              onChange={(e) => setIncludeSubfolders(e.target.checked)}
-              className="w-4 h-4 rounded cursor-pointer border-2"
-              style={{ accentColor: isCyber ? "#00F5FF" : "#FF3366" }}
-            />
-            <span>Nested</span>
-          </label>
         </div>
       </div>
 
-      {/* ── Main Layout (Sidebar + Grid) ── */}
-      <div className="flex flex-col lg:flex-row gap-8 items-start">
-        {/* Sidebar Controls */}
-        <div
-          className="w-full lg:w-80 shrink-0 p-6 rounded-2xl flex flex-col gap-6"
-          style={{
-            backgroundColor: isCyber ? "rgba(6,11,30,0.7)" : "#FFF",
-            borderColor: isCyber ? "rgba(0,245,255,0.2)" : "#000",
-            borderWidth: isCyber ? "1px" : "4px",
-            boxShadow: isCyber ? "none" : "6px 6px 0 #000",
-            backdropFilter: isCyber ? "blur(8px)" : "none",
-          }}
-        >
-          {/* Section: Folders Tree */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-center pb-2.5 border-b-2 border-dashed border-adaptive-unique">
-              <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-2">
-                <span>📁</span> Core Directories
-              </h3>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setShowFolderCreator(!showFolderCreator)}
-                  className="text-[9px] px-2 py-0.5 rounded-md border font-black uppercase tracking-wider bg-black/5 dark:hover:bg-white/10"
-                  style={{ borderColor: "#000" }}
+      {/* ── Windows Explorer Breadcrumb Navigation Path ── */}
+      <div
+        className="px-5 py-3 rounded-xl border-adaptive-unique flex flex-wrap items-center gap-2 text-xs font-mono font-bold"
+        style={{
+          backgroundColor: isCyber ? "rgba(5,8,22,0.5)" : "#FFF9E6",
+        }}
+      >
+        {/* Up to Parent Button */}
+        {currentFolder !== "Root" && (
+          <button
+            onClick={handleNavigateUp}
+            className="px-2.5 py-1 rounded-lg border-adaptive-unique text-[11px] font-black flex items-center gap-1 hover:bg-black/5 dark:hover:bg-white/10 transition-transform active:scale-95"
+            title="Navigate Up one directory level"
+          >
+            <span>↑</span>
+            <span>Up</span>
+          </button>
+        )}
+
+        {/* Clickable Breadcrumbs (Support drag-and-drop targeting!) */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {breadcrumbTrail.map((crumb, idx) => {
+            const isLast = idx === breadcrumbTrail.length - 1;
+            const isDropTarget = dragTargetFolder === crumb.path;
+
+            return (
+              <React.Fragment key={crumb.path}>
+                {idx > 0 && <span className="opacity-40">/</span>}
+                <span
+                  onClick={() => setCurrentFolder(crumb.path)}
+                  onDragOver={(e) => handleFolderDragOver(e, crumb.path)}
+                  onDragLeave={handleFolderDragLeave}
+                  onDrop={(e) => handleFolderDrop(e, crumb.path)}
+                  className={`px-2 py-0.5 rounded-md cursor-pointer transition-all ${
+                    isLast ? "font-black" : "opacity-75 hover:opacity-100 hover:underline"
+                  }`}
+                  style={{
+                    backgroundColor: isDropTarget
+                      ? isCyber
+                        ? "rgba(0,245,255,0.3)"
+                        : "#FFD166"
+                      : isLast
+                      ? isCyber
+                        ? "rgba(0,245,255,0.12)"
+                        : "#FFF"
+                      : "transparent",
+                    color: isLast ? (isCyber ? "#00F5FF" : "#000") : undefined,
+                    border: isDropTarget ? "2px solid #00F5FF" : undefined,
+                  }}
                 >
-                  {showFolderCreator ? "Cancel" : "⚡ New Folder"}
-                </button>
-              </div>
-            </div>
-
-            {/* Inline dynamic folder builder form */}
-            <AnimatePresence>
-              {showFolderCreator && (
-                <motion.form
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  onSubmit={handleCreateFolderInline}
-                  className="p-3 rounded-xl border-2 space-y-2 bg-black/5 dark:bg-white/5"
-                  style={{ borderColor: isCyber ? "#00F5FF" : "#000" }}
-                >
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[9px] font-black uppercase">Mount Inside Node</label>
-                    <select
-                      value={inlineFolderParent}
-                      onChange={(e) => setInlineFolderParent(e.target.value)}
-                      className="text-[10px] p-1 font-bold rounded bg-transparent border border-adaptive-unique"
-                    >
-                      <option value="Root">Root Base</option>
-                      {uniqueFolders.map(f => (
-                        <option key={f} value={f}>{f}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[9px] font-black uppercase">Directory Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={newFolderName}
-                      onChange={(e) => setNewFolderName(e.target.value)}
-                      placeholder="e.g. ConceptArt"
-                      className="text-[10px] p-1.5 font-bold rounded bg-transparent border border-adaptive-unique"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full py-1 text-[9px] font-black uppercase text-center rounded bg-black text-white dark:bg-white dark:text-black border border-transparent"
-                  >
-                    🚀 Initialize Folder
-                  </button>
-                </motion.form>
-              )}
-            </AnimatePresence>
-
-            <div className="flex flex-col gap-1 max-h-64 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin" }}>
-              <div
-                onClick={() => setSelectedFolder("All Folders")}
-                className="flex items-center justify-between py-2 px-2.5 rounded-xl cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-all text-xs font-black mb-1 tracking-wide"
-                style={{
-                  backgroundColor: selectedFolder === "All Folders" ? (isCyber ? "rgba(0,245,255,0.15)" : "#FF3366") : "transparent",
-                  borderLeft: selectedFolder === "All Folders" ? (isCyber ? "4px solid #00F5FF" : "4px solid #000") : "4px solid transparent",
-                  border: !isCyber && selectedFolder === "All Folders" ? "3px solid #000" : undefined,
-                  boxShadow: !isCyber && selectedFolder === "All Folders" ? "3px 3px 0px #000" : undefined,
-                  color: selectedFolder === "All Folders" && !isCyber ? "#FFF" : undefined,
-                }}
-              >
-                <span>🌍 Root Matrix Vector</span>
-                <span className="text-[9px] font-mono px-2 py-0.5 bg-black/5 dark:bg-white/5 border border-adaptive-unique rounded">
-                  {gallery.length}
+                  {crumb.path === "Root" ? "🏠 Gallery" : `📁 ${crumb.name}`}
                 </span>
-              </div>
-              <FolderTreeNavigation node={folderTree} depth={0} />
-            </div>
-          </div>
+              </React.Fragment>
+            );
+          })}
+        </div>
 
-          {/* Section: Categories */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-center pb-2.5 border-b-2 border-dashed border-adaptive-unique">
-              <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-2">
-                <span>🏷️</span> Classification Core
-              </h3>
+        {/* Count overview */}
+        <div className="ml-auto text-[10px] opacity-60 flex items-center gap-2">
+          <span>{childFolders.length} folder(s)</span>
+          <span>•</span>
+          <span>{displayedMedia.length} asset(s)</span>
+        </div>
+      </div>
+
+      {/* ── Main Explorer Content Canvas (Right-Clickable Canvas) ── */}
+      <div onContextMenu={handleCanvasContextMenu} className="space-y-8 min-h-[400px]">
+        {/* ═══════════════════════════════════════════════════════════════════
+            SECTION A: SUB-DIRECTORIES (Folders that contain media)
+        ═════════════════════════════════════════════════════════════════════ */}
+        {childFolders.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-black uppercase tracking-wider font-mono theme-text-primary flex items-center gap-1.5">
+                <span>📁</span>
+                <span>Sub-Directories ({childFolders.length})</span>
+              </h2>
             </div>
-            <div className="flex flex-wrap lg:flex-col gap-1 max-h-60 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin" }}>
-              <div
-                onClick={() => setSelectedCategory("All Categories")}
-                className="flex items-center justify-between py-2 px-3 rounded-xl cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-all text-xs font-black w-full mb-1"
-                style={{
-                  backgroundColor: selectedCategory === "All Categories" ? (isCyber ? "rgba(0,245,255,0.15)" : "#FF3366") : "transparent",
-                  borderLeft: selectedCategory === "All Categories" ? (isCyber ? "4px solid #00F5FF" : "4px solid #000") : "4px solid transparent",
-                  border: !isCyber && selectedCategory === "All Categories" ? "3px solid #000" : undefined,
-                  boxShadow: !isCyber && selectedCategory === "All Categories" ? "3px 3px 0px #000" : undefined,
-                  color: selectedCategory === "All Categories" && !isCyber ? "#FFF" : undefined,
-                }}
-              >
-                <span>🏷️ All Classifications</span>
-                <span className="text-[9px] font-mono px-2 py-0.5 bg-black/5 dark:bg-white/5 border border-adaptive-unique rounded">
-                  {gallery.length}
-                </span>
-              </div>
-              {uniqueCategories.map((cat) => {
-                const count = gallery.filter((item) => (item.category || "General") === cat).length;
-                const isSelected = selectedCategory === cat;
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
+              {childFolders.map((folder) => {
+                const isDropTarget = dragTargetFolder === folder.fullPath;
+
                 return (
-                  <div
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className="flex items-center justify-between py-2 px-3 rounded-xl cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-all text-xs font-black w-full mb-1"
+                  <motion.div
+                    key={folder.fullPath}
+                    onClick={() => setCurrentFolder(folder.fullPath)}
+                    onContextMenu={(e) => handleFolderContextMenu(e, folder)}
+                    onDragOver={(e) => handleFolderDragOver(e, folder.fullPath)}
+                    onDragLeave={handleFolderDragLeave}
+                    onDrop={(e) => handleFolderDrop(e, folder.fullPath)}
+                    whileHover={{ y: -2, scale: 1.02 }}
+                    className="p-3.5 rounded-2xl border-adaptive-unique cursor-pointer transition-all flex flex-col justify-between min-h-[105px] relative group select-none overflow-hidden"
                     style={{
-                      backgroundColor: isSelected ? (isCyber ? "rgba(0,245,255,0.15)" : "#FF3366") : "transparent",
-                      borderLeft: isSelected ? (isCyber ? "4px solid #00F5FF" : "4px solid #000") : "4px solid transparent",
-                      border: !isCyber && isSelected ? "3px solid #000" : undefined,
-                      boxShadow: !isCyber && isSelected ? "3px 3px 0px #000" : undefined,
-                      color: isSelected && !isCyber ? "#FFF" : undefined,
+                      backgroundColor: isDropTarget
+                        ? isCyber
+                          ? "rgba(0, 245, 255, 0.25)"
+                          : "#FFD166"
+                        : isCyber
+                        ? "rgba(10, 15, 44, 0.6)"
+                        : "#FFFFFF",
+                      borderColor: isDropTarget
+                        ? isCyber
+                          ? "#00F5FF"
+                          : "#000"
+                        : undefined,
+                      borderWidth: isDropTarget ? "3px" : undefined,
+                      boxShadow: isDropTarget
+                        ? isCyber
+                          ? "0 0 25px rgba(0,245,255,0.4)"
+                          : "6px 6px 0 #000"
+                        : isCyber
+                        ? "none"
+                        : "3px 3px 0 #000",
                     }}
                   >
-                    <span className="truncate uppercase tracking-wider">{cat}</span>
-                    <span className="text-[9px] font-mono px-2 py-0.5 bg-black/5 dark:bg-white/5 border border-adaptive-unique rounded">
-                      {count}
-                    </span>
-                  </div>
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-2xl">{isDropTarget ? "📂" : "📁"}</span>
+                      <span
+                        className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-adaptive-unique shrink-0"
+                        style={{
+                          backgroundColor: isCyber ? "rgba(255,255,255,0.05)" : "#F3F4F6",
+                        }}
+                      >
+                        {folder.itemCount} items
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="text-xs font-black truncate theme-text-primary tracking-wide">
+                        {folder.name}
+                      </h3>
+                      {folder.subfolderCount > 0 && (
+                        <p className="text-[9px] theme-text-muted mt-0.5 font-mono">
+                          {folder.subfolderCount} subfolder(s)
+                        </p>
+                      )}
+                    </div>
+                  </motion.div>
                 );
               })}
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Gallery Grid Section */}
-        <div className="flex-1 w-full">
-          {/* Active Navigation Path / Breadcrumbs */}
-          <div className="mb-6 flex flex-wrap items-center gap-2 text-xs font-black tracking-wider font-mono uppercase">
-            <span>INDEX:</span>
-            <span className="bg-black/5 dark:bg-white/10 px-2.5 py-1 border border-adaptive-unique rounded-lg text-emerald-500">
-              📁 {selectedFolder}
-            </span>
-            <span>//</span>
-            <span className="bg-black/5 dark:bg-white/10 px-2.5 py-1 border border-adaptive-unique rounded-lg text-amber-500">
-              🏷️ {selectedCategory}
-            </span>
-            {filteredGallery.length > 0 && (
-              <span className="ml-auto text-[10px] opacity-60">
-                Found {filteredGallery.length} active pipelines
+        {/* ═══════════════════════════════════════════════════════════════════
+            SECTION B: DIRECT ASSET MATRIX (Media in this directory)
+        ═════════════════════════════════════════════════════════════════════ */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-black uppercase tracking-wider font-mono theme-text-primary flex items-center gap-1.5">
+              <span>🖼️</span>
+              <span>
+                {currentFolder === "Root" ? "Root Media Assets" : "Contained Assets"} (
+                {displayedMedia.length})
               </span>
-            )}
+            </h2>
           </div>
 
-          {/* Photo Layout — View Mode Aware */}
-          {viewMode === "timeline" ? (
-            /* ── TIMELINE VIEW ── */
-            (() => {
-              const grouped = filteredGallery.reduce((acc, item) => {
-                const key = "Imported Items";
-                if (!acc[key]) acc[key] = [];
-                acc[key].push(item);
-                return acc;
-              }, {} as Record<string, typeof filteredGallery>);
+          {/* Render by active View Mode */}
+          {displayedMedia.length > 0 ? (
+            viewMode === "masonry" ? (
+              /* ── MASONRY VIEW ── */
+              <div
+                style={{ columnCount: 3, columnGap: "1.25rem" }}
+                className="[&>*]:break-inside-avoid [&>*]:mb-5 md:columns-3 columns-1 sm:columns-2"
+              >
+                {displayedMedia.map((item) => (
+                  <motion.div
+                    key={item.id}
+                    layoutId={`asset-${item.id}`}
+                    draggable
+                    onDragStart={(e) => handlePhotoDragStart(e as any, item)}
+                    onDragEnd={handlePhotoDragEnd}
+                    onClick={() => openLightbox(item)}
+                    onContextMenu={(e) => handlePhotoContextMenu(e, item)}
+                    className="group relative cursor-pointer overflow-hidden rounded-2xl border-adaptive-unique bg-black/10 transition-transform duration-200"
+                    style={{
+                      boxShadow: isCyber ? "none" : "4px 4px 0 #000",
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <img
+                      src={item.url}
+                      alt={item.title}
+                      className="w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&q=80";
+                      }}
+                    />
 
-              return (
-                <div className="space-y-10">
-                  {Object.entries(grouped).map(([month, items]) => (
-                    <div key={month}>
-                      <div className="flex items-center gap-3 mb-5">
-                        <h3
-                          className="font-black text-base uppercase tracking-wider"
-                          style={{ color: isCyber ? "#00F5FF" : "#1A1A1A", fontFamily: isCyber ? "var(--font-orbitron)" : "inherit" }}
+                    {/* Gradient Overlay with Meta & Quick Actions */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
+                      <p className="text-white text-xs font-black uppercase tracking-wide truncate">
+                        {item.title}
+                      </p>
+                      {item.caption && (
+                        <p className="text-[10px] text-white/70 line-clamp-2 mt-1">{item.caption}</p>
+                      )}
+
+                      <div className="flex items-center gap-2 mt-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePromptMovePhoto(item);
+                          }}
+                          className="px-2 py-1 text-[9px] font-black rounded-lg bg-[#00F5FF] text-black shadow-md uppercase"
                         >
-                          📅 {month}
-                        </h3>
-                        <span className="text-xs theme-text-muted">({items.length} items)</span>
-                        <div className="flex-1 h-px" style={{ background: isCyber ? "rgba(0,245,255,0.15)" : "rgba(0,0,0,0.1)" }} />
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                        {items.map((item, idx) => (
-                          <motion.div
-                            key={item.id}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: idx * 0.04 }}
-                            onClick={() => openLightbox(item, filteredGallery.indexOf(item))}
-                            onContextMenu={(e) => {
-                              e.preventDefault();
-                              openContextMenu(e, [
-                                {
-                                  id: "view",
-                                  label: "Open Full Preview",
-                                  icon: "🔍",
-                                  onClick: () => openLightbox(item, filteredGallery.indexOf(item)),
-                                },
-                                {
-                                  id: "delete",
-                                  label: "Delete Image",
-                                  icon: "🗑️",
-                                  danger: true,
-                                  divider: true,
-                                  onClick: () => handleDelete(item.id, { stopPropagation: () => {} } as React.MouseEvent),
-                                },
-                              ], item.title);
-                            }}
-                            className="group relative cursor-pointer overflow-hidden aspect-square bg-black/10"
-                            style={{
-                              borderRadius: isCyber ? "12px" : "0px",
-                              border: isCyber ? "1px solid rgba(0,245,255,0.15)" : "3px solid #000",
-                            }}
-                            whileHover={{ scale: 1.05 }}
-                          >
-                            <img src={item.url} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                              onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300&q=80"; }} />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-2">
-                              <p className="text-white text-[10px] font-black truncate">{item.title}</p>
-                            </div>
-                          </motion.div>
-                        ))}
+                          📁 Move
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePromptEditPhoto(item);
+                          }}
+                          className="px-2 py-1 text-[9px] font-black rounded-lg bg-white/20 text-white hover:bg-white/30 uppercase"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          onClick={(e) => handleDeletePhoto(item.id, e)}
+                          className="ml-auto p-1 rounded-lg text-red-400 hover:bg-red-500/20 text-[10px] font-bold"
+                        >
+                          🗑️
+                        </button>
                       </div>
                     </div>
-                  ))}
-                  {filteredGallery.length === 0 && (
-                    <div className="text-center py-24 border-4 border-dashed border-adaptive-unique rounded-2xl opacity-75">
-                      <p className="text-5xl animate-bounce">📅</p>
-                      <p className="text-sm font-black uppercase tracking-wider mt-4">No Timeline Entries</p>
+                  </motion.div>
+                ))}
+              </div>
+            ) : viewMode === "timeline" ? (
+              /* ── TIMELINE VIEW ── */
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {displayedMedia.map((item) => (
+                  <motion.div
+                    key={item.id}
+                    layoutId={`asset-${item.id}`}
+                    draggable
+                    onDragStart={(e) => handlePhotoDragStart(e as any, item)}
+                    onDragEnd={handlePhotoDragEnd}
+                    onClick={() => openLightbox(item)}
+                    onContextMenu={(e) => handlePhotoContextMenu(e, item)}
+                    className="group relative cursor-pointer overflow-hidden aspect-square rounded-2xl border-adaptive-unique bg-black/10"
+                    whileHover={{ scale: 1.04 }}
+                  >
+                    <img
+                      src={item.url}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-end">
+                      <p className="text-white text-[11px] font-black truncate">{item.title}</p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePromptMovePhoto(item);
+                        }}
+                        className="mt-1 px-2 py-0.5 text-[8px] font-black rounded bg-[#00F5FF] text-black w-max"
+                      >
+                        📁 Move
+                      </button>
                     </div>
-                  )}
-                </div>
-              );
-            })()
-          ) : viewMode === "masonry" ? (
-            /* ── MASONRY VIEW ── */
-            <div
-              style={{
-                columnCount: 3,
-                columnGap: "1.25rem",
-              }}
-              className="[&>*]:break-inside-avoid [&>*]:mb-5 md:columns-3 columns-2 sm:columns-2"
-            >
-              {filteredGallery.map((item, idx) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.03 }}
-                  onClick={() => openLightbox(item, idx)}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    openContextMenu(e, [
-                      {
-                        id: "view",
-                        label: "Open Full Preview",
-                        icon: "🔍",
-                        onClick: () => openLightbox(item, idx),
-                      },
-                      {
-                        id: "delete",
-                        label: "Delete Image",
-                        icon: "🗑️",
-                        danger: true,
-                        divider: true,
-                        onClick: () => handleDelete(item.id, { stopPropagation: () => {} } as React.MouseEvent),
-                      },
-                    ], item.title);
-                  }}
-                  className="group relative cursor-pointer overflow-hidden bg-black/10 break-inside-avoid mb-5"
-                  style={{
-                    borderRadius: isCyber ? "16px" : "0px",
-                    border: isCyber ? "1px solid rgba(0,245,255,0.2)" : "4px solid #000",
-                    boxShadow: isCyber ? "0 0 15px rgba(0,245,255,0.02)" : "6px 6px 0 #000",
-                    display: "inline-block",
-                    width: "100%",
-                  }}
-                  whileHover={{ scale: 1.02, boxShadow: isCyber ? "0 0 25px rgba(0,245,255,0.15)" : "8px 8px 0 #000" }}
-                >
-                  <img
-                    src={item.url}
-                    alt={item.title}
-                    className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
-                    loading="lazy"
-                    onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&q=80"; }}
-                  />
-                  {/* Gradient overlay on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4 pointer-events-none">
-                    <h3 className="text-white text-sm font-black tracking-wide truncate">{item.title}</h3>
-                    {item.caption && <p className="text-[10px] text-white/70 line-clamp-1 mt-0.5">{item.caption}</p>}
-                    <div className="flex gap-1 mt-2 flex-wrap">
-                      {(item.tags || []).slice(0, 3).map((tag) => (
-                        <span key={tag} className="text-[8px] font-black px-1.5 py-0.5 bg-white/10 text-white border border-white/20 rounded">{tag}</span>
-                      ))}
-                    </div>
-                  </div>
-                  {/* Delete button */}
-                  <button
-                    onClick={(e) => handleDelete(item.id, e)}
-                    className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center bg-red-500 text-white rounded-xl opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-red-600 z-20 shadow-lg border border-red-700 font-bold text-xs"
-                  >✕</button>
-                </motion.div>
-              ))}
-              {filteredGallery.length === 0 && (
-                <div className="col-span-full text-center py-24 border-4 border-dashed border-adaptive-unique rounded-2xl opacity-75 bg-black/5 dark:bg-white/5">
-                  <p className="text-5xl animate-bounce">📡</p>
-                  <p className="text-sm font-black uppercase tracking-wider mt-4">No Images Found</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            /* ── STANDARD GRID VIEW ── */
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {filteredGallery.map((item, idx) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: idx * 0.04 }}
-                  onClick={() => openLightbox(item, idx)}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    openContextMenu(e, [
-                      {
-                        id: "view",
-                        label: "Open Full Preview",
-                        icon: "🔍",
-                        onClick: () => openLightbox(item, idx),
-                      },
-                      {
-                        id: "delete",
-                        label: "Delete Image",
-                        icon: "🗑️",
-                        danger: true,
-                        divider: true,
-                        onClick: () => handleDelete(item.id, { stopPropagation: () => {} } as React.MouseEvent),
-                      },
-                    ], item.title);
-                  }}
-                  className="group relative cursor-pointer overflow-hidden aspect-video bg-black/10 transition-transform duration-200"
-                  style={{
-                    borderRadius: isCyber ? "16px" : "0px",
-                    border: isCyber ? "1px solid rgba(0,245,255,0.2)" : "4px solid #000",
-                    boxShadow: isCyber ? "0 0 15px rgba(0,245,255,0.02)" : "6px 6px 0 #000",
-                  }}
-                  whileHover={{ scale: 1.03 }}
-                >
-                  <img
-                    src={item.url}
-                    alt={item.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    loading="lazy"
-                    onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&q=80"; }}
-                  />
-                  <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
-                    <span className="text-[9px] font-black uppercase tracking-wider font-mono px-2 py-0.5 bg-black/80 text-white border border-white/10 rounded-md shadow-md">📁 {item.folder || "Root"}</span>
-                    <span className="text-[9px] font-black uppercase tracking-wider font-mono px-2 py-0.5 bg-[#00F5FF] text-black rounded-md shadow-md w-max">{item.category || "General"}</span>
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-black/20 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-5 pointer-events-none">
-                    <h3 className="text-white text-sm font-black tracking-wide uppercase truncate">{item.title}</h3>
-                    {item.caption && <p className="text-[11px] text-white/70 line-clamp-2 mt-1.5 leading-relaxed font-semibold">{item.caption}</p>}
-                    {item.tags && item.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2.5">
-                        {item.tags.map((tag) => (<span key={tag} className="text-[9px] font-black px-2 py-0.5 bg-[#00F5FF]/10 text-[#00F5FF] border border-[#00F5FF]/30 rounded-md font-mono">#{tag.toUpperCase()}</span>))}
-                      </div>
-                    )}
-                  </div>
-                  <button onClick={(e) => handleDelete(item.id, e)} className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center bg-red-500 text-white rounded-xl opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-red-600 z-20 shadow-lg border border-red-700 font-bold text-xs">✕</button>
-                </motion.div>
-              ))}
-              {filteredGallery.length === 0 && (
-                <div className="col-span-full text-center py-24 border-4 border-dashed border-adaptive-unique rounded-2xl opacity-75 bg-black/5 dark:bg-white/5">
-                  <p className="text-5xl animate-bounce">📡</p>
-                  <p className="text-sm font-black uppercase tracking-wider mt-4">Empty Grid Array</p>
-                </div>
-              )}
-            </div>
-          )}
-          </div>
-        </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              /* ── STANDARD GRID VIEW ── */
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                {displayedMedia.map((item) => (
+                  <motion.div
+                    key={item.id}
+                    layoutId={`asset-${item.id}`}
+                    draggable
+                    onDragStart={(e) => handlePhotoDragStart(e as any, item)}
+                    onDragEnd={handlePhotoDragEnd}
+                    onClick={() => openLightbox(item)}
+                    onContextMenu={(e) => handlePhotoContextMenu(e, item)}
+                    className="group relative cursor-pointer overflow-hidden aspect-video rounded-2xl border-adaptive-unique bg-black/10 transition-transform duration-200"
+                    style={{
+                      boxShadow: isCyber ? "none" : "4px 4px 0 #000",
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <img
+                      src={item.url}
+                      alt={item.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&q=80";
+                      }}
+                    />
 
-      {/* ── Add Image Overlay dialog ── */}
-      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} maxWidth="max-w-md">
-        <div className="p-6 relative">
-          {isCyber && (
-            <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#00F5FF]" />
+                    {/* Top Badges */}
+                    <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10 pointer-events-none">
+                      <span className="text-[9px] font-black uppercase font-mono px-2 py-0.5 bg-black/80 text-white rounded-md">
+                        📁 {item.folder || "Root"}
+                      </span>
+                      {item.category && (
+                        <span className="text-[9px] font-black uppercase font-mono px-2 py-0.5 bg-[#00F5FF] text-black rounded-md">
+                          {item.category}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Hover Info & Quick Action Bar (Mobile-friendly Move button) */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
+                      <p className="text-white text-xs font-black uppercase tracking-wide truncate">
+                        {item.title}
+                      </p>
+                      {item.caption && (
+                        <p className="text-[10px] text-white/70 line-clamp-2 mt-0.5">{item.caption}</p>
+                      )}
+
+                      <div className="flex items-center gap-2 mt-2.5">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePromptMovePhoto(item);
+                          }}
+                          className="px-2.5 py-1 text-[9px] font-black rounded-lg bg-[#00F5FF] text-black shadow-md uppercase transition-transform active:scale-95"
+                          title="Move to Folder"
+                        >
+                          📁 Move
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePromptEditPhoto(item);
+                          }}
+                          className="px-2.5 py-1 text-[9px] font-black rounded-lg bg-white/20 text-white hover:bg-white/30 uppercase transition-transform active:scale-95"
+                          title="Edit Info"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          onClick={(e) => handleDeletePhoto(item.id, e)}
+                          className="ml-auto p-1.5 rounded-lg text-red-400 hover:bg-red-500/20 text-xs font-bold"
+                          title="Delete Photo"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )
+          ) : (
+            /* Empty Directory Canvas */
+            <div
+              className="p-12 text-center rounded-2xl border-4 border-dashed border-adaptive-unique flex flex-col items-center justify-center gap-3 opacity-70"
+              style={{
+                backgroundColor: isCyber ? "rgba(10,15,44,0.3)" : "#FFF",
+              }}
+            >
+              <span className="text-4xl">📂</span>
+              <h3 className="font-black text-sm uppercase tracking-wider theme-text-primary">
+                {searchQuery
+                  ? "No Assets Match Query"
+                  : currentFolder === "Root"
+                  ? "Root Matrix has no Direct Media"
+                  : `Folder "${currentFolder}" is Empty`}
+              </h3>
+              <p className="text-xs theme-text-muted max-w-sm">
+                Drag and drop photos onto this area, or import virtual assets directly into this directory.
+              </p>
+              <button
+                onClick={() => {
+                  setFolderInput(currentFolder);
+                  setIsOpen(true);
+                }}
+                className="mt-2 px-4 py-2 text-xs font-black rounded-xl border-adaptive-unique transition-transform active:scale-95"
+                style={{
+                  backgroundColor: isCyber ? "#00F5FF" : "#FFD166",
+                  color: isCyber ? "#050816" : "#000",
+                }}
+              >
+                ➕ Import Asset Here
+              </button>
+            </div>
           )}
-          <div
-            className="flex justify-between items-center mb-5 pb-3"
-            style={{
-              borderBottom: isCyber ? "1px solid rgba(255,255,255,0.1)" : "4px dashed #000",
-            }}
-          >
-            <h3 className="font-black text-lg uppercase tracking-wide">Import Virtual Asset</h3>
-            <button onClick={() => setIsOpen(false)} className="text-xs font-black p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded">
+        </div>
+      </div>
+
+      {/* ── Move-to-Folder Modal (Mobile & Keyboard Drag/Drop Alternative) ── */}
+      <MoveToFolderModal
+        isOpen={isMoveModalOpen}
+        onClose={() => {
+          setIsMoveModalOpen(false);
+          setMoveModalItem(null);
+        }}
+        item={moveModalItem}
+        folders={allUniqueFolders}
+        onMove={async (id, target) => {
+          await moveGalleryItem(id, target);
+        }}
+      />
+
+      {/* ── Edit Asset Metadata Modal ── */}
+      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} maxWidth="max-w-md">
+        <form onSubmit={handleSavePhotoEdits} className="p-6 space-y-4">
+          <div className="flex justify-between items-center pb-2 border-b border-adaptive-unique">
+            <h3 className="text-base font-black uppercase tracking-wider theme-text-primary">
+              ✏️ Edit Asset Metadata
+            </h3>
+            <button
+              type="button"
+              onClick={() => setIsEditModalOpen(false)}
+              className="text-xs font-black opacity-60 hover:opacity-100"
+            >
               ✕
             </button>
           </div>
+
+          <div>
+            <label className="text-[10px] font-black uppercase theme-text-muted">Title</label>
+            <input
+              type="text"
+              required
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="w-full mt-1 p-2 text-xs font-bold rounded-lg border border-adaptive-unique bg-transparent outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black uppercase theme-text-muted">Caption</label>
+            <textarea
+              value={editCaption}
+              onChange={(e) => setEditCaption(e.target.value)}
+              className="w-full mt-1 p-2 text-xs font-bold rounded-lg border border-adaptive-unique bg-transparent outline-none resize-none h-20"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black uppercase theme-text-muted">Category</label>
+            <input
+              type="text"
+              value={editCategory}
+              onChange={(e) => setEditCategory(e.target.value)}
+              className="w-full mt-1 p-2 text-xs font-bold rounded-lg border border-adaptive-unique bg-transparent outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black uppercase theme-text-muted">Tags (Press Enter)</label>
+            <div className="flex gap-2 mt-1">
+              <input
+                type="text"
+                value={editTagInput}
+                onChange={(e) => setEditTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const clean = editTagInput.trim().replace(/#/g, "");
+                    if (clean && !editTags.includes(clean)) {
+                      setEditTags([...editTags, clean]);
+                    }
+                    setEditTagInput("");
+                  }
+                }}
+                placeholder="Add tag..."
+                className="flex-1 p-2 text-xs font-bold rounded-lg border border-adaptive-unique bg-transparent outline-none"
+              />
+            </div>
+            {editTags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {editTags.map((tag, idx) => (
+                  <span
+                    key={tag}
+                    onClick={() => setEditTags(editTags.filter((_, i) => i !== idx))}
+                    className="text-[9px] font-black px-2 py-0.5 rounded cursor-pointer bg-black/10 dark:bg-white/10"
+                  >
+                    #{tag} ✕
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-3">
+            <button
+              type="button"
+              onClick={() => setIsEditModalOpen(false)}
+              className="px-4 py-2 text-xs font-black rounded-xl border border-adaptive-unique uppercase"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 text-xs font-black rounded-xl bg-[#00F5FF] text-black uppercase tracking-wider"
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ── New Subfolder Prompt Modal ── */}
+      <Modal isOpen={isNewFolderModalOpen} onClose={() => setIsNewFolderModalOpen(false)} maxWidth="max-w-md">
+        <form onSubmit={handleConfirmCreateFolder} className="p-6 space-y-4">
+          <div className="flex justify-between items-center pb-2 border-b border-adaptive-unique">
+            <h3 className="text-base font-black uppercase tracking-wider theme-text-primary">
+              📁 Initialize Sub-Directory
+            </h3>
+            <button
+              type="button"
+              onClick={() => setIsNewFolderModalOpen(false)}
+              className="text-xs font-black opacity-60 hover:opacity-100"
+            >
+              ✕
+            </button>
+          </div>
+
+          <p className="text-xs font-mono theme-text-muted">
+            Mounting inside: <span className="font-bold text-emerald-500">{newFolderParentPath}</span>
+          </p>
+
+          <div>
+            <label className="text-[10px] font-black uppercase theme-text-muted">Folder Name</label>
+            <input
+              type="text"
+              required
+              autoFocus
+              value={newFolderNameInput}
+              onChange={(e) => setNewFolderNameInput(e.target.value)}
+              placeholder="e.g. Wallpapers or Screenshots"
+              className="w-full mt-1 p-2 text-xs font-bold rounded-lg border border-adaptive-unique bg-transparent outline-none"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-3">
+            <button
+              type="button"
+              onClick={() => setIsNewFolderModalOpen(false)}
+              className="px-4 py-2 text-xs font-black rounded-xl border border-adaptive-unique uppercase"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 text-xs font-black rounded-xl bg-[#00F5FF] text-black uppercase tracking-wider"
+            >
+              Create Folder
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ── Rename Folder Prompt Modal ── */}
+      <Modal isOpen={isRenameModalOpen} onClose={() => setIsRenameModalOpen(false)} maxWidth="max-w-md">
+        <form onSubmit={handleConfirmRenameFolder} className="p-6 space-y-4">
+          <div className="flex justify-between items-center pb-2 border-b border-adaptive-unique">
+            <h3 className="text-base font-black uppercase tracking-wider theme-text-primary">
+              ✏️ Rename Directory
+            </h3>
+            <button
+              type="button"
+              onClick={() => setIsRenameModalOpen(false)}
+              className="text-xs font-black opacity-60 hover:opacity-100"
+            >
+              ✕
+            </button>
+          </div>
+
+          <p className="text-xs font-mono theme-text-muted">
+            Target: <span className="font-bold">{folderToRename}</span>
+          </p>
+
+          <div>
+            <label className="text-[10px] font-black uppercase theme-text-muted">New Folder Name</label>
+            <input
+              type="text"
+              required
+              autoFocus
+              value={renamedFolderNameInput}
+              onChange={(e) => setRenamedFolderNameInput(e.target.value)}
+              className="w-full mt-1 p-2 text-xs font-bold rounded-lg border border-adaptive-unique bg-transparent outline-none"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-3">
+            <button
+              type="button"
+              onClick={() => setIsRenameModalOpen(false)}
+              className="px-4 py-2 text-xs font-black rounded-xl border border-adaptive-unique uppercase"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 text-xs font-black rounded-xl bg-[#00F5FF] text-black uppercase tracking-wider"
+            >
+              Apply Rename
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ── Add / Import Asset Dialog ── */}
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} maxWidth="max-w-md">
+        <div className="p-6 relative">
+          <div className="flex justify-between items-center mb-5 pb-3 border-b border-adaptive-unique">
+            <h3 className="font-black text-lg uppercase tracking-wide">Import Virtual Asset</h3>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="text-xs font-black p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded"
+            >
+              ✕
+            </button>
+          </div>
+
           <form onSubmit={handleAddImage} className="space-y-4">
-            {/* Title */}
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-black uppercase tracking-wider opacity-70">
-                Asset Identifier Title
+            {/* Folder Destination Selector */}
+            <div>
+              <label className="text-[10px] font-black uppercase theme-text-muted">
+                Destination Folder
               </label>
+              <select
+                value={folderInput}
+                onChange={(e) => setFolderInput(e.target.value)}
+                className="w-full mt-1 p-2 text-xs font-bold rounded-lg border border-adaptive-unique bg-transparent outline-none font-mono"
+              >
+                {allUniqueFolders.map((f) => (
+                  <option key={f} value={f}>
+                    {f === "Root" ? "🏠 Root Base" : `📁 ${f}`}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Upload Method Tabs */}
+            <div className="flex rounded-xl overflow-hidden border border-adaptive-unique">
+              <button
+                type="button"
+                onClick={() => setUploadTab("upload")}
+                className="flex-1 py-1.5 text-xs font-black uppercase"
+                style={{
+                  backgroundColor: uploadTab === "upload" ? (isCyber ? "#00F5FF" : "#FFD166") : "transparent",
+                  color: uploadTab === "upload" ? "#000" : undefined,
+                }}
+              >
+                📁 Local Upload
+              </button>
+              <button
+                type="button"
+                onClick={() => setUploadTab("url")}
+                className="flex-1 py-1.5 text-xs font-black uppercase"
+                style={{
+                  backgroundColor: uploadTab === "url" ? (isCyber ? "#00F5FF" : "#FFD166") : "transparent",
+                  color: uploadTab === "url" ? "#000" : undefined,
+                }}
+              >
+                🌐 Remote URL
+              </button>
+            </div>
+
+            {uploadTab === "upload" ? (
+              <div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="w-full text-xs font-mono"
+                />
+                {selectedFile && (
+                  <p className="text-[10px] font-mono text-emerald-500 mt-1">✓ Ready to deploy image</p>
+                )}
+              </div>
+            ) : (
+              <div>
+                <input
+                  type="url"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full p-2 text-xs font-bold rounded-lg border border-adaptive-unique bg-transparent outline-none font-mono"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="text-[10px] font-black uppercase theme-text-muted">Title</label>
               <input
                 type="text"
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. ALPHA RAW DATA DEPLOYMENT"
-                className="px-4 py-2.5 text-xs font-black rounded-xl border outline-none bg-black/5 dark:bg-white/5 border-adaptive-unique uppercase"
+                placeholder="Asset title"
+                className="w-full mt-1 p-2 text-xs font-bold rounded-lg border border-adaptive-unique bg-transparent outline-none"
               />
             </div>
-            {/* Upload Method Selector Tab */}
-            <div className="flex gap-2 p-1 rounded-xl bg-black/5 dark:bg-white/5 border border-adaptive-unique">
-              <button
-                type="button"
-                onClick={() => setUploadTab("upload")}
-                className="flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all"
-                style={{
-                  backgroundColor: uploadTab === "upload" ? (isCyber ? "rgba(0,245,255,0.15)" : "#000") : "transparent",
-                  color: uploadTab === "upload" ? (isCyber ? "#00F5FF" : "#FFF") : "inherit",
-                }}
-              >
-                📁 local drive
-              </button>
-              <button
-                type="button"
-                onClick={() => setUploadTab("url")}
-                className="flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all"
-                style={{
-                  backgroundColor: uploadTab === "url" ? (isCyber ? "rgba(0,245,255,0.15)" : "#000") : "transparent",
-                  color: uploadTab === "url" ? (isCyber ? "#00F5FF" : "#FFF") : "inherit",
-                }}
-              >
-                🔗 network link
-              </button>
-            </div>
-            {/* Ingestion Type Form Fields */}
-            {uploadTab === "upload" ? (
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-black uppercase tracking-wider opacity-70">
-                  Select Data Stream Source
-                </label>
-                <div
-                  onDragEnter={handleDrag}
-                  onDragOver={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors duration-200 ${
-                    dragActive
-                      ? "bg-[#00F5FF]/10 border-[#00F5FF]"
-                      : "bg-black/5 dark:bg-white/5 border-adaptive-unique hover:bg-black/10"
-                  }`}
-                  style={{
-                    borderWidth: !isCyber ? "3px" : "2px",
-                    borderColor: !isCyber ? "#000" : undefined,
-                    borderRadius: !isCyber ? "0px" : undefined,
-                  }}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  {selectedFile ? (
-                    <div className="space-y-1">
-                      <p className="text-xs font-black text-emerald-500">✓ DATA STREAM LOCKED</p>
-                      <p className="text-[10px] font-mono truncate">{selectedFile.name}</p>
-                      <p className="text-[9px] opacity-60">
-                        {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB CAPACITY
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      <p className="text-2xl">📥</p>
-                      <p className="text-[10px] font-black uppercase">
-                        Drop media matrix bundle or tap to index
-                      </p>
-                      <p className="text-[8px] opacity-50">PNG, JPG, GIF MATCHERS MAX 5MB</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-black uppercase tracking-wider opacity-70">
-                  Remote System Web Uniform Link
-                </label>
-                <input
-                  type="text"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="e.g. HTTPS://SERVER.NET/IMAGE.PNG"
-                  className="px-4 py-2.5 text-xs font-black rounded-xl border outline-none bg-black/5 dark:bg-white/5 border-adaptive-unique"
-                />
-              </div>
-            )}
-            {/* Folder & Category Row */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Category */}
-              <div ref={categoryRef} className="flex flex-col gap-1 relative">
-                <label className="text-[10px] font-black uppercase tracking-wider opacity-70">
-                  Classification Category
-                </label>
-                <input
-                  type="text"
-                  value={categoryInput}
-                  onChange={(e) => {
-                    setCategoryInput(e.target.value);
-                    setShowCategorySuggestions(true);
-                  }}
-                  onFocus={() => setShowCategorySuggestions(true)}
-                  className="px-4 py-2.5 text-xs font-black rounded-xl border outline-none bg-black/5 dark:bg-white/5 border-adaptive-unique uppercase"
-                />
-                {showCategorySuggestions && filteredCategorySuggestions.length > 0 && (
-                  <div
-                    className="absolute top-full left-0 right-0 z-50 mt-1 max-h-40 overflow-y-auto rounded-xl border shadow-xl"
-                    style={{
-                      backgroundColor: isCyber ? "#080F25" : "#FFF",
-                      borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000",
-                      borderWidth: isCyber ? "1px" : "3px",
-                    }}
-                  >
-                    {filteredCategorySuggestions.map((cat) => (
-                      <div
-                        key={cat}
-                        onClick={() => {
-                          setCategoryInput(cat);
-                          setShowCategorySuggestions(false);
-                        }}
-                        className="px-4 py-2 text-[10px] font-black uppercase cursor-pointer hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-                      >
-                        {cat}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {/* Folder */}
-              <div ref={folderRef} className="flex flex-col gap-1 relative">
-                <label className="text-[10px] font-black uppercase tracking-wider opacity-70">
-                  System Folder Path
-                </label>
-                <input
-                  type="text"
-                  value={folderInput}
-                  onChange={(e) => {
-                    setFolderInput(e.target.value);
-                    setShowFolderSuggestions(true);
-                  }}
-                  onFocus={() => setShowFolderSuggestions(true)}
-                  className="px-4 py-2.5 text-xs font-black rounded-xl border outline-none bg-black/5 dark:bg-white/5 border-adaptive-unique uppercase"
-                />
-                {showFolderSuggestions && filteredFolderSuggestions.length > 0 && (
-                  <div
-                    className="absolute top-full left-0 right-0 z-50 mt-1 max-h-40 overflow-y-auto rounded-xl border shadow-xl"
-                    style={{
-                      backgroundColor: isCyber ? "#080F25" : "#FFF",
-                      borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000",
-                      borderWidth: isCyber ? "1px" : "3px",
-                    }}
-                  >
-                    {filteredFolderSuggestions.map((f) => (
-                      <div
-                        key={f}
-                        onClick={() => {
-                          setFolderInput(f);
-                          setShowFolderSuggestions(false);
-                        }}
-                        className="px-4 py-2 text-[10px] font-black uppercase cursor-pointer hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-                      >
-                        {f}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            {/* Caption */}
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-black uppercase tracking-wider opacity-70">
-                Asset Summary Details
-              </label>
+
+            <div>
+              <label className="text-[10px] font-black uppercase theme-text-muted">Caption (Optional)</label>
               <textarea
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
-                placeholder="Metadata descriptive notes..."
-                rows={2}
-                className="px-4 py-2.5 text-xs font-black rounded-xl border outline-none bg-black/5 dark:bg-white/5 border-adaptive-unique"
+                placeholder="Asset description..."
+                className="w-full mt-1 p-2 text-xs font-bold rounded-lg border border-adaptive-unique bg-transparent outline-none resize-none h-16"
               />
             </div>
-            {/* Tag Builder */}
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-black uppercase tracking-wider opacity-70">
-                Indexing Hash Tokens
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      const clean = tagInput.trim().replace(/#/g, "");
-                      if (clean && !tags.includes(clean)) {
-                        setTags([...tags, clean]);
-                      }
-                      setTagInput("");
-                    }
-                  }}
-                  placeholder="Type tag token & enter..."
-                  className="flex-1 px-4 py-2.5 text-xs font-black rounded-xl border outline-none bg-black/5 dark:bg-white/5 border-adaptive-unique uppercase"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddTag}
-                  className="px-4 py-2.5 text-xs font-black rounded-xl border-2 border-black dark:border-white bg-black/5 dark:bg-white/5 uppercase"
-                >
-                  Add
-                </button>
-              </div>
-              {tags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {tags.map((tag, idx) => (
-                    <span
-                      key={tag}
-                      className="text-[10px] font-black px-2.5 py-0.5 rounded-md flex items-center gap-1 cursor-pointer transition-transform active:scale-95"
-                      style={{
-                        backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#000",
-                        color: isCyber ? "#00F5FF" : "#FFF",
-                        border: isCyber ? "1px solid rgba(0,245,255,0.3)" : "2px solid #000",
-                      }}
-                      onClick={() => handleRemoveTag(idx)}
-                    >
-                      #{tag.toUpperCase()} <span className="opacity-60 text-[8px] font-bold">✕</span>
-                    </span>
-                  ))}
-                </div>
-              )}
+
+            <div>
+              <label className="text-[10px] font-black uppercase theme-text-muted">Category</label>
+              <input
+                type="text"
+                value={categoryInput}
+                onChange={(e) => setCategoryInput(e.target.value)}
+                className="w-full mt-1 p-2 text-xs font-bold rounded-lg border border-adaptive-unique bg-transparent outline-none"
+              />
             </div>
+
             {uploadError && (
-              <p className="text-[10px] text-red-500 font-black tracking-wider uppercase">
-                CRITICAL_ERROR // {uploadError}
-              </p>
+              <p className="text-[10px] text-red-500 font-black font-mono">ERROR // {uploadError}</p>
             )}
-            {/* Form Actions */}
+
             <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => {
-                  setTitle("");
-                  setUrl("");
-                  setCaption("");
-                  setTags([]);
-                  setCategoryInput("General");
-                  setFolderInput("Root");
-                  setSelectedFile(null);
-                  setIsOpen(false);
-                }}
-                className="px-4 py-2 text-xs font-black rounded-xl border border-adaptive-unique bg-transparent uppercase"
+                onClick={() => setIsOpen(false)}
+                className="px-4 py-2 text-xs font-black rounded-xl border border-adaptive-unique uppercase"
               >
-                Abort
+                Cancel
               </button>
               <button
                 type="submit"
                 disabled={uploading}
-                className="px-5 py-2 text-xs font-black rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 uppercase"
-                style={{
-                  backgroundColor: uploading ? "#E2E8F0" : isCyber ? "#00F5FF" : "#FF3366",
-                  color: isCyber ? "#050816" : "#fff",
-                  boxShadow: isCyber ? "0 0 15px rgba(0,245,255,0.4)" : "3px 3px 0 #000",
-                  border: !isCyber ? "3px solid #000" : undefined,
-                }}
+                className="px-5 py-2 text-xs font-black rounded-xl bg-[#00F5FF] text-black uppercase tracking-wider"
               >
-                {uploading ? "COMPILING SYSTEMSTREAM..." : "DEPLOY ASSET"}
+                {uploading ? "Deploying..." : "Deploy Asset"}
               </button>
             </div>
           </form>
         </div>
       </Modal>
 
-      {/* ── Lightbox Modal Preview ── */}
+      {/* ── Lightbox Preview Modal ── */}
       <Modal isOpen={!!lightboxUrl} onClose={() => setLightboxUrl(null)} maxWidth="max-w-4xl">
         <div className="relative rounded-2xl overflow-hidden flex flex-col md:flex-row bg-[#02040a] border-4 border-black dark:border-[#00F5FF]/30">
           <div className="flex-1 bg-black/60 flex items-center justify-center p-4">
@@ -1260,7 +1581,7 @@ function GalleryPageContent() {
                 {lightboxFolder && (
                   <span
                     onClick={() => {
-                      setSelectedFolder(lightboxFolder);
+                      setCurrentFolder(lightboxFolder);
                       setLightboxUrl(null);
                     }}
                     className="text-[9px] font-black px-2.5 py-0.5 bg-black/20 text-[#94A3B8] border border-adaptive-unique rounded-md cursor-pointer uppercase font-mono tracking-wider"
@@ -1269,13 +1590,7 @@ function GalleryPageContent() {
                   </span>
                 )}
                 {lightboxCategory && (
-                  <span
-                    onClick={() => {
-                      setSelectedCategory(lightboxCategory);
-                      setLightboxUrl(null);
-                    }}
-                    className="text-[9px] font-black px-2.5 py-0.5 bg-[#00F5FF]/10 text-[#00F5FF] border border-[#00F5FF]/30 rounded-md cursor-pointer uppercase font-mono tracking-wider"
-                  >
+                  <span className="text-[9px] font-black px-2.5 py-0.5 bg-[#00F5FF]/10 text-[#00F5FF] border border-[#00F5FF]/30 rounded-md uppercase font-mono tracking-wider">
                     🏷️ {lightboxCategory}
                   </span>
                 )}
@@ -1284,43 +1599,34 @@ function GalleryPageContent() {
                 {lightboxTitle}
               </h4>
               {lightboxCaption && (
-                <p className="text-xs mt-3 leading-relaxed opacity-80 font-semibold">
-                  {lightboxCaption}
-                </p>
+                <p className="text-xs mt-3 leading-relaxed opacity-80 font-semibold">{lightboxCaption}</p>
               )}
             </div>
+
             {lightboxTags.length > 0 && (
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-wider opacity-50 mb-2">
-                  Metadata Hashes
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {lightboxTags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-xs font-black px-3 py-0.5 rounded-md"
-                      style={{
-                        backgroundColor: isCyber ? "rgba(0,245,255,0.15)" : "#000",
-                        color: isCyber ? "#00F5FF" : "#FFF",
-                        border: isCyber ? "1px solid rgba(0,245,255,0.3)" : "2px solid #000",
-                      }}
-                    >
-                      #{tag.toUpperCase()}
-                    </span>
-                  ))}
-                </div>
+              <div className="flex flex-wrap gap-1.5">
+                {lightboxTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-xs font-black px-2.5 py-0.5 rounded-md bg-[#00F5FF]/15 text-[#00F5FF] font-mono"
+                  >
+                    #{tag.toUpperCase()}
+                  </span>
+                ))}
               </div>
             )}
+
             <button
               onClick={() => setLightboxUrl(null)}
-              className="mt-auto w-full py-3 rounded-xl text-xs font-black uppercase tracking-widest border-2 border-black dark:border-white bg-transparent transition-all active:scale-95"
+              className="mt-auto w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest border-2 border-black dark:border-white bg-transparent transition-all active:scale-95"
             >
-              Terminate View
+              Close Preview
             </button>
           </div>
         </div>
       </Modal>
 
+      {/* Image Crop Modal */}
       <ImageCropModal
         isOpen={isCropOpen}
         imageSrc={cropImageSrc}
@@ -1333,7 +1639,7 @@ function GalleryPageContent() {
         }}
         onCropComplete={handleCropComplete}
       />
-    </>
+    </div>
   );
 }
 

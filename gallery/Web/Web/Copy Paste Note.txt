@@ -1,0 +1,14 @@
+﻿git add . 
+git commit -m "Game Character Particle Buff again"
+git push
+
+got some issue here where Character Dictionary i put their profile potrait and square avatar differently but turns out on the display the suqare avatar ain't render my picture i uplaod in fact it syncs by profile potrait and if profile potrait doesn't have any picture it directly follow the hero card image (only happen on tokusatsu)
+
+ALSO as you can see on Game Character every time i uploaded a card image, avatar image, splash art it will automatically saved three of them at gallery too which i can download or view in gallery but in Character Dictionary it only saved Card Image while profile avatar and potrait image ain't saved at gallery (this occurs on every card in Character Dictionary which i mean Actor, ACtress, tokosatsu, anime) 
+ALSO always make sure that don't overwrite the data i already input in deployment im very exhausted on fixing those using json, i have input all Game Character, Character Dictionary even fill their gallery 
+so make sure dont overwrite those data and picture that already exist
+if turns out local got less data than deployment then don't overwrite it even better if the deployment get more information i want to insert it to local so they both equal! i don't know if this thing that occurs the information lost or not it's just my assumption
+
+SINCE i have Vtuber filter add Vtuber Type at Edit Character Entry and remove Tokusatsu from filter because it already have separate entry!
+
+ALSO DO YOU THINK IS IT POSSIBLE TO MAKE SOME CROP/ADJUSTMENT WHILE UPLOADING A MP4 (LIVE WALLPAPER)

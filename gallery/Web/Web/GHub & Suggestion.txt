@@ -1,0 +1,25 @@
+﻿git add . 
+git commit -m "Android Improvements"
+git push
+
+Developer Plans :
+Main FIX
+1. Continue Agent task which stop in the middle of task (lack of tokens) (finish)
+2. after finish double checks the results (Production Finish)
+Currently Working on Hall of Fame (finish)
+
+3. Game Database :
+	Character Collections
+	- Editable Splash Art (Upload pciture option)
+	- NOT every game got a win rate so adjust it as what the game is! for gacha games 	  instead of win rate display element / Class / Nation and Birthday
+
+
+4. Add new category on game which is Game Character between Games and Games Database which it display the same as tokosatsu and character dictornary!! display game character what makes this different is Game Character got special tag and connection directly with the game database so they are related! but the rest are the same. related here means related on the Character Selection so if i add new character (depends on the tag if the tag game is HSR )there it will automatically added to Character Collection in Database (which also HSR) and if Character Collection added character , don't add to Game Character because Game Character only the one i like! also at character directory filter add Game Character which shows Game Character too! hall of fame group 2 add new group which is Game Ranks (of course it's Game Characters Ranking) if Game Character got a picture and the Character Collection also got a picture in their own (just separate them so it won't break) if character collection got no art while game character did you can sync it! and changeable
+add a button inside character collection "character" which when i press those button ("add to Character") it will added to Game Character and be part of Game character but also when i change those add Character profile it also won't change the Character collection picture in Game database! and of course the theme Of Games vibes! just in case if the tagged character doesn't have the game in game database and let it be but make a sync button if in the future i add the game i can directly since those! give a special border color in the Character collection that are also inside Game Character to ensure that is my fav! (Done)
+
+
+4. hobbies still untouched (Done)
+5. Some of the view details doesn't match the movies at all what do you think for it to fix?
+and For Guest mode AI library only display 3 top AI (which are only seed for guest) and for other section everything put 1-3 items as seed! (Done)
+6. Making a Landing Pages (Done)
+7. Remake Mobile Application Logos (DOne)

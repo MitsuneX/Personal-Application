@@ -818,6 +818,54 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true });
       }
 
+      case "UPDATE_GALLERY": {
+        const item = await prisma.galleryItem.update({
+          where: { id: payload.id },
+          data: {
+            title: payload.title !== undefined ? payload.title : undefined,
+            caption: payload.caption !== undefined ? payload.caption : undefined,
+            tags: payload.tags !== undefined ? payload.tags : undefined,
+            category: payload.category !== undefined ? payload.category : undefined,
+            folder: payload.folder !== undefined ? payload.folder : undefined,
+          },
+        });
+        return NextResponse.json({ success: true, data: item });
+      }
+
+      case "MOVE_GALLERY": {
+        const item = await prisma.galleryItem.update({
+          where: { id: payload.id },
+          data: {
+            folder: payload.folder ?? "Root",
+          },
+        });
+        return NextResponse.json({ success: true, data: item });
+      }
+
+      case "RENAME_GALLERY_FOLDER": {
+        const oldPath = payload.oldPath;
+        const newPath = payload.newPath;
+        if (oldPath && newPath && oldPath !== newPath) {
+          const items = await prisma.galleryItem.findMany({ where: { userId } });
+          for (const it of items) {
+            const currentFolder = it.folder || "Root";
+            if (currentFolder === oldPath) {
+              await prisma.galleryItem.update({
+                where: { id: it.id },
+                data: { folder: newPath },
+              });
+            } else if (currentFolder.startsWith(oldPath + "/")) {
+              const updated = newPath + currentFolder.slice(oldPath.length);
+              await prisma.galleryItem.update({
+                where: { id: it.id },
+                data: { folder: updated },
+              });
+            }
+          }
+        }
+        return NextResponse.json({ success: true });
+      }
+
       // ─── Music Actions ─────────────────────────────────────────────────────────
       case "UPDATE_SONG": {
         const isNew = !(await prisma.song.findUnique({ where: { id: payload.id } }));

@@ -960,6 +960,9 @@ interface DashboardState {
 
   // Gallery Actions
   addGalleryItem: (id: string, title: string, url: string, caption?: string, tags?: string[], category?: string, folder?: string) => Promise<void>;
+  updateGalleryItem: (id: string, data: Partial<GalleryEntry>) => Promise<void>;
+  moveGalleryItem: (id: string, targetFolder: string) => Promise<void>;
+  renameGalleryFolder: (oldPath: string, newPath: string) => Promise<void>;
   deleteGalleryItem: (id: string) => Promise<void>;
 
   // Music Actions
@@ -2525,7 +2528,14 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   saveNote: async (id, title, content, hobbyId?, isCuriosity?) => {
     set((s) => {
       const exists = s.notes.some((n) => n.id === id);
-      const newNote: NoteEntry = { id, title, content, hobbyId: hobbyId ?? null, isCuriosity: isCuriosity ?? false };
+      const newNote: NoteEntry = {
+        id,
+        title,
+        content,
+        hobbyId: hobbyId ?? null,
+        isCuriosity: isCuriosity ?? false,
+        updatedAt: new Date().toISOString(),
+      };
       const newNotes = exists
         ? s.notes.map((n) => (n.id === id ? newNote : n))
         : [newNote, ...s.notes];
@@ -2614,6 +2624,62 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
     } catch (err) {
       console.error("Failed to delete gallery item:", err);
+    }
+  },
+
+  updateGalleryItem: async (id, data) => {
+    set((s) => ({
+      gallery: s.gallery.map((g) => (g.id === id ? { ...g, ...data } : g)),
+    }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "UPDATE_GALLERY", payload: { id, ...data } }),
+      });
+    } catch (err) {
+      console.error("Failed to update gallery item:", err);
+    }
+  },
+
+  moveGalleryItem: async (id, targetFolder) => {
+    const cleanFolder = targetFolder.trim() || "Root";
+    set((s) => ({
+      gallery: s.gallery.map((g) => (g.id === id ? { ...g, folder: cleanFolder } : g)),
+    }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "MOVE_GALLERY", payload: { id, folder: cleanFolder } }),
+      });
+    } catch (err) {
+      console.error("Failed to move gallery item:", err);
+    }
+  },
+
+  renameGalleryFolder: async (oldPath, newPath) => {
+    if (!oldPath || !newPath || oldPath === newPath) return;
+    set((s) => ({
+      gallery: s.gallery.map((g) => {
+        const fold = g.folder || "Root";
+        if (fold === oldPath) {
+          return { ...g, folder: newPath };
+        }
+        if (fold.startsWith(oldPath + "/")) {
+          return { ...g, folder: newPath + fold.slice(oldPath.length) };
+        }
+        return g;
+      }),
+    }));
+    try {
+      await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "RENAME_GALLERY_FOLDER", payload: { oldPath, newPath } }),
+      });
+    } catch (err) {
+      console.error("Failed to rename gallery folder:", err);
     }
   },
 

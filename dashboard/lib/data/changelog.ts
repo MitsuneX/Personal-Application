@@ -13,6 +13,44 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v13.6.0",
+    date: "2026-09-11",
+    title: "Notepad Mobile-Notes UX Overhaul & Gallery Windows Explorer Hierarchy",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Transformed the Notepad into a modern mobile-notes-inspired interface featuring a slide-out navigation drawer, full-screen editor mode, debounced auto-save, dual List/Grid toggle, Curiosity filter tab, and custom right-click context menus — all while preserving every note, HobbySkill writing XP integration, and the Notepad ↔ Hobbies connection. Upgraded the Gallery into a Windows Explorer-style folder hierarchy system with real media containment, breadcrumb navigation, drag-and-drop photo relocation between folders, a mobile-friendly Move-to-Folder modal, folder rename/create, and custom context menus — all existing gallery media, folders, and database relationships fully preserved.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "📝 Notepad Mobile-Notes Interface (app/notepad/page.tsx): Redesigned the Notepad as a two-panel mobile-notes experience — a compact List/Grid note card view with search and filter tabs (All / 🔍 Curiosity), and a full-screen editor that opens on note selection. Note cards display title, content preview, linked hobby badge, Curiosity indicator, and relative timestamp.",
+          "📂 Slide-Out Navigation Drawer (app/notepad/page.tsx): Added a left-side sliding drawer panel accessible via hamburger icon, containing a quick-switch notes list with inline search, and a Settings tab for app-level note preferences — enabling note switching without leaving the editor view.",
+          "⚡ Debounced Auto-Save (app/notepad/page.tsx): Notes auto-save 1.5 s after the user stops typing, with a live save-status indicator (Saving… / Saved ✓) and an explicit flush-on-blur fallback to prevent data loss on tab/window switch.",
+          "🗂️ Gallery Windows Explorer Hierarchy (app/gallery/page.tsx): Rebuilt gallery navigation around real folder containment — navigating into a folder shows only its direct items and subfolders, with breadcrumb trail (Root › Folder › Subfolder) for instant level-jumping.",
+          "📁 Create Subfolder & Rename Folder (app/gallery/page.tsx): Folders can now be created as subfolders of the current directory and renamed in-place; all affected items have their folder paths updated atomically via the new RENAME_GALLERY_FOLDER API action.",
+          "📲 Move-to-Folder Modal (components/gallery/MoveToFolderModal.tsx): Mobile-friendly modal alternative to drag-and-drop that lists all available folders in a scrollable picker, letting users relocate any photo without needing precise pointer control.",
+          "🖱️ Custom Context Menus (app/notepad/page.tsx, app/gallery/page.tsx): Right-clicking a note card or gallery photo/folder opens a themed context menu with context-appropriate actions (Open, Edit, Duplicate note / Move, Rename, Delete folder etc.), consistent across Cyberpunk and Neo-Brutalism themes.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🔧 New API Actions — UPDATE_GALLERY, MOVE_GALLERY, RENAME_GALLERY_FOLDER (app/api/action/route.ts): Added three new persistent action handlers to support in-place metadata editing, cross-folder photo relocation, and recursive folder rename without any destructive migration.",
+          "🗄️ Store Actions — updateGalleryItem, moveGalleryItem, renameGalleryFolder (lib/store/dashboardStore.ts): Wired corresponding Zustand store actions that update in-memory state optimistically and fire the API call for persistence; guest mode changes remain sandbox-isolated.",
+          "🕒 Note Timestamp Tracking (lib/store/dashboardStore.ts): saveNote now stamps updatedAt on every write so the relative-time display in note cards (Today / Yesterday / Mon / Sep 9) reflects real edit recency.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🎨 Dual-Theme Fidelity — Notepad & Gallery: All new panels, modals, drawers, and context menus implement full isCyber branching, using neon cyan / magenta accents, scanline glows, and sharp monospace typography in Cyberpunk mode, and bold black borders, paper-texture backgrounds, and high-contrast ink colours in Neo-Brutalism mode.",
+          "🔀 Drag-and-Drop Photo Relocation (app/gallery/page.tsx): Photos can be dragged from the grid and dropped onto folder tiles to move them; the drop target highlights with a pulsing ring and the move is persisted immediately via the MOVE_GALLERY action.",
+          "🔢 Gallery List / Grid / Timeline View Modes (app/gallery/page.tsx): Retained and improved the three gallery view modes (Grid, Masonry, Timeline) with the new folder-aware scoped filtering applied uniformly across all views.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v13.5.0",
     date: "2026-09-10",
     title: "Creatures Hall of Fame Integration, Conditional Bestiary Tabs & Connected Character Enrichment",
