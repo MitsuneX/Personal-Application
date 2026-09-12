@@ -13,6 +13,40 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v13.8.0",
+    date: "2026-09-12",
+    title: "Creature Form Presentation Overhaul, Unified History & Bulk Selection System",
+    badge: "MINOR",
+    type: "minor",
+    summary: "Delivered an extensive presentation overhaul for Creature Forms & Variants, unified multi-entity soft deletion and recovery under the Settings History system, and introduced contextual multi-select bulk operations across both Character Dictionary and Creature collections. Redesigned creature form presentation with contained, full-width high-resolution artwork cards, ambient blurred background luminescence, clear typography hierarchies, and seamless omission when zero forms exist. Elevated forms to the bottom of the Dossier for natural reading flow and embedded a real-time live card preview directly inside the Form editor panel with integrated cropping and URL fallback. Built a floating contextual Bulk Action Bar with multi-select checkboxes across Character Dictionary and Creature grids, backed by a unified SoftDeleteHistory engine with dedicated Creatures history tab and bulk restore capabilities.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🖼️ Contained Full-Width Creature Form Cards (components/creatures/CreatureFormCard.tsx): Built a dedicated form presentation component featuring contained full-width artwork with ambient blurred backdrop luminescence, high-contrast vignette, and clear information hierarchy (Artwork → Form Name → Variant Pill → Description → Appearance Tags).",
+          "👁️ Live Dossier Card Preview & Cropper in Form Editor (components/ui/CreatureEditorModal.tsx): Added an interactive, real-time Live Dossier Card Preview directly within the Form editing panel, alongside image device upload with 16:9 cropping and direct URL input fallback.",
+          "☑️ Multi-Selection & Floating Bulk Action Bar (app/creatures/page.tsx, app/characters/page.tsx, components/cards/CreatureCard.tsx, components/cards/HofEntryCard.tsx): Introduced multi-select toolbar toggles, individual card checkbox badges with glow indicators, and a floating contextual bottom bar for bulk soft-deletion with count indicators and safety confirmations.",
+          "🐾 Unified Creature Soft-Delete & History System (components/ui/HistoryModal.tsx, app/api/history/route.ts, app/api/action/route.ts, lib/store/dashboardStore.ts): Extended the SoftDeleteHistory engine to support CREATURE entities, adding a dedicated 🐾 Creatures tab in the Settings History modal with single/bulk restore and permanent deletion.",
+          "🔗 Read-Only Connected Creature Profiling (components/game/CharacterProfileModal.tsx): Standardized connected creature profile viewing across Character Dictionary and Game Characters to open in strictly read-only mode, preserving canonical data integrity.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🛡️ Unified Batch Action API Engine (app/api/action/route.ts): Enhanced the batch action endpoint to process both single and multiple target IDs for CREATURE, GAME_CHARACTER, and HALL_OF_FAME entities with atomic database transactions.",
+          "🧹 Creature Media Switcher Cleanup (components/ui/CreatureDossierModal.tsx): Eliminated redundant Primary Art / Card Poster switcher buttons in the creature hero artwork panel, ensuring a clean, distraction-free display while retaining all stored artwork assets.",
+          "📊 Database Safety & Relationship Audit: Executed database integrity validation confirming 100% preservation of all authentic dragons, character dictionary entries, game characters, couples, and gallery media without any loss or pollution.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🎨 Complete Dual-Theme Parity across Upgraded Modals & Cards: Delivered tailored styling across Cyberpunk (cyan/magenta glowing borders, deep backdrop blurs, dark panels) and Neo-Brutalism (bold black borders, high-contrast badges, crisp hard shadows) for the new CreatureFormCard, bulk action bars, and History modal tabs.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v13.7.0",
     date: "2026-09-11",
     title: "Creature Forms System, Notepad Cyberpunk Settings Fix & Creature Data Hygiene",

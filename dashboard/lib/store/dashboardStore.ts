@@ -837,7 +837,7 @@ export interface NotificationEntry {
 export interface SoftDeleteHistoryEntry {
   id: string;
   userId?: string | null;
-  entityType: "GAME_CHARACTER" | "HALL_OF_FAME";
+  entityType: "GAME_CHARACTER" | "HALL_OF_FAME" | "CREATURE";
   originalRecordId: string;
   name: string;
   category?: string | null;
@@ -896,7 +896,8 @@ interface DashboardState {
   fetchError: string | null;
 
   fetchHistory: () => Promise<void>;
-  softDeleteCharacter: (entityType: "GAME_CHARACTER" | "HALL_OF_FAME", id: string) => Promise<void>;
+  softDeleteCharacter: (entityType: "GAME_CHARACTER" | "HALL_OF_FAME" | "CREATURE", id: string) => Promise<void>;
+  bulkSoftDelete: (entityType: "GAME_CHARACTER" | "HALL_OF_FAME" | "CREATURE", ids: string[]) => Promise<void>;
   restoreHistoryItems: (historyIds: string[]) => Promise<void>;
   permanentDeleteHistoryItems: (historyIds: string[]) => Promise<void>;
   fetchGameSyncMetadata: (gameId: string) => Promise<GameSyncMetadataEntry | null>;
@@ -2450,6 +2451,34 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
   },
 
+  bulkSoftDelete: async (entityType, ids) => {
+    if (!ids || ids.length === 0) return;
+    const idSet = new Set(ids);
+    if (entityType === "HALL_OF_FAME") {
+      set((s) => ({ hallOfFame: s.hallOfFame.filter((h) => !idSet.has(h.id)) }));
+    } else if (entityType === "CREATURE") {
+      set((s) => ({ creatures: s.creatures.filter((c) => !idSet.has(c.id)) }));
+    } else if (entityType === "GAME_CHARACTER") {
+      set((s) => ({ gameCharacters: s.gameCharacters.filter((g) => !idSet.has(g.id)) }));
+    }
+
+    try {
+      const res = await fetch("/api/history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "SOFT_DELETE", entityType, ids }),
+      });
+      const data = await res.json();
+      if (data.historyEntries && Array.isArray(data.historyEntries)) {
+        set((s) => ({ historyItems: [...data.historyEntries, ...(s.historyItems || [])] }));
+      } else if (data.historyEntry) {
+        set((s) => ({ historyItems: [data.historyEntry, ...(s.historyItems || [])] }));
+      }
+    } catch (err) {
+      console.error(`Failed to bulk soft delete ${entityType}:`, err);
+    }
+  },
+
   restoreHistoryItems: async (historyIds) => {
     if (!historyIds || historyIds.length === 0) return;
     try {
@@ -3472,19 +3501,12 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   deleteCreature: async (id) => {
+    const target = get().creatures.find((c) => c.id === id);
     set((s) => ({
       creatures: s.creatures.filter((c) => c.id !== id),
     }));
-
-    try {
-      await fetch("/api/action", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "DELETE_CREATURE", payload: { id } }),
-      });
-    } catch (err) {
-      console.error("Failed to delete creature:", err);
-    }
+    if (!target) return;
+    await get().softDeleteCharacter("CREATURE", id);
   },
 
   toggleFavoriteCreature: async (id) => {

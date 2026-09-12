@@ -1020,6 +1020,13 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                 );
                 const relType = relRef?.relationshipType || "Companion";
 
+                const creatureArt =
+                  creature.media?.card ||
+                  creature.media?.primary ||
+                  creature.media?.gallery?.[0] ||
+                  (creature as any).artwork ||
+                  creature.avatarUrl;
+
                 return (
                   <motion.div
                     key={creature.id}
@@ -1033,9 +1040,9 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                     }`}
                   >
                     <div className="relative aspect-[3/4] w-full overflow-hidden bg-black/40">
-                      {creature.avatarUrl ? (
+                      {creatureArt ? (
                         <img
-                          src={creature.avatarUrl}
+                          src={creatureArt}
                           alt={creature.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />

@@ -16,6 +16,9 @@ interface CreatureCardProps {
   onSelect: (creature: CreatureEntry) => void;
   onEdit?: (creature: CreatureEntry) => void;
   onDelete?: (creature: CreatureEntry) => void;
+  selectable?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
 export function CreatureCard({
@@ -23,6 +26,9 @@ export function CreatureCard({
   onSelect,
   onEdit,
   onDelete,
+  selectable = false,
+  isSelected = false,
+  onToggleSelect,
 }: CreatureCardProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
@@ -56,11 +62,29 @@ export function CreatureCard({
     toggleFavoriteCreature(creature.id);
   };
 
+  const handleCardClick = () => {
+    if (selectable) {
+      onToggleSelect?.(creature.id);
+      return;
+    }
+    onSelect(creature);
+  };
+
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     const items: ContextMenuItem[] = [
+      ...(selectable || onToggleSelect
+        ? [
+            {
+              id: "select",
+              label: isSelected ? `Deselect ${creature.name}` : `Select ${creature.name}`,
+              icon: isSelected ? "◻️" : "☑️",
+              onClick: () => onToggleSelect?.(creature.id),
+            },
+          ]
+        : []),
       {
         id: "view-dossier",
         label: "View Creature Dossier",
@@ -122,20 +146,26 @@ export function CreatureCard({
 
   return (
     <motion.div
-      onClick={() => onSelect(creature)}
+      onClick={handleCardClick}
       onContextMenu={handleContextMenu}
       whileHover={shouldReduceMotion ? {} : { y: -5, scale: 1.015 }}
       whileTap={{ scale: 0.985 }}
       className="group relative flex flex-col justify-between h-[420px] sm:h-[440px] rounded-2xl overflow-hidden cursor-pointer select-none transition-all duration-300 border"
       style={{
         backgroundColor: isCyber ? "#080c1a" : "#FFFBF5",
-        borderColor: isCyber
+        borderColor: isSelected
+          ? (isCyber ? "#00F5FF" : "#000000")
+          : isCyber
           ? creature.isFavorite
             ? "rgba(0, 245, 255, 0.6)"
             : "rgba(0, 245, 255, 0.2)"
           : "#000000",
-        borderWidth: isCyber ? "1px" : "3px",
-        boxShadow: isCyber
+        borderWidth: isSelected
+          ? (isCyber ? "2.5px" : "3.5px")
+          : (isCyber ? "1px" : "3px"),
+        boxShadow: isSelected
+          ? (isCyber ? "0 0 25px rgba(0, 245, 255, 0.45)" : "5px 5px 0px 0px #F59E0B")
+          : isCyber
           ? creature.isFavorite
             ? "0 0 20px rgba(0, 245, 255, 0.35), inset 0 0 15px rgba(0, 245, 255, 0.1)"
             : "0 4px 20px rgba(0, 0, 0, 0.5)"
@@ -191,18 +221,42 @@ export function CreatureCard({
 
       {/* ── TOP ACTION BAR: CLASSIFICATION & FAVOURITE ── */}
       <div className="relative z-10 flex items-center justify-between p-3.5">
-        {/* Classification Badge */}
-        <div
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black font-mono tracking-wider uppercase border backdrop-blur-md shadow-md"
-          style={{
-            backgroundColor: isCyber ? classificationMeta.bgCyber : classificationMeta.bgNeo,
-            borderColor: isCyber ? classificationMeta.borderCyber : classificationMeta.borderNeo,
-            color: isCyber ? classificationMeta.color : "#000000",
-            boxShadow: isCyber ? `0 0 10px ${classificationMeta.color}33` : "2px 2px 0px #000000",
-          }}
-        >
-          <span>{classificationMeta.icon}</span>
-          <span>{classificationMeta.label}</span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {(selectable || isSelected) && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleSelect?.(creature.id);
+              }}
+              className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all cursor-pointer border shadow-md shrink-0 ${
+                isSelected
+                  ? isCyber
+                    ? "bg-cyan-500 text-black border-cyan-300 shadow-[0_0_12px_rgba(0,245,255,0.6)]"
+                    : "bg-amber-400 text-black border-2 border-black shadow-[2px_2px_0_#000]"
+                  : isCyber
+                  ? "bg-black/60 text-transparent border-white/30 hover:border-cyan-400 backdrop-blur-md"
+                  : "bg-white/90 text-transparent border-2 border-black hover:bg-white"
+              }`}
+              aria-label={isSelected ? `Deselect ${creature.name}` : `Select ${creature.name}`}
+            >
+              <span className="text-xs font-black">✓</span>
+            </button>
+          )}
+
+          {/* Classification Badge */}
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black font-mono tracking-wider uppercase border backdrop-blur-md shadow-md"
+            style={{
+              backgroundColor: isCyber ? classificationMeta.bgCyber : classificationMeta.bgNeo,
+              borderColor: isCyber ? classificationMeta.borderCyber : classificationMeta.borderNeo,
+              color: isCyber ? classificationMeta.color : "#000000",
+              boxShadow: isCyber ? `0 0 10px ${classificationMeta.color}33` : "2px 2px 0px #000000",
+            }}
+          >
+            <span>{classificationMeta.icon}</span>
+            <span>{classificationMeta.label}</span>
+          </div>
         </div>
 
         {/* Favorite Star Button */}

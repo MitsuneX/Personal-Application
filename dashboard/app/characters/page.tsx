@@ -14,6 +14,7 @@ import { CharacterPreviewModal } from "@/components/ui/CharacterPreviewModal";
 import { CharacterDictProfileModal } from "@/components/ui/CharacterDictProfileModal";
 import { useSearchParams } from "next/navigation";
 import { useConfirm } from "@/lib/context/ConfirmContext";
+import { useToast } from "@/components/ui/ToastProvider";
 import { FilterDropdown } from "@/components/ui/FilterDropdown";
 import { BentoCard } from "@/components/cards/BentoCard";
 import { isTokusatsuEntry, resolveFranchiseType } from "@/lib/data/tokusatsuDataHelper";
@@ -58,9 +59,13 @@ const SORT_OPTIONS = [
 function CharactersContent() {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { hallOfFame = [], dossierCharacters = [], deleteHof } = useDashboardStore();
+  const { hallOfFame = [], dossierCharacters = [], deleteHof, bulkSoftDelete } = useDashboardStore();
   const { confirm } = useConfirm();
+  const { success: toastSuccess, error: toastError } = useToast();
   const searchParams = useSearchParams();
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectionMode, setSelectionMode] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -273,18 +278,70 @@ function CharactersContent() {
     setEditorOpen(true);
   }, []);
 
+  const handleToggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  }, []);
+
+  const allVisibleSelected = useMemo(() => {
+    return (
+      filteredHofList.length > 0 &&
+      filteredHofList.every((entry) => selectedIds.includes(entry.id))
+    );
+  }, [filteredHofList, selectedIds]);
+
+  const handleSelectAllVisible = useCallback(() => {
+    if (allVisibleSelected) {
+      const visibleSet = new Set(filteredHofList.map((e) => e.id));
+      setSelectedIds((prev) => prev.filter((id) => !visibleSet.has(id)));
+    } else {
+      const combined = new Set([...selectedIds, ...filteredHofList.map((e) => e.id)]);
+      setSelectedIds(Array.from(combined));
+    }
+  }, [allVisibleSelected, filteredHofList, selectedIds]);
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedIds([]);
+    setSelectionMode(false);
+  }, []);
+
+  const handleBulkDelete = useCallback(() => {
+    if (selectedIds.length === 0) return;
+    const count = selectedIds.length;
+    confirm({
+      title: `Delete ${count} ${count === 1 ? "Character" : "Characters"}?`,
+      message: `Are you sure you want to move ${count} selected ${count === 1 ? "character" : "characters"} to History? They can be restored at any time from Settings → History.`,
+      variant: "danger",
+      confirmText: `Delete ${count}`,
+      onConfirm: async () => {
+        try {
+          await bulkSoftDelete("HALL_OF_FAME", selectedIds);
+          toastSuccess(`✓ Moved ${count} ${count === 1 ? "character" : "characters"} to History.`);
+          setSelectedIds([]);
+          setSelectionMode(false);
+        } catch {
+          toastError("Failed to delete selected characters.");
+        }
+      },
+    });
+  }, [selectedIds, confirm, bulkSoftDelete, toastSuccess, toastError]);
+
   const handleDeleteHof = useCallback(
     (id: string, name: string) => {
       confirm({
         title: "Delete Entry",
-        message: `Are you sure you want to delete "${name}" from the Master Directory?`,
+        message: `Are you sure you want to move "${name}" to History? It can be restored at any time from Settings → History.`,
         variant: "danger",
+        confirmText: "Delete",
         onConfirm: async () => {
           await deleteHof(id);
+          toastSuccess(`✓ Moved "${name}" to History.`);
+          setSelectedIds((prev) => prev.filter((item) => item !== id));
         },
       });
     },
-    [confirm, deleteHof]
+    [confirm, deleteHof, toastSuccess]
   );
 
   return (
@@ -520,6 +577,33 @@ function CharactersContent() {
               >
                 👑 GOAT Only
               </button>
+
+              <button
+                onClick={() => {
+                  if (selectionMode) {
+                    setSelectedIds([]);
+                    setSelectionMode(false);
+                  } else {
+                    setSelectionMode(true);
+                  }
+                }}
+                className="px-3 py-2 rounded-xl text-xs font-bold font-mono cursor-pointer border transition-all flex items-center gap-1.5"
+                style={{
+                  backgroundColor: selectionMode || selectedIds.length > 0
+                    ? isCyber ? "rgba(0,245,255,0.2)" : "#FEF08A"
+                    : isCyber ? "rgba(255,255,255,0.05)" : "#F1F5F9",
+                  color: selectionMode || selectedIds.length > 0
+                    ? isCyber ? "#00F5FF" : "#854D0E"
+                    : isCyber ? "#94A3B8" : "#475569",
+                  borderColor: selectionMode || selectedIds.length > 0
+                    ? isCyber ? "#00F5FF" : "#000"
+                    : isCyber ? "rgba(255,255,255,0.1)" : "#000",
+                  borderWidth: isCyber ? "1px" : "2px",
+                }}
+              >
+                <span>{selectionMode || selectedIds.length > 0 ? "☑" : "☐"}</span>
+                <span>{selectedIds.length > 0 ? `Selected (${selectedIds.length})` : "Select"}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -560,6 +644,9 @@ function CharactersContent() {
                       idx={idx}
                       isCyber={isCyber}
                       group={groupDetails}
+                      selectable={selectionMode || selectedIds.length > 0}
+                      isSelected={selectedIds.includes(entry.id)}
+                      onToggleSelect={handleToggleSelect}
                       onEdit={handleEditHof}
                       onDelete={(id, name) => handleDeleteHof(id, name)}
                       onOpenProfile={(item) => setDictProfileEntry(item)}
@@ -615,6 +702,50 @@ function CharactersContent() {
           onClose={() => setPreviewCharacter(null)}
           character={previewCharacter}
         />
+
+        {/* Floating Contextual Bulk Action Bar */}
+        <AnimatePresence>
+          {selectedIds.length > 0 && (
+            <motion.div
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl border shadow-2xl backdrop-blur-md ${
+                isCyber
+                  ? "bg-[#060a17]/95 border-cyan-400 text-white shadow-[0_0_30px_rgba(0,245,255,0.3)]"
+                  : "bg-white border-3 border-black text-black shadow-[6px_6px_0_#000]"
+              }`}
+            >
+              <span className="text-xs font-mono font-bold">
+                {selectedIds.length} {selectedIds.length === 1 ? "Character" : "Characters"} Selected
+              </span>
+              <div className="h-4 w-[1px] bg-white/20 mx-1" />
+              <button
+                onClick={handleSelectAllVisible}
+                className="text-xs font-mono underline opacity-80 hover:opacity-100 cursor-pointer"
+              >
+                {allVisibleSelected ? "Deselect All" : "Select All Visible"}
+              </button>
+              <button
+                onClick={handleClearSelection}
+                className="text-xs font-mono opacity-80 hover:opacity-100 px-2 py-1 rounded cursor-pointer"
+              >
+                Clear
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                className={`px-4 py-1.5 rounded-xl text-xs font-mono font-black flex items-center gap-1.5 transition-all cursor-pointer ${
+                  isCyber
+                    ? "bg-red-500/20 text-red-300 border border-red-500 hover:bg-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.4)]"
+                    : "bg-red-500 text-white border-2 border-black shadow-[2px_2px_0_#000] hover:bg-red-600"
+                }`}
+              >
+                <span>🗑</span>
+                <span>Delete {selectedIds.length}</span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </AppShell>
   );

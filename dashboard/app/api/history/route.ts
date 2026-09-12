@@ -38,69 +38,122 @@ export async function POST(req: Request) {
 
     // ── 1. SOFT_DELETE ────────────────────────────────────────────────────────
     if (action === "SOFT_DELETE") {
-      const { entityType, id } = body;
-      if (!entityType || !id) {
-        return NextResponse.json({ error: "Missing entityType or id" }, { status: 400 });
+      const { entityType } = body;
+      const targetIds: string[] = Array.isArray(body.ids) ? body.ids : (body.id ? [body.id] : []);
+      if (!entityType || targetIds.length === 0) {
+        return NextResponse.json({ error: "Missing entityType or id(s)" }, { status: 400 });
       }
 
+      const createdEntries: any[] = [];
+
       if (entityType === "GAME_CHARACTER") {
-        const record = await prisma.gameCharacter.findUnique({ where: { id } });
-        if (!record) {
-          return NextResponse.json({ error: "GameCharacter not found" }, { status: 404 });
+        for (const targetId of targetIds) {
+          const record = await prisma.gameCharacter.findUnique({ where: { id: targetId } });
+          if (!record) continue;
+
+          const mediaReferences = {
+            cardImage: record.cardImage,
+            avatarUrl: record.avatarUrl,
+            splashArt: record.splashArt,
+            gallery: record.stats && (record.stats as any).gallery ? (record.stats as any).gallery : [],
+          };
+
+          const historyEntry = await prisma.softDeleteHistory.create({
+            data: {
+              userId: user?.id || record.userId || null,
+              entityType: "GAME_CHARACTER",
+              originalRecordId: record.id,
+              name: record.name,
+              category: record.gameName || "Game Character",
+              snapshot: record as any,
+              mediaReferences,
+            },
+          });
+
+          await prisma.gameCharacter.delete({ where: { id: targetId } });
+          createdEntries.push(historyEntry);
         }
-
-        const mediaReferences = {
-          cardImage: record.cardImage,
-          avatarUrl: record.avatarUrl,
-          splashArt: record.splashArt,
-          gallery: record.stats && (record.stats as any).gallery ? (record.stats as any).gallery : [],
-        };
-
-        const historyEntry = await prisma.softDeleteHistory.create({
-          data: {
-            userId: user?.id || record.userId || null,
-            entityType: "GAME_CHARACTER",
-            originalRecordId: record.id,
-            name: record.name,
-            category: record.gameName || "Game Character",
-            snapshot: record as any,
-            mediaReferences,
-          },
+        return NextResponse.json({
+          success: true,
+          count: createdEntries.length,
+          historyEntry: createdEntries[0] || null,
+          historyEntries: createdEntries,
         });
-
-        await prisma.gameCharacter.delete({ where: { id } });
-        return NextResponse.json({ success: true, historyEntry });
       }
 
       if (entityType === "HALL_OF_FAME") {
-        const record = await prisma.hallOfFame.findUnique({ where: { id } });
-        if (!record) {
-          return NextResponse.json({ error: "HallOfFame record not found" }, { status: 404 });
+        for (const targetId of targetIds) {
+          const record = await prisma.hallOfFame.findUnique({ where: { id: targetId } });
+          if (!record) continue;
+
+          const detailsObj = (record.details && typeof record.details === "object") ? (record.details as any) : {};
+          const mediaReferences = {
+            imageUrl: record.imageUrl,
+            portraitUrl: record.portraitUrl,
+            avatarUrl: detailsObj.avatarUrl || (record as any).avatarUrl,
+            splashArt: record.splashArt,
+            gallery: Array.isArray(record.gallery) ? record.gallery : [],
+          };
+
+          const historyEntry = await prisma.softDeleteHistory.create({
+            data: {
+              userId: user?.id || record.userId || null,
+              entityType: "HALL_OF_FAME",
+              originalRecordId: record.id,
+              name: record.name,
+              category: record.type || "Character Dictionary",
+              snapshot: record as any,
+              mediaReferences,
+            },
+          });
+
+          await prisma.hallOfFame.delete({ where: { id: targetId } });
+          createdEntries.push(historyEntry);
         }
-
-        const detailsObj = (record.details && typeof record.details === "object") ? (record.details as any) : {};
-        const mediaReferences = {
-          imageUrl: record.imageUrl,
-          portraitUrl: record.portraitUrl,
-          avatarUrl: detailsObj.avatarUrl || (record as any).avatarUrl,
-          splashArt: record.splashArt,
-          gallery: Array.isArray(record.gallery) ? record.gallery : [],
-        };
-
-        const historyEntry = await prisma.softDeleteHistory.create({
-          data: {
-            userId: user?.id || record.userId || null,
-            entityType: "HALL_OF_FAME",
-            originalRecordId: record.id,
-            name: record.name,
-            category: record.type || "Character Dictionary",
-            snapshot: record as any,
-            mediaReferences,
-          },
+        return NextResponse.json({
+          success: true,
+          count: createdEntries.length,
+          historyEntry: createdEntries[0] || null,
+          historyEntries: createdEntries,
         });
+      }
 
-        await prisma.hallOfFame.delete({ where: { id } });
-        return NextResponse.json({ success: true, historyEntry });
+      if (entityType === "CREATURE") {
+        for (const targetId of targetIds) {
+          const record = await prisma.creature.findUnique({ where: { id: targetId } });
+          if (!record) continue;
+
+          const mediaReferences = {
+            primary: (record.media as any)?.primary,
+            card: (record.media as any)?.card,
+            favouriteMoment: (record.media as any)?.favouriteMoment,
+            gallery: (record.media as any)?.gallery || [],
+            forms: Array.isArray(record.forms)
+              ? (record.forms as any[]).map((f) => f.artwork).filter(Boolean)
+              : [],
+          };
+
+          const historyEntry = await prisma.softDeleteHistory.create({
+            data: {
+              userId: user?.id || record.userId || null,
+              entityType: "CREATURE",
+              originalRecordId: record.id,
+              name: record.name,
+              category: record.classification || "Creature",
+              snapshot: record as any,
+              mediaReferences,
+            },
+          });
+
+          await prisma.creature.delete({ where: { id: targetId } });
+          createdEntries.push(historyEntry);
+        }
+        return NextResponse.json({
+          success: true,
+          count: createdEntries.length,
+          historyEntry: createdEntries[0] || null,
+          historyEntries: createdEntries,
+        });
       }
 
       return NextResponse.json({ error: `Unsupported entityType: ${entityType}` }, { status: 400 });
@@ -234,6 +287,43 @@ export async function POST(req: Request) {
               portraitUrl: snapshot.portraitUrl || null,
               accentColor: snapshot.accentColor || null,
               gameCharacterId: snapshot.gameCharacterId || null,
+            },
+          });
+        } else if (historyItem.entityType === "CREATURE") {
+          const restored = await prisma.creature.upsert({
+            where: { id: historyItem.originalRecordId },
+            update: {
+              userId: user?.id || snapshot.userId || null,
+              name: snapshot.name || historyItem.name,
+              classification: snapshot.classification || "ANIME",
+              tier: snapshot.tier || "S",
+              sourceTitle: snapshot.sourceTitle || "",
+              species: snapshot.species || null,
+              description: snapshot.description || null,
+              personalNote: snapshot.personalNote || null,
+              likes: snapshot.likes ?? 0,
+              isFavorite: snapshot.isFavorite ?? false,
+              tags: Array.isArray(snapshot.tags) ? snapshot.tags : [],
+              forms: Array.isArray(snapshot.forms) ? snapshot.forms : [],
+              media: snapshot.media || {},
+              connectedCharacters: Array.isArray(snapshot.connectedCharacters) ? snapshot.connectedCharacters : [],
+            },
+            create: {
+              id: historyItem.originalRecordId,
+              userId: user?.id || snapshot.userId || null,
+              name: snapshot.name || historyItem.name,
+              classification: snapshot.classification || "ANIME",
+              tier: snapshot.tier || "S",
+              sourceTitle: snapshot.sourceTitle || "",
+              species: snapshot.species || null,
+              description: snapshot.description || null,
+              personalNote: snapshot.personalNote || null,
+              likes: snapshot.likes ?? 0,
+              isFavorite: snapshot.isFavorite ?? false,
+              tags: Array.isArray(snapshot.tags) ? snapshot.tags : [],
+              forms: Array.isArray(snapshot.forms) ? snapshot.forms : [],
+              media: snapshot.media || {},
+              connectedCharacters: Array.isArray(snapshot.connectedCharacters) ? snapshot.connectedCharacters : [],
             },
           });
           restoredRecords.push(restored);

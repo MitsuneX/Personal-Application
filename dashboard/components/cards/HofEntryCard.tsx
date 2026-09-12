@@ -165,6 +165,9 @@ interface CardProps {
   group: typeof NATIONALITY_GROUPS[0] | typeof OTHER_GROUP;
   showType?: boolean;
   podiumRank?: number | null;
+  selectable?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
   onDoubleTap?: (e: React.MouseEvent | React.TouchEvent, id: string) => void;
   onOpenProfile?: (entry: HallOfFameEntry) => void;
   onCompare?: (entry: HallOfFameEntry) => void;
@@ -181,9 +184,15 @@ export function HofEntryCard({
   group,
   showType = false,
   podiumRank = null,
+  selectable = false,
+  isSelected = false,
+  onToggleSelect,
   onDoubleTap,
   onOpenProfile,
   onCompare,
+  onEdit,
+  onDelete,
+  onDuplicate,
 }: CardProps) {
   const [imgError, setImgError] = React.useState(false);
   const [videoError, setVideoError] = React.useState(false);
@@ -214,6 +223,10 @@ export function HofEntryCard({
   };
 
   const handleClick = (e: React.MouseEvent) => {
+    if (selectable) {
+      onToggleSelect?.(entry.id);
+      return;
+    }
     // Delay single-click execution slightly (250ms) to distinguish from double-click
     if (clickTimerRef.current) {
       clearTimeout(clickTimerRef.current);
@@ -259,12 +272,32 @@ export function HofEntryCard({
     openContextMenu(
       e,
       [
+        ...(selectable || onToggleSelect
+          ? [
+              {
+                id: "select",
+                label: isSelected ? `Deselect ${entry.name}` : `Select ${entry.name}`,
+                icon: isSelected ? "◻️" : "☑️",
+                onClick: () => onToggleSelect?.(entry.id),
+              },
+            ]
+          : []),
         {
           id: "profile",
           label: `Open ${entry.name} Dossier`,
           icon: "📖",
           onClick: () => executeOpenProfile(),
         },
+        ...(onEdit
+          ? [
+              {
+                id: "edit",
+                label: `Edit ${entry.name}`,
+                icon: "✎",
+                onClick: () => onEdit(entry),
+              },
+            ]
+          : []),
         {
           id: "compare",
           label: "Compare Entry",
@@ -291,6 +324,16 @@ export function HofEntryCard({
             navigator.clipboard.writeText(`${window.location.origin}/hall-of-fame?id=${entry.id}`);
           },
         },
+        ...(onDelete
+          ? [
+              {
+                id: "delete",
+                label: `Delete ${entry.name}`,
+                icon: "🗑️",
+                onClick: () => onDelete(entry.id, entry.name),
+              },
+            ]
+          : []),
       ],
       entry.name
     );
@@ -332,7 +375,9 @@ export function HofEntryCard({
       onContextMenu={handleContextMenu}
       style={{
         aspectRatio: "3/4",
-        border: isGold
+        border: isSelected
+          ? (isCyber ? `2.5px solid #00F5FF` : `3.5px solid #000000`)
+          : isGold
           ? (isCyber ? `2.5px solid #FFD700` : `3.5px solid #000000`)
           : isSilver
           ? (isCyber ? `2px solid rgba(226,232,240,0.8)` : `3px solid #64748B`)
@@ -341,7 +386,9 @@ export function HofEntryCard({
           : podiumRank
           ? (isCyber ? `1.5px solid rgba(0,245,255,0.4)` : `2.5px solid #000000`)
           : (isCyber ? `1.5px solid ${group.accentBorder || "rgba(0,245,255,0.2)"}` : `3px solid #000000`),
-        boxShadow: isGold
+        boxShadow: isSelected
+          ? (isCyber ? `0 0 25px rgba(0,245,255,0.45)` : "5px 5px 0 #F59E0B")
+          : isGold
           ? (isCyber ? `0 0 25px rgba(255,215,0,0.35)` : "6px 6px 0 #000000")
           : isSilver
           ? (isCyber ? `0 0 15px rgba(226,232,240,0.25)` : "5px 5px 0 #000000")
@@ -405,6 +452,27 @@ export function HofEntryCard({
       {/* ── Layer 2: Top Bar Controls (Status / Rank + Interactive Heart Button) ── */}
       <div className="absolute top-3 left-3 right-3 z-20 flex items-center justify-between pointer-events-auto">
         <div className="flex items-center gap-1.5 flex-wrap">
+          {(selectable || isSelected) && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleSelect?.(entry.id);
+              }}
+              className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all cursor-pointer border shadow-md shrink-0 ${
+                isSelected
+                  ? isCyber
+                    ? "bg-cyan-500 text-black border-cyan-300 shadow-[0_0_12px_rgba(0,245,255,0.6)]"
+                    : "bg-amber-400 text-black border-2 border-black shadow-[2px_2px_0_#000]"
+                  : isCyber
+                  ? "bg-black/60 text-transparent border-white/30 hover:border-cyan-400 backdrop-blur-md"
+                  : "bg-white/90 text-transparent border-2 border-black hover:bg-white"
+              }`}
+              aria-label={isSelected ? `Deselect ${entry.name}` : `Select ${entry.name}`}
+            >
+              <span className="text-xs font-black">✓</span>
+            </button>
+          )}
           {podiumRank ? (
             <span
               className="px-2.5 py-0.5 rounded-full text-[10px] font-black font-mono shadow-md border flex items-center gap-1"

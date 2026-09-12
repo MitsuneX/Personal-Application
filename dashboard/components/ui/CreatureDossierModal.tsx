@@ -7,6 +7,7 @@ import { CreatureEntry, getClassificationMeta, CREATURE_TIER_META } from "@/lib/
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { RomanticLoveBurst, RomanticLoveBurstHandle } from "@/components/ui/RomanticLoveBurst";
 import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
+import { CreatureFormCard } from "@/components/creatures/CreatureFormCard";
 
 interface CreatureDossierModalProps {
   isOpen: boolean;
@@ -219,32 +220,6 @@ export function CreatureDossierModal({
                 )}
               </div>
 
-              {/* Thumbnail Gallery Strip (if multiple media) */}
-              {allMedia.length > 1 && (
-                <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                  {allMedia.map((m, idx) => {
-                    const isSelected = activeDisplayUrl === m.url;
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => setSelectedMediaUrl(m.url)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-mono font-bold shrink-0 transition-all border cursor-pointer ${
-                          isSelected
-                            ? isCyber
-                              ? "bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-[0_0_10px_rgba(0,245,255,0.4)]"
-                              : "bg-black text-white border-2 border-black"
-                            : isCyber
-                            ? "bg-white/5 text-slate-400 border-white/10 hover:bg-white/10"
-                            : "bg-white text-black border border-black hover:bg-amber-100"
-                        }`}
-                      >
-                        <span>🖼️</span>
-                        <span>{m.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
             </div>
 
             {/* CREATURE IDENTITY HEADER */}
@@ -320,91 +295,6 @@ export function CreatureDossierModal({
                 </button>
               </div>
             </div>
-
-            {/* ── FORMS SECTION (only when creature has forms) ── */}
-            {creature.forms && creature.forms.length > 0 && (
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-2 border-b pb-3" style={{ borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#E2E8F0" }}>
-                  <span className="text-base">✦</span>
-                  <h4 className="text-xs font-mono font-black tracking-wider uppercase" style={{ color: isCyber ? "#A78BFA" : "#000000" }}>
-                    Forms &amp; Variants
-                  </h4>
-                  <span className={`ml-auto text-[10px] font-mono px-2 py-0.5 rounded-full border font-bold ${
-                    isCyber ? "bg-violet-500/20 text-violet-300 border-violet-500/40" : "bg-violet-100 text-violet-900 border-violet-300"
-                  }`}>
-                    {creature.forms.length} {creature.forms.length === 1 ? "Form" : "Forms"}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {[...creature.forms].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((form, idx) => (
-                    <div
-                      key={form.id || idx}
-                      className={`rounded-2xl overflow-hidden border transition-all ${
-                        isCyber
-                          ? "bg-white/[0.03] border-violet-500/20 hover:border-violet-400/50"
-                          : "bg-white border-2 border-black shadow-[2px_2px_0px_#000000]"
-                      }`}
-                    >
-                      {/* Form artwork */}
-                      {form.artwork ? (
-                        <div className="relative w-full h-36 overflow-hidden bg-black/30">
-                          <div
-                            className="absolute inset-0 bg-cover bg-center scale-110 blur-xl opacity-25"
-                            style={{ backgroundImage: `url(${form.artwork})` }}
-                          />
-                          <img
-                            src={form.artwork}
-                            alt={form.name}
-                            className="relative w-full h-full object-contain p-1.5"
-                          />
-                        </div>
-                      ) : (
-                        <div className={`w-full h-20 flex items-center justify-center text-3xl ${
-                          isCyber ? "bg-violet-950/30" : "bg-violet-50"
-                        }`}>
-                          ✦
-                        </div>
-                      )}
-
-                      {/* Form info */}
-                      <div className="p-3 space-y-1.5">
-                        <div className="flex items-start justify-between gap-2">
-                          <h5 className="text-xs font-black font-mono leading-snug">
-                            {form.displayName || form.name}
-                          </h5>
-                          {form.variantType && (
-                            <span className={`shrink-0 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md border uppercase ${
-                              isCyber
-                                ? "bg-violet-500/20 text-violet-300 border-violet-500/30"
-                                : "bg-violet-100 text-violet-800 border-violet-300"
-                            }`}>
-                              {form.variantType}
-                            </span>
-                          )}
-                        </div>
-                        {form.description && (
-                          <p className={`text-[11px] font-mono leading-relaxed ${isCyber ? "text-slate-300/80" : "text-slate-700"}`}>
-                            {form.description}
-                          </p>
-                        )}
-                        {form.tags && form.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 pt-0.5">
-                            {form.tags.map((tag) => (
-                              <span key={tag} className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${
-                                isCyber ? "bg-white/5 border-white/10 text-slate-400" : "bg-slate-100 border-slate-300 text-slate-600"
-                              }`}>
-                                #{tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* LORE / ABOUT */}
             {creature.description && (
@@ -597,6 +487,45 @@ export function CreatureDossierModal({
                       #{tag}
                     </span>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── FORMS & VARIANTS (PLACED AT THE BOTTOM OF THE DOSSIER) ── */}
+            {creature.forms && creature.forms.length > 0 && (
+              <div className="space-y-4 pt-4 border-t border-white/10">
+                <div
+                  className="flex items-center gap-2 border-b pb-3"
+                  style={{ borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#E2E8F0" }}
+                >
+                  <span className="text-base text-violet-400">✦</span>
+                  <h4
+                    className="text-xs sm:text-sm font-mono font-black tracking-wider uppercase"
+                    style={{ color: isCyber ? "#C084FC" : "#000000" }}
+                  >
+                    Forms &amp; Variants
+                  </h4>
+                  <span
+                    className={`ml-auto text-[10px] font-mono px-2.5 py-0.5 rounded-full border font-bold ${
+                      isCyber
+                        ? "bg-violet-500/20 text-violet-300 border-violet-500/40"
+                        : "bg-violet-100 text-violet-900 border-violet-300 shadow-[1px_1px_0_#000]"
+                    }`}
+                  >
+                    {creature.forms.length} {creature.forms.length === 1 ? "Form" : "Forms"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                  {[...creature.forms]
+                    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                    .map((form, idx) => (
+                      <CreatureFormCard
+                        key={form.id || idx}
+                        form={form}
+                        isCyber={isCyber}
+                      />
+                    ))}
                 </div>
               </div>
             )}

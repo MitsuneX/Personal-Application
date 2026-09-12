@@ -23,6 +23,7 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 import { useToast } from "@/components/ui/ToastProvider";
 import { CharacterImageUploader, GalleryUploader } from "@/components/ui/CharacterImageUploader";
+import { CreatureFormCard } from "@/components/creatures/CreatureFormCard";
 
 interface CreatureEditorModalProps {
   isOpen: boolean;
@@ -1314,13 +1315,26 @@ export function CreatureEditorModal({
                               >▼</button>
                             </div>
 
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-black font-mono truncate">
-                                {form.name || <span className="opacity-40">Unnamed Form</span>}
-                              </p>
-                              {form.variantType && (
-                                <p className={`text-[10px] font-mono opacity-60`}>{form.variantType}</p>
+                            <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                              {form.artwork ? (
+                                <img
+                                  src={form.artwork}
+                                  alt={form.name}
+                                  className="w-10 h-10 rounded-lg object-cover border border-white/20 shrink-0"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-lg bg-violet-500/20 border border-violet-500/30 flex items-center justify-center text-xs shrink-0">
+                                  ✦
+                                </div>
                               )}
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-black font-mono truncate">
+                                  {form.displayName || form.name || <span className="opacity-40">Unnamed Form</span>}
+                                </p>
+                                {form.variantType && (
+                                  <p className={`text-[10px] font-mono opacity-60`}>{form.variantType}</p>
+                                )}
+                              </div>
                             </div>
 
                             <div className="flex items-center gap-1.5">
@@ -1400,27 +1414,30 @@ export function CreatureEditorModal({
                                 </div>
                               </div>
 
-                              {/* Artwork URL */}
-                              <div className="space-y-1">
-                                <label className={`text-[10px] font-mono font-bold uppercase tracking-wider ${
-                                  isCyber ? "text-violet-300" : "text-slate-600"
-                                }`}>Form Artwork URL</label>
-                                <input
-                                  type="url"
+                              {/* Form Artwork Upload & Live Preview */}
+                              <div className="space-y-2">
+                                <CharacterImageUploader
+                                  label="Form Artwork"
                                   value={formDraft.artwork || ""}
-                                  onChange={(e) => setFormDraft((d) => ({ ...d, artwork: e.target.value || null }))}
-                                  placeholder="https://..."
-                                  className={`w-full px-3 py-2 rounded-xl text-xs font-mono border ${
-                                    isCyber
-                                      ? "bg-white/5 border-violet-500/30 text-white placeholder-slate-500 focus:border-violet-400"
-                                      : "bg-white border-2 border-black text-black placeholder-slate-400 focus:border-violet-500"
-                                  } outline-none transition-all`}
+                                  onChange={(url) => setFormDraft((d) => ({ ...d, artwork: url }))}
+                                  onClear={() => setFormDraft((d) => ({ ...d, artwork: null }))}
+                                  aspect={4 / 3}
+                                  hint="Spans full card width with ambient backdrop in Dossier."
+                                  previewClass="h-44 w-full"
                                 />
-                                {formDraft.artwork && (
-                                  <div className="mt-1.5 h-20 rounded-xl overflow-hidden border border-black/10">
-                                    <img src={formDraft.artwork} alt="preview" className="w-full h-full object-contain bg-black/20" />
-                                  </div>
-                                )}
+
+                                <div className="space-y-1">
+                                  <label className="text-[10px] font-mono opacity-60">
+                                    Or direct image URL:
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={formDraft.artwork || ""}
+                                    onChange={(e) => setFormDraft((d) => ({ ...d, artwork: e.target.value || null }))}
+                                    placeholder="https://..."
+                                    className={inputStyle}
+                                  />
+                                </div>
                               </div>
 
                               {/* Description */}
@@ -1439,6 +1456,25 @@ export function CreatureEditorModal({
                                       : "bg-white border-2 border-black text-black placeholder-slate-400 focus:border-violet-500"
                                   } outline-none transition-all`}
                                 />
+                              </div>
+
+                              {/* Live Dossier Card Presentation Preview */}
+                              <div className="space-y-1.5 pt-2 border-t border-white/10">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider opacity-70">
+                                    ✦ Live Dossier Card Preview
+                                  </span>
+                                  <span className="text-[9px] font-mono opacity-50">
+                                    (Exact appearance as displayed in the Dossier)
+                                  </span>
+                                </div>
+                                <div className="max-w-md mx-auto pt-1">
+                                  <CreatureFormCard
+                                    form={formDraft}
+                                    isCyber={isCyber}
+                                    isPreview={true}
+                                  />
+                                </div>
                               </div>
                             </div>
                           )}

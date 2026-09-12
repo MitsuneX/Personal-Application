@@ -14,7 +14,7 @@ interface HistoryModalProps {
   onClose: () => void;
 }
 
-type CategoryTab = "ALL" | "GAME_CHARACTER" | "HALL_OF_FAME";
+type CategoryTab = "ALL" | "GAME_CHARACTER" | "HALL_OF_FAME" | "CREATURE";
 
 export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
   const { theme } = useTheme();
@@ -101,85 +101,115 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
     });
   };
 
+  // Single Item Actions
+  const handleSingleRestore = async (id: string, name: string) => {
+    setIsProcessing(true);
+    try {
+      await restoreHistoryItems([id]);
+      toastSuccess(`✓ Successfully restored "${name}".`);
+      setSelectedIds((prev) => prev.filter((i) => i !== id));
+    } catch {
+      toastError(`Failed to restore "${name}".`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleSinglePermanentDelete = (id: string, name: string) => {
+    confirm({
+      title: `Permanently Delete "${name}"?`,
+      message: "This action cannot be undone. The snapshot will be permanently removed from recovery history.",
+      variant: "danger",
+      confirmText: "Permanently Delete",
+      onConfirm: async () => {
+        setIsProcessing(true);
+        try {
+          await permanentDeleteHistoryItems([id]);
+          toastSuccess(`✓ Permanently deleted "${name}".`);
+          setSelectedIds((prev) => prev.filter((i) => i !== id));
+        } catch {
+          toastError(`Failed to delete "${name}".`);
+        } finally {
+          setIsProcessing(false);
+        }
+      },
+    });
+  };
+
   if (!isOpen) return null;
 
   return (
     <OverlayPortal>
       <AnimatePresence>
         <div
-          className="fixed inset-0 flex items-center justify-center p-3 sm:p-5 overflow-y-auto"
-          style={{ zIndex: Z_INDEX.MODAL }}
+          className="fixed inset-0 flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+          style={{ zIndex: Z_INDEX.MODAL + 50 }}
         >
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="fixed inset-0 bg-black/80 backdrop-blur-md"
-        />
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/80 backdrop-blur-md"
+          />
 
-        {/* Modal Container */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 15 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          transition={{ type: "spring", stiffness: 350, damping: 28 }}
-          className="relative w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl z-10 flex flex-col max-h-[88vh]"
-          style={{
-            backgroundColor: isCyber ? "#050816" : "#FFFFFF",
-            borderColor: isCyber ? "rgba(0,245,255,0.3)" : "#000000",
-            borderWidth: isCyber ? "1.5px" : "3px",
-            boxShadow: isCyber ? "0 0 50px rgba(0,245,255,0.15)" : "8px 8px 0 #000000",
-          }}
-        >
-          {/* ── HEADER ── */}
-          <div
-            className="px-5 py-4 border-b flex flex-wrap items-center justify-between gap-3 shrink-0"
-            style={{
-              borderColor: isCyber ? "rgba(0,245,255,0.15)" : "#000000",
-              backgroundColor: isCyber ? "rgba(10,15,44,0.95)" : "#F8FAFC",
-            }}
+          {/* Modal Card */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 15 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className={`relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-3xl overflow-hidden border z-10 ${
+              isCyber
+                ? "bg-[#060a17] border-cyan-500/40 text-slate-100 shadow-[0_0_50px_rgba(0,245,255,0.25)]"
+                : "bg-[#FFFBF5] border-3 border-black text-black shadow-[8px_8px_0px_0px_#000000]"
+            }`}
           >
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">📜</span>
-              <div>
-                <h2 className="text-lg font-black tracking-tight" style={{ color: isCyber ? "#00F5FF" : "#000000" }}>
-                  Persistent Record History
-                </h2>
-                <p className="text-xs font-mono opacity-60">
-                  Soft-deleted characters and entries. Restore or permanently delete at any time.
-                </p>
+            {/* ── HEADER ── */}
+            <div
+              className={`flex items-center justify-between px-6 py-4 border-b shrink-0 ${
+                isCyber ? "bg-[#0a0f24]/90 border-cyan-500/20" : "bg-white border-black"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">📜</span>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black font-mono uppercase tracking-wider">
+                    Recovery &amp; History
+                  </h3>
+                  <p className="text-xs font-mono opacity-60">
+                    Soft-deleted records and entries. Restore or permanently delete at any time.
+                  </p>
+                </div>
               </div>
+
+              <button
+                onClick={onClose}
+                className="w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-sm cursor-pointer transition-transform hover:scale-110"
+                style={{
+                  backgroundColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0",
+                  color: isCyber ? "#FFFFFF" : "#000000",
+                  border: isCyber ? "1px solid rgba(255,255,255,0.2)" : "2px solid #000",
+                }}
+              >
+                ✕
+              </button>
             </div>
 
-            <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-sm cursor-pointer transition-transform hover:scale-110"
-              style={{
-                backgroundColor: isCyber ? "rgba(255,255,255,0.1)" : "#E2E8F0",
-                color: isCyber ? "#FFFFFF" : "#000000",
-                border: isCyber ? "1px solid rgba(255,255,255,0.2)" : "2px solid #000",
-              }}
+            {/* ── CONTROLS & SELECTION BAR ── */}
+            <div
+              className={`px-6 py-3 border-b flex flex-wrap items-center justify-between gap-3 shrink-0 ${
+                isCyber ? "bg-[#080d22]/80 border-cyan-500/10" : "bg-[#F8FAFC] border-black/10"
+              }`}
             >
-              ✕
-            </button>
-          </div>
-
-          {/* ── CONTROLS & SELECTION BAR ── */}
-          <div
-            className="px-5 py-3 border-b flex flex-wrap items-center justify-between gap-3 shrink-0"
-            style={{
-              borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#E2E8F0",
-              backgroundColor: isCyber ? "rgba(5,8,22,0.8)" : "#F1F5F9",
-            }}
-          >
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-1.5 bg-black/20 p-1 rounded-xl border border-white/10">
+              {/* Filter Tabs */}
+              <div className="flex items-center gap-1.5 bg-black/20 p-1 rounded-xl border border-white/10 flex-wrap">
               {[
                 { id: "ALL", label: "All Items", icon: "🌐" },
                 { id: "GAME_CHARACTER", label: "Game Characters", icon: "🎮" },
                 { id: "HALL_OF_FAME", label: "Character Dict", icon: "👑" },
+                { id: "CREATURE", label: "Creatures", icon: "🐾" },
               ].map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
@@ -280,10 +310,14 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                 const snapshot = item.snapshot || {};
                 const media = item.mediaReferences || {};
                 const imageSrc =
+                  media.primary ||
+                  media.card ||
                   media.cardImage ||
                   media.avatarUrl ||
                   media.imageUrl ||
                   media.portraitUrl ||
+                  snapshot.media?.primary ||
+                  snapshot.media?.card ||
                   snapshot.cardImage ||
                   snapshot.avatarUrl ||
                   snapshot.imageUrl;
@@ -361,12 +395,20 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                               ? isCyber
                                 ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
                                 : "bg-cyan-200 text-black border border-black shadow-[1px_1px_0_#000]"
+                              : item.entityType === "CREATURE"
+                              ? isCyber
+                                ? "bg-violet-500/20 text-violet-300 border border-violet-500/40"
+                                : "bg-violet-200 text-black border border-black shadow-[1px_1px_0_#000]"
                               : isCyber
                               ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
                               : "bg-amber-200 text-black border border-black shadow-[1px_1px_0_#000]"
                           }`}
                         >
-                          {item.entityType === "GAME_CHARACTER" ? "Game Character" : "Character Dict"}
+                          {item.entityType === "GAME_CHARACTER"
+                            ? "Game Character"
+                            : item.entityType === "CREATURE"
+                            ? "Creature"
+                            : "Character Dict"}
                         </span>
                       </div>
 

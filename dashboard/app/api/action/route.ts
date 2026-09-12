@@ -1644,7 +1644,35 @@ export async function POST(req: Request) {
         if (!prisma.creature) {
           return NextResponse.json({ error: "Creature model not available" }, { status: 503 });
         }
-        await prisma.creature.delete({ where: { id: payload.id } });
+        const record = await prisma.creature.findUnique({ where: { id: payload.id } });
+        if (record) {
+          const mediaReferences = {
+            primary: (record.media as any)?.primary,
+            card: (record.media as any)?.card,
+            favouriteMoment: (record.media as any)?.favouriteMoment,
+            gallery: (record.media as any)?.gallery || [],
+            forms: Array.isArray(record.forms)
+              ? (record.forms as any[]).map((f) => f.artwork).filter(Boolean)
+              : [],
+          };
+
+          const historyEntry = await prisma.softDeleteHistory.create({
+            data: {
+              userId: userId || record.userId || null,
+              entityType: "CREATURE",
+              originalRecordId: record.id,
+              name: record.name,
+              category: record.classification || "Creature",
+              snapshot: record as any,
+              mediaReferences,
+            },
+          });
+
+          if (historyEntry && historyEntry.id) {
+            await prisma.creature.delete({ where: { id: payload.id } });
+          }
+          return NextResponse.json({ success: true, historyEntry });
+        }
         return NextResponse.json({ success: true });
       }
 
