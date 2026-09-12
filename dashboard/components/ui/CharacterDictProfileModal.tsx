@@ -13,6 +13,8 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { resolveCharacterDictionaryGallery, CharacterGalleryMediaItem } from "@/lib/utils/mediaResolver";
 import { CreatureEntry, getClassificationMeta } from "@/lib/data/creatureSchema";
 import { CreatureDossierModal } from "@/components/ui/CreatureDossierModal";
+import { OverlayPortal } from "@/components/ui/OverlayPortal";
+import { Z_INDEX } from "@/components/ui/ViewportBoundary";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Props {
@@ -201,11 +203,14 @@ export function CharacterDictProfileModal({
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        if (selectedCreature || lightboxSrc || targetGameChar || deleteTarget) return;
+        onClose();
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, selectedCreature, lightboxSrc, targetGameChar, deleteTarget]);
 
   // Body scroll locking
   useEffect(() => {
@@ -446,16 +451,21 @@ export function CharacterDictProfileModal({
 
   return (
     <>
-      <AnimatePresence>
-        <div className="fixed inset-0 z-[1500] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto">
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-md"
-          />
+      <OverlayPortal>
+        <AnimatePresence>
+          {isOpen && (
+            <div
+              className="fixed inset-0 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto"
+              style={{ zIndex: Z_INDEX.MODAL }}
+            >
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={onClose}
+                className="fixed inset-0 bg-black/80 backdrop-blur-md"
+              />
 
           {/* Modal Card */}
           <motion.div
@@ -1258,12 +1268,14 @@ export function CharacterDictProfileModal({
             </div>
           </motion.div>
         </div>
-      </AnimatePresence>
+      )}
+    </AnimatePresence>
 
       <AnimatePresence>
         {deleteTarget && (
           <div
-            className="fixed inset-0 z-[1800] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+            className="fixed inset-0 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+            style={{ zIndex: Z_INDEX.MODAL_CONFIRM }}
             onClick={() => setDeleteTarget(null)}
           >
             <motion.div
@@ -1323,6 +1335,7 @@ export function CharacterDictProfileModal({
           </div>
         )}
       </AnimatePresence>
+      </OverlayPortal>
 
       {/* Lightbox Modal for Gallery */}
       <ImageLightboxModal

@@ -73,7 +73,7 @@ export function GlobalConfirmModal() {
           <div
             className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 select-none"
             style={{
-              zIndex: Z_INDEX.MODAL + 100,
+              zIndex: Z_INDEX.MODAL_CONFIRM,
             }}
           >
             {/* Backdrop */}

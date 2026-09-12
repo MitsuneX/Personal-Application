@@ -13,6 +13,38 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v13.8.1",
+    date: "2026-09-12",
+    title: "Creature Form Card Full-Art Overhaul & Nested Modal Stacking Architecture",
+    badge: "PATCH",
+    type: "patch",
+    summary: "Re-architected Creature Form presentation into true full-art collectible cards where artwork spans the entire container background with zero aspect ratio distortion and transparent overlaid typography. Solved the architectural root cause of nested dossier modal stacking contexts where opening a connected Creature from within the Character Dictionary placed the Creature Dossier behind the parent Character Dossier. Established a unified application-wide modal stacking hierarchy in ViewportBoundary.ts with top-level portaling through OverlayPortal, ensuring base dossiers, nested dossiers, and confirmation dialogs layer cleanly with robust Escape key dismissals and dual-theme parity.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🎴 True Full-Art Collectible Form Cards (components/creatures/CreatureFormCard.tsx): Replaced the split image/text card layout with a full-surface artwork canvas (aspect-[3/4] / responsive height) with ambient blurred backdrop fill, object-cover foreground scaling, and upward transparent bottom gradient (bg-gradient-to-t from-black/95 via-black/75 via-45% to-transparent) preserving 100% of the artwork and delivering crisp text contrast.",
+          "👁️ In-Editor Live Preview Parity (components/ui/CreatureEditorModal.tsx): Live Dossier Card Preview inside the Form editor dynamically inherits the true full-art presentation, providing immediate visual feedback for uploaded artwork and overlaid metadata.",
+          "🏛️ Unified Modal Hierarchy Architecture (components/ui/ViewportBoundary.ts): Formalized semantic modal z-index constants: MODAL (1300 for base dossiers), MODAL_NESTED (1350 for child dossiers), and MODAL_CONFIRM (1400 for global confirm/delete modals), eliminating ad-hoc z-index collisions across the application.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🪟 Nested Creature Dossier Stacking Fix (components/ui/CreatureDossierModal.tsx, components/ui/CharacterDictProfileModal.tsx): Re-architected modal mounting using OverlayPortal directly into document.body / #overlay-root at zIndex 1350, ensuring Creature Dossiers opened from Character Dictionary profiles render directly IN FRONT of the parent dossier with independent dimmed backdrops.",
+          "⌨️ Child Modal ESC Key Protection (components/ui/CharacterDictProfileModal.tsx): Guarded the parent Character Dossier's keydown listener to prevent Escape key presses from prematurely dismissing the parent modal when a nested creature dossier, lightbox, or delete dialog is active.",
+          "🛡️ Confirmation Dialog Layering (components/ui/GlobalConfirmModal.tsx): Standardized GlobalConfirmModal to Z_INDEX.MODAL_CONFIRM (1400), ensuring delete confirmation modals float cleanly above active nested dossiers.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🎨 Dual-Theme Full-Art Parity: Polished full-art Form cards for both Cyberpunk (neon purple/cyan glow borders, dark backdrop glow) and Neo-Brutalism (3px solid black borders, 5px hard offset black drop shadow, high-contrast badges).",
+        ],
+      },
+    ],
+  },
+  {
     version: "v13.8.0",
     date: "2026-09-12",
     title: "Creature Form Presentation Overhaul, Unified History & Bulk Selection System",

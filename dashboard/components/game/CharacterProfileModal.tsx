@@ -11,6 +11,8 @@ import { ElementParticles } from "@/components/game/ElementParticles";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { CreatureEntry, getClassificationMeta } from "@/lib/data/creatureSchema";
 import { CreatureDossierModal } from "@/components/ui/CreatureDossierModal";
+import { OverlayPortal } from "@/components/ui/OverlayPortal";
+import { Z_INDEX } from "@/components/ui/ViewportBoundary";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Props {
@@ -1120,23 +1122,32 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
 
   return (
     <>
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* ── Backdrop ────────────────────────────────────────────────── */}
-            <motion.div
-              key="backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="fixed inset-0 z-[900]"
-              style={{ backgroundColor: "rgba(0,0,0,0.84)", backdropFilter: "blur(16px)" }}
-              onClick={onClose}
-            />
+      <OverlayPortal>
+        <AnimatePresence>
+          {isOpen && (
+            <>
+              {/* ── Backdrop ────────────────────────────────────────────────── */}
+              <motion.div
+                key="backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="fixed inset-0"
+                style={{
+                  zIndex: Z_INDEX.MODAL,
+                  backgroundColor: "rgba(0,0,0,0.84)",
+                  backdropFilter: "blur(16px)",
+                }}
+                onClick={onClose}
+              />
 
-            {/* ── Modal Container (Landscape Character Dossier Viewport) ── */}
-            <div data-modal-open="true" className="fixed inset-0 z-[901] flex items-center justify-center p-2 sm:p-4 pointer-events-none">
+              {/* ── Modal Container (Landscape Character Dossier Viewport) ── */}
+              <div
+                data-modal-open="true"
+                className="fixed inset-0 flex items-center justify-center p-2 sm:p-4 pointer-events-none"
+                style={{ zIndex: Z_INDEX.MODAL + 1 }}
+              >
               <motion.div
                 key="modal"
                 initial={{ opacity: 0, scale: 0.94, y: 10 }}
@@ -1588,7 +1599,8 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
       <AnimatePresence>
         {deleteTarget && (
           <div
-            className="fixed inset-0 z-[1800] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+            className="fixed inset-0 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+            style={{ zIndex: Z_INDEX.MODAL_CONFIRM }}
             onClick={() => setDeleteTarget(null)}
           >
             <motion.div
@@ -1648,6 +1660,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
           </div>
         )}
       </AnimatePresence>
+      </OverlayPortal>
 
       <ImageLightboxModal
         isOpen={Boolean(lightboxSrc)}

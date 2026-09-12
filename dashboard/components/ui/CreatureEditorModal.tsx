@@ -23,6 +23,8 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 import { useToast } from "@/components/ui/ToastProvider";
 import { CharacterImageUploader, GalleryUploader } from "@/components/ui/CharacterImageUploader";
+import { OverlayPortal } from "@/components/ui/OverlayPortal";
+import { Z_INDEX } from "@/components/ui/ViewportBoundary";
 import { CreatureFormCard } from "@/components/creatures/CreatureFormCard";
 
 interface CreatureEditorModalProps {
@@ -369,16 +371,20 @@ export function CreatureEditorModal({
   const labelStyle = "block text-xs font-mono font-bold uppercase tracking-wider mb-1 opacity-80";
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="fixed inset-0 bg-black/80 backdrop-blur-md"
-        />
+    <OverlayPortal>
+      <AnimatePresence>
+        <div
+          className="fixed inset-0 flex items-center justify-center p-3 sm:p-6 overflow-y-auto select-none"
+          style={{ zIndex: Z_INDEX.MODAL_NESTED }}
+        >
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/80 backdrop-blur-md"
+          />
 
         {/* Modal Container */}
         <motion.div
@@ -1552,5 +1558,6 @@ export function CreatureEditorModal({
         </motion.div>
       </div>
     </AnimatePresence>
-  );
+  </OverlayPortal>
+);
 }

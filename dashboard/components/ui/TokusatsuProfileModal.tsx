@@ -16,6 +16,8 @@ import {
   TokusatsuAppearance,
 } from "@/lib/types/tokusatsu";
 import { ImageLightboxModal } from "@/components/ui/ImageLightboxModal";
+import { OverlayPortal } from "@/components/ui/OverlayPortal";
+import { Z_INDEX } from "@/components/ui/ViewportBoundary";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface Props {
@@ -365,9 +367,13 @@ export function TokusatsuProfileModal({ isOpen, entry, onClose, onEdit, onLike }
 
   return (
     <>
-      <AnimatePresence>
-        {isOpen && (
-          <div className="fixed inset-0 z-[1500] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto">
+      <OverlayPortal>
+        <AnimatePresence>
+          {isOpen && (
+            <div
+              className="fixed inset-0 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto"
+              style={{ zIndex: Z_INDEX.MODAL }}
+            >
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={onClose}
@@ -974,6 +980,7 @@ export function TokusatsuProfileModal({ isOpen, entry, onClose, onEdit, onLike }
           </div>
         )}
       </AnimatePresence>
+      </OverlayPortal>
 
       <ImageLightboxModal
         isOpen={Boolean(lightboxSrc)}

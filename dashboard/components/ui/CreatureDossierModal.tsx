@@ -8,12 +8,15 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { RomanticLoveBurst, RomanticLoveBurstHandle } from "@/components/ui/RomanticLoveBurst";
 import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
 import { CreatureFormCard } from "@/components/creatures/CreatureFormCard";
+import { OverlayPortal } from "@/components/ui/OverlayPortal";
+import { Z_INDEX } from "@/components/ui/ViewportBoundary";
 
 interface CreatureDossierModalProps {
   isOpen: boolean;
   onClose: () => void;
   creature: CreatureEntry | null;
   onEdit?: (creature: CreatureEntry) => void;
+  zIndex?: number;
 }
 
 export function CreatureDossierModal({
@@ -21,6 +24,7 @@ export function CreatureDossierModal({
   onClose,
   creature,
   onEdit,
+  zIndex = Z_INDEX.MODAL_NESTED,
 }: CreatureDossierModalProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
@@ -93,16 +97,20 @@ export function CreatureDossierModal({
   };
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="fixed inset-0 bg-black/80 backdrop-blur-md"
-        />
+    <OverlayPortal>
+      <AnimatePresence>
+        <div
+          className="fixed inset-0 flex items-center justify-center p-3 sm:p-6 overflow-y-auto select-none"
+          style={{ zIndex }}
+        >
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/80 backdrop-blur-md"
+          />
 
         {/* Modal Container */}
         <motion.div
@@ -533,5 +541,6 @@ export function CreatureDossierModal({
         </motion.div>
       </div>
     </AnimatePresence>
-  );
+  </OverlayPortal>
+);
 }
