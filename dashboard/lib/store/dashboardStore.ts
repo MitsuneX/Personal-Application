@@ -3,6 +3,8 @@ import { DEFAULT_AI_TOOLS } from "@/lib/data/initialAiTools";
 import { INITIAL_DOSSIER_CHARACTERS } from "@/lib/data/initialDossierCharacters";
 import { CoupleEntry, normalizeCoupleJson } from "@/lib/data/coupleSchema";
 import { CreatureEntry, normalizeCreatureJson } from "@/lib/data/creatureSchema";
+import { QuickLaunchShortcut, DEFAULT_QUICK_LAUNCH_SHORTCUTS } from "@/lib/data/guestSeedData";
+export type { QuickLaunchShortcut };
 
 // ─── Shared Types ─────────────────────────────────────────────────────────────
 
@@ -40,6 +42,7 @@ export interface ProfileData {
   landingBgStyle?: "matrix" | "nebula" | "grid" | "minimal";
   landingAccentColor?: string;
   visibleFeatures?: string[];
+  quickLaunch?: QuickLaunchShortcut[];
 }
 
 export interface ProfileHistoryEntry {
@@ -905,6 +908,7 @@ interface DashboardState {
   resetUserStore: () => void;
   fetchDashboard: () => Promise<void>;
   updateProfile: (data: Partial<ProfileData>) => Promise<void>;
+  updateQuickLaunch: (shortcuts: QuickLaunchShortcut[]) => Promise<void>;
   addGame: (game: GameEntry) => Promise<void>;
   updateGame: (id: string, data: Partial<GameEntry>) => Promise<void>;
   removeGame: (id: string) => Promise<void>;
@@ -1073,6 +1077,7 @@ const initialProfile: ProfileData = {
   landingBgStyle: "matrix",
   landingAccentColor: "#00F5FF",
   visibleFeatures: ["game-database", "game-characters", "hall-of-fame", "music", "media", "ai-library", "hobbies", "emergency"],
+  quickLaunch: DEFAULT_QUICK_LAUNCH_SHORTCUTS,
 };
 
 const initialMedia: MediaEntry = {
@@ -1288,6 +1293,11 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
                 ...data.profile,
                 avatar: data.profile.avatar || currentProfile.avatar || "/avatar.png",
                 borderStyle: data.profile.borderStyle || currentProfile.borderStyle || "default",
+                quickLaunch: (Array.isArray(data.profile.quickLaunch) && data.profile.quickLaunch.length > 0)
+                  ? data.profile.quickLaunch
+                  : (Boolean(data.isGuest) && typeof window !== "undefined" && localStorage.getItem("guest_quick_launch"))
+                    ? JSON.parse(localStorage.getItem("guest_quick_launch") || "[]")
+                    : (currentProfile.quickLaunch && currentProfile.quickLaunch.length > 0 ? currentProfile.quickLaunch : DEFAULT_QUICK_LAUNCH_SHORTCUTS),
               }
             : currentProfile,
           games: data.games || [],
@@ -1397,6 +1407,26 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       }
     } catch (err) {
       console.error("Failed to sync profile:", err);
+    }
+  },
+
+  updateQuickLaunch: async (shortcuts) => {
+    set((s) => ({
+      profile: {
+        ...s.profile,
+        quickLaunch: shortcuts,
+      },
+    }));
+    if (get().isGuest) {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("guest_quick_launch", JSON.stringify(shortcuts));
+      }
+      return;
+    }
+    try {
+      await get().updateProfile({ quickLaunch: shortcuts });
+    } catch (err) {
+      console.error("Failed to sync quick launch shortcuts:", err);
     }
   },
 

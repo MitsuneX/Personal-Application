@@ -58,6 +58,7 @@ export async function POST(req: Request) {
         landingBgStyle: data.landingBgStyle ?? "matrix",
         landingAccentColor: data.landingAccentColor ?? "#00F5FF",
         visibleFeatures: Array.isArray(data.visibleFeatures) ? data.visibleFeatures : ["game-database", "game-characters", "hall-of-fame", "music", "media", "ai-library", "hobbies", "emergency"],
+        ...(data.quickLaunch !== undefined && { quickLaunch: data.quickLaunch }),
       },
       create: {
         id: profileId,
@@ -84,6 +85,7 @@ export async function POST(req: Request) {
         landingBgStyle: data.landingBgStyle ?? "matrix",
         landingAccentColor: data.landingAccentColor ?? "#00F5FF",
         visibleFeatures: Array.isArray(data.visibleFeatures) ? data.visibleFeatures : ["game-database", "game-characters", "hall-of-fame", "music", "media", "ai-library", "hobbies", "emergency"],
+        ...(data.quickLaunch !== undefined && { quickLaunch: data.quickLaunch }),
       },
     });
 

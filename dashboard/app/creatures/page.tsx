@@ -457,6 +457,10 @@ export default function CreaturesPage() {
           }}
           creature={selectedCreature}
           onEdit={handleOpenEdit}
+          onOpenCreature={(c) => {
+            setSelectedCreature(c);
+            setIsDossierOpen(true);
+          }}
         />
 
         <CreatureEditorModal

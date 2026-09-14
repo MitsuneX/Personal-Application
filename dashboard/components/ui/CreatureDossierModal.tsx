@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/theme";
-import { CreatureEntry, getClassificationMeta, CREATURE_TIER_META } from "@/lib/data/creatureSchema";
+import { CreatureEntry, CreatureCharacterRef, getClassificationMeta, CREATURE_TIER_META } from "@/lib/data/creatureSchema";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { RomanticLoveBurst, RomanticLoveBurstHandle } from "@/components/ui/RomanticLoveBurst";
 import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
@@ -16,8 +16,74 @@ interface CreatureDossierModalProps {
   onClose: () => void;
   creature: CreatureEntry | null;
   onEdit?: (creature: CreatureEntry) => void;
+  /** Called when user clicks a derived/source creature to navigate to it */
+  onOpenCreature?: (creature: CreatureEntry) => void;
   zIndex?: number;
   initialFormId?: string | null;
+}
+
+// ─── Helper: Grouped character type ───────────────────────────────────────────
+interface GroupedCharacter {
+  characterId: string;
+  name: string;
+  avatar?: string | null;
+  avatarUrl?: string | null;
+  characterType: "character_dict" | "game_character";
+  sourceTitle?: string;
+  /** General (parent-creature) connection */
+  generalRef?: CreatureCharacterRef;
+  /** Form-specific connections belonging to this character */
+  formRefs: Array<{ formName: string; formId: string; relationshipType?: string }>;
+}
+
+/** Groups flat connection arrays by characterId to prevent duplicate character cards. */
+function groupCharacterConnections(
+  generalConns: CreatureCharacterRef[],
+  formConns: Array<CreatureCharacterRef & { formName: string; formId: string }>
+): GroupedCharacter[] {
+  const map = new Map<string, GroupedCharacter>();
+
+  for (const c of generalConns) {
+    const key = c.characterId;
+    if (!map.has(key)) {
+      map.set(key, {
+        characterId: c.characterId,
+        name: c.name,
+        avatar: c.avatar,
+        avatarUrl: c.avatarUrl,
+        characterType: c.characterType,
+        sourceTitle: c.sourceTitle,
+        generalRef: c,
+        formRefs: [],
+      });
+    } else {
+      // Already grouped — just ensure generalRef is set
+      map.get(key)!.generalRef = c;
+    }
+  }
+
+  for (const c of formConns) {
+    const key = c.characterId;
+    if (!map.has(key)) {
+      map.set(key, {
+        characterId: c.characterId,
+        name: c.name,
+        avatar: c.avatar,
+        avatarUrl: c.avatarUrl,
+        characterType: c.characterType,
+        sourceTitle: c.sourceTitle,
+        formRefs: [{ formName: c.formName, formId: c.formId, relationshipType: c.relationshipType }],
+      });
+    } else {
+      const entry = map.get(key)!;
+      // Only add unique form refs
+      if (!entry.formRefs.some((f) => f.formId === c.formId)) {
+        entry.formRefs.push({ formName: c.formName, formId: c.formId, relationshipType: c.relationshipType });
+      }
+    }
+  }
+
+  return Array.from(map.values());
 }
 
 export function CreatureDossierModal({
@@ -25,19 +91,39 @@ export function CreatureDossierModal({
   onClose,
   creature,
   onEdit,
+  onOpenCreature,
   zIndex = Z_INDEX.MODAL_NESTED,
   initialFormId = null,
 }: CreatureDossierModalProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { toggleFavoriteCreature, bondCreature } = useDashboardStore();
+  const { toggleFavoriteCreature, bondCreature, creatures: allCreatures } = useDashboardStore();
 
   const loveBurstRef = useRef<RomanticLoveBurstHandle>(null);
   const favBurstRef = useRef<RomanticLoveBurstHandle>(null);
 
-  // Gallery viewer index
   const [selectedMediaUrl, setSelectedMediaUrl] = useState<string | null>(null);
   const [highlightedFormId, setHighlightedFormId] = useState<string | null>(null);
+
+  // ── Lineage: creatures derived FROM this creature (reverse lookup) ──────────
+  const derivativeCreatures = useMemo(() => {
+    if (!creature) return [];
+    return allCreatures.filter((c) =>
+      c.id !== creature.id &&
+      (c.derivedFrom || []).some((d) => d.creatureId === creature.id)
+    );
+  }, [allCreatures, creature]);
+
+  // ── Lineage: source creatures this creature was derived FROM ────────────────
+  const sourceCreatures = useMemo(() => {
+    if (!creature || !creature.derivedFrom || creature.derivedFrom.length === 0) return [];
+    return creature.derivedFrom
+      .map((ref) => ({
+        ref,
+        entry: allCreatures.find((c) => c.id === ref.creatureId) ?? null,
+      }))
+      .filter((x) => x.entry !== null) as Array<{ ref: (typeof creature.derivedFrom)[0]; entry: CreatureEntry }>;
+  }, [allCreatures, creature]);
 
   // Scroll to and highlight targeted form if initialFormId is passed
   useEffect(() => {
@@ -45,13 +131,9 @@ export function CreatureDossierModal({
       setHighlightedFormId(initialFormId);
       const timer = setTimeout(() => {
         const el = document.getElementById(`creature-form-${initialFormId}`);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 250);
-      const clearTimer = setTimeout(() => {
-        setHighlightedFormId(null);
-      }, 4000);
+      const clearTimer = setTimeout(() => setHighlightedFormId(null), 4000);
       return () => {
         clearTimeout(timer);
         clearTimeout(clearTimer);
@@ -75,9 +157,7 @@ export function CreatureDossierModal({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
-    if (isOpen) {
-      window.addEventListener("keydown", handleKeyDown);
-    }
+    if (isOpen) window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
@@ -86,29 +166,20 @@ export function CreatureDossierModal({
   const classificationMeta = getClassificationMeta(creature.classification);
   const tierMeta = CREATURE_TIER_META[creature.tier] || CREATURE_TIER_META.S;
 
-  // Gather all available media URLs for gallery strip
+  // Gallery strip
   const allMedia: { label: string; url: string }[] = [];
-  if (creature.media.primary) {
-    allMedia.push({ label: "Primary Art", url: creature.media.primary });
-  }
-  if (creature.media.card && creature.media.card !== creature.media.primary) {
+  if (creature.media.primary) allMedia.push({ label: "Primary Art", url: creature.media.primary });
+  if (creature.media.card && creature.media.card !== creature.media.primary)
     allMedia.push({ label: "Card Poster", url: creature.media.card });
-  }
-  if (creature.media.favouriteMoment) {
+  if (creature.media.favouriteMoment)
     allMedia.push({ label: "Favourite Moment", url: creature.media.favouriteMoment });
-  }
   (creature.media.gallery || []).forEach((g, idx) => {
-    if (g && !allMedia.some((m) => m.url === g)) {
+    if (g && !allMedia.some((m) => m.url === g))
       allMedia.push({ label: `Gallery ${idx + 1}`, url: g });
-    }
   });
 
   const activeDisplayUrl =
-    selectedMediaUrl ||
-    creature.media.primary ||
-    creature.media.card ||
-    creature.media.gallery?.[0] ||
-    null;
+    selectedMediaUrl || creature.media.primary || creature.media.card || creature.media.gallery?.[0] || null;
 
   const handleBond = (e: React.MouseEvent) => {
     loveBurstRef.current?.trigger();
@@ -119,6 +190,177 @@ export function CreatureDossierModal({
   const handleToggleFav = () => {
     favBurstRef.current?.trigger();
     toggleFavoriteCreature(creature.id);
+  };
+
+  // ── Build grouped character connections ────────────────────────────────────
+
+  const generalDict = (creature.connectedCharacters || []).filter(
+    (c) => c.characterType !== "game_character"
+  );
+  const formDict = (creature.forms || []).flatMap((f) =>
+    (f.connectedCharacters || [])
+      .filter((c) => c.characterType !== "game_character")
+      .map((c) => ({ ...c, formName: f.displayName || f.name, formId: f.id }))
+  );
+  const groupedDictChars = groupCharacterConnections(generalDict, formDict);
+
+  const generalGame = (creature.connectedCharacters || []).filter(
+    (c) => c.characterType === "game_character"
+  );
+  const formGame = (creature.forms || []).flatMap((f) =>
+    (f.connectedCharacters || [])
+      .filter((c) => c.characterType === "game_character")
+      .map((c) => ({ ...c, formName: f.displayName || f.name, formId: f.id }))
+  );
+  const groupedGameChars = groupCharacterConnections(generalGame, formGame);
+
+  // ── Shared grouped character card renderer ─────────────────────────────────
+  const renderGroupedCharCard = (group: GroupedCharacter, isGame: boolean) => {
+    const accentClass = isGame
+      ? isCyber ? "text-purple-300 bg-purple-500/20" : "bg-purple-100 text-purple-900 border border-purple-300"
+      : isCyber ? "text-cyan-300 bg-cyan-500/20" : "bg-cyan-100 text-cyan-900 border border-cyan-300";
+
+    return (
+      <div
+        key={group.characterId}
+        className={`p-3 rounded-2xl border transition-all ${
+          isCyber
+            ? "bg-white/[0.04] border-white/10"
+            : "bg-white border-2 border-black shadow-[2px_2px_0px_#000]"
+        }`}
+      >
+        {/* Character header row */}
+        <div className="flex items-center gap-3">
+          {group.avatar || group.avatarUrl ? (
+            <img
+              src={(group.avatar || group.avatarUrl)!}
+              alt={group.name}
+              className="w-12 h-12 rounded-xl object-cover shrink-0 border border-black/20"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 text-xl">
+              {isGame ? "🎮" : "👤"}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <strong className="block text-sm font-bold truncate">{group.name}</strong>
+            <div className="flex items-center gap-1.5 text-[11px] opacity-75 mt-0.5 flex-wrap">
+              {group.generalRef && (
+                <span className={`px-1.5 rounded text-[10px] font-bold ${accentClass}`}>
+                  {group.generalRef.relationshipType || "Companion"}
+                </span>
+              )}
+              {group.sourceTitle && (
+                <span className="truncate opacity-75">{group.sourceTitle}</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Form-specific connection tree */}
+        {group.formRefs.length > 0 && (
+          <div className="mt-2.5 pl-3 space-y-1.5 border-l-2 border-violet-500/30">
+            {group.formRefs.map((fr) => (
+              <button
+                key={fr.formId}
+                type="button"
+                onClick={() => {
+                  setHighlightedFormId(fr.formId);
+                  const el = document.getElementById(`creature-form-${fr.formId}`);
+                  if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                }}
+                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg border text-left cursor-pointer transition-all ${
+                  isCyber
+                    ? "bg-violet-500/10 border-violet-500/20 hover:border-violet-400/50 text-slate-200"
+                    : "bg-violet-50 border border-violet-300 hover:bg-violet-100 text-black"
+                }`}
+              >
+                <span className="text-violet-400 text-[10px] shrink-0">✦</span>
+                <span className="text-[11px] font-mono font-bold truncate">{fr.formName}</span>
+                {fr.relationshipType && (
+                  <span className={`text-[9px] font-mono px-1 rounded shrink-0 ${
+                    isCyber ? "text-violet-300 bg-violet-500/20" : "text-violet-800 bg-violet-200"
+                  }`}>
+                    {fr.relationshipType}
+                  </span>
+                )}
+                <span className="ml-auto text-[9px] font-mono opacity-50 shrink-0">↑ scroll</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ── Mini lineage art card renderer ─────────────────────────────────────────
+  const renderLineageCard = (c: CreatureEntry, label: string) => {
+    const art = c.media.primary || c.media.card || c.media.gallery?.[0] || null;
+    const meta = getClassificationMeta(c.classification);
+    const cTierMeta = CREATURE_TIER_META[c.tier] || CREATURE_TIER_META.S;
+    return (
+      <button
+        key={c.id}
+        type="button"
+        onClick={() => onOpenCreature?.(c)}
+        className={`group relative rounded-2xl overflow-hidden border cursor-pointer flex flex-col transition-all duration-300 text-left w-full ${
+          isCyber
+            ? "bg-[#060a18] border-white/10 hover:border-amber-400/60 hover:shadow-[0_0_20px_rgba(255,215,0,0.15)]"
+            : "bg-white border-2 border-black shadow-[3px_3px_0px_#000] hover:translate-y-[-2px]"
+        }`}
+        title={`Open dossier: ${c.name}`}
+      >
+        {/* Portrait artwork */}
+        <div className="relative aspect-[3/4] w-full overflow-hidden bg-slate-900">
+          {art ? (
+            <img
+              src={art}
+              alt={c.name}
+              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-5xl">
+              {meta.icon}
+            </div>
+          )}
+          {/* Tier badge */}
+          <div
+            className="absolute top-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-mono font-black border uppercase"
+            style={{
+              backgroundColor: isCyber ? "rgba(5,8,20,0.85)" : cTierMeta.bgNeo,
+              borderColor: isCyber ? cTierMeta.borderCyber : "#000000",
+              color: isCyber ? cTierMeta.color : "#000000",
+            }}
+          >
+            {c.tier}
+          </div>
+          {/* Label badge */}
+          <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-mono font-black border uppercase ${
+            isCyber ? "bg-amber-500/20 border-amber-400/50 text-amber-300" : "bg-amber-200 border-black text-black"
+          }`}>
+            {label}
+          </div>
+          {/* Bottom overlay */}
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/60 to-transparent p-3 pt-6">
+            <p className="text-white font-black font-mono text-sm truncate">{c.name}</p>
+            <p className="text-white/70 text-[10px] font-mono truncate">{c.sourceTitle}</p>
+          </div>
+        </div>
+        {/* Footer */}
+        <div className={`px-3 py-2 flex items-center justify-between border-t ${
+          isCyber ? "border-white/5" : "border-black/10"
+        }`}>
+          <span className={`text-[10px] font-mono ${isCyber ? "text-slate-400" : "text-slate-600"}`}>
+            {meta.icon} {meta.label}
+          </span>
+          <span className={`text-[10px] font-mono font-bold ${
+            isCyber ? "text-amber-400" : "text-black"
+          }`}>
+            View →
+          </span>
+        </div>
+      </button>
+    );
   };
 
   return (
@@ -235,7 +477,6 @@ export function CreatureDossierModal({
               >
                 {activeDisplayUrl ? (
                   <>
-                    {/* Ambient backdrop */}
                     <div
                       className="absolute inset-0 bg-cover bg-center scale-110 blur-xl opacity-30"
                       style={{ backgroundImage: `url(${activeDisplayUrl})` }}
@@ -253,13 +494,36 @@ export function CreatureDossierModal({
                 )}
               </div>
 
+              {/* Media strip */}
+              {allMedia.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {allMedia.map((m) => (
+                    <button
+                      key={m.url}
+                      type="button"
+                      onClick={() => setSelectedMediaUrl(m.url)}
+                      title={m.label}
+                      className={`shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${
+                        selectedMediaUrl === m.url
+                          ? isCyber
+                            ? "border-cyan-400 shadow-[0_0_10px_rgba(0,245,255,0.4)]"
+                            : "border-black shadow-[2px_2px_0px_#000]"
+                          : isCyber
+                          ? "border-white/10 hover:border-white/30"
+                          : "border-black/20 hover:border-black"
+                      }`}
+                    >
+                      <img src={m.url} alt={m.label} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* CREATURE IDENTITY HEADER */}
             <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-5 border-white/10">
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  {/* Classification badge */}
                   <div
                     className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-black tracking-wider uppercase border shadow-sm"
                     style={{
@@ -272,7 +536,6 @@ export function CreatureDossierModal({
                     <span>{classificationMeta.label}</span>
                   </div>
 
-                  {/* Canonical Tier badge */}
                   <div
                     className="px-2.5 py-1 rounded-full text-xs font-mono font-black tracking-wider uppercase border shadow-sm"
                     style={{
@@ -347,16 +610,14 @@ export function CreatureDossierModal({
               </div>
             )}
 
-            {/* DEDICATED SCRAPBOOK HIGHLIGHT: WHY I LOVE THIS CREATURE */}
+            {/* SCRAPBOOK: WHY I LOVE THIS CREATURE */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <span className="text-base">💖</span>
                 <h4 className="text-xs font-mono font-black tracking-wider uppercase text-pink-400">
                   Why I Love This Creature
                 </h4>
-                <span className="text-[10px] font-mono opacity-60">
-                  (Personal Favourite Note)
-                </span>
+                <span className="text-[10px] font-mono opacity-60">(Personal Favourite Note)</span>
               </div>
               <div
                 className={`p-5 rounded-2xl border leading-relaxed text-xs sm:text-sm font-mono relative ${
@@ -377,197 +638,98 @@ export function CreatureDossierModal({
               </div>
             </div>
 
-            {/* CONNECTED CHARACTERS (CHARACTER DICTIONARY) */}
-            {(() => {
-              const generalDict = (creature.connectedCharacters || [])
-                .filter((c) => c.characterType !== "game_character")
-                .map((c) => ({ ...c, scope: "general" as const, formName: undefined, formId: undefined }));
-
-              const formDict = (creature.forms || []).flatMap((f) =>
-                (f.connectedCharacters || [])
-                  .filter((c) => c.characterType !== "game_character")
-                  .map((c) => ({
-                    ...c,
-                    scope: "form" as const,
-                    formName: f.displayName || f.name,
-                    formId: f.id,
-                  }))
-              );
-
-              const dictConnections = [...generalDict, ...formDict];
-              if (dictConnections.length === 0) return null;
-
-              return (
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">👤</span>
-                    <h4 className="text-xs font-mono font-black tracking-wider uppercase text-cyan-400">
-                      Connected Characters ({dictConnections.length})
-                    </h4>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {dictConnections.map((conn, idx) => (
-                      <div
-                        key={idx}
-                        onClick={() => {
-                          if (conn.formId) {
-                            setHighlightedFormId(conn.formId);
-                            const el = document.getElementById(`creature-form-${conn.formId}`);
-                            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-                          }
-                        }}
-                        className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
-                          conn.formId ? "cursor-pointer" : ""
-                        } ${
-                          isCyber
-                            ? "bg-white/[0.04] border-white/10 hover:border-cyan-500/40"
-                            : "bg-white border-2 border-black shadow-[2px_2px_0px_#000]"
-                        }`}
-                        title={conn.formName ? `Associated with form: ${conn.formName}` : undefined}
-                      >
-                        {conn.avatar ? (
-                          <img
-                            src={conn.avatar}
-                            alt={conn.name}
-                            className="w-12 h-12 rounded-xl object-cover shrink-0 border border-black/20"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 text-xl">
-                            👤
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <strong className="block text-sm font-bold truncate">
-                            {conn.name}
-                          </strong>
-                          <div className="flex items-center gap-1.5 text-[11px] opacity-75 mt-0.5 flex-wrap">
-                            <span
-                              className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
-                                isCyber
-                                  ? "bg-cyan-500/20 text-cyan-300"
-                                  : "bg-cyan-100 text-cyan-900 border border-cyan-300"
-                              }`}
-                            >
-                              {conn.relationshipType || "Companion"}
-                            </span>
-                            {conn.formName && (
-                              <span
-                                className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
-                                  isCyber
-                                    ? "bg-violet-500/25 text-violet-300 border border-violet-500/40"
-                                    : "bg-violet-100 text-violet-900 border border-violet-300"
-                                }`}
-                              >
-                                ⚡ Form: {conn.formName}
-                              </span>
-                            )}
-                            {conn.sourceTitle && (
-                              <span className="truncate opacity-75">{conn.sourceTitle}</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+            {/* ── DERIVED FROM (shown on derived/fusion creatures) ── */}
+            {sourceCreatures.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🔗</span>
+                  <h4 className="text-xs font-mono font-black tracking-wider uppercase text-amber-400">
+                    Derived / Fused From
+                  </h4>
+                  <span className={`ml-auto text-[10px] font-mono px-2 py-0.5 rounded-full border font-bold ${
+                    isCyber
+                      ? "bg-amber-500/15 text-amber-300 border-amber-500/40"
+                      : "bg-amber-100 text-amber-900 border-amber-400 shadow-[1px_1px_0_#000]"
+                  }`}>
+                    {sourceCreatures.length} source{sourceCreatures.length > 1 ? "s" : ""}
+                  </span>
                 </div>
-              );
-            })()}
-
-            {/* CONNECTED GAME CHARACTERS */}
-            {(() => {
-              const generalGame = (creature.connectedCharacters || [])
-                .filter((c) => c.characterType === "game_character")
-                .map((c) => ({ ...c, scope: "general" as const, formName: undefined, formId: undefined }));
-
-              const formGame = (creature.forms || []).flatMap((f) =>
-                (f.connectedCharacters || [])
-                  .filter((c) => c.characterType === "game_character")
-                  .map((c) => ({
-                    ...c,
-                    scope: "form" as const,
-                    formName: f.displayName || f.name,
-                    formId: f.id,
-                  }))
-              );
-
-              const gameConnections = [...generalGame, ...formGame];
-              if (gameConnections.length === 0) return null;
-
-              return (
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">🎮</span>
-                    <h4 className="text-xs font-mono font-black tracking-wider uppercase text-purple-400">
-                      Connected Game Characters ({gameConnections.length})
-                    </h4>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {gameConnections.map((conn, idx) => (
-                      <div
-                        key={idx}
-                        onClick={() => {
-                          if (conn.formId) {
-                            setHighlightedFormId(conn.formId);
-                            const el = document.getElementById(`creature-form-${conn.formId}`);
-                            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-                          }
-                        }}
-                        className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
-                          conn.formId ? "cursor-pointer" : ""
-                        } ${
-                          isCyber
-                            ? "bg-white/[0.04] border-white/10 hover:border-purple-500/40"
-                            : "bg-white border-2 border-black shadow-[2px_2px_0px_#000]"
-                        }`}
-                        title={conn.formName ? `Associated with form: ${conn.formName}` : undefined}
-                      >
-                        {conn.avatar ? (
-                          <img
-                            src={conn.avatar}
-                            alt={conn.name}
-                            className="w-12 h-12 rounded-xl object-cover shrink-0 border border-black/20"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 text-xl">
-                            🎮
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <strong className="block text-sm font-bold truncate">
-                            {conn.name}
-                          </strong>
-                          <div className="flex items-center gap-1.5 text-[11px] opacity-75 mt-0.5 flex-wrap">
-                            <span
-                              className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
-                                isCyber
-                                  ? "bg-purple-500/20 text-purple-300"
-                                  : "bg-purple-100 text-purple-900 border border-purple-300"
-                              }`}
-                            >
-                              {conn.relationshipType || "Companion"}
-                            </span>
-                            {conn.formName && (
-                              <span
-                                className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
-                                  isCyber
-                                    ? "bg-violet-500/25 text-violet-300 border border-violet-500/40"
-                                    : "bg-violet-100 text-violet-900 border border-violet-300"
-                                }`}
-                              >
-                                ⚡ Form: {conn.formName}
-                              </span>
-                            )}
-                            {conn.sourceTitle && (
-                              <span className="truncate opacity-75">{conn.sourceTitle}</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                <div
+                  className={`p-3 rounded-2xl border text-xs font-mono opacity-70 italic ${
+                    isCyber ? "border-white/10 bg-white/[0.02]" : "border-black/10 bg-amber-50/50"
+                  }`}
+                >
+                  This creature was created through a combination of the source creatures listed below.
+                  These are separate, independent creatures — lineage does not create direct character connections.
                 </div>
-              );
-            })()}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {sourceCreatures.map(({ ref, entry }) =>
+                    renderLineageCard(entry, ref.relationshipType)
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── DERIVATIVE LINEAGE (shown on source creatures) ── */}
+            {derivativeCreatures.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">✨</span>
+                  <h4 className="text-xs font-mono font-black tracking-wider uppercase text-emerald-400">
+                    Derivative / Fusion Forms
+                  </h4>
+                  <span className={`ml-auto text-[10px] font-mono px-2 py-0.5 rounded-full border font-bold ${
+                    isCyber
+                      ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/40"
+                      : "bg-emerald-100 text-emerald-900 border-emerald-400 shadow-[1px_1px_0_#000]"
+                  }`}>
+                    {derivativeCreatures.length} derived
+                  </span>
+                </div>
+                <div
+                  className={`p-3 rounded-2xl border text-xs font-mono opacity-70 italic ${
+                    isCyber ? "border-white/10 bg-white/[0.02]" : "border-black/10 bg-emerald-50/50"
+                  }`}
+                >
+                  The following creatures list <strong>{creature.name}</strong> as a source component in their creation.
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {derivativeCreatures.map((c) =>
+                    renderLineageCard(c, "Derivative")
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── CONNECTED CHARACTERS (GROUPED — no duplicate character cards) ── */}
+            {groupedDictChars.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">👤</span>
+                  <h4 className="text-xs font-mono font-black tracking-wider uppercase text-cyan-400">
+                    Connected Characters ({groupedDictChars.length})
+                  </h4>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {groupedDictChars.map((group) => renderGroupedCharCard(group, false))}
+                </div>
+              </div>
+            )}
+
+            {/* ── CONNECTED GAME CHARACTERS (GROUPED) ── */}
+            {groupedGameChars.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🎮</span>
+                  <h4 className="text-xs font-mono font-black tracking-wider uppercase text-purple-400">
+                    Connected Game Characters ({groupedGameChars.length})
+                  </h4>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {groupedGameChars.map((group) => renderGroupedCharCard(group, true))}
+                </div>
+              </div>
+            )}
 
             {/* TAGS */}
             {creature.tags && creature.tags.length > 0 && (
@@ -592,7 +754,7 @@ export function CreatureDossierModal({
               </div>
             )}
 
-            {/* ── FORMS & VARIANTS (PLACED AT THE BOTTOM OF THE DOSSIER) ── */}
+            {/* ── FORMS & VARIANTS ── */}
             {creature.forms && creature.forms.length > 0 && (
               <div className="space-y-4 pt-4 border-t border-white/10">
                 <div

@@ -14,6 +14,9 @@ import {
   CREATURE_TIERS,
   CREATURE_TIER_META,
   CREATURE_RELATIONSHIP_TYPES,
+  CREATURE_LINEAGE_TYPES,
+  CreatureLineageType,
+  CreatureLineageRef,
   validateCreatureJson,
   normalizeCreatureJson,
   exportCreatureToJson,
@@ -37,7 +40,7 @@ interface CreatureEditorModalProps {
   creatureToEdit?: CreatureEntry | null;
 }
 
-type TabKey = "basic" | "lore" | "media" | "connections" | "forms";
+type TabKey = "basic" | "lore" | "media" | "connections" | "forms" | "lineage";
 
 export function CreatureEditorModal({
   isOpen,
@@ -46,7 +49,7 @@ export function CreatureEditorModal({
 }: CreatureEditorModalProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { addCreature, updateCreature, deleteCreature } = useDashboardStore();
+  const { creatures: allCreatures, addCreature, updateCreature, deleteCreature } = useDashboardStore();
   const { confirm } = useConfirm();
   const { success: toastSuccess, warning: toastWarning, error: toastError } = useToast();
 
@@ -81,6 +84,12 @@ export function CreatureEditorModal({
   // Editing state for an in-progress form (null = not editing)
   const [editingFormIdx, setEditingFormIdx] = useState<number | null>(null);
   const [formDraft, setFormDraft] = useState<Partial<CreatureForm>>({});
+
+  // Lineage / Derived Relationships
+  const [derivedFrom, setDerivedFrom] = useState<CreatureLineageRef[]>([]);
+  const [sourceSearchQuery, setSourceSearchQuery] = useState("");
+  const [selectedSourceId, setSelectedSourceId] = useState("");
+  const [selectedLineageType, setSelectedLineageType] = useState<CreatureLineageType>("Fusion");
 
   // Form-level Character Connection states
   const [formCharPickerType, setFormCharPickerType] = useState<"character_dict" | "game_character" | null>(null);
@@ -129,6 +138,10 @@ export function CreatureEditorModal({
       setConnectedCharacters(creatureToEdit.connectedCharacters || []);
       setMedia(creatureToEdit.media || { primary: null, card: null, gallery: [], favouriteMoment: null });
       setForms(creatureToEdit.forms || []);
+      setDerivedFrom(creatureToEdit.derivedFrom || []);
+      setSelectedSourceId("");
+      setSourceSearchQuery("");
+      setSelectedLineageType("Fusion");
       setJsonText(JSON.stringify(exportCreatureToJson(creatureToEdit), null, 2));
     } else {
       setName("");
@@ -146,6 +159,10 @@ export function CreatureEditorModal({
       setConnectedCharacters([]);
       setMedia({ primary: null, card: null, gallery: [], favouriteMoment: null });
       setForms([]);
+      setDerivedFrom([]);
+      setSelectedSourceId("");
+      setSourceSearchQuery("");
+      setSelectedLineageType("Fusion");
       setJsonText(
         JSON.stringify(
           {
@@ -347,6 +364,41 @@ export function CreatureEditorModal({
     }));
   };
 
+  // ── Lineage Management ──
+  const handleAddSourceCreature = () => {
+    if (!selectedSourceId) {
+      toastWarning("Please select a source creature to attach.");
+      return;
+    }
+    const targetCreature = (allCreatures || []).find((c) => c.id === selectedSourceId);
+    if (!targetCreature) return;
+    if (derivedFrom.some((d) => d.creatureId === selectedSourceId)) {
+      toastWarning(`"${targetCreature.name}" is already attached as a source.`);
+      return;
+    }
+    setDerivedFrom((prev) => [
+      ...prev,
+      {
+        creatureId: targetCreature.id,
+        creatureName: targetCreature.name,
+        relationshipType: selectedLineageType,
+      },
+    ]);
+    toastSuccess(`Attached "${targetCreature.name}" as ${selectedLineageType} source!`);
+    setSelectedSourceId("");
+    setSourceSearchQuery("");
+  };
+
+  const handleRemoveSourceCreature = (sourceId: string) => {
+    setDerivedFrom((prev) => prev.filter((d) => d.creatureId !== sourceId));
+  };
+
+  const handleUpdateSourceRelType = (sourceId: string, newType: CreatureLineageType) => {
+    setDerivedFrom((prev) =>
+      prev.map((d) => (d.creatureId === sourceId ? { ...d, relationshipType: newType } : d))
+    );
+  };
+
   // ── Save Creature Form ──
   const handleSave = async () => {
     if (!name.trim()) {
@@ -387,6 +439,7 @@ export function CreatureEditorModal({
         tags,
         connectedCharacters,
         forms: finalForms.length > 0 ? finalForms : [],
+        derivedFrom: derivedFrom.length > 0 ? derivedFrom : [],
       };
 
       if (creatureToEdit?.id) {
@@ -550,6 +603,8 @@ export function CreatureEditorModal({
                       media,
                       tags,
                       connectedCharacters,
+                      forms,
+                      derivedFrom,
                     };
                     setJsonText(JSON.stringify(exportCreatureToJson(liveState), null, 2));
                     setEditorMode("json");
@@ -653,6 +708,23 @@ export function CreatureEditorModal({
                 {forms.length > 0 && (
                   <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-violet-500 text-black font-black">
                     {forms.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab("lineage")}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
+                  activeTab === "lineage"
+                    ? isCyber
+                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400"
+                      : "bg-black text-white"
+                    : "opacity-60 hover:opacity-100"
+                }`}
+              >
+                <span>6. Lineage &amp; Sources</span>
+                {derivedFrom.length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-500 text-black font-black">
+                    {derivedFrom.length}
                   </span>
                 )}
               </button>
@@ -1809,6 +1881,234 @@ export function CreatureEditorModal({
                     })}
                   </div>
                 )}
+              </div>
+            )}
+
+            {editorMode === "form" && activeTab === "lineage" && (
+              <div className="space-y-5">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className={`text-sm font-black font-mono uppercase ${isCyber ? "text-emerald-300" : "text-black"}`}>
+                      🧬 Lineage &amp; Derived / Fusion Sources
+                    </h4>
+                    <p className="text-[11px] font-mono opacity-60">
+                      Define source creatures that contributed to or fused into this creature.
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
+                    {derivedFrom.length} Source{derivedFrom.length === 1 ? "" : "s"}
+                  </span>
+                </div>
+
+                {/* Architectural Rule Info Alert */}
+                <div
+                  className={`p-3.5 rounded-xl border text-xs font-mono leading-relaxed space-y-1.5 ${
+                    isCyber
+                      ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-200"
+                      : "bg-emerald-50 border-2 border-black text-black"
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <span>💡</span>
+                    <span>Interconnected Creature Architecture</span>
+                  </div>
+                  <p className="opacity-80 text-[11px]">
+                    When you link source creatures here, this creature will automatically appear under the
+                    <strong> Derived / Fusion Forms</strong> section of those source creatures&apos; dossiers.
+                    Direct Character Connections and Creature Lineage remain separate concepts: lineage never silently creates character relationships.
+                  </p>
+                </div>
+
+                {/* Add Source Creature Section */}
+                <div
+                  className={`p-4 rounded-xl border space-y-3 ${
+                    isCyber
+                      ? "bg-white/[0.02] border-white/10"
+                      : "bg-amber-50/40 border-2 border-black shadow-[2px_2px_0px_#000000]"
+                  }`}
+                >
+                  <h5 className="text-xs font-bold font-mono uppercase tracking-wider opacity-80">
+                    + Attach Source Creature
+                  </h5>
+
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                    {/* Search & Select Creature Dropdown */}
+                    <div className="md:col-span-6 space-y-1">
+                      <label className="text-[10px] font-mono opacity-60 uppercase">
+                        Select Source Creature
+                      </label>
+                      <select
+                        value={selectedSourceId}
+                        onChange={(e) => setSelectedSourceId(e.target.value)}
+                        className={inputStyle}
+                      >
+                        <option value="">-- Choose an existing creature --</option>
+                        {(allCreatures || [])
+                          .filter((c) => c.id !== creatureToEdit?.id)
+                          .filter((c) => !derivedFrom.some((d) => d.creatureId === c.id))
+                          .filter((c) => {
+                            if (!sourceSearchQuery.trim()) return true;
+                            const q = sourceSearchQuery.toLowerCase();
+                            return (
+                              c.name.toLowerCase().includes(q) ||
+                              c.sourceTitle.toLowerCase().includes(q) ||
+                              (c.species && c.species.toLowerCase().includes(q))
+                            );
+                          })
+                          .map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name} ({c.classification} · {c.sourceTitle})
+                            </option>
+                          ))}
+                      </select>
+                      {/* Optional filter input if list is long */}
+                      <input
+                        type="text"
+                        value={sourceSearchQuery}
+                        onChange={(e) => setSourceSearchQuery(e.target.value)}
+                        placeholder="Type to filter dropdown options..."
+                        className={`w-full px-2.5 py-1 rounded-lg text-[10px] font-mono border mt-1 focus:outline-none ${
+                          isCyber
+                            ? "bg-white/5 border-white/10 text-white focus:border-emerald-400"
+                            : "bg-white border border-black/30 text-black"
+                        }`}
+                      />
+                    </div>
+
+                    {/* Relationship Type Selector */}
+                    <div className="md:col-span-3 space-y-1">
+                      <label className="text-[10px] font-mono opacity-60 uppercase">
+                        Lineage Type
+                      </label>
+                      <select
+                        value={selectedLineageType}
+                        onChange={(e) => setSelectedLineageType(e.target.value as CreatureLineageType)}
+                        className={inputStyle}
+                      >
+                        {CREATURE_LINEAGE_TYPES.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Attach Button */}
+                    <div className="md:col-span-3 flex items-end">
+                      <button
+                        type="button"
+                        onClick={handleAddSourceCreature}
+                        disabled={!selectedSourceId}
+                        className={`w-full py-2 px-3 rounded-xl text-xs font-mono font-black uppercase tracking-wider transition-all cursor-pointer ${
+                          !selectedSourceId
+                            ? "opacity-40 cursor-not-allowed bg-slate-700 text-slate-400"
+                            : isCyber
+                            ? "bg-emerald-500 text-black hover:bg-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                            : "bg-emerald-500 text-black border-2 border-black hover:bg-emerald-400 shadow-[2px_2px_0px_#000000]"
+                        }`}
+                      >
+                        + Attach Source
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Attached Source Creatures List */}
+                <div className="space-y-2 pt-2">
+                  <h5 className="text-xs font-bold font-mono uppercase tracking-wider opacity-80">
+                    Attached Lineage Sources ({derivedFrom.length})
+                  </h5>
+
+                  {derivedFrom.length === 0 ? (
+                    <div
+                      className={`p-6 rounded-xl border text-center space-y-1 ${
+                        isCyber
+                          ? "bg-white/[0.02] border-white/10 text-slate-400"
+                          : "bg-white border-2 border-dashed border-black/20 text-slate-600"
+                      }`}
+                    >
+                      <p className="text-xs font-mono font-bold">No source creatures attached</p>
+                      <p className="text-[11px] font-mono opacity-70">
+                        If this is an original / base creature, leave this empty.
+                        For fusion or derived creatures, attach one or more source creatures above.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {derivedFrom.map((d) => {
+                        const sourceCreature = (allCreatures || []).find((c) => c.id === d.creatureId);
+                        const art = sourceCreature
+                          ? sourceCreature.media.card || sourceCreature.media.primary || sourceCreature.media.gallery?.[0]
+                          : null;
+
+                        return (
+                          <div
+                            key={d.creatureId}
+                            className={`p-3 rounded-xl border flex items-center justify-between gap-3 ${
+                              isCyber
+                                ? "bg-white/[0.03] border-white/10"
+                                : "bg-white border-2 border-black shadow-[2px_2px_0px_#000000]"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              {art ? (
+                                <img
+                                  src={art}
+                                  alt={d.creatureName}
+                                  className="w-12 h-16 rounded-lg object-cover shrink-0 border border-white/10"
+                                />
+                              ) : (
+                                <div className="w-12 h-16 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-lg shrink-0">
+                                  🧬
+                                </div>
+                              )}
+                              <div className="min-w-0 space-y-0.5">
+                                <p className="text-xs font-bold font-mono truncate">
+                                  {d.creatureName}
+                                </p>
+                                {sourceCreature && (
+                                  <p className="text-[10px] font-mono opacity-60 truncate">
+                                    {sourceCreature.classification} · {sourceCreature.sourceTitle}
+                                  </p>
+                                )}
+                                <div className="flex items-center gap-1 pt-1">
+                                  <span className="text-[9px] font-mono opacity-50 uppercase">Type:</span>
+                                  <select
+                                    value={d.relationshipType}
+                                    onChange={(e) =>
+                                      handleUpdateSourceRelType(d.creatureId, e.target.value as CreatureLineageType)
+                                    }
+                                    className={`px-1.5 py-0.5 rounded text-[10px] font-mono border cursor-pointer ${
+                                      isCyber
+                                        ? "bg-black/60 border-white/20 text-emerald-300"
+                                        : "bg-emerald-100 border-black text-black"
+                                    }`}
+                                  >
+                                    {CREATURE_LINEAGE_TYPES.map((t) => (
+                                      <option key={t} value={t}>
+                                        {t}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSourceCreature(d.creatureId)}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center text-xs text-red-400 hover:bg-red-500/20 transition-all cursor-pointer shrink-0"
+                              title="Remove source creature"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

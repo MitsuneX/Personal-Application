@@ -13,6 +13,38 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v13.9.0",
+    date: "2026-09-14",
+    title: "Creature Lineage Architecture, Character Deduplication & Full-Art Showcase",
+    badge: "FEATURE",
+    type: "minor",
+    summary: "Re-architected the Creature ↔ Character relationship system to separate direct character bonds from creature lineage. Introduced canonical multi-source lineage tracking (`derivedFrom`) enabling fusion/derived forms (e.g. Odd-Eyes Rebellion Dragon) to automatically appear in the dossiers of their source creatures (Dark Rebellion Xyz Dragon & Odd-Eyes Pendulum Dragon) without data duplication. Eliminated repeated character card rendering in Creature Dossiers by collating connections by character ID and nesting form-specific relationships underneath. Upgraded the Character Dictionary's Creature showcase to prominent portrait (3:4) full-art cards with dynamic tier badges, relationship role chips, and read-only inspection.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🧬 Multi-Source Creature Lineage System (lib/data/creatureSchema.ts, prisma/schema.prisma): Added `derivedFrom` canonical references supporting single and multi-source creature lineage with relationship types (Fusion, Derived, Evolution, Other). Source creatures automatically resolve and display derived creatures in their dossiers at runtime without data duplication.",
+          "🛠️ Creature Lineage Editor Tab (components/ui/CreatureEditorModal.tsx): Added Tab 6 ('Lineage & Sources') with creature search, relationship type selector, live source attachment management, and clear architectural guidance.",
+          "🎴 Full-Art Creature Showcase in Character Dossier (components/ui/CharacterDictProfileModal.tsx): Upgraded connected creature presentation to prominent 3:4 portrait cards with real canonical artwork, CREATURE_TIER_META badges, relationship tags, and nested form relationship chips with read-only click navigation.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "👥 Elimination of Duplicate Character Cards (components/ui/CreatureDossierModal.tsx): Replaced flat connection rendering with `groupCharacterConnections`, grouping both general creature and form-level relationships under a single character card with nested form chips.",
+          "🔄 Bidirectional Lineage Navigation (components/ui/CreatureDossierModal.tsx, app/creatures/page.tsx, components/ui/CharacterDictProfileModal.tsx): Wired `onOpenCreature` handlers so clicking a source or derivative creature in the lineage sections seamlessly transitions to that creature's dossier.",
+          "💾 Non-Destructive Schema & API Persistence (prisma/schema.prisma, app/api/action/route.ts): Added `derivedFrom Json?` to Prisma schema and updated `UPDATE_CREATURE` handler to safely persist lineage data without resetting or altering any existing database records.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🎨 Dual-Theme Polish for Lineage & Grouping: Verified and styled all new character grouping cards, lineage sections, and editor controls across both Cyberpunk and Neo-Brutalist themes with crisp borders and theme-aligned contrast.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v13.8.2",
     date: "2026-09-14",
     title: "Game Duplication Root-Cause Fix, Sidebar Scroll Persistence & Portrait Crop",

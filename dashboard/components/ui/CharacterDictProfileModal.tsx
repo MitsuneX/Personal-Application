@@ -1269,9 +1269,9 @@ export function CharacterDictProfileModal({
                                 <span
                                   className="px-2 py-0.5 rounded-md text-[10px] font-mono font-black border uppercase shadow-md"
                                   style={{
-                                    backgroundColor: isCyber ? "rgba(5,8,20,0.85)" : "#000000",
-                                    borderColor: isCyber ? "rgba(255,215,0,0.5)" : "#000000",
-                                    color: isCyber ? "#FFD700" : "#FFFFFF",
+                                    backgroundColor: isCyber ? "rgba(5,8,20,0.85)" : CREATURE_TIER_META[cr.tier as keyof typeof CREATURE_TIER_META]?.bgNeo ?? "#FEF08A",
+                                    borderColor: isCyber ? (CREATURE_TIER_META[cr.tier as keyof typeof CREATURE_TIER_META]?.borderCyber ?? "rgba(255,215,0,0.5)") : "#000000",
+                                    color: isCyber ? (CREATURE_TIER_META[cr.tier as keyof typeof CREATURE_TIER_META]?.color ?? "#FFD700") : "#000000",
                                   }}
                                 >
                                   {cr.tier} TIER
@@ -1520,6 +1520,12 @@ export function CharacterDictProfileModal({
             setSelectedFormId(null);
           }}
           onEdit={undefined}
+          onOpenCreature={(c) => {
+            // Navigate to another creature's dossier from within this modal
+            setSelectedCreature(c);
+            setSelectedFormId(null);
+            setIsCreatureModalOpen(true);
+          }}
         />
       )}
     </>

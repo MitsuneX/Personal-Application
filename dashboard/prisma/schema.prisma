@@ -35,6 +35,7 @@ model Profile {
   landingBgStyle     String?  @default("matrix")
   landingAccentColor String?  @default("#00F5FF")
   visibleFeatures    String[] @default(["game-database", "game-characters", "hall-of-fame", "music", "media", "ai-library", "hobbies", "emergency"])
+  quickLaunch        Json?    // array of QuickLaunchShortcut { id, name, type, target, icon, openInNewTab, color }
   updatedAt          DateTime @updatedAt
 }
 
@@ -798,6 +799,7 @@ model Creature {
   tags                String[] @default([])
   connectedCharacters Json?    // Array of CreatureCharacterRef
   forms               Json?    // Array of CreatureForm (optional: alternate forms, evolutions, transformations)
+  derivedFrom         Json?    // Array of CreatureLineageRef — source creature references for fusion/derived lineage
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 

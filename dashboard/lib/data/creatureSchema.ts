@@ -12,6 +12,21 @@ export interface CreatureMedia {
 }
 
 /**
+ * A lightweight reference from a derived/fusion Creature back to one of its
+ * source Creatures.  Stored on the DERIVED creature; source creatures resolve
+ * the reverse relationship at runtime by scanning the creature list.
+ * Never copy full entity objects here — only canonical IDs and display names.
+ */
+export const CREATURE_LINEAGE_TYPES = ["Fusion", "Derived", "Evolution", "Other"] as const;
+export type CreatureLineageType = (typeof CREATURE_LINEAGE_TYPES)[number];
+
+export interface CreatureLineageRef {
+  creatureId: string;           // Canonical ID of the source creature
+  creatureName: string;         // Denormalized name for display (do not edit via this ref)
+  relationshipType: CreatureLineageType; // How this creature relates to the source
+}
+
+/**
  * A single canonical Form variant belonging to a parent Creature.
  * Forms represent alternate states, evolutions, transformations, powered modes,
  * elemental variants, or other recognized distinct forms of the same Creature.
@@ -125,6 +140,7 @@ export interface CreatureEntry {
   tags: string[];
   connectedCharacters?: CreatureCharacterRef[];
   forms?: CreatureForm[];        // Optional alternate forms/transformations (canonical, single-source)
+  derivedFrom?: CreatureLineageRef[]; // Source creature(s) this was fused/derived from (reverse resolved at runtime)
   createdAt?: string;
   updatedAt?: string;
 }
@@ -381,6 +397,17 @@ export function normalizeCreatureJson(raw: any, fallbackId?: string): CreatureEn
           })
           .filter((f: any) => f.name || f.displayName || f.artwork)
       : [],
+    derivedFrom: Array.isArray(raw.derivedFrom)
+      ? raw.derivedFrom
+          .map((d: any) => ({
+            creatureId: String(d.creatureId || "").trim(),
+            creatureName: String(d.creatureName || "Unknown Creature").trim(),
+            relationshipType: (["Fusion", "Derived", "Evolution", "Other"].includes(d.relationshipType)
+              ? d.relationshipType
+              : "Derived") as CreatureLineageType,
+          }))
+          .filter((d: any) => d.creatureId)
+      : [],
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
   };
@@ -414,6 +441,10 @@ export function exportCreatureToJson(creature: Partial<CreatureEntry>) {
     forms:
       creature.forms && creature.forms.length > 0
         ? creature.forms
+        : undefined,
+    derivedFrom:
+      creature.derivedFrom && creature.derivedFrom.length > 0
+        ? creature.derivedFrom
         : undefined,
   };
 }

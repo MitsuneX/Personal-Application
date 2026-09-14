@@ -15,6 +15,11 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { gridContainerVariants, cardVariants } from "@/lib/theme/motionVariants";
 import { FocusWidget } from "@/components/dashboard/FocusWidget";
 import { QuickActionsToolbar } from "@/components/dashboard/QuickActionsToolbar";
+import { QuickLaunchBar } from "@/components/dashboard/QuickLaunchBar";
+import { FavouritesSnapshot } from "@/components/dashboard/FavouritesSnapshot";
+import { CoupleSpotlightCard } from "@/components/dashboard/CoupleSpotlightCard";
+import { CreatureSpotlightCard } from "@/components/dashboard/CreatureSpotlightCard";
+import { RecentNotesCard } from "@/components/dashboard/RecentNotesCard";
 import { ContinueWatchingSection } from "@/components/dashboard/ContinueWatchingSection";
 import { HofLiveTrendsSection } from "@/components/dashboard/HofLiveTrendsSection";
 import { LiveActivityFeed } from "@/components/dashboard/LiveActivityFeed";
@@ -206,10 +211,13 @@ function DashboardContent() {
         ))}
       </motion.div>
 
-      {/* ── 3. Quick Actions Toolbar ── */}
+      {/* ── 3. Quick Launch & Fast Shortcuts ── */}
+      <QuickLaunchBar />
+
+      {/* ── 4. Quick Actions Creation Toolbar ── */}
       <QuickActionsToolbar />
 
-      {/* ── 4. Core Identity & Progression Grid (Profile | Radar | Anime Progress) ── */}
+      {/* ── 5. Core Identity & Progression Grid (Profile | Radar | Anime Progress) ── */}
       <motion.div
         className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
         variants={gridContainerVariants}
@@ -260,16 +268,23 @@ function DashboardContent() {
         </motion.div>
       </motion.div>
 
-      {/* ── 5. Today's Mission / Focus Control ── */}
+      {/* ── 6. Today's Mission / Focus Control ── */}
       <FocusWidget />
 
-      {/* ── 6. ▶ Continue Watching & Next Up ── */}
+      {/* ── 7. Systems Spotlight & Favourites (Favourites | Love Match | Creature) ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <FavouritesSnapshot />
+        <CoupleSpotlightCard />
+        <CreatureSpotlightCard />
+      </div>
+
+      {/* ── 8. ▶ Continue Watching & Next Up ── */}
       <ContinueWatchingSection />
 
-      {/* ── 7. // Hall of Fame · Live Trends (5 Cards) ── */}
+      {/* ── 9. // Hall of Fame · Live Trends (5 Cards) ── */}
       <HofLiveTrendsSection />
 
-      {/* ── 8. Domain Overview Cards ── */}
+      {/* ── 10. Domain Overview Cards ── */}
       <motion.div
         className="grid grid-cols-1 md:grid-cols-2 gap-5"
         variants={gridContainerVariants}
@@ -281,13 +296,20 @@ function DashboardContent() {
         <motion.div variants={cardVariants} className="md:col-span-2"><AnimeZoneCard /></motion.div>
       </motion.div>
 
-      {/* ── 9. Live System Activity & System Pulse Telemetry ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <LiveActivityFeed />
-        <SystemPulseCard />
+      {/* ── 11. Live System Activity, Recent Notes & Pulse Telemetry ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="md:col-span-1 lg:col-span-1">
+          <LiveActivityFeed />
+        </div>
+        <div className="md:col-span-1 lg:col-span-1">
+          <RecentNotesCard />
+        </div>
+        <div className="md:col-span-2 lg:col-span-1">
+          <SystemPulseCard />
+        </div>
       </div>
 
-      {/* ── 10. System Status Bar & Footer ── */}
+      {/* ── 12. System Status Bar & Footer ── */}
       <SystemStatusBar />
 
       <motion.footer

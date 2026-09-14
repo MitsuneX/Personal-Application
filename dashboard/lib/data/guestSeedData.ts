@@ -1,6 +1,82 @@
 // ─── GUEST MODE DEMO SEED DATA ────────────────────────────────────────────────
 // Lightweight, curated showcase data for unauthenticated / guest exploration.
 
+export interface QuickLaunchShortcut {
+  id: string;
+  name: string;
+  type: "internal" | "external";
+  target: string;
+  icon?: string;
+  openInNewTab?: boolean;
+  color?: string;
+}
+
+export const DEFAULT_QUICK_LAUNCH_SHORTCUTS: QuickLaunchShortcut[] = [
+  {
+    id: "ql-youtube",
+    name: "YouTube",
+    type: "external",
+    target: "https://youtube.com",
+    icon: "youtube",
+    openInNewTab: true,
+    color: "#FF0000",
+  },
+  {
+    id: "ql-cursor",
+    name: "Cursor",
+    type: "external",
+    target: "https://cursor.com",
+    icon: "cursor",
+    openInNewTab: true,
+    color: "#00F5FF",
+  },
+  {
+    id: "ql-discord",
+    name: "Discord",
+    type: "external",
+    target: "https://discord.com",
+    icon: "discord",
+    openInNewTab: true,
+    color: "#5865F2",
+  },
+  {
+    id: "ql-gemini",
+    name: "Gemini",
+    type: "external",
+    target: "https://gemini.google.com",
+    icon: "sparkles",
+    openInNewTab: true,
+    color: "#4F46E5",
+  },
+  {
+    id: "ql-couples",
+    name: "Couples",
+    type: "internal",
+    target: "/couples",
+    icon: "heart",
+    openInNewTab: false,
+    color: "#FF7EB9",
+  },
+  {
+    id: "ql-creatures",
+    name: "Creatures",
+    type: "internal",
+    target: "/creatures",
+    icon: "shield",
+    openInNewTab: false,
+    color: "#39FF14",
+  },
+  {
+    id: "ql-notepad",
+    name: "Notepad",
+    type: "internal",
+    target: "/notepad",
+    icon: "file-text",
+    openInNewTab: false,
+    color: "#FFD166",
+  },
+];
+
 export const GUEST_PROFILE = {
   id: "guest-profile",
   name: "Guest Explorer",
@@ -14,6 +90,7 @@ export const GUEST_PROFILE = {
   ],
   avatar: "/avatar.png",
   borderStyle: "default",
+  quickLaunch: DEFAULT_QUICK_LAUNCH_SHORTCUTS,
 };
 
 export const GUEST_AI_TOOLS = [

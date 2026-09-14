@@ -27,6 +27,9 @@ export function LiveActivityFeed() {
     animeList,
     dramas,
     gameCharacters,
+    couples = [],
+    creatures = [],
+    notes = [],
     isGuest,
   } = useDashboardStore();
 
@@ -133,6 +136,63 @@ export function LiveActivityFeed() {
       });
     }
 
+    // 6. Recent Couples Celebrations
+    const lovedCouples = couples
+      .filter((c) => (c.likes ?? 0) > 0 || c.isFavorite)
+      .sort((a, b) => (b.likes ?? 0) - (a.likes ?? 0))
+      .slice(0, 3);
+
+    for (const cp of lovedCouples) {
+      list.push({
+        id: `couple-${cp.id}`,
+        title: `Loved ${cp.coupleName}`,
+        subtitle: `${cp.likes || 0} Love Matches · ${cp.source?.title || "Romance"}`,
+        timestamp: "Recent",
+        type: "character",
+        icon: "💕",
+        color: isCyber ? "#FF7EB9" : "#EF476F",
+        linkHref: "/couples",
+      });
+    }
+
+    // 7. Recent Creature Additions
+    const recentCreatures = creatures.slice(0, 3);
+    for (const cr of recentCreatures) {
+      list.push({
+        id: `creature-${cr.id}`,
+        title: `Cataloged ${cr.name}`,
+        subtitle: `${cr.classification} · ${cr.species || cr.sourceTitle || "Creature"}`,
+        timestamp: "Recent",
+        type: "character",
+        icon: "🐉",
+        color: isCyber ? "#39FF14" : "#059669",
+        linkHref: "/creatures",
+      });
+    }
+
+    // 8. Recent Notepad Updates
+    const recentNotesList = notes
+      .filter((n) => n.title)
+      .sort((a, b) => {
+        const timeA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const timeB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return timeB - timeA;
+      })
+      .slice(0, 3);
+
+    for (const nt of recentNotesList) {
+      list.push({
+        id: `note-${nt.id}`,
+        title: `Updated Note: ${nt.title}`,
+        subtitle: `${nt.isCuriosity ? "Spark Idea · " : ""}${nt.content ? nt.content.slice(0, 35) + "..." : "Recorded entry"}`,
+        timestamp: "Recent",
+        type: "system",
+        icon: "📓",
+        color: isCyber ? "#FFD166" : "#D97706",
+        linkHref: `/notepad?id=${nt.id}`,
+      });
+    }
+
     // Fallback seed events if empty
     if (list.length === 0) {
       list.push({
@@ -147,7 +207,7 @@ export function LiveActivityFeed() {
     }
 
     return list;
-  }, [hallEvents, aiTools, animeList, dramas, gameCharacters, isCyber]);
+  }, [hallEvents, aiTools, animeList, dramas, gameCharacters, couples, creatures, notes, isCyber]);
 
   const visibleList = activities.slice(0, 5);
 
