@@ -20,6 +20,8 @@ export interface ModalProps {
   maxWidth?: string;
   /** Whether clicking the backdrop closes the modal. Defaults to true */
   closeOnBackdrop?: boolean;
+  /** Custom z-index override. Defaults to Z_INDEX.MODAL (1300) */
+  zIndex?: number;
 }
 
 const backdropVariants = {
@@ -76,6 +78,7 @@ export function Modal({
   className = "",
   maxWidth = "max-w-2xl",
   closeOnBackdrop = true,
+  zIndex,
 }: ModalProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
@@ -121,7 +124,7 @@ export function Modal({
             // Outer overlay container: fixed inset-0 centered in viewport
             className="fixed inset-0 flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto"
             style={{
-              zIndex: Z_INDEX.MODAL,
+              zIndex: zIndex ?? Z_INDEX.MODAL,
               backgroundColor: "rgba(0, 0, 0, 0.65)",
               backdropFilter: "blur(8px)",
               WebkitBackdropFilter: "blur(8px)",

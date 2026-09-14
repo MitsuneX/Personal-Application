@@ -6,6 +6,7 @@ import getCroppedImg from "@/utils/cropImage";
 import { Modal } from "@/components/ui/modal";
 import { useTheme } from "@/lib/theme";
 import { useToast } from "@/components/ui/ToastProvider";
+import { Z_INDEX } from "@/components/ui/ViewportBoundary";
 
 export interface CropData {
   zoom: number;
@@ -22,8 +23,10 @@ interface ImageCropModalProps {
   aspect?: number;
   title?: string;
   initialCropData?: Partial<CropData> | null;
+  zIndex?: number;
   onClose: () => void;
   onCropComplete: (croppedBlob: Blob, cropData: CropData) => void;
+  onSkipCrop?: () => void;
 }
 
 export function ImageCropModal({
@@ -32,8 +35,10 @@ export function ImageCropModal({
   aspect = 1,
   title = "Position & Crop Image",
   initialCropData,
+  zIndex,
   onClose,
   onCropComplete,
+  onSkipCrop,
 }: ImageCropModalProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
@@ -94,10 +99,29 @@ export function ImageCropModal({
   };
 
   const handleConfirm = async () => {
-    if (!imageSrc || !croppedAreaPixels) return;
+    if (!imageSrc) return;
     setIsProcessing(true);
     try {
-      const croppedBlob = await getCroppedImg(imageSrc, croppedAreaPixels, rotation);
+      let pixels = croppedAreaPixels;
+      if (!pixels) {
+        // Safe fallback if cropper event hasn't fired yet
+        const img = new Image();
+        img.src = imageSrc;
+        await new Promise((res) => { img.onload = res; img.onerror = res; });
+        const imgW = img.naturalWidth || 800;
+        const imgH = img.naturalHeight || 600;
+        const targetAspect = aspect || 1;
+        let cropW = imgW;
+        let cropH = Math.round(cropW / targetAspect);
+        if (cropH > imgH) {
+          cropH = imgH;
+          cropW = Math.round(cropH * targetAspect);
+        }
+        const cropX = Math.round((imgW - cropW) / 2);
+        const cropY = Math.round((imgH - cropH) / 2);
+        pixels = { x: Math.max(0, cropX), y: Math.max(0, cropY), width: cropW, height: cropH };
+      }
+      const croppedBlob = await getCroppedImg(imageSrc, pixels, rotation);
       if (croppedBlob) {
         const cropDataResult: CropData = {
           zoom: Number(zoom.toFixed(2)),
@@ -105,9 +129,11 @@ export function ImageCropModal({
           y: Math.round(crop.y),
           rotation,
           aspect,
-          cropArea: croppedAreaPixels,
+          cropArea: pixels,
         };
         onCropComplete(croppedBlob, cropDataResult);
+      } else {
+        throw new Error("Cropping canvas produced empty blob");
       }
     } catch (e) {
       console.error("Cropping error:", e);
@@ -120,7 +146,12 @@ export function ImageCropModal({
   if (!isOpen || !imageSrc) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-xl">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-xl"
+      zIndex={zIndex ?? Z_INDEX.MODAL_CONFIRM}
+    >
       <div className="overflow-y-auto overscroll-contain flex-1 p-5 sm:p-6 scrollbar-thin relative select-none">
         {/* Cyber corner brackets */}
         {isCyber && (
@@ -286,30 +317,49 @@ export function ImageCropModal({
           </div>
 
           {/* Actions Footer */}
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-xs font-bold rounded-xl border-2 transition-colors bg-transparent cursor-pointer"
-              style={{
-                borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB",
-                color: isCyber ? "#94A3B8" : "#6B7280",
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleConfirm}
-              disabled={isProcessing}
-              className="px-5 py-2 text-xs font-black rounded-xl transition-transform active:scale-95 disabled:opacity-60 cursor-pointer shadow-lg"
-              style={{
-                backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
-                color: isCyber ? "#050816" : "#fff",
-              }}
-            >
-              {isProcessing ? "Saving Crop..." : "✂️ Apply & Save Position"}
-            </button>
+          <div className="flex items-center justify-between gap-3 pt-2">
+            <div>
+              {onSkipCrop && (
+                <button
+                  type="button"
+                  onClick={onSkipCrop}
+                  disabled={isProcessing}
+                  className={`px-3.5 py-2 text-xs font-mono font-bold rounded-xl border transition-all cursor-pointer ${
+                    isCyber
+                      ? "bg-white/5 border-white/20 text-slate-300 hover:bg-white/10 hover:text-white"
+                      : "bg-slate-100 border-2 border-black text-black shadow-[2px_2px_0px_#000000] hover:bg-slate-200"
+                  }`}
+                  title="Upload original image directly without cropping"
+                >
+                  ⚡ Use Original (No Crop)
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-xs font-bold rounded-xl border-2 transition-colors bg-transparent cursor-pointer"
+                style={{
+                  borderColor: isCyber ? "rgba(255,255,255,0.15)" : "#D1D5DB",
+                  color: isCyber ? "#94A3B8" : "#6B7280",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirm}
+                disabled={isProcessing}
+                className="px-5 py-2 text-xs font-black rounded-xl transition-transform active:scale-95 disabled:opacity-60 cursor-pointer shadow-lg"
+                style={{
+                  backgroundColor: isCyber ? "#00F5FF" : "#FF6B35",
+                  color: isCyber ? "#050816" : "#fff",
+                }}
+              >
+                {isProcessing ? "Saving Crop..." : "✂️ Apply & Save Position"}
+              </button>
+            </div>
           </div>
         </div>
       </div>

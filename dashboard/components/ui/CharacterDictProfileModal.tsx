@@ -11,7 +11,7 @@ import { isTokusatsuEntry } from "@/lib/data/tokusatsuDataHelper";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { useToast } from "@/components/ui/ToastProvider";
 import { resolveCharacterDictionaryGallery, CharacterGalleryMediaItem } from "@/lib/utils/mediaResolver";
-import { CreatureEntry, getClassificationMeta } from "@/lib/data/creatureSchema";
+import { CreatureEntry, CreatureForm, CreatureCharacterRef, getClassificationMeta, CREATURE_TIER_META } from "@/lib/data/creatureSchema";
 import { CreatureDossierModal } from "@/components/ui/CreatureDossierModal";
 import { OverlayPortal } from "@/components/ui/OverlayPortal";
 import { Z_INDEX } from "@/components/ui/ViewportBoundary";
@@ -157,26 +157,63 @@ export function CharacterDictProfileModal({
 
   // Creature Dossier Modal State
   const [selectedCreature, setSelectedCreature] = useState<CreatureEntry | null>(null);
+  const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const [isCreatureModalOpen, setIsCreatureModalOpen] = useState(false);
 
   // Cross-Navigation Game Character Modal State
   const [gameCharModalOpen, setGameCharModalOpen] = useState(false);
   const [targetGameChar, setTargetGameChar] = useState<GameCharacterEntry | null>(null);
 
-  // Compute connected creatures
-  const connectedCreatures = useMemo(() => {
+  // Compute connected creatures (General connections + Form-level connections combined)
+  const connectedCreatureData = useMemo(() => {
     if (!liveEntry) return [];
     const charId = liveEntry.id;
     const charName = liveEntry.name.toLowerCase().trim();
 
-    return creatures.filter((c) =>
-      (c.connectedCharacters || []).some(
+    const matches: Array<{
+      creature: CreatureEntry;
+      isGeneralConnection: boolean;
+      generalRef?: CreatureCharacterRef;
+      connectedForms: Array<{ form: CreatureForm; ref: CreatureCharacterRef }>;
+    }> = [];
+
+    for (const c of creatures) {
+      const generalRef = (c.connectedCharacters || []).find(
         (ref) =>
           ref.characterId === charId ||
           (ref.name && ref.name.toLowerCase().trim() === charName)
-      )
-    );
+      );
+      const isGeneralConnection = Boolean(generalRef);
+
+      const connectedForms: Array<{ form: CreatureForm; ref: CreatureCharacterRef }> = [];
+      for (const f of c.forms || []) {
+        const formRef = (f.connectedCharacters || []).find(
+          (ref) =>
+            ref.characterId === charId ||
+            (ref.name && ref.name.toLowerCase().trim() === charName)
+        );
+        if (formRef) {
+          connectedForms.push({ form: f, ref: formRef });
+        }
+      }
+
+      if (isGeneralConnection || connectedForms.length > 0) {
+        matches.push({
+          creature: c,
+          isGeneralConnection,
+          generalRef,
+          connectedForms,
+        });
+      }
+    }
+
+    return matches;
   }, [creatures, liveEntry]);
+
+  const connectedCreatures = useMemo(
+    () => connectedCreatureData.map((d) => d.creature),
+    [connectedCreatureData]
+  );
 
   // Dynamic tabs: only show "creatures" if connectedCreatures.length > 0
   const dynamicTabs = useMemo(() => {
@@ -1173,22 +1210,18 @@ export function CharacterDictProfileModal({
                     <div className="flex items-center gap-2">
                       <span className="text-lg">🐾</span>
                       <h3 className="text-sm sm:text-base font-black font-mono theme-text-primary tracking-tight uppercase">
-                        Connected Creatures & Companions ({connectedCreatures.length})
+                        Connected Creatures &amp; Companions ({connectedCreatures.length})
                       </h3>
                     </div>
                     <span className="text-[11px] font-mono theme-text-muted">
-                      Click any creature to inspect full bestiary dossier
+                      Click any creature or form to inspect full bestiary dossier
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    {connectedCreatures.map((cr) => {
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {connectedCreatureData.map((item) => {
+                      const cr = item.creature;
                       const meta = getClassificationMeta(cr.classification);
-                      const myConnection = (cr.connectedCharacters || []).find(
-                        (ref) =>
-                          ref.characterId === liveEntry?.id ||
-                          (ref.name && ref.name.toLowerCase().trim() === liveEntry?.name?.toLowerCase().trim())
-                      );
                       const art = cr.media.card || cr.media.primary || cr.media.gallery?.[0];
 
                       return (
@@ -1196,21 +1229,22 @@ export function CharacterDictProfileModal({
                           key={cr.id}
                           onClick={() => {
                             setSelectedCreature(cr);
+                            setSelectedFormId(null);
                             setIsCreatureModalOpen(true);
                           }}
-                          className={`group relative rounded-2xl overflow-hidden border cursor-pointer transition-all duration-300 ${
+                          className={`group relative rounded-2xl overflow-hidden border cursor-pointer flex flex-col transition-all duration-300 ${
                             isCyber
-                              ? "bg-white/[0.04] border-white/10 hover:border-cyan-400/60 hover:shadow-[0_0_20px_rgba(0,245,255,0.25)]"
+                              ? "bg-[#060a18] border-white/10 hover:border-cyan-400/60 hover:shadow-[0_0_25px_rgba(0,245,255,0.25)]"
                               : "bg-white border-2 border-black shadow-[3px_3px_0px_#000] hover:translate-y-[-2px]"
                           }`}
                         >
-                          {/* Image Container (3:4 ratio) */}
+                          {/* Image Container — portrait 3:4, full artwork visible */}
                           <div className="relative aspect-[3/4] w-full overflow-hidden bg-slate-900">
                             {art ? (
                               <img
                                 src={art}
                                 alt={cr.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-5xl">
@@ -1219,44 +1253,160 @@ export function CharacterDictProfileModal({
                             )}
 
                             {/* Classification Badge (Top Right) */}
-                            <div
-                              className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-black uppercase border shadow-md flex items-center gap-1"
-                              style={{
-                                backgroundColor: isCyber ? meta.bgCyber : meta.bgNeo,
-                                borderColor: isCyber ? meta.borderCyber : meta.borderNeo,
-                                color: isCyber ? meta.color : "#000000",
-                              }}
-                            >
-                              <span>{meta.icon}</span>
-                              <span>{meta.label}</span>
+                            <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-10">
+                              <span
+                                className="px-2 py-0.5 rounded-full text-[10px] font-mono font-black uppercase border shadow-md flex items-center gap-1"
+                                style={{
+                                  backgroundColor: isCyber ? meta.bgCyber : meta.bgNeo,
+                                  borderColor: isCyber ? meta.borderCyber : meta.borderNeo,
+                                  color: isCyber ? meta.color : "#000000",
+                                }}
+                              >
+                                <span>{meta.icon}</span>
+                                <span>{meta.label}</span>
+                              </span>
+                              {cr.tier && (
+                                <span
+                                  className="px-2 py-0.5 rounded-md text-[10px] font-mono font-black border uppercase shadow-md"
+                                  style={{
+                                    backgroundColor: isCyber ? "rgba(5,8,20,0.85)" : "#000000",
+                                    borderColor: isCyber ? "rgba(255,215,0,0.5)" : "#000000",
+                                    color: isCyber ? "#FFD700" : "#FFFFFF",
+                                  }}
+                                >
+                                  {cr.tier} TIER
+                                </span>
+                              )}
                             </div>
 
                             {/* Relationship Role Badge (Top Left) */}
-                            {myConnection?.relationshipType && (
-                              <div
-                                className={`absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black uppercase border shadow-md ${
-                                  isCyber
-                                    ? "bg-black/70 border-cyan-400/50 text-cyan-300"
-                                    : "bg-amber-300 border-black text-black"
-                                }`}
-                              >
-                                {myConnection.relationshipType}
+                            <div className="absolute top-2.5 left-2.5 z-10 flex flex-col gap-1">
+                              {item.isGeneralConnection ? (
+                                <span
+                                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black uppercase border shadow-md ${
+                                    isCyber
+                                      ? "bg-black/80 border-cyan-400/50 text-cyan-300"
+                                      : "bg-amber-300 border-black text-black"
+                                  }`}
+                                >
+                                  🔗 {item.generalRef?.relationshipType || "General Connection"}
+                                </span>
+                              ) : (
+                                <span
+                                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black uppercase border shadow-md ${
+                                    isCyber
+                                      ? "bg-violet-950/80 border-violet-400/50 text-violet-300"
+                                      : "bg-violet-200 border-black text-violet-950"
+                                  }`}
+                                >
+                                  ⚡ Form Partner
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Bottom Gradient Overlay */}
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent p-3 pt-8 text-white space-y-0.5">
+                              <h4 className="text-base font-black font-mono tracking-tight truncate">
+                                {cr.name}
+                              </h4>
+                              <p className="text-[10px] font-mono opacity-80 truncate">
+                                {cr.species ? `${cr.species} · ` : ""}{cr.sourceTitle}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Card Content & Form-Specific Connections */}
+                          <div className="p-3 flex-1 flex flex-col justify-between space-y-2.5">
+                            {/* General Lore Preview if available */}
+                            {cr.description && (
+                              <p className={`text-[11px] font-mono line-clamp-2 leading-relaxed ${
+                                isCyber ? "text-slate-300" : "text-slate-700"
+                              }`}>
+                                {cr.description}
+                              </p>
+                            )}
+
+                            {/* Form-specific relationships sub-panel */}
+                            {item.connectedForms.length > 0 && (
+                              <div className={`p-2.5 rounded-xl border space-y-2 ${
+                                isCyber
+                                  ? "bg-violet-950/20 border-violet-500/30"
+                                  : "bg-violet-50 border border-violet-300"
+                              }`}>
+                                <div className="flex items-center justify-between">
+                                  <span className={`text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 ${
+                                    isCyber ? "text-violet-300" : "text-violet-900"
+                                  }`}>
+                                    <span>✦</span>
+                                    <span>Connected Form{item.connectedForms.length > 1 ? "s" : ""} ({item.connectedForms.length})</span>
+                                  </span>
+                                  <span className="text-[9px] font-mono opacity-60">
+                                    Click form to inspect
+                                  </span>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                  {item.connectedForms.map(({ form, ref }) => (
+                                    <div
+                                      key={form.id}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedCreature(cr);
+                                        setSelectedFormId(form.id);
+                                        setIsCreatureModalOpen(true);
+                                      }}
+                                      className={`p-2 rounded-lg border transition-all flex items-center justify-between gap-2 cursor-pointer ${
+                                        isCyber
+                                          ? "bg-white/[0.04] border-white/10 hover:border-violet-400/50 hover:bg-violet-500/10"
+                                          : "bg-white border border-black shadow-[1px_1px_0px_#000] hover:bg-yellow-50"
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-2 min-w-0">
+                                        {form.artwork ? (
+                                          <img
+                                            src={form.artwork}
+                                            alt={form.name}
+                                            className="w-8 h-8 rounded-lg object-cover shrink-0 border border-black/20"
+                                          />
+                                        ) : (
+                                          <div className="w-8 h-8 rounded-lg bg-violet-500/20 border border-violet-500/30 flex items-center justify-center text-xs shrink-0">
+                                            ✦
+                                          </div>
+                                        )}
+                                        <div className="min-w-0">
+                                          <p className="text-xs font-bold font-mono truncate">
+                                            {form.displayName || form.name}
+                                          </p>
+                                          <div className="flex items-center gap-1.5 text-[9px] font-mono opacity-75">
+                                            {form.variantType && (
+                                              <span className="text-violet-400 font-semibold">{form.variantType}</span>
+                                            )}
+                                            {ref.relationshipType && (
+                                              <span className="opacity-60">· Role: {ref.relationshipType}</span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border font-bold shrink-0 ${
+                                        isCyber
+                                          ? "text-violet-300 border-violet-500/30 bg-violet-500/10"
+                                          : "text-black border-black bg-yellow-300"
+                                      }`}>
+                                        Inspect →
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
                             )}
 
-                            {/* Bottom Gradient Overlay */}
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/60 to-transparent p-3 pt-8 text-white space-y-0.5">
-                              <h4 className="text-sm font-black font-mono tracking-tight truncate">
-                                {cr.name}
-                              </h4>
-                              <p className="text-[10px] font-mono opacity-75 truncate">
-                                {cr.species ? `${cr.species} · ` : ""}{cr.sourceTitle}
-                              </p>
-                              {cr.forms && cr.forms.length > 0 && (
-                                <p className="text-[10px] font-mono text-violet-300 truncate pt-0.5">
-                                  ✦ {cr.forms.map((f) => f.displayName || f.name).join(" · ")}
-                                </p>
-                              )}
+                            {/* Read-Only action hint */}
+                            <div className="pt-1 flex items-center justify-between text-[10px] font-mono opacity-60 border-t border-white/10">
+                              <span>Dossier View</span>
+                              <span className="hover:opacity-100 group-hover:text-cyan-400 transition-colors">
+                                Open Dossier ↗
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -1363,9 +1513,11 @@ export function CharacterDictProfileModal({
         <CreatureDossierModal
           isOpen={isCreatureModalOpen}
           creature={selectedCreature}
+          initialFormId={selectedFormId}
           onClose={() => {
             setIsCreatureModalOpen(false);
             setSelectedCreature(null);
+            setSelectedFormId(null);
           }}
           onEdit={undefined}
         />

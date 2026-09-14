@@ -82,23 +82,41 @@ export function CoupleDossierModal({
 
   // Resolve Partner A
   const canonicalA = useMemo(() => {
-    if (!couple?.partnerA.characterId) return null;
-    return (
-      hallOfFame.find((h) => h.id === couple.partnerA.characterId) ||
-      dossierCharacters.find((d) => d.id === couple.partnerA.characterId) ||
-      null
-    );
-  }, [couple?.partnerA.characterId, hallOfFame, dossierCharacters]);
+    if (couple?.partnerA.characterId) {
+      const found =
+        hallOfFame.find((h) => h.id === couple.partnerA.characterId) ||
+        dossierCharacters.find((d) => d.id === couple.partnerA.characterId);
+      if (found) return found;
+    }
+    if (couple?.partnerA.name?.trim()) {
+      const pName = couple.partnerA.name.trim().toLowerCase();
+      return (
+        hallOfFame.find((h) => h.name.trim().toLowerCase() === pName) ||
+        dossierCharacters.find((d) => d.name.trim().toLowerCase() === pName) ||
+        null
+      );
+    }
+    return null;
+  }, [couple?.partnerA.characterId, couple?.partnerA.name, hallOfFame, dossierCharacters]);
 
   // Resolve Partner B
   const canonicalB = useMemo(() => {
-    if (!couple?.partnerB.characterId) return null;
-    return (
-      hallOfFame.find((h) => h.id === couple.partnerB.characterId) ||
-      dossierCharacters.find((d) => d.id === couple.partnerB.characterId) ||
-      null
-    );
-  }, [couple?.partnerB.characterId, hallOfFame, dossierCharacters]);
+    if (couple?.partnerB.characterId) {
+      const found =
+        hallOfFame.find((h) => h.id === couple.partnerB.characterId) ||
+        dossierCharacters.find((d) => d.id === couple.partnerB.characterId);
+      if (found) return found;
+    }
+    if (couple?.partnerB.name?.trim()) {
+      const pName = couple.partnerB.name.trim().toLowerCase();
+      return (
+        hallOfFame.find((h) => h.name.trim().toLowerCase() === pName) ||
+        dossierCharacters.find((d) => d.name.trim().toLowerCase() === pName) ||
+        null
+      );
+    }
+    return null;
+  }, [couple?.partnerB.characterId, couple?.partnerB.name, hallOfFame, dossierCharacters]);
 
   if (!isOpen || !couple) return null;
 
@@ -458,9 +476,16 @@ export function CoupleDossierModal({
                     <button
                       type="button"
                       onClick={() => onOpenCharacterDictionary(canonicalA as HallOfFameEntry)}
-                      className="mt-1.5 text-[10px] font-mono font-bold underline transition-opacity hover:opacity-100 opacity-60 text-cyan-400"
+                      className={`group/dict inline-flex items-center gap-1.5 px-2.5 py-1 mt-2 rounded-lg border text-[11px] font-mono font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer select-none ${
+                        isCyber
+                          ? "bg-cyan-500/10 border-cyan-400/40 text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-300 shadow-[0_0_12px_rgba(0,245,255,0.25)]"
+                          : "bg-sky-50 border-2 border-black text-sky-900 shadow-[2px_2px_0px_#000000] hover:bg-sky-100"
+                      }`}
+                      title={`Open ${partnerAName}'s profile in Character Dictionary`}
                     >
-                      View in Dictionary ↗
+                      <span className="text-xs">📖</span>
+                      <span>View Dictionary</span>
+                      <span className="text-[10px] opacity-70 group-hover/dict:translate-x-0.5 group-hover/dict:-translate-y-0.5 transition-transform">↗</span>
                     </button>
                   )}
                 </div>
@@ -625,9 +650,16 @@ export function CoupleDossierModal({
                     <button
                       type="button"
                       onClick={() => onOpenCharacterDictionary(canonicalB as HallOfFameEntry)}
-                      className="mt-1.5 text-[10px] font-mono font-bold underline transition-opacity hover:opacity-100 opacity-60 text-pink-400"
+                      className={`group/dict inline-flex items-center gap-1.5 px-2.5 py-1 mt-2 rounded-lg border text-[11px] font-mono font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer select-none ${
+                        isCyber
+                          ? "bg-pink-500/10 border-pink-400/40 text-pink-300 hover:bg-pink-500/20 hover:border-pink-300 shadow-[0_0_12px_rgba(236,72,153,0.25)]"
+                          : "bg-pink-50 border-2 border-black text-pink-900 shadow-[2px_2px_0px_#000000] hover:bg-pink-100"
+                      }`}
+                      title={`Open ${partnerBName}'s profile in Character Dictionary`}
                     >
-                      View in Dictionary ↗
+                      <span className="text-xs">📖</span>
+                      <span>View Dictionary</span>
+                      <span className="text-[10px] opacity-70 group-hover/dict:translate-x-0.5 group-hover/dict:-translate-y-0.5 transition-transform">↗</span>
                     </button>
                   )}
                 </div>

@@ -17,6 +17,7 @@ interface CreatureDossierModalProps {
   creature: CreatureEntry | null;
   onEdit?: (creature: CreatureEntry) => void;
   zIndex?: number;
+  initialFormId?: string | null;
 }
 
 export function CreatureDossierModal({
@@ -25,6 +26,7 @@ export function CreatureDossierModal({
   creature,
   onEdit,
   zIndex = Z_INDEX.MODAL_NESTED,
+  initialFormId = null,
 }: CreatureDossierModalProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
@@ -35,6 +37,29 @@ export function CreatureDossierModal({
 
   // Gallery viewer index
   const [selectedMediaUrl, setSelectedMediaUrl] = useState<string | null>(null);
+  const [highlightedFormId, setHighlightedFormId] = useState<string | null>(null);
+
+  // Scroll to and highlight targeted form if initialFormId is passed
+  useEffect(() => {
+    if (isOpen && initialFormId) {
+      setHighlightedFormId(initialFormId);
+      const timer = setTimeout(() => {
+        const el = document.getElementById(`creature-form-${initialFormId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 250);
+      const clearTimer = setTimeout(() => {
+        setHighlightedFormId(null);
+      }, 4000);
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(clearTimer);
+      };
+    } else {
+      setHighlightedFormId(null);
+    }
+  }, [isOpen, initialFormId]);
 
   // Reset selected image on open
   useEffect(() => {
@@ -354,9 +379,22 @@ export function CreatureDossierModal({
 
             {/* CONNECTED CHARACTERS (CHARACTER DICTIONARY) */}
             {(() => {
-              const dictConnections = (creature.connectedCharacters || []).filter(
-                (c) => c.characterType !== "game_character"
+              const generalDict = (creature.connectedCharacters || [])
+                .filter((c) => c.characterType !== "game_character")
+                .map((c) => ({ ...c, scope: "general" as const, formName: undefined, formId: undefined }));
+
+              const formDict = (creature.forms || []).flatMap((f) =>
+                (f.connectedCharacters || [])
+                  .filter((c) => c.characterType !== "game_character")
+                  .map((c) => ({
+                    ...c,
+                    scope: "form" as const,
+                    formName: f.displayName || f.name,
+                    formId: f.id,
+                  }))
               );
+
+              const dictConnections = [...generalDict, ...formDict];
               if (dictConnections.length === 0) return null;
 
               return (
@@ -371,11 +409,21 @@ export function CreatureDossierModal({
                     {dictConnections.map((conn, idx) => (
                       <div
                         key={idx}
+                        onClick={() => {
+                          if (conn.formId) {
+                            setHighlightedFormId(conn.formId);
+                            const el = document.getElementById(`creature-form-${conn.formId}`);
+                            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                          }
+                        }}
                         className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
+                          conn.formId ? "cursor-pointer" : ""
+                        } ${
                           isCyber
                             ? "bg-white/[0.04] border-white/10 hover:border-cyan-500/40"
                             : "bg-white border-2 border-black shadow-[2px_2px_0px_#000]"
                         }`}
+                        title={conn.formName ? `Associated with form: ${conn.formName}` : undefined}
                       >
                         {conn.avatar ? (
                           <img
@@ -402,6 +450,17 @@ export function CreatureDossierModal({
                             >
                               {conn.relationshipType || "Companion"}
                             </span>
+                            {conn.formName && (
+                              <span
+                                className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                                  isCyber
+                                    ? "bg-violet-500/25 text-violet-300 border border-violet-500/40"
+                                    : "bg-violet-100 text-violet-900 border border-violet-300"
+                                }`}
+                              >
+                                ⚡ Form: {conn.formName}
+                              </span>
+                            )}
                             {conn.sourceTitle && (
                               <span className="truncate opacity-75">{conn.sourceTitle}</span>
                             )}
@@ -416,9 +475,22 @@ export function CreatureDossierModal({
 
             {/* CONNECTED GAME CHARACTERS */}
             {(() => {
-              const gameConnections = (creature.connectedCharacters || []).filter(
-                (c) => c.characterType === "game_character"
+              const generalGame = (creature.connectedCharacters || [])
+                .filter((c) => c.characterType === "game_character")
+                .map((c) => ({ ...c, scope: "general" as const, formName: undefined, formId: undefined }));
+
+              const formGame = (creature.forms || []).flatMap((f) =>
+                (f.connectedCharacters || [])
+                  .filter((c) => c.characterType === "game_character")
+                  .map((c) => ({
+                    ...c,
+                    scope: "form" as const,
+                    formName: f.displayName || f.name,
+                    formId: f.id,
+                  }))
               );
+
+              const gameConnections = [...generalGame, ...formGame];
               if (gameConnections.length === 0) return null;
 
               return (
@@ -433,11 +505,21 @@ export function CreatureDossierModal({
                     {gameConnections.map((conn, idx) => (
                       <div
                         key={idx}
+                        onClick={() => {
+                          if (conn.formId) {
+                            setHighlightedFormId(conn.formId);
+                            const el = document.getElementById(`creature-form-${conn.formId}`);
+                            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                          }
+                        }}
                         className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
+                          conn.formId ? "cursor-pointer" : ""
+                        } ${
                           isCyber
                             ? "bg-white/[0.04] border-white/10 hover:border-purple-500/40"
                             : "bg-white border-2 border-black shadow-[2px_2px_0px_#000]"
                         }`}
+                        title={conn.formName ? `Associated with form: ${conn.formName}` : undefined}
                       >
                         {conn.avatar ? (
                           <img
@@ -464,6 +546,17 @@ export function CreatureDossierModal({
                             >
                               {conn.relationshipType || "Companion"}
                             </span>
+                            {conn.formName && (
+                              <span
+                                className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                                  isCyber
+                                    ? "bg-violet-500/25 text-violet-300 border border-violet-500/40"
+                                    : "bg-violet-100 text-violet-900 border border-violet-300"
+                                }`}
+                              >
+                                ⚡ Form: {conn.formName}
+                              </span>
+                            )}
                             {conn.sourceTitle && (
                               <span className="truncate opacity-75">{conn.sourceTitle}</span>
                             )}
@@ -528,11 +621,17 @@ export function CreatureDossierModal({
                   {[...creature.forms]
                     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
                     .map((form, idx) => (
-                      <CreatureFormCard
+                      <div
+                        id={`creature-form-${form.id}`}
                         key={form.id || idx}
-                        form={form}
-                        isCyber={isCyber}
-                      />
+                        className="transition-all duration-300"
+                      >
+                        <CreatureFormCard
+                          form={form}
+                          isCyber={isCyber}
+                          isHighlighted={form.id === highlightedFormId}
+                        />
+                      </div>
                     ))}
                 </div>
               </div>

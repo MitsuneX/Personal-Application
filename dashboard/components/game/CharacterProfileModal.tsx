@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { getElementTheme, ElementTheme } from "@/lib/utils/elementTheme";
 import { ElementParticles } from "@/components/game/ElementParticles";
 import { useContextMenu } from "@/hooks/useContextMenu";
-import { CreatureEntry, getClassificationMeta } from "@/lib/data/creatureSchema";
+import { CreatureEntry, CreatureForm, CreatureCharacterRef, getClassificationMeta } from "@/lib/data/creatureSchema";
 import { CreatureDossierModal } from "@/components/ui/CreatureDossierModal";
 import { OverlayPortal } from "@/components/ui/OverlayPortal";
 import { Z_INDEX } from "@/components/ui/ViewportBoundary";
@@ -359,25 +359,64 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
 
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [selectedCreature, setSelectedCreature] = useState<CreatureEntry | null>(null);
+  const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [lightboxTitle, setLightboxTitle] = useState("");
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
-  // Connected creatures for this game character
-  const connectedCreatures = useMemo(() => {
+  // Connected creatures for this game character (General + Form-level connections combined)
+  const connectedCreatureData = useMemo(() => {
     if (!character) return [];
     const charId = character.id;
     const legacyCharId = character.characterId;
     const charName = character.name.toLowerCase().trim();
-    return creatures.filter((c) =>
-      (c.connectedCharacters || []).some(
+
+    const matches: Array<{
+      creature: CreatureEntry;
+      isGeneralConnection: boolean;
+      generalRef?: CreatureCharacterRef;
+      connectedForms: Array<{ form: CreatureForm; ref: CreatureCharacterRef }>;
+    }> = [];
+
+    for (const c of creatures) {
+      const generalRef = (c.connectedCharacters || []).find(
         (ref) =>
           ref.characterId === charId ||
           (legacyCharId && ref.characterId === legacyCharId) ||
           (ref.name && ref.name.toLowerCase().trim() === charName)
-      )
-    );
+      );
+      const isGeneralConnection = Boolean(generalRef);
+
+      const connectedForms: Array<{ form: CreatureForm; ref: CreatureCharacterRef }> = [];
+      for (const f of c.forms || []) {
+        const formRef = (f.connectedCharacters || []).find(
+          (ref) =>
+            ref.characterId === charId ||
+            (legacyCharId && ref.characterId === legacyCharId) ||
+            (ref.name && ref.name.toLowerCase().trim() === charName)
+        );
+        if (formRef) {
+          connectedForms.push({ form: f, ref: formRef });
+        }
+      }
+
+      if (isGeneralConnection || connectedForms.length > 0) {
+        matches.push({
+          creature: c,
+          isGeneralConnection,
+          generalRef,
+          connectedForms,
+        });
+      }
+    }
+
+    return matches;
   }, [creatures, character]);
+
+  const connectedCreatures = useMemo(
+    () => connectedCreatureData.map((d) => d.creature),
+    [connectedCreatureData]
+  );
 
   // Dynamic tabs: show creatures tab only if connectedCreatures.length > 0
   const dynamicTabs = useMemo(() => {
@@ -1003,25 +1042,18 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                     isCyber ? "text-white" : "text-black"
                   }`}
                 >
-                  Connected Creatures & Companions ({connectedCreatures.length})
+                  Connected Creatures &amp; Companions ({connectedCreatures.length})
                 </h3>
               </div>
               <span className={`text-[11px] font-mono ${isCyber ? "text-white/40" : "text-gray-500"}`}>
-                Click any creature to inspect full bestiary dossier
+                Click any creature or form to inspect full bestiary dossier
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 pt-2">
-              {connectedCreatures.map((creature) => {
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+              {connectedCreatureData.map((item) => {
+                const creature = item.creature;
                 const classMeta = getClassificationMeta(creature.classification);
-                const relRef = (creature.connectedCharacters || []).find(
-                  (r) =>
-                    r.characterId === character.id ||
-                    (character.characterId && r.characterId === character.characterId) ||
-                    (r.name && r.name.toLowerCase().trim() === character.name.toLowerCase().trim())
-                );
-                const relType = relRef?.relationshipType || "Companion";
-
                 const creatureArt =
                   creature.media?.card ||
                   creature.media?.primary ||
@@ -1032,16 +1064,19 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                 return (
                   <motion.div
                     key={creature.id}
-                    whileHover={{ scale: 1.03, y: -2 }}
+                    whileHover={{ scale: 1.02, y: -2 }}
                     transition={{ duration: 0.18 }}
-                    onClick={() => setSelectedCreature(creature)}
+                    onClick={() => {
+                      setSelectedCreature(creature);
+                      setSelectedFormId(null);
+                    }}
                     className={`group relative flex flex-col rounded-2xl overflow-hidden cursor-pointer border transition-all ${
                       isCyber
                         ? "bg-[#060a17]/90 border-white/10 hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(0,245,255,0.2)]"
                         : "bg-white border-2 border-black shadow-[3px_3px_0_#000] hover:shadow-[5px_5px_0_#000]"
                     }`}
                   >
-                    <div className="relative aspect-[3/4] w-full overflow-hidden bg-black/40">
+                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-black/40">
                       {creatureArt ? (
                         <img
                           src={creatureArt}
@@ -1053,7 +1088,32 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                           {classMeta.icon}
                         </div>
                       )}
-                      <div className="absolute top-2 left-2 z-10">
+                      <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
+                        {item.isGeneralConnection ? (
+                          <span
+                            className="px-2 py-0.5 rounded-md text-[10px] font-mono font-black border uppercase tracking-wider"
+                            style={{
+                              backgroundColor: isCyber ? "rgba(5,8,20,0.85)" : "#FFFFFF",
+                              borderColor: isCyber ? "rgba(0,245,255,0.4)" : "#000000",
+                              color: isCyber ? "#00F5FF" : "#000000",
+                            }}
+                          >
+                            🔗 {item.generalRef?.relationshipType || "General Connection"}
+                          </span>
+                        ) : (
+                          <span
+                            className="px-2 py-0.5 rounded-md text-[10px] font-mono font-black border uppercase tracking-wider"
+                            style={{
+                              backgroundColor: isCyber ? "rgba(168,85,247,0.85)" : "#F3E8FF",
+                              borderColor: isCyber ? "rgba(168,85,247,0.5)" : "#000000",
+                              color: isCyber ? "#E9D5FF" : "#6B21A8",
+                            }}
+                          >
+                            ⚡ Form Partner
+                          </span>
+                        )}
+                      </div>
+                      <div className="absolute top-2 right-2 z-10 flex items-center gap-1.5">
                         <span
                           className="px-2 py-0.5 rounded-md text-[10px] font-mono font-black border uppercase tracking-wider"
                           style={{
@@ -1064,9 +1124,7 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                         >
                           {classMeta.icon} {classMeta.label}
                         </span>
-                      </div>
-                      {creature.tier && (
-                        <div className="absolute top-2 right-2 z-10">
+                        {creature.tier && (
                           <span
                             className="px-2 py-0.5 rounded-md text-[10px] font-mono font-black border"
                             style={{
@@ -1077,38 +1135,114 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
                           >
                             {creature.tier} TIER
                           </span>
-                        </div>
-                      )}
-                      <div className="absolute bottom-2 left-2 z-10">
-                        <span
-                          className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold border"
-                          style={{
-                            backgroundColor: isCyber ? "rgba(168,85,247,0.25)" : "#F3E8FF",
-                            borderColor: isCyber ? "rgba(168,85,247,0.5)" : "#000000",
-                            color: isCyber ? "#D8B4FE" : "#6B21A8",
-                          }}
-                        >
-                          🔗 {relType}
-                        </span>
+                        )}
                       </div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent pointer-events-none" />
+
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none flex items-end p-3">
+                        <div>
+                          <h4
+                            className={`text-sm font-bold truncate font-mono ${
+                              isCyber ? "text-white group-hover:text-cyan-300" : "text-white"
+                            }`}
+                          >
+                            {creature.name}
+                          </h4>
+                          <p className="text-[10px] text-white/70 truncate">
+                            {creature.species || creature.originWork || "Unknown"}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="p-2.5 flex flex-col gap-0.5">
-                      <h4
-                        className={`text-xs font-bold truncate font-mono ${
-                          isCyber ? "text-white group-hover:text-cyan-300" : "text-black"
-                        }`}
-                      >
-                        {creature.name}
-                      </h4>
-                      <p className={`text-[10px] truncate ${isCyber ? "text-white/50" : "text-gray-600"}`}>
-                        {creature.species || creature.originWork || "Unknown"}
-                      </p>
-                      {creature.forms && creature.forms.length > 0 && (
-                        <p className="text-[10px] font-mono text-violet-400 truncate">
-                          ✦ {creature.forms.map((f) => f.displayName || f.name).join(" · ")}
+
+                    <div className="p-3 flex-1 flex flex-col justify-between space-y-2.5">
+                      {creature.description && (
+                        <p className={`text-[11px] font-mono line-clamp-2 leading-relaxed ${
+                          isCyber ? "text-slate-300" : "text-slate-700"
+                        }`}>
+                          {creature.description}
                         </p>
                       )}
+
+                      {/* Connected Forms Sub-Strip */}
+                      {item.connectedForms.length > 0 && (
+                        <div className={`p-2.5 rounded-xl border space-y-2 ${
+                          isCyber
+                            ? "bg-violet-950/20 border-violet-500/30"
+                            : "bg-violet-50 border border-violet-300"
+                        }`}>
+                          <div className="flex items-center justify-between">
+                            <span className={`text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 ${
+                              isCyber ? "text-violet-300" : "text-violet-900"
+                            }`}>
+                              <span>✦</span>
+                              <span>Connected Form{item.connectedForms.length > 1 ? "s" : ""} ({item.connectedForms.length})</span>
+                            </span>
+                            <span className="text-[9px] font-mono opacity-60">
+                              Click form to inspect
+                            </span>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            {item.connectedForms.map(({ form, ref }) => (
+                              <div
+                                key={form.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedCreature(creature);
+                                  setSelectedFormId(form.id);
+                                }}
+                                className={`p-2 rounded-lg border transition-all flex items-center justify-between gap-2 cursor-pointer ${
+                                  isCyber
+                                    ? "bg-white/[0.04] border-white/10 hover:border-violet-400/50 hover:bg-violet-500/10"
+                                    : "bg-white border border-black shadow-[1px_1px_0px_#000] hover:bg-yellow-50"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  {form.artwork ? (
+                                    <img
+                                      src={form.artwork}
+                                      alt={form.name}
+                                      className="w-8 h-8 rounded-lg object-cover shrink-0 border border-black/20"
+                                    />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded-lg bg-violet-500/20 border border-violet-500/30 flex items-center justify-center text-xs shrink-0">
+                                      ✦
+                                    </div>
+                                  )}
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-bold font-mono truncate">
+                                      {form.displayName || form.name}
+                                    </p>
+                                    <div className="flex items-center gap-1.5 text-[9px] font-mono opacity-75">
+                                      {form.variantType && (
+                                        <span className="text-violet-400 font-semibold">{form.variantType}</span>
+                                      )}
+                                      {ref.relationshipType && (
+                                        <span className="opacity-60">· Role: {ref.relationshipType}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border font-bold shrink-0 ${
+                                  isCyber
+                                    ? "text-violet-300 border-violet-500/30 bg-violet-500/10"
+                                    : "text-black border-black bg-yellow-300"
+                                }`}>
+                                  Inspect →
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="pt-1 flex items-center justify-between text-[10px] font-mono opacity-60 border-t border-white/10">
+                        <span>Dossier View</span>
+                        <span className="hover:opacity-100 group-hover:text-cyan-400 transition-colors">
+                          Open Dossier ↗
+                        </span>
+                      </div>
                     </div>
                   </motion.div>
                 );
@@ -1674,7 +1808,11 @@ export function CharacterProfileModal({ isOpen, character, onClose, onEdit, onDe
       <CreatureDossierModal
         isOpen={Boolean(selectedCreature)}
         creature={selectedCreature}
-        onClose={() => setSelectedCreature(null)}
+        initialFormId={selectedFormId}
+        onClose={() => {
+          setSelectedCreature(null);
+          setSelectedFormId(null);
+        }}
         onEdit={undefined}
       />
     </>

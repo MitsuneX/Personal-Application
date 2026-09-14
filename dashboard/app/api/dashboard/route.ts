@@ -75,11 +75,17 @@ export async function GET() {
 
     const userId = user.id;
 
-    const safeQuery = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
+    const queryStatus = {
+      aiToolsOk: true,
+      gamesOk: true,
+    };
+
+    const safeQuery = async <T>(fn: () => Promise<T>, fallback: T, onFail?: () => void): Promise<T> => {
       try {
         return await fn();
       } catch (err: any) {
         console.warn("[Dashboard API] Query fallback:", err?.message || err);
+        if (onFail) onFail();
         return fallback;
       }
     };
@@ -119,8 +125,16 @@ export async function GET() {
       dbCreatures,
     ] = await Promise.all([
       safeQuery(() => prisma.profile.findFirst({ where: { OR: [{ userId }, { id: userId }] } }), null),
-      safeQuery(() => prisma.aiToolItem.findMany({ where: { userId }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] }), []),
-      safeQuery(() => prisma.game.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
+      safeQuery(
+        () => prisma.aiToolItem.findMany({ where: { userId }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] }),
+        [],
+        () => { queryStatus.aiToolsOk = false; }
+      ),
+      safeQuery(
+        () => prisma.game.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }),
+        [],
+        () => { queryStatus.gamesOk = false; }
+      ),
       safeQuery(() => prisma.gameDossierCharacter.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }), []),
       safeQuery(() => prisma.gameExternalResource.findMany({ where: { userId }, orderBy: { sortOrder: "asc" } }), []),
       safeQuery(() => prisma.gameShowcaseItem.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }), []),
@@ -171,72 +185,98 @@ export async function GET() {
       });
     }
 
-    // Auto-seed AI tools for NEW registered user if empty
-    if (dbAiTools.length === 0) {
+    // Auto-seed AI tools for NEW registered user ONLY if query succeeded and user has 0 items
+    if (queryStatus.aiToolsOk && dbAiTools.length === 0) {
       try {
-        console.log(`[AI Library] Seeding default AI collection for user ${userId}...`);
-        for (const t of DEFAULT_AI_TOOLS) {
-          await prisma.aiToolItem.create({
-            data: {
-              userId,
-              name: t.name,
-              company: t.company || null,
-              description: t.description,
-              logo: t.logo || null,
-              accentColor: t.accentColor || "#10A37F",
-              category: t.category || "💬 General AI",
-              usageStatus: t.usageStatus || "Daily",
-              pricingModel: t.pricingModel || "Freemium",
-              rating: t.rating ?? 5,
-              strengths: t.strengths || [],
-              notes: t.notes || null,
-              version: t.version || null,
-              lastUsed: t.lastUsed ? new Date(t.lastUsed) : null,
-              launchCount: t.launchCount || 0,
-              launchUrl: t.launchUrl || null,
-              websiteUrl: t.websiteUrl || null,
-              docsUrl: t.docsUrl || null,
-              apiUrl: t.apiUrl || null,
-              pricingUrl: t.pricingUrl || null,
-              githubUrl: (t as any).githubUrl || null,
-              tags: t.tags || [],
-              sortOrder: t.sortOrder || 0,
-              isFavorite: t.isFavorite || false,
-              isPinned: t.isPinned || false,
-              isArchived: t.isArchived || false,
-            },
+        const existingCount = await prisma.aiToolItem.count({ where: { userId } });
+        if (existingCount === 0) {
+          console.log(`[AI Library] Seeding default AI collection for user ${userId}...`);
+          const existingTools = await prisma.aiToolItem.findMany({
+            where: { userId },
+            select: { name: true },
           });
+          const existingNames = new Set(existingTools.map((t) => t.name.trim().toLowerCase()));
+
+          for (const t of DEFAULT_AI_TOOLS) {
+            if (existingNames.has(t.name.trim().toLowerCase())) {
+              continue;
+            }
+            await prisma.aiToolItem.create({
+              data: {
+                userId,
+                name: t.name,
+                company: t.company || null,
+                description: t.description,
+                logo: t.logo || null,
+                accentColor: t.accentColor || "#10A37F",
+                category: t.category || "💬 General AI",
+                usageStatus: t.usageStatus || "Daily",
+                pricingModel: t.pricingModel || "Freemium",
+                rating: t.rating ?? 5,
+                strengths: t.strengths || [],
+                notes: t.notes || null,
+                version: t.version || null,
+                lastUsed: t.lastUsed ? new Date(t.lastUsed) : null,
+                launchCount: t.launchCount || 0,
+                launchUrl: t.launchUrl || null,
+                websiteUrl: t.websiteUrl || null,
+                docsUrl: t.docsUrl || null,
+                apiUrl: t.apiUrl || null,
+                pricingUrl: t.pricingUrl || null,
+                githubUrl: (t as any).githubUrl || null,
+                tags: t.tags || [],
+                sortOrder: t.sortOrder || 0,
+                isFavorite: t.isFavorite || false,
+                isPinned: t.isPinned || false,
+                isArchived: t.isArchived || false,
+              },
+            });
+            existingNames.add(t.name.trim().toLowerCase());
+          }
+          dbAiTools = await prisma.aiToolItem.findMany({ where: { userId }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] });
         }
-        dbAiTools = await prisma.aiToolItem.findMany({ where: { userId }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] });
       } catch (seedErr) {
         console.error("[AI Library] User auto-seed error:", seedErr);
       }
     }
 
-    // Auto-seed Games for NEW registered user if empty
-    if (dbGames.length === 0) {
+    // Auto-seed Games for NEW registered user ONLY if query succeeded and user has 0 items
+    if (queryStatus.gamesOk && dbGames.length === 0) {
       try {
-        console.log(`[Games Library] Seeding default games for user ${userId}...`);
-        for (const g of DEFAULT_GAMES) {
-          await prisma.game.create({
-            data: {
-              userId,
-              game: g.game,
-              handle: g.handle || null,
-              platform: g.platform,
-              rank: g.rank || null,
-              mainCharacter: g.mainCharacter,
-              mainRole: g.mainRole || null,
-              category: g.category,
-              isActive: g.isActive !== undefined ? g.isActive : true,
-              accentColor: g.accentColor,
-              profileLink: g.profileLink || null,
-              icon: g.icon || null,
-              screenshot: null,
-            },
+        const existingCount = await prisma.game.count({ where: { userId } });
+        if (existingCount === 0) {
+          console.log(`[Games Library] Seeding default games for user ${userId}...`);
+          const existingGames = await prisma.game.findMany({
+            where: { userId },
+            select: { game: true },
           });
+          const existingTitles = new Set(existingGames.map((g) => g.game.trim().toLowerCase()));
+
+          for (const g of DEFAULT_GAMES) {
+            if (existingTitles.has(g.game.trim().toLowerCase())) {
+              continue;
+            }
+            await prisma.game.create({
+              data: {
+                userId,
+                game: g.game,
+                handle: g.handle || null,
+                platform: g.platform,
+                rank: g.rank || null,
+                mainCharacter: g.mainCharacter,
+                mainRole: g.mainRole || null,
+                category: g.category,
+                isActive: g.isActive !== undefined ? g.isActive : true,
+                accentColor: g.accentColor,
+                profileLink: g.profileLink || null,
+                icon: g.icon || null,
+                screenshot: null,
+              },
+            });
+            existingTitles.add(g.game.trim().toLowerCase());
+          }
+          dbGames = await prisma.game.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
         }
-        dbGames = await prisma.game.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
       } catch (gameSeedErr) {
         console.error("[Games Library] User auto-seed error:", gameSeedErr);
       }

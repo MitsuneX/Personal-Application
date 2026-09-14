@@ -26,8 +26,19 @@ export async function POST(req: Request) {
 
     switch (action) {
       case "UPDATE_GAME": {
+        let existing = payload.id ? await prisma.game.findUnique({ where: { id: payload.id } }) : null;
+        if (!existing && payload.game) {
+          existing = await prisma.game.findFirst({
+            where: {
+              userId,
+              game: { equals: payload.game.trim(), mode: "insensitive" },
+            },
+          });
+        }
+        const targetId = existing?.id || payload.id;
+
         const game = await prisma.game.upsert({
-          where: { id: payload.id },
+          where: { id: targetId },
           update: {
             userId,
             game: payload.game,
@@ -44,7 +55,7 @@ export async function POST(req: Request) {
             screenshot: payload.screenshot ?? null,
           },
           create: {
-            id: payload.id,
+            id: targetId,
             userId,
             game: payload.game,
             handle: payload.handle || null,
@@ -264,8 +275,19 @@ export async function POST(req: Request) {
           ? new Date(payload.lastUsed)
           : null;
 
+        let existing = payload.id ? await prisma.aiToolItem.findUnique({ where: { id: payload.id } }) : null;
+        if (!existing && payload.name) {
+          existing = await prisma.aiToolItem.findFirst({
+            where: {
+              userId,
+              name: { equals: payload.name.trim(), mode: "insensitive" },
+            },
+          });
+        }
+        const targetId = existing?.id || payload.id;
+
         const item = await prisma.aiToolItem.upsert({
-          where: { id: payload.id },
+          where: { id: targetId },
           update: {
             userId,
             name: payload.name,
@@ -301,7 +323,7 @@ export async function POST(req: Request) {
             isArchived: payload.isArchived ?? false,
           },
           create: {
-            id: payload.id,
+            id: targetId,
             userId,
             name: payload.name,
             company: payload.company || null,

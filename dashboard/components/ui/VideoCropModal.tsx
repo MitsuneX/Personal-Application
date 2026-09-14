@@ -295,7 +295,7 @@ export function VideoCropModal({
       <AnimatePresence>
         <div
           className="fixed inset-0 flex items-center justify-center p-3 sm:p-5 overflow-y-auto"
-          style={{ zIndex: Z_INDEX.MODAL }}
+          style={{ zIndex: Z_INDEX.MODAL_CONFIRM }}
         >
           {/* Backdrop */}
           <motion.div

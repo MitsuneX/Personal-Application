@@ -643,6 +643,9 @@ export default function HallOfFamePage() {
           }}
           onEdit={undefined}
           onOpenJson={undefined}
+          onOpenCharacterDictionary={(entry) => {
+            setProfileModalEntry(entry);
+          }}
         />
 
         <CreatureDossierModal

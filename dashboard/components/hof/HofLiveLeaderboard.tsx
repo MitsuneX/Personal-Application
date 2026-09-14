@@ -603,6 +603,7 @@ export function HofLiveLeaderboard({
                     isCyber={isCyber}
                     onOpenProfile={(c) => (onOpenCoupleProfile ? onOpenCoupleProfile(c) : onOpenProfile(entry))}
                     onCompare={() => onCompare(entry)}
+                    onOpenCharacterDictionary={onOpenProfile}
                   />
                 ) : (
                   <HofEntryCard

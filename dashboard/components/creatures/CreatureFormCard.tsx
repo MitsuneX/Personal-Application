@@ -3,34 +3,51 @@
 import React from "react";
 import { CreatureForm } from "@/lib/data/creatureSchema";
 
+/**
+ * Canonical 3:4 portrait aspect ratio used for Creature Form / Variant collectible cards.
+ * Both the display card presentation and the image crop interface MUST synchronize with this ratio.
+ */
+export const CREATURE_FORM_ASPECT_RATIO = 3 / 4;
+export const CREATURE_FORM_ASPECT_CLASS = "aspect-[3/4]";
+
 interface CreatureFormCardProps {
   form: Partial<CreatureForm>;
   isCyber: boolean;
   isPreview?: boolean;
+  isHighlighted?: boolean;
 }
 
 export function CreatureFormCard({
   form,
   isCyber,
   isPreview = false,
+  isHighlighted = false,
 }: CreatureFormCardProps) {
   const artwork = form.artwork?.trim() || null;
   const name = form.displayName || form.name || (isPreview ? "Form Name Preview" : "Unnamed Form");
 
   return (
     <div
-      className={`group relative flex flex-col rounded-2xl overflow-hidden border transition-all duration-300 select-none w-full aspect-[3/4] min-h-[360px] sm:min-h-[400px] ${
+      className={`group relative flex flex-col rounded-2xl overflow-hidden border transition-all duration-300 select-none w-full ${CREATURE_FORM_ASPECT_CLASS} min-h-[360px] sm:min-h-[400px] ${
         isPreview ? "shadow-md" : "hover:-translate-y-1.5"
-      }`}
+      } ${isHighlighted ? (isCyber ? "ring-2 ring-cyan-400 ring-offset-2 ring-offset-black animate-pulse" : "ring-4 ring-yellow-400") : ""}`}
       style={{
         backgroundColor: isCyber ? "#050816" : "#FFFDF5",
-        borderColor: isCyber
+        borderColor: isHighlighted
+          ? isCyber
+            ? "#00F5FF"
+            : "#000000"
+          : isCyber
           ? isPreview
             ? "rgba(168, 85, 247, 0.6)"
             : "rgba(168, 85, 247, 0.35)"
           : "#000000",
-        borderWidth: isCyber ? "1.5px" : "3px",
-        boxShadow: isCyber
+        borderWidth: isCyber ? (isHighlighted ? "2px" : "1.5px") : "3px",
+        boxShadow: isHighlighted
+          ? isCyber
+            ? "0 0 30px rgba(0, 245, 255, 0.6), 0 4px 25px rgba(0, 0, 0, 0.7)"
+            : "6px 6px 0px #000000"
+          : isCyber
           ? isPreview
             ? "0 0 20px rgba(168, 85, 247, 0.3)"
             : "0 4px 25px rgba(0, 0, 0, 0.6), 0 0 15px rgba(168, 85, 247, 0.2)"
@@ -154,6 +171,35 @@ export function CreatureFormCard({
                   }}
                 >
                   #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Form Connected Characters */}
+          {form.connectedCharacters && form.connectedCharacters.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-white/15">
+              {form.connectedCharacters.map((c, i) => (
+                <span
+                  key={c.characterId || i}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold backdrop-blur-md"
+                  style={{
+                    backgroundColor: isCyber ? "rgba(6, 182, 212, 0.2)" : "#CFFAFE",
+                    borderColor: isCyber ? "rgba(6, 182, 212, 0.5)" : "#000000",
+                    borderWidth: isCyber ? "1px" : "1.5px",
+                    color: isCyber ? "#67E8F9" : "#083344",
+                    boxShadow: isCyber ? "none" : "1px 1px 0px #000000",
+                  }}
+                >
+                  {c.avatar ? (
+                    <img src={c.avatar} alt={c.name} className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
+                  ) : (
+                    <span>{c.characterType === "game_character" ? "🎮" : "👤"}</span>
+                  )}
+                  <span className="truncate max-w-[90px]">{c.name}</span>
+                  {c.relationshipType && (
+                    <span className="opacity-70 text-[8px]">({c.relationshipType})</span>
+                  )}
                 </span>
               ))}
             </div>

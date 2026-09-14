@@ -108,6 +108,7 @@ export function HofPodiumSection({
                     isCyber={isCyber}
                     onOpenProfile={(c) => (onOpenCoupleProfile ? onOpenCoupleProfile(c) : onOpenProfile(top2))}
                     onCompare={() => onCompare(top2)}
+                    onOpenCharacterDictionary={onOpenProfile}
                   />
                 ) : (
                   <HofEntryCard
@@ -197,6 +198,7 @@ export function HofPodiumSection({
                     isCyber={isCyber}
                     onOpenProfile={(c) => (onOpenCoupleProfile ? onOpenCoupleProfile(c) : onOpenProfile(top1))}
                     onCompare={() => onCompare(top1)}
+                    onOpenCharacterDictionary={onOpenProfile}
                   />
                 ) : (
                   <HofEntryCard
@@ -273,6 +275,7 @@ export function HofPodiumSection({
                     isCyber={isCyber}
                     onOpenProfile={(c) => (onOpenCoupleProfile ? onOpenCoupleProfile(c) : onOpenProfile(top3))}
                     onCompare={() => onCompare(top3)}
+                    onOpenCharacterDictionary={onOpenProfile}
                   />
                 ) : (
                   <HofEntryCard

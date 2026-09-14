@@ -13,6 +13,34 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v13.8.2",
+    date: "2026-09-14",
+    title: "Game Duplication Root-Cause Fix, Sidebar Scroll Persistence & Portrait Crop",
+    badge: "PATCH",
+    type: "patch",
+    summary: "Permanently resolved a race-condition in the dashboard auto-seeding pipeline that caused Games and AI Tools to duplicate on every transient database timeout. The `safeQuery` helper now tracks query failure status and gates all default-seed logic behind a mandatory success signal plus a secondary double-count guard, making seeding fully idempotent. Ran a reference-safe reconciliation script that removed 38 zero-reference duplicate Game records and 140 duplicate AI Tool records with zero data loss. Fixed the `UPDATE_GAME` and `UPDATE_AI_TOOL` action handlers to perform case-insensitive title/name fallback lookups before upsert, preventing future ID-mismatch duplications. Patched the Sidebar to preserve its own internal scroll position across navigation using a stable `scrollTop` ref. Changed the Creature Form / Variant image crop interface from landscape (16:9) to portrait (3:4) to match the actual full-art presentation of form cards.",
+    categories: [
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🔁 Idempotent Auto-Seed Guard (app/api/dashboard/route.ts): Enhanced `safeQuery` with an `onFail` callback that sets `queryStatus.gamesOk` and `queryStatus.aiToolsOk` to false on any exception. Auto-seeding is now blocked unless the query both succeeded and returned an empty result, preventing the false-empty race condition triggered by database connection pool saturation or timeouts.",
+          "🛡️ Secondary DB Count Guard (app/api/dashboard/route.ts): Even when `queryStatus.xOk === true && db[x].length === 0`, a second direct `prisma.game.count()` / `prisma.aiToolItem.count()` check confirms zero records exist before any insert is attempted. Per-name deduplication via `existingTitles` / `existingNames` sets prevents partial double-seeds.",
+          "🔍 Case-Insensitive Name Fallback in Upsert (app/api/action/route.ts): `UPDATE_GAME` and `UPDATE_AI_TOOL` now attempt `prisma.game.findFirst({ where: { userId, game: { equals: ..., mode: 'insensitive' } } })` before falling back to create, so payload ID mismatches merge into the canonical record instead of spawning duplicates.",
+          "🗂️ Safe Data Reconciliation (scripts/reconcile_duplicate_games.ts): Executed a reference-verified cleanup script that identified canonical records via a composite richness score (character count × 1000, handle/icon/link bonuses), asserted 0 incoming references on each candidate, and deleted 38 duplicate Game records and 140 duplicate AI Tool records. All 315 GameCharacter and 345 GameDossierCharacter records remain 100% intact with 0 orphaned references.",
+          "📜 Sidebar Scroll Persistence (components/layout/Sidebar.tsx): Stored the sidebar nav container's `scrollTop` in a stable `useRef` and restored it with `element.scrollTop = savedRef.current` inside a `useLayoutEffect` on route change, preventing the sidebar from jumping back to the top when navigating between sections.",
+          "🖼️ Portrait Crop for Creature Forms (components/ui/ImageCropModal.tsx, components/ui/CharacterImageUploader.tsx): Changed the crop aspect ratio used for Creature Form / Variant artwork uploads from landscape (16:9) to portrait (3:4) to align the crop preview with the actual full-art 3:4 card presentation.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🎴 Accurate Crop Preview for Form Artwork: Users uploading artwork for Creature Forms and Variants now see a portrait-oriented crop bounding box that accurately reflects how the final card will be framed, reducing misaligned crops.",
+        ],
+      },
+    ],
+  },
+  {
+
     version: "v13.8.1",
     date: "2026-09-12",
     title: "Creature Form Card Full-Art Overhaul & Nested Modal Stacking Architecture",

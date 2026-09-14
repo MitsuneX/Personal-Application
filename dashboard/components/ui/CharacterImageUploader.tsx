@@ -17,6 +17,7 @@ interface CharacterImageUploaderProps {
   cropData?: any;
   allowVideo?: boolean;
   onVideoCropChange?: (cropData: VideoCropData) => void;
+  zIndex?: number;
 }
 
 export function CharacterImageUploader({
@@ -30,6 +31,7 @@ export function CharacterImageUploader({
   cropData,
   allowVideo = false,
   onVideoCropChange,
+  zIndex,
 }: CharacterImageUploaderProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
@@ -39,6 +41,7 @@ export function CharacterImageUploader({
   const [isCropOpen, setIsCropOpen] = useState(false);
   const [isVideoCropOpen, setIsVideoCropOpen] = useState(false);
   const [videoCropSrc, setVideoCropSrc] = useState<string | null>(null);
+  const [rawFile, setRawFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const { error: toastError } = useToast();
@@ -107,6 +110,7 @@ export function CharacterImageUploader({
   const processFile = useCallback((file: File) => {
     // Clear any previous error immediately so the user sees feedback for the new attempt
     setUploadError(null);
+    setRawFile(file);
     if (file.type.startsWith("video/")) {
       if (!allowVideo) return;
       handleVideoUpload(file);
@@ -121,6 +125,43 @@ export function CharacterImageUploader({
     };
     reader.readAsDataURL(file);
   }, [allowVideo, onChange]);
+
+  const handleDirectUpload = async () => {
+    setIsCropOpen(false);
+    if (!rawFile) return;
+    setIsUploading(true);
+    setUploadError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", rawFile, rawFile.name);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => `HTTP ${res.status}`);
+        throw new Error(errText || `Upload failed with status ${res.status}`);
+      }
+      const json = await res.json();
+      if (json.success && json.url) {
+        onChange(json.url);
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          onChange(e.target?.result as string);
+        };
+        reader.readAsDataURL(rawFile);
+      }
+    } catch (err: any) {
+      console.error("Direct upload error, falling back to data URL:", err);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        onChange(e.target?.result as string);
+      };
+      reader.readAsDataURL(rawFile);
+    } finally {
+      setIsUploading(false);
+      setCropSrc(null);
+      setRawFile(null);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -174,6 +215,7 @@ export function CharacterImageUploader({
     } finally {
       setIsUploading(false);
       setCropSrc(null);
+      setRawFile(null);
     }
   };
 
@@ -326,8 +368,10 @@ export function CharacterImageUploader({
         aspect={aspect}
         title={`Position & Crop ${label}`}
         initialCropData={cropData}
-        onClose={() => { setIsCropOpen(false); setCropSrc(null); }}
+        zIndex={zIndex}
+        onClose={() => { setIsCropOpen(false); setCropSrc(null); setRawFile(null); }}
         onCropComplete={handleCropComplete}
+        onSkipCrop={rawFile ? handleDirectUpload : undefined}
       />
 
       <VideoCropModal

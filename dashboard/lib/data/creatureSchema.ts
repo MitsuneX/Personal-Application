@@ -26,6 +26,7 @@ export interface CreatureForm {
   variantType?: string;          // e.g. "Evolution", "Powered Form", "Transformation", "Regional"
   tags?: string[];
   order?: number;                // Sort order for display
+  connectedCharacters?: CreatureCharacterRef[]; // Form-specific character and game character connections
   createdAt?: string;
   updatedAt?: string;
 }
@@ -82,12 +83,14 @@ export const CREATURE_TIER_META: Record<
 export const CREATURE_RELATIONSHIP_TYPES = [
   "Partner",
   "Companion",
-  "Owner",
-  "Summon",
+  "User",
   "Trainer",
+  "Owner",
   "Mount",
+  "Summon",
   "Familiar",
   "Associated",
+  "Fusion Component",
   "Other",
 ] as const;
 export type CreatureRelationshipType = (typeof CREATURE_RELATIONSHIP_TYPES)[number];
@@ -349,19 +352,34 @@ export function normalizeCreatureJson(raw: any, fallbackId?: string): CreatureEn
       : [],
     forms: Array.isArray(raw.forms)
       ? raw.forms
-          .map((f: any, idx: number): CreatureForm => ({
-            id: String(f.id || `form-${idx}-${Date.now()}`).trim(),
-            name: String(f.name || "Unnamed Form").trim(),
-            displayName: f.displayName ? String(f.displayName).trim() : undefined,
-            description: f.description ? String(f.description).trim() : undefined,
-            artwork: f.artwork || null,
-            variantType: f.variantType ? String(f.variantType).trim() : undefined,
-            tags: Array.isArray(f.tags) ? f.tags.map((t: any) => String(t).trim()).filter(Boolean) : [],
-            order: typeof f.order === "number" ? f.order : idx,
-            createdAt: f.createdAt,
-            updatedAt: f.updatedAt,
-          }))
-          .filter((f: any) => f.name)
+          .map((f: any, idx: number): CreatureForm => {
+            const formName = String(f.name || f.displayName || "").trim();
+            return {
+              id: String(f.id || `form-${idx}-${Date.now()}`).trim(),
+              name: formName || "Unnamed Form",
+              displayName: f.displayName ? String(f.displayName).trim() : undefined,
+              description: f.description ? String(f.description).trim() : undefined,
+              artwork: f.artwork || null,
+              variantType: f.variantType ? String(f.variantType).trim() : undefined,
+              tags: Array.isArray(f.tags) ? f.tags.map((t: any) => String(t).trim()).filter(Boolean) : [],
+              order: typeof f.order === "number" ? f.order : idx,
+              connectedCharacters: Array.isArray(f.connectedCharacters)
+                ? f.connectedCharacters
+                    .map((c: any) => ({
+                      characterId: String(c.characterId || c.id || "").trim(),
+                      characterType: c.characterType === "game_character" ? ("game_character" as const) : ("character_dict" as const),
+                      name: String(c.name || "Unknown Character").trim(),
+                      avatar: c.avatar || c.avatarUrl || c.imageUrl || null,
+                      sourceTitle: c.sourceTitle ? String(c.sourceTitle).trim() : undefined,
+                      relationshipType: c.relationshipType ? String(c.relationshipType).trim() : undefined,
+                    }))
+                    .filter((c: any) => c.characterId)
+                : [],
+              createdAt: f.createdAt,
+              updatedAt: f.updatedAt,
+            };
+          })
+          .filter((f: any) => f.name || f.displayName || f.artwork)
       : [],
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,

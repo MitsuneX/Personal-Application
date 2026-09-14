@@ -73,6 +73,43 @@ const DRAMA_SUB = [
   { href: "/drama/hollywood", icon: "🎬", label: "Hollywood"  },
 ];
 
+// Module-level in-memory cache surviving client-side route transitions and component remounts
+const sidebarScrollMemory: Record<string, number> = {
+  desktop: 0,
+  mobile: 0,
+};
+
+const SIDEBAR_SCROLL_STORAGE_PREFIX = "nexus_sidebar_scroll_";
+
+function getSidebarScroll(key: string): number {
+  if (typeof window === "undefined") return 0;
+  if (sidebarScrollMemory[key] !== undefined && sidebarScrollMemory[key] > 0) {
+    return sidebarScrollMemory[key];
+  }
+  try {
+    const stored = sessionStorage.getItem(`${SIDEBAR_SCROLL_STORAGE_PREFIX}${key}`);
+    if (stored !== null) {
+      const parsed = parseFloat(stored);
+      if (!isNaN(parsed) && parsed >= 0) {
+        sidebarScrollMemory[key] = parsed;
+        return parsed;
+      }
+    }
+  } catch {}
+  return 0;
+}
+
+function saveSidebarScroll(key: string, scrollTop: number) {
+  sidebarScrollMemory[key] = scrollTop;
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(`${SIDEBAR_SCROLL_STORAGE_PREFIX}${key}`, String(scrollTop));
+  } catch {}
+}
+
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
+
 export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, onToggleCollapse }: SidebarProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
@@ -85,6 +122,73 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
   const { profile } = useDashboardStore();
   const avatar = profile.avatar || "/avatar.png";
   const isDramaActive = pathname.startsWith("/drama");
+
+  const scrollKey = isMobileDrawer ? "mobile" : "desktop";
+  const navRef = React.useRef<HTMLElement>(null);
+  const isRestoringRef = React.useRef(false);
+  const scrollTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Synchronously restore scroll position before browser paint to eliminate flicker
+  useIsomorphicLayoutEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const saved = getSidebarScroll(scrollKey);
+    if (saved > 0) {
+      isRestoringRef.current = true;
+      nav.scrollTop = saved;
+
+      // Double-check on next animation frame in case child elements or fonts reflow after first paint
+      const raf = requestAnimationFrame(() => {
+        if (nav && Math.abs(nav.scrollTop - saved) > 1) {
+          nav.scrollTop = saved;
+        }
+        setTimeout(() => {
+          isRestoringRef.current = false;
+        }, 120);
+      });
+
+      return () => {
+        cancelAnimationFrame(raf);
+        isRestoringRef.current = false;
+      };
+    }
+  }, [scrollKey, pathname]);
+
+  // Track active scroll interactions
+  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+    if (isRestoringRef.current) return;
+    const pos = e.currentTarget.scrollTop;
+    sidebarScrollMemory[scrollKey] = pos;
+
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    scrollTimeoutRef.current = setTimeout(() => {
+      saveSidebarScroll(scrollKey, pos);
+    }, 150);
+  };
+
+  // Ensure last scroll position is captured before component unmounts on navigation
+  React.useEffect(() => {
+    const nav = navRef.current;
+    return () => {
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+      if (nav && !isRestoringRef.current) {
+        saveSidebarScroll(scrollKey, nav.scrollTop);
+      }
+    };
+  }, [scrollKey]);
+
+  // Capture position on tab hide / page unload as well
+  React.useEffect(() => {
+    const handlePageHide = () => {
+      const nav = navRef.current;
+      if (nav && !isRestoringRef.current) {
+        saveSidebarScroll(scrollKey, nav.scrollTop);
+      }
+    };
+    window.addEventListener("pagehide", handlePageHide);
+    return () => window.removeEventListener("pagehide", handlePageHide);
+  }, [scrollKey]);
 
   return (
     <>
@@ -191,7 +295,11 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
         </div>
 
         {/* ── Navigation ── */}
-        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
+        <nav
+          ref={navRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto py-3 px-2 space-y-4"
+        >
           {NAV_SECTIONS.map((section) => (
             <div key={section.label}>
               {/* Section label */}

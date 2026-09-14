@@ -8,6 +8,7 @@ import { useContextMenu } from "@/hooks/useContextMenu";
 import { useToast } from "@/components/ui/ToastProvider";
 import { RomanticLoveBurst, RomanticLoveBurstHandle } from "@/components/ui/RomanticLoveBurst";
 import { triggerHeartEffect } from "@/components/ui/FloatingHeartEngine";
+import type { HallOfFameEntry } from "@/lib/store/dashboardStore";
 
 interface HofCoupleCardProps {
   couple: CoupleEntry;
@@ -16,6 +17,7 @@ interface HofCoupleCardProps {
   isCyber: boolean;
   onOpenProfile: (couple: CoupleEntry) => void;
   onCompare?: (couple: CoupleEntry) => void;
+  onOpenCharacterDictionary?: (entry: HallOfFameEntry) => void;
 }
 
 export function HofCoupleCard({
@@ -25,6 +27,7 @@ export function HofCoupleCard({
   isCyber,
   onOpenProfile,
   onCompare,
+  onOpenCharacterDictionary,
 }: HofCoupleCardProps) {
   const shouldReduceMotion = useReducedMotion();
   const { hallOfFame = [], dossierCharacters = [], loveCouple, toggleFavoriteCouple } = useDashboardStore();
@@ -35,22 +38,40 @@ export function HofCoupleCard({
 
   // ── Resolve canonical partner images if not set on couple ───────────────────
   const canonicalA = useMemo(() => {
-    if (!couple.partnerA.characterId) return null;
-    return (
-      hallOfFame.find((h) => h.id === couple.partnerA.characterId) ||
-      dossierCharacters.find((d) => d.id === couple.partnerA.characterId) ||
-      null
-    );
-  }, [couple.partnerA.characterId, hallOfFame, dossierCharacters]);
+    if (couple.partnerA.characterId) {
+      const found =
+        hallOfFame.find((h) => h.id === couple.partnerA.characterId) ||
+        dossierCharacters.find((d) => d.id === couple.partnerA.characterId);
+      if (found) return found;
+    }
+    if (couple.partnerA.name?.trim()) {
+      const pName = couple.partnerA.name.trim().toLowerCase();
+      return (
+        hallOfFame.find((h) => h.name.trim().toLowerCase() === pName) ||
+        dossierCharacters.find((d) => d.name.trim().toLowerCase() === pName) ||
+        null
+      );
+    }
+    return null;
+  }, [couple.partnerA.characterId, couple.partnerA.name, hallOfFame, dossierCharacters]);
 
   const canonicalB = useMemo(() => {
-    if (!couple.partnerB.characterId) return null;
-    return (
-      hallOfFame.find((h) => h.id === couple.partnerB.characterId) ||
-      dossierCharacters.find((d) => d.id === couple.partnerB.characterId) ||
-      null
-    );
-  }, [couple.partnerB.characterId, hallOfFame, dossierCharacters]);
+    if (couple.partnerB.characterId) {
+      const found =
+        hallOfFame.find((h) => h.id === couple.partnerB.characterId) ||
+        dossierCharacters.find((d) => d.id === couple.partnerB.characterId);
+      if (found) return found;
+    }
+    if (couple.partnerB.name?.trim()) {
+      const pName = couple.partnerB.name.trim().toLowerCase();
+      return (
+        hallOfFame.find((h) => h.name.trim().toLowerCase() === pName) ||
+        dossierCharacters.find((d) => d.name.trim().toLowerCase() === pName) ||
+        null
+      );
+    }
+    return null;
+  }, [couple.partnerB.characterId, couple.partnerB.name, hallOfFame, dossierCharacters]);
 
   const partnerAAvatar =
     couple.partnerA.avatar?.trim() ||
@@ -105,6 +126,26 @@ export function HofCoupleCard({
           icon: "📖",
           onClick: () => onOpenProfile(couple),
         },
+        ...(canonicalA && onOpenCharacterDictionary
+          ? [
+              {
+                id: "view-partner-a",
+                label: `View ${partnerAName} in Dictionary`,
+                icon: "👤",
+                onClick: () => onOpenCharacterDictionary(canonicalA as HallOfFameEntry),
+              },
+            ]
+          : []),
+        ...(canonicalB && onOpenCharacterDictionary
+          ? [
+              {
+                id: "view-partner-b",
+                label: `View ${partnerBName} in Dictionary`,
+                icon: "👤",
+                onClick: () => onOpenCharacterDictionary(canonicalB as HallOfFameEntry),
+              },
+            ]
+          : []),
         {
           id: "love-couple",
           label: `Love Match (+1) — ${couple.likes || 0}`,
@@ -251,11 +292,22 @@ export function HofCoupleCard({
             boxShadow: isCyber ? "0 4px 20px rgba(0, 0, 0, 0.5)" : "3px 3px 0px #000000",
           }}
         >
-          {/* Partner A (Floating gently) */}
+          {/* Partner A (Floating gently, clickable if connected to Dictionary) */}
           <motion.div
             animate={shouldReduceMotion ? {} : { y: [-3, 3, -3] }}
             transition={{ repeat: Infinity, duration: 3.2, ease: "easeInOut" }}
-            className="flex items-center gap-2 min-w-0 flex-1"
+            onClick={
+              canonicalA && onOpenCharacterDictionary
+                ? (e) => {
+                    e.stopPropagation();
+                    onOpenCharacterDictionary(canonicalA as HallOfFameEntry);
+                  }
+                : undefined
+            }
+            className={`flex items-center gap-2 min-w-0 flex-1 ${
+              canonicalA && onOpenCharacterDictionary ? "cursor-pointer group/partnerA hover:opacity-90 transition-opacity" : ""
+            }`}
+            title={canonicalA && onOpenCharacterDictionary ? `View ${partnerAName} in Character Dictionary` : undefined}
           >
             <div
               className="w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden shrink-0 border-2 shadow-md relative"
@@ -272,10 +324,13 @@ export function HofCoupleCard({
             </div>
             <div className="min-w-0">
               <p
-                className="text-xs font-black truncate leading-tight"
+                className="text-xs font-black truncate leading-tight flex items-center gap-1"
                 style={{ color: isCyber ? "#FFFFFF" : "#000000" }}
               >
-                {partnerAName}
+                <span>{partnerAName}</span>
+                {canonicalA && onOpenCharacterDictionary && (
+                  <span className="text-[9px] text-cyan-400 opacity-70 group-hover/partnerA:opacity-100">↗</span>
+                )}
               </p>
               {couple.partnerA.role && (
                 <p
@@ -310,18 +365,32 @@ export function HofCoupleCard({
             </span>
           </div>
 
-          {/* Partner B (Floating with inverse phase / natural delay) */}
+          {/* Partner B (Floating with inverse phase / natural delay, clickable if connected) */}
           <motion.div
             animate={shouldReduceMotion ? {} : { y: [3, -3, 3] }}
             transition={{ repeat: Infinity, duration: 3.2, ease: "easeInOut", delay: 0.8 }}
-            className="flex items-center gap-2 min-w-0 flex-1 justify-end text-right"
+            onClick={
+              canonicalB && onOpenCharacterDictionary
+                ? (e) => {
+                    e.stopPropagation();
+                    onOpenCharacterDictionary(canonicalB as HallOfFameEntry);
+                  }
+                : undefined
+            }
+            className={`flex items-center gap-2 min-w-0 flex-1 justify-end text-right ${
+              canonicalB && onOpenCharacterDictionary ? "cursor-pointer group/partnerB hover:opacity-90 transition-opacity" : ""
+            }`}
+            title={canonicalB && onOpenCharacterDictionary ? `View ${partnerBName} in Character Dictionary` : undefined}
           >
             <div className="min-w-0">
               <p
-                className="text-xs font-black truncate leading-tight"
+                className="text-xs font-black truncate leading-tight flex items-center justify-end gap-1"
                 style={{ color: isCyber ? "#FFFFFF" : "#000000" }}
               >
-                {partnerBName}
+                {canonicalB && onOpenCharacterDictionary && (
+                  <span className="text-[9px] text-pink-400 opacity-70 group-hover/partnerB:opacity-100">↗</span>
+                )}
+                <span>{partnerBName}</span>
               </p>
               {couple.partnerB.role && (
                 <p

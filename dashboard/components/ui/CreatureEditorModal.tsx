@@ -25,7 +25,11 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { CharacterImageUploader, GalleryUploader } from "@/components/ui/CharacterImageUploader";
 import { OverlayPortal } from "@/components/ui/OverlayPortal";
 import { Z_INDEX } from "@/components/ui/ViewportBoundary";
-import { CreatureFormCard } from "@/components/creatures/CreatureFormCard";
+import {
+  CreatureFormCard,
+  CREATURE_FORM_ASPECT_RATIO,
+  CREATURE_FORM_ASPECT_CLASS,
+} from "@/components/creatures/CreatureFormCard";
 
 interface CreatureEditorModalProps {
   isOpen: boolean;
@@ -77,6 +81,13 @@ export function CreatureEditorModal({
   // Editing state for an in-progress form (null = not editing)
   const [editingFormIdx, setEditingFormIdx] = useState<number | null>(null);
   const [formDraft, setFormDraft] = useState<Partial<CreatureForm>>({});
+
+  // Form-level Character Connection states
+  const [formCharPickerType, setFormCharPickerType] = useState<"character_dict" | "game_character" | null>(null);
+  const [formCharSearchQuery, setFormCharSearchQuery] = useState("");
+  const [formCharSearchResults, setFormCharSearchResults] = useState<CharacterSearchResult[]>([]);
+  const [isSearchingFormChars, setIsSearchingFormChars] = useState(false);
+  const [formCharRole, setFormCharRole] = useState("Partner");
 
   // Media states
   const [media, setMedia] = useState<CreatureMedia>({
@@ -175,9 +186,12 @@ export function CreatureEditorModal({
     setCharSearchResults([]);
     setEditingFormIdx(null);
     setFormDraft({});
+    setFormCharPickerType(null);
+    setFormCharSearchQuery("");
+    setFormCharSearchResults([]);
   }, [isOpen, creatureToEdit]);
 
-  // Debounced search for characters
+  // Debounced search for general characters
   useEffect(() => {
     const q = charSearchQuery.trim();
     if (!q || q.length < 2) {
@@ -206,6 +220,38 @@ export function CreatureEditorModal({
 
     return () => clearTimeout(handler);
   }, [charSearchQuery]);
+
+  // Debounced search for form-specific characters
+  useEffect(() => {
+    const q = formCharSearchQuery.trim();
+    if (!q || q.length < 2 || !formCharPickerType) {
+      setFormCharSearchResults([]);
+      setIsSearchingFormChars(false);
+      return;
+    }
+
+    setIsSearchingFormChars(true);
+    const handler = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/characters/search?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setFormCharSearchResults(
+            data.filter((c: CharacterSearchResult) => c.characterType === formCharPickerType)
+          );
+        } else {
+          setFormCharSearchResults([]);
+        }
+      } catch (err) {
+        console.error("Form character search query error:", err);
+        setFormCharSearchResults([]);
+      } finally {
+        setIsSearchingFormChars(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [formCharSearchQuery, formCharPickerType]);
 
   if (!isOpen) return null;
 
@@ -258,6 +304,49 @@ export function CreatureEditorModal({
     );
   };
 
+  // ── Form-Level Connection Management ──
+  const handleAddFormConnection = (char: CharacterSearchResult) => {
+    const current = formDraft.connectedCharacters || [];
+    if (current.some((c) => c.characterId === char.id)) {
+      toastWarning(`"${char.name}" is already connected to this form.`);
+      return;
+    }
+
+    const newRef: CreatureCharacterRef = {
+      characterId: char.id,
+      characterType: char.characterType,
+      name: char.name,
+      avatar: char.avatar || null,
+      sourceTitle: char.sourceTitle,
+      relationshipType: formCharRole || "Partner",
+    };
+
+    setFormDraft((prev) => ({
+      ...prev,
+      connectedCharacters: [...(prev.connectedCharacters || []), newRef],
+    }));
+    toastSuccess(`Connected "${char.name}" to form!`);
+    setFormCharSearchQuery("");
+    setFormCharSearchResults([]);
+    setFormCharPickerType(null);
+  };
+
+  const handleRemoveFormConnection = (characterId: string) => {
+    setFormDraft((prev) => ({
+      ...prev,
+      connectedCharacters: (prev.connectedCharacters || []).filter((c) => c.characterId !== characterId),
+    }));
+  };
+
+  const handleUpdateFormRelationshipType = (characterId: string, relType: string) => {
+    setFormDraft((prev) => ({
+      ...prev,
+      connectedCharacters: (prev.connectedCharacters || []).map((c) =>
+        c.characterId === characterId ? { ...c, relationshipType: relType } : c
+      ),
+    }));
+  };
+
   // ── Save Creature Form ──
   const handleSave = async () => {
     if (!name.trim()) {
@@ -273,6 +362,11 @@ export function CreatureEditorModal({
 
     setIsSaving(true);
     try {
+      // Auto-commit any active form draft
+      const finalForms = editingFormIdx !== null
+        ? forms.map((f, i) => i === editingFormIdx ? { ...f, ...formDraft, updatedAt: new Date().toISOString() } : f)
+        : forms;
+
       const payload: Partial<CreatureEntry> = {
         name: name.trim(),
         classification: currentClassification,
@@ -292,7 +386,7 @@ export function CreatureEditorModal({
         },
         tags,
         connectedCharacters,
-        forms: forms.length > 0 ? forms : [],
+        forms: finalForms.length > 0 ? finalForms : [],
       };
 
       if (creatureToEdit?.id) {
@@ -914,6 +1008,7 @@ export function CreatureEditorModal({
                         aspect={16 / 9}
                         hint="16:9 or 4:3 artwork recommended."
                         previewClass="h-44 w-full"
+                        zIndex={Z_INDEX.MODAL_CONFIRM}
                       />
 
                       <div className="space-y-1">
@@ -951,6 +1046,7 @@ export function CreatureEditorModal({
                         aspect={3 / 4}
                         hint="3:4 portrait crop recommended for card grid."
                         previewClass="h-48 w-36 mx-auto"
+                        zIndex={Z_INDEX.MODAL_CONFIRM}
                       />
 
                       <div className="space-y-1">
@@ -988,6 +1084,7 @@ export function CreatureEditorModal({
                         aspect={16 / 9}
                         hint="Widescreen scene capture."
                         previewClass="h-40 w-full"
+                        zIndex={Z_INDEX.MODAL_CONFIRM}
                       />
                     </div>
 
@@ -1322,9 +1419,9 @@ export function CreatureEditorModal({
                             </div>
 
                             <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                              {form.artwork ? (
+                              {(isEditing ? (formDraft.artwork ?? form.artwork) : form.artwork) ? (
                                 <img
-                                  src={form.artwork}
+                                  src={(isEditing ? (formDraft.artwork ?? form.artwork) : form.artwork)!}
                                   alt={form.name}
                                   className="w-10 h-10 rounded-lg object-cover border border-white/20 shrink-0"
                                 />
@@ -1427,9 +1524,10 @@ export function CreatureEditorModal({
                                   value={formDraft.artwork || ""}
                                   onChange={(url) => setFormDraft((d) => ({ ...d, artwork: url }))}
                                   onClear={() => setFormDraft((d) => ({ ...d, artwork: null }))}
-                                  aspect={4 / 3}
-                                  hint="Spans full card width with ambient backdrop in Dossier."
-                                  previewClass="h-44 w-full"
+                                  aspect={CREATURE_FORM_ASPECT_RATIO}
+                                  hint="3:4 portrait crop matching the Form / Variant card presentation."
+                                  previewClass={`w-36 h-48 ${CREATURE_FORM_ASPECT_CLASS} mx-auto`}
+                                  zIndex={Z_INDEX.MODAL_CONFIRM}
                                 />
 
                                 <div className="space-y-1">
@@ -1462,6 +1560,228 @@ export function CreatureEditorModal({
                                       : "bg-white border-2 border-black text-black placeholder-slate-400 focus:border-violet-500"
                                   } outline-none transition-all`}
                                 />
+                              </div>
+
+                              {/* ── Form Character Connections Section ── */}
+                              <div className="space-y-3 pt-3 border-t border-white/10">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                  <div>
+                                    <h5 className={`text-xs font-mono font-black uppercase flex items-center gap-1.5 ${
+                                      isCyber ? "text-cyan-300" : "text-black"
+                                    }`}>
+                                      <span>🔗</span>
+                                      <span>Form-Specific Character Connections</span>
+                                    </h5>
+                                    <p className={`text-[10px] font-mono opacity-70 mt-0.5 ${
+                                      isCyber ? "text-slate-400" : "text-slate-600"
+                                    }`}>
+                                      Connect Characters or Game Characters specifically associated with this Form/Variant.
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setFormCharPickerType(formCharPickerType === "character_dict" ? null : "character_dict");
+                                        setFormCharSearchQuery("");
+                                        setFormCharSearchResults([]);
+                                      }}
+                                      className={`px-2.5 py-1 rounded-xl text-[10px] font-mono font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                                        formCharPickerType === "character_dict"
+                                          ? isCyber ? "bg-amber-500/30 text-amber-300 border-amber-400" : "bg-amber-300 text-black border-black"
+                                          : isCyber ? "bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20" : "bg-amber-100 text-black border border-black hover:bg-amber-200"
+                                      }`}
+                                    >
+                                      <span>👤</span>
+                                      <span>+ Connect Character</span>
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setFormCharPickerType(formCharPickerType === "game_character" ? null : "game_character");
+                                        setFormCharSearchQuery("");
+                                        setFormCharSearchResults([]);
+                                      }}
+                                      className={`px-2.5 py-1 rounded-xl text-[10px] font-mono font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                                        formCharPickerType === "game_character"
+                                          ? isCyber ? "bg-purple-500/30 text-purple-300 border-purple-400" : "bg-purple-300 text-black border-black"
+                                          : isCyber ? "bg-purple-500/10 text-purple-300 border-purple-500/30 hover:bg-purple-500/20" : "bg-purple-100 text-black border border-black hover:bg-purple-200"
+                                      }`}
+                                    >
+                                      <span>🎮</span>
+                                      <span>+ Connect Game Char</span>
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Search Picker Box */}
+                                {formCharPickerType && (
+                                  <div className={`p-3 rounded-xl border space-y-2.5 ${
+                                    isCyber ? "bg-[#060a18] border-cyan-500/30" : "bg-slate-50 border-2 border-black shadow-[2px_2px_0px_#000]"
+                                  }`}>
+                                    <div className="flex items-center justify-between">
+                                      <span className={`text-[10px] font-mono font-bold uppercase ${
+                                        formCharPickerType === "character_dict" ? (isCyber ? "text-amber-300" : "text-amber-800") : (isCyber ? "text-purple-300" : "text-purple-800")
+                                      }`}>
+                                        {formCharPickerType === "character_dict" ? "👤 Search Character Dictionary" : "🎮 Search Game Character Roster"}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => setFormCharPickerType(null)}
+                                        className="text-xs opacity-50 hover:opacity-100 cursor-pointer"
+                                      >
+                                        ✕ Close
+                                      </button>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                      <div className="relative flex-1">
+                                        <input
+                                          type="text"
+                                          value={formCharSearchQuery}
+                                          onChange={(e) => setFormCharSearchQuery(e.target.value)}
+                                          placeholder={
+                                            formCharPickerType === "character_dict"
+                                              ? "Search character name or source work..."
+                                              : "Search game character name or game title..."
+                                          }
+                                          autoFocus
+                                          className={`w-full px-3 py-1.5 rounded-lg text-xs font-mono border outline-none ${
+                                            isCyber
+                                              ? "bg-black/60 border-white/20 text-white placeholder-slate-500 focus:border-cyan-400"
+                                              : "bg-white border border-black text-black placeholder-slate-400"
+                                          }`}
+                                        />
+                                        {isSearchingFormChars && (
+                                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs animate-spin text-cyan-400">
+                                            ⟳
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      {/* Optional Role selector for form connection */}
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        <span className="text-[10px] font-mono opacity-60">Role:</span>
+                                        <select
+                                          value={formCharRole}
+                                          onChange={(e) => setFormCharRole(e.target.value)}
+                                          className={`px-2 py-1 rounded-lg text-xs font-mono font-bold border cursor-pointer ${
+                                            isCyber ? "bg-black/60 border-white/20 text-cyan-300" : "bg-white border-black text-black"
+                                          }`}
+                                        >
+                                          {CREATURE_RELATIONSHIP_TYPES.map((t) => (
+                                            <option key={t} value={t}>{t}</option>
+                                          ))}
+                                        </select>
+                                      </div>
+                                    </div>
+
+                                    {/* Results */}
+                                    {formCharSearchResults.length > 0 && (
+                                      <div className={`max-h-48 overflow-y-auto rounded-lg border divide-y ${
+                                        isCyber ? "bg-black/40 border-white/10 divide-white/10" : "bg-white border-black divide-slate-200"
+                                      }`}>
+                                        {formCharSearchResults.map((res) => (
+                                          <div
+                                            key={res.id}
+                                            onClick={() => handleAddFormConnection(res)}
+                                            className={`p-2 flex items-center justify-between gap-2 hover:bg-cyan-500/10 cursor-pointer transition-all ${
+                                              isCyber ? "text-white" : "text-black"
+                                            }`}
+                                          >
+                                            <div className="flex items-center gap-2 min-w-0">
+                                              {res.avatar ? (
+                                                <img src={res.avatar} alt={res.name} className="w-8 h-8 rounded-lg object-cover shrink-0" />
+                                              ) : (
+                                                <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0 text-xs">
+                                                  {res.characterType === "game_character" ? "🎮" : "👤"}
+                                                </div>
+                                              )}
+                                              <div className="min-w-0">
+                                                <p className="text-xs font-bold font-mono truncate">{res.name}</p>
+                                                <p className="text-[10px] font-mono opacity-60 truncate">{res.sourceTitle}</p>
+                                              </div>
+                                            </div>
+                                            <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold shrink-0 ${
+                                              isCyber ? "bg-cyan-500/20 text-cyan-300" : "bg-black text-white"
+                                            }`}>
+                                              + Connect
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    {formCharSearchQuery.trim().length >= 2 && !isSearchingFormChars && formCharSearchResults.length === 0 && (
+                                      <p className="text-[10px] font-mono opacity-60 text-center py-2">
+                                        No matching {formCharPickerType === "character_dict" ? "Character Dictionary" : "Game Character"} records found.
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Active Form Connections List */}
+                                {(!formDraft.connectedCharacters || formDraft.connectedCharacters.length === 0) ? (
+                                  <p className="text-[10px] font-mono opacity-50 italic">
+                                    No characters specifically connected to this form yet.
+                                  </p>
+                                ) : (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {formDraft.connectedCharacters.map((conn) => {
+                                      const isDict = conn.characterType !== "game_character";
+                                      return (
+                                        <div
+                                          key={conn.characterId}
+                                          className={`flex items-center justify-between gap-2 p-2 rounded-xl border ${
+                                            isCyber ? "bg-black/40 border-white/10" : "bg-white border border-black shadow-[1px_1px_0px_#000]"
+                                          }`}
+                                        >
+                                          <div className="flex items-center gap-2 min-w-0">
+                                            {conn.avatar ? (
+                                              <img src={conn.avatar} alt={conn.name} className="w-8 h-8 rounded-lg object-cover shrink-0" />
+                                            ) : (
+                                              <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0 text-xs">
+                                                {isDict ? "👤" : "🎮"}
+                                              </div>
+                                            )}
+                                            <div className="min-w-0">
+                                              <p className="text-xs font-bold font-mono truncate">{conn.name}</p>
+                                              <div className="flex items-center gap-1 text-[9px] font-mono opacity-60 truncate">
+                                                <span className={`font-bold ${isDict ? (isCyber ? "text-amber-300" : "text-amber-800") : (isCyber ? "text-purple-300" : "text-purple-800")}`}>
+                                                  {isDict ? "Character Dict" : "Game Char"}
+                                                </span>
+                                                {conn.sourceTitle && <span>· {conn.sourceTitle}</span>}
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                          <div className="flex items-center gap-1 shrink-0">
+                                            <select
+                                              value={conn.relationshipType || "Partner"}
+                                              onChange={(e) => handleUpdateFormRelationshipType(conn.characterId, e.target.value)}
+                                              className={`px-1.5 py-0.5 rounded text-[10px] font-mono border cursor-pointer ${
+                                                isCyber ? "bg-black/60 border-white/20 text-cyan-300" : "bg-slate-100 border-black text-black"
+                                              }`}
+                                            >
+                                              {CREATURE_RELATIONSHIP_TYPES.map((t) => (
+                                                <option key={t} value={t}>{t}</option>
+                                              ))}
+                                            </select>
+                                            <button
+                                              type="button"
+                                              onClick={() => handleRemoveFormConnection(conn.characterId)}
+                                              className="w-6 h-6 rounded-md flex items-center justify-center text-xs text-red-400 hover:bg-red-500/20 transition-all cursor-pointer"
+                                              title="Remove relationship"
+                                            >
+                                              ✕
+                                            </button>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
                               </div>
 
                               {/* Live Dossier Card Presentation Preview */}
