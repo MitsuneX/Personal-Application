@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useTheme } from "@/lib/theme";
 import { CreatureEntry, getClassificationMeta, CREATURE_TIER_META } from "@/lib/data/creatureSchema";
+
+import { useLiveCreatureHighlight } from "@/lib/hooks/useLiveCreatureHighlight";
 
 interface CreatureSpotlightProps {
   creatures: CreatureEntry[];
@@ -20,97 +22,15 @@ export function CreatureSpotlight({
   const isCyber = theme === "cyber";
   const shouldReduceMotion = useReducedMotion();
 
-  // ── Automatic Randomized Rotation Engine with Anti-Repeat History ────────────
-  const [activeId, setActiveId] = useState<string | null>(() => {
-    if (!creatures || creatures.length === 0) return null;
-    // Prefer favorite if available on first mount, else random
-    const fav = creatures.find((c) => c.isFavorite);
-    return fav ? fav.id : creatures[0].id;
-  });
-
-  const [isPaused, setIsPaused] = useState(false);
-  const [rotationKey, setRotationKey] = useState(0);
-
-  // Anti-repeat history buffer: holds last few creature IDs to prevent immediate repeats
-  const recentHistoryRef = useRef<string[]>([]);
-
-  // Sync activeId if current active creature was deleted or creatures changed
-  useEffect(() => {
-    if (creatures.length === 0) {
-      setActiveId(null);
-      recentHistoryRef.current = [];
-      return;
-    }
-    if (!activeId || !creatures.some((c) => c.id === activeId)) {
-      const initial = creatures.find((c) => c.isFavorite) || creatures[0];
-      setActiveId(initial.id);
-      recentHistoryRef.current = [initial.id];
-    }
-  }, [creatures, activeId]);
-
-  // Current active creature record
-  const activeCreature = useMemo(() => {
-    if (!creatures || creatures.length === 0) return null;
-    return creatures.find((c) => c.id === activeId) || creatures[0];
-  }, [creatures, activeId]);
-
-  // Pick next creature with anti-repeat safeguards
-  const pickNextRandom = useCallback(() => {
-    if (creatures.length <= 1) return;
-
-    // Buffer length: avoid repeats across up to 3 creatures (or count - 1 if smaller)
-    const historyCap = Math.max(1, Math.min(3, creatures.length - 1));
-
-    // Exclude recently seen IDs
-    let eligible = creatures.filter(
-      (c) => c.id !== activeId && !recentHistoryRef.current.includes(c.id)
-    );
-
-    // If all creatures were in history cap, relax to any creature except currently active
-    if (eligible.length === 0) {
-      eligible = creatures.filter((c) => c.id !== activeId);
-    }
-
-    if (eligible.length === 0) return;
-
-    // Truly random selection from eligible candidates
-    const chosen = eligible[Math.floor(Math.random() * eligible.length)];
-
-    // Update history cap
-    recentHistoryRef.current = [...recentHistoryRef.current.slice(-historyCap + 1), chosen.id];
-    setActiveId(chosen.id);
-    setRotationKey((k) => k + 1);
-  }, [creatures, activeId]);
-
-  // Pick previous creature from history or random
-  const pickPrev = useCallback(() => {
-    if (creatures.length <= 1) return;
-    const history = recentHistoryRef.current;
-    if (history.length > 1) {
-      // Step back in history
-      const prevId = history[history.length - 2];
-      const prevCreature = creatures.find((c) => c.id === prevId);
-      if (prevCreature) {
-        recentHistoryRef.current = history.slice(0, history.length - 1);
-        setActiveId(prevCreature.id);
-        setRotationKey((k) => k + 1);
-        return;
-      }
-    }
-    // Fallback: regular random pick
-    pickNextRandom();
-  }, [creatures, pickNextRandom]);
-
-  // Automatic interval timer: 9 seconds
-  useEffect(() => {
-    if (isPaused || creatures.length <= 1) return;
-
-    const timer = setInterval(() => {
-      pickNextRandom();
-    }, 9000);
-
-    return () => clearInterval(timer);
-  }, [isPaused, creatures.length, pickNextRandom]);
+  // Canonical shared live Creature Highlight state
+  const {
+    activeCreature,
+    pickNextRandom,
+    pickPrev,
+    isPaused,
+    setIsPaused,
+    rotationKey,
+  } = useLiveCreatureHighlight();
 
   // Clean empty state when no creatures exist
   if (!activeCreature) {

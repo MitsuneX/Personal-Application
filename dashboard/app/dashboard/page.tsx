@@ -41,6 +41,7 @@ function DashboardContent() {
 
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -120,7 +121,7 @@ function DashboardContent() {
   ];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-6">
+    <div className="space-y-6 w-full max-w-screen-2xl mx-auto pb-6">
       {/* ── 1. Command Header ── */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -169,8 +170,12 @@ function DashboardContent() {
         initial="hidden"
         animate="visible"
       >
-        {stats.map((stat) => (
-          <motion.div key={stat.label} variants={cardVariants}>
+        {stats.map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            variants={cardVariants}
+            className={idx === stats.length - 1 ? "col-span-2 sm:col-span-1 lg:col-span-1" : ""}
+          >
             <Link href={stat.href}>
               <motion.div
                 className="rounded-xl p-4 flex flex-col justify-between h-full cursor-pointer transition-all"
@@ -219,14 +224,14 @@ function DashboardContent() {
 
       {/* ── 5. Core Identity & Progression Grid (Profile | Radar | Anime Progress) ── */}
       <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
         variants={gridContainerVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* Profile Card */}
-        <div className="md:col-span-2 xl:col-span-1">
-          <ProfileCard />
+        {/* Profile Card (Compact Snapshot) */}
+        <div className="md:col-span-2 lg:col-span-1">
+          <ProfileCard compact />
         </div>
 
         {/* Game Radar Chart */}
@@ -275,7 +280,9 @@ function DashboardContent() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         <FavouritesSnapshot />
         <CoupleSpotlightCard />
-        <CreatureSpotlightCard />
+        <div className="md:col-span-2 lg:col-span-1">
+          <CreatureSpotlightCard />
+        </div>
       </div>
 
       {/* ── 8. ▶ Continue Watching & Next Up ── */}

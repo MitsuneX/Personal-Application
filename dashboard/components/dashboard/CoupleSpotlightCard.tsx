@@ -6,7 +6,7 @@ import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, Sparkles, ArrowRight } from "lucide-react";
+import { Heart, ArrowRight } from "lucide-react";
 
 export function CoupleSpotlightCard() {
   const { theme } = useTheme();
@@ -102,9 +102,9 @@ export function CoupleSpotlightCard() {
         boxShadow: isCyber ? "0 0 20px rgba(255, 126, 185, 0.12)" : "4px 4px 0 #000000",
       }}
     >
-      <div>
+      <div className="flex flex-col flex-1 min-h-0">
         {/* Header */}
-        <div className="flex items-center justify-between mb-3.5">
+        <div className="flex items-center justify-between mb-3 shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-base" role="img" aria-label="heart">
               💕
@@ -132,92 +132,90 @@ export function CoupleSpotlightCard() {
           </span>
         </div>
 
-        {/* Couple Card Body */}
-        <div className="relative rounded-xl overflow-hidden border border-white/10 group mb-3.5">
-          {/* Artwork Thumbnail / Banner */}
-          <div className="relative h-32 w-full bg-slate-900 flex items-center justify-center overflow-hidden">
-            {coupleArtwork ? (
+        {/* ── Media-Aware Couple Artwork Region ── */}
+        <div className="relative flex-1 min-h-[185px] w-full rounded-xl overflow-hidden border border-white/10 group mb-3.5 bg-slate-950/80 flex items-center justify-center">
+          {/* Ambient blurred backdrop layer derived from couple artwork */}
+          {coupleArtwork && (
+            <div
+              className="absolute inset-0 bg-cover bg-center scale-110 blur-xl opacity-35 transition-transform duration-700 group-hover:scale-125 pointer-events-none"
+              style={{ backgroundImage: `url(${coupleArtwork})` }}
+            />
+          )}
+
+          {/* Crisp uncropped foreground artwork preserving both partners */}
+          {coupleArtwork ? (
+            <div className="relative w-full h-full z-10 flex items-center justify-center p-1.5">
               <Image
                 src={coupleArtwork}
                 alt={spotlightCouple.coupleName}
                 fill
                 sizes="(max-width: 768px) 100vw, 33vw"
-                className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                className="object-contain object-center drop-shadow-[0_8px_16px_rgba(0,0,0,0.65)] group-hover:scale-[1.03] transition-transform duration-500"
                 unoptimized
               />
-            ) : (
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full border border-pink-400/40 bg-pink-500/20 flex items-center justify-center text-lg">
-                  🌸
-                </div>
-                <div className="text-pink-400 font-bold">♥</div>
-                <div className="w-12 h-12 rounded-full border border-pink-400/40 bg-pink-500/20 flex items-center justify-center text-lg">
-                  ✨
-                </div>
-              </div>
-            )}
-
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-
-            {/* Love Match Badge on artwork */}
-            <div className="absolute top-2.5 right-2.5">
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.92 }}
-                onClick={handleLoveMatchClick}
-                className="px-2.5 py-1 rounded-full border flex items-center gap-1.5 text-[11px] font-bold shadow-lg backdrop-blur-md cursor-pointer transition-all"
-                style={{
-                  backgroundColor: isCyber ? "rgba(10, 15, 30, 0.85)" : "#FFFFFF",
-                  borderColor: isCyber ? "#FF7EB9" : "#E11D48",
-                  color: isCyber ? "#FF7EB9" : "#E11D48",
-                  boxShadow: isCyber ? "0 0 12px rgba(255,126,185,0.4)" : "2px 2px 0 #000",
-                }}
-                title="Click to celebrate (+1 Love Match)"
-              >
-                <motion.span
-                  animate={isLoverBumping ? { scale: [1, 1.4, 1] } : {}}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Heart size={12} className="fill-current text-pink-400" />
-                </motion.span>
-                <span className="font-mono">{spotlightCouple.likes || 0}</span>
-              </motion.button>
             </div>
+          ) : (
+            <div className="flex items-center gap-3 z-10">
+              <div className="w-12 h-12 rounded-full border border-pink-400/40 bg-pink-500/20 flex items-center justify-center text-lg">
+                🌸
+              </div>
+              <div className="text-pink-400 font-bold">♥</div>
+              <div className="w-12 h-12 rounded-full border border-pink-400/40 bg-pink-500/20 flex items-center justify-center text-lg">
+                ✨
+              </div>
+            </div>
+          )}
 
-            {/* Bottom Title Overlay */}
-            <div className="absolute bottom-2.5 left-2.5 right-2.5 min-w-0">
-              <p className="text-white font-black text-sm truncate drop-shadow-md">
+          {/* Gradient Overlay for bottom text legibility */}
+          <div className="absolute inset-0 z-20 pointer-events-none bg-gradient-to-t from-slate-950 via-slate-950/45 to-transparent" />
+
+          {/* Love Match Interactive Bump Badge */}
+          <div className="absolute top-2.5 right-2.5 z-30">
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.92 }}
+              onClick={handleLoveMatchClick}
+              className="px-2.5 py-1 rounded-full border flex items-center gap-1.5 text-[11px] font-bold shadow-lg backdrop-blur-md cursor-pointer transition-all"
+              style={{
+                backgroundColor: isCyber ? "rgba(10, 15, 30, 0.85)" : "#FFFFFF",
+                borderColor: isCyber ? "#FF7EB9" : "#E11D48",
+                color: isCyber ? "#FF7EB9" : "#E11D48",
+                boxShadow: isCyber ? "0 0 12px rgba(255,126,185,0.4)" : "2px 2px 0 #000",
+              }}
+              title="Click to celebrate (+1 Love Match)"
+            >
+              <motion.span
+                animate={isLoverBumping ? { scale: [1, 1.4, 1] } : {}}
+                transition={{ duration: 0.3 }}
+              >
+                <Heart size={12} className="fill-current text-pink-400" />
+              </motion.span>
+              <span className="font-mono">{spotlightCouple.likes || 0}</span>
+            </motion.button>
+          </div>
+
+          {/* Bottom Title & Pairing Context Overlay */}
+          <div className="absolute bottom-2.5 left-2.5 right-2.5 min-w-0 z-30">
+            <div className="flex items-center justify-between gap-1.5">
+              <p className="text-white font-black text-sm md:text-base truncate drop-shadow-md">
                 {spotlightCouple.coupleName}
               </p>
-              <p className="text-pink-200/80 text-[10px] truncate font-medium">
-                {spotlightCouple.source?.title || `${partnerAName} × ${partnerBName}`}
-              </p>
+              {spotlightCouple.relationship?.dynamics?.[0] && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/15 text-pink-200 font-mono shrink-0 truncate max-w-[120px]">
+                  {spotlightCouple.relationship.dynamics[0]}
+                </span>
+              )}
             </div>
+            <p className="text-pink-200/90 text-[10px] truncate font-medium mt-0.5">
+              {spotlightCouple.source?.title || `${partnerAName} × ${partnerBName}`}
+            </p>
           </div>
-        </div>
-
-        {/* Dynamics or relationship preview */}
-        <div className="flex flex-wrap gap-1 mb-2">
-          {(spotlightCouple.relationship?.dynamics || ["Canon Pairing"]).slice(0, 2).map((dyn) => (
-            <span
-              key={dyn}
-              className="text-[10px] px-2 py-0.5 rounded-md border font-medium truncate"
-              style={{
-                backgroundColor: isCyber ? "rgba(255,255,255,0.03)" : "#F1F5F9",
-                borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#E2E8F0",
-                color: isCyber ? "#E2E8F0" : "#475569",
-              }}
-            >
-              {dyn}
-            </span>
-          ))}
         </div>
       </div>
 
       {/* Footer Link */}
-      <div className="pt-3 border-t border-white/5 flex items-center justify-between">
+      <div className="pt-2.5 border-t border-white/5 flex items-center justify-between shrink-0">
         <span className="text-[10px] theme-text-muted">
           {spotlightCouple.likes || 0} Love Matches recorded
         </span>

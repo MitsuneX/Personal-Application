@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React from "react";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
+import { useLiveCreatureHighlight } from "@/lib/hooks/useLiveCreatureHighlight";
 import Link from "next/link";
 import Image from "next/image";
-import { Shield, Sparkles, RefreshCw, ArrowRight } from "lucide-react";
+import { RefreshCw, ArrowRight, Star } from "lucide-react";
 import { getClassificationMeta, CREATURE_TIER_META } from "@/lib/data/creatureSchema";
 
 export function CreatureSpotlightCard() {
@@ -14,51 +14,7 @@ export function CreatureSpotlightCard() {
   const isCyber = theme === "cyber";
 
   const { creatures = [] } = useDashboardStore();
-
-  // ── Anti-repeat randomizer / featured creature rotation ───────────────────────
-  const [activeId, setActiveId] = useState<string | null>(() => {
-    if (!creatures || creatures.length === 0) return null;
-    const fav = creatures.find((c) => c.isFavorite);
-    return fav ? fav.id : creatures[0].id;
-  });
-
-  const recentHistoryRef = useRef<string[]>([]);
-
-  useEffect(() => {
-    if (creatures.length === 0) {
-      setActiveId(null);
-      recentHistoryRef.current = [];
-      return;
-    }
-    if (!activeId || !creatures.some((c) => c.id === activeId)) {
-      const initial = creatures.find((c) => c.isFavorite) || creatures[0];
-      setActiveId(initial.id);
-      recentHistoryRef.current = [initial.id];
-    }
-  }, [creatures, activeId]);
-
-  const activeCreature = useMemo(() => {
-    if (!creatures || creatures.length === 0) return null;
-    return creatures.find((c) => c.id === activeId) || creatures[0];
-  }, [creatures, activeId]);
-
-  const pickNextRandom = useCallback(() => {
-    if (creatures.length <= 1) return;
-    const historyCap = Math.max(1, Math.min(3, creatures.length - 1));
-
-    let eligible = creatures.filter(
-      (c) => c.id !== activeId && !recentHistoryRef.current.includes(c.id)
-    );
-
-    if (eligible.length === 0) {
-      eligible = creatures.filter((c) => c.id !== activeId);
-    }
-
-    if (eligible.length === 0) return;
-    const chosen = eligible[Math.floor(Math.random() * eligible.length)];
-    recentHistoryRef.current = [...recentHistoryRef.current.slice(-historyCap + 1), chosen.id];
-    setActiveId(chosen.id);
-  }, [creatures, activeId]);
+  const { activeCreature, pickNextRandom } = useLiveCreatureHighlight();
 
   if (!activeCreature) {
     return (
@@ -119,9 +75,9 @@ export function CreatureSpotlightCard() {
         boxShadow: isCyber ? "0 0 20px rgba(57, 255, 20, 0.12)" : "4px 4px 0 #000000",
       }}
     >
-      <div>
+      <div className="flex flex-col flex-1 min-h-0">
         {/* Header */}
-        <div className="flex items-center justify-between mb-3.5">
+        <div className="flex items-center justify-between mb-3 shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-base" role="img" aria-label="dragon">
               🐉
@@ -142,8 +98,8 @@ export function CreatureSpotlightCard() {
               <button
                 type="button"
                 onClick={pickNextRandom}
-                className="p-1 rounded-lg border border-transparent hover:border-white/20 text-slate-400 hover:text-white transition-all active:scale-95"
-                title="Cycle to another creature"
+                className="p-1 rounded-lg border border-transparent hover:border-white/20 text-slate-400 hover:text-white transition-all active:scale-95 cursor-pointer"
+                title="Rotate to next creature"
               >
                 <RefreshCw size={12} />
               </button>
@@ -161,88 +117,94 @@ export function CreatureSpotlightCard() {
           </div>
         </div>
 
-        {/* Creature Card Body */}
-        <div className="relative rounded-xl overflow-hidden border border-white/10 group mb-3.5">
-          <div className="relative h-32 w-full bg-slate-900 flex items-center justify-center overflow-hidden">
-            {artwork ? (
+        {/* ── Near Full-Art Media Region ── */}
+        <div className="relative flex-1 min-h-[185px] w-full rounded-xl overflow-hidden border border-white/10 group mb-3.5 bg-slate-950/80 flex items-center justify-center">
+          {/* Ambient blurred backdrop layer to fill letterbox seamlessly */}
+          {artwork && (
+            <div
+              className="absolute inset-0 bg-cover bg-center scale-110 blur-xl opacity-35 transition-transform duration-700 group-hover:scale-125 pointer-events-none"
+              style={{ backgroundImage: `url(${artwork})` }}
+            />
+          )}
+
+          {/* Crisp uncropped foreground artwork */}
+          {artwork ? (
+            <div className="relative w-full h-full z-10 flex items-center justify-center p-1.5">
               <Image
                 src={artwork}
                 alt={activeCreature.name}
                 fill
                 sizes="(max-width: 768px) 100vw, 33vw"
-                className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                className="object-contain object-center drop-shadow-[0_8px_16px_rgba(0,0,0,0.65)] group-hover:scale-[1.03] transition-transform duration-500"
                 unoptimized
               />
-            ) : (
-              <div className="flex items-center justify-center text-4xl">
-                {classMeta.icon || "🐉"}
-              </div>
-            )}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center text-5xl z-10">
+              {classMeta.icon || "🐉"}
+            </div>
+          )}
 
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+          {/* Gradient Overlay for bottom text legibility */}
+          <div className="absolute inset-0 z-20 pointer-events-none bg-gradient-to-t from-slate-950 via-slate-950/45 to-transparent" />
 
-            {/* Tier Badge on artwork */}
-            <div className="absolute top-2.5 right-2.5">
-              <span
-                className="px-2 py-0.5 rounded-md border font-black text-[10px] shadow-lg backdrop-blur-md"
-                style={{
-                  backgroundColor: isCyber ? "rgba(10, 15, 30, 0.85)" : "#FFFFFF",
-                  borderColor: tierMeta.color,
-                  color: tierMeta.color,
-                }}
-              >
-                {activeCreature.tier} TIER
+          {/* Floating Top Badges inside artwork */}
+          <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-30 pointer-events-none">
+            {activeCreature.isFavorite ? (
+              <span className="px-2 py-0.5 rounded-md border border-amber-500/40 bg-slate-950/75 backdrop-blur-md text-amber-400 font-bold text-[10px] flex items-center gap-1 shadow-md">
+                <Star size={10} className="fill-current" />
+                <span>FAVORITE</span>
               </span>
-            </div>
+            ) : <span />}
 
-            {/* Bottom Title Overlay */}
-            <div className="absolute bottom-2.5 left-2.5 right-2.5 min-w-0">
-              <p className="text-white font-black text-sm truncate drop-shadow-md">
-                {activeCreature.name}
-              </p>
-              <p className="text-emerald-200/80 text-[10px] truncate font-medium">
-                {activeCreature.species ? `${activeCreature.species} · ` : ""}
-                {activeCreature.sourceTitle}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Tags / Short Description */}
-        <div className="flex flex-wrap gap-1 mb-2">
-          {(activeCreature.tags || []).slice(0, 2).map((tag) => (
             <span
-              key={tag}
-              className="text-[10px] px-2 py-0.5 rounded-md border font-medium truncate"
+              className="px-2 py-0.5 rounded-md border font-black text-[10px] shadow-lg backdrop-blur-md"
               style={{
-                backgroundColor: isCyber ? "rgba(255,255,255,0.03)" : "#F1F5F9",
-                borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#E2E8F0",
-                color: isCyber ? "#E2E8F0" : "#475569",
+                backgroundColor: isCyber ? "rgba(10, 15, 30, 0.85)" : "#FFFFFF",
+                borderColor: tierMeta.color,
+                color: tierMeta.color,
               }}
             >
-              #{tag}
+              {activeCreature.tier} TIER
             </span>
-          ))}
-          {activeCreature.isFavorite && (
-            <span className="text-[10px] px-2 py-0.5 rounded-md border border-amber-500/30 bg-amber-500/10 text-amber-400 font-bold">
-              ★ Favorite
-            </span>
-          )}
+          </div>
+
+          {/* Bottom Title & Context Overlay */}
+          <div className="absolute bottom-2.5 left-2.5 right-2.5 min-w-0 z-30">
+            <div className="flex items-center justify-between gap-1.5">
+              <p className="text-white font-black text-sm md:text-base truncate drop-shadow-md">
+                {activeCreature.name}
+              </p>
+              {activeCreature.species && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/15 text-emerald-300 font-mono shrink-0 truncate max-w-[120px]">
+                  {activeCreature.species}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 mt-0.5 text-emerald-200/90 text-[10px] font-medium truncate">
+              <span className="truncate">{activeCreature.sourceTitle}</span>
+              {activeCreature.tags && activeCreature.tags[0] && (
+                <>
+                  <span className="opacity-40">·</span>
+                  <span className="opacity-80 truncate">#{activeCreature.tags[0]}</span>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Footer Link */}
-      <div className="pt-3 border-t border-white/5 flex items-center justify-between">
+      <div className="pt-2.5 border-t border-white/5 flex items-center justify-between shrink-0">
         <span className="text-[10px] theme-text-muted">
-          {creatures.length} creatures in collection
+          {creatures.length} creature{creatures.length === 1 ? "" : "s"} archived
         </span>
         <Link
           href="/creatures"
           className="inline-flex items-center gap-1 text-xs font-bold transition-all hover:gap-1.5"
           style={{ color: isCyber ? "#39FF14" : "#059669" }}
         >
-          <span>View Creature</span>
+          <span>Bestiary</span>
           <ArrowRight size={12} />
         </Link>
       </div>

@@ -13,6 +13,31 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v13.9.1",
+    date: "2026-09-14",
+    title: "Dashboard Polish — Profile Density, Uncropped Artwork & Live Creature Synchronization",
+    badge: "POLISH",
+    type: "patch",
+    summary: "Polished the production dashboard to fill interior empty space in the minimized Profile card without altering container dimensions, resolved aggressive image cropping across Love Match and Creature Spotlight cards via media-aware dual-layer fitting, and unified Creature Spotlight with the canonical live time-based Creature Highlight rotation engine.",
+    categories: [
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🎴 Media-Aware Uncropped Artwork Presentation (CoupleSpotlightCard.tsx, CreatureSpotlightCard.tsx): Replaced rigid h-32 letterbox containers and object-fit: cover with a flexible dual-layer presentation strategy (object-contain foreground + ambient blurred backdrop derived from the same artwork). Preserves both partners in couple artwork and full wings/creature bodies without distortion, face clipping, or empty letterbox bars.",
+          "👤 Compact Profile Card Information Density (ProfileCard.tsx): Filled internal dead space without expanding the container or grid footprint. Integrated real application data including persona focus/tagline, top skill tags, active pursuit progression (hobbySkills with priority pursuit name, level, streak flame, and progress bar), current project context (projects), and personal identity chips (MBTI, Zodiac with theme colors, Custom Border Aura).",
+          "🐉 Near Full-Art Creature Spotlight (CreatureSpotlightCard.tsx): Maximized the visual media region inside the dashboard card, moving creature name, species chip, and source title directly onto a protective gradient overlay.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "⏱️ Live Creature Highlight Synchronization (lib/hooks/useLiveCreatureHighlight.ts, CreatureSpotlight.tsx, CreatureSpotlightCard.tsx): Unified both the Dashboard Creature Spotlight and the Bestiary Creature Spotlight under a single canonical wall-clock rotation hook (useLiveCreatureHighlight). The active creature rotates every 9 seconds using a deterministic slot hash with anti-repeat safeguards, guaranteeing that page refreshes within the same window resolve to the exact same creature and both components stay 100% synchronized.",
+          "🧼 Clean Lint & TypeScript Integrity: Resolved explicit any typecasts and unused imports in the modified components, achieving clean TypeScript validation and zero lint errors.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v13.9.0",
     date: "2026-09-14",
     title: "Creature Lineage Architecture, Character Deduplication & Full-Art Showcase",

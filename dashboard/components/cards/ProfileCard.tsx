@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useRef } from "react";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import React, { useRef, useMemo } from "react";
+import { motion, useMotionValue, useSpring, useTransform, type TargetAndTransition } from "framer-motion";
 import { BentoCard } from "./BentoCard";
 import { useTheme } from "@/lib/theme";
 import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { listContainerVariants, listItemVariants } from "@/lib/theme/motionVariants";
 
+import Link from "next/link";
 import { 
   Github, 
   Instagram, 
@@ -16,7 +17,8 @@ import {
   Send, 
   Share2, 
   Phone, 
-  Brain 
+  Brain,
+  ArrowUpRight 
 } from "lucide-react";
 
 const PLATFORM_ICONS: Record<string, string> = {
@@ -148,7 +150,7 @@ const STATUS_CONFIG = {
 
 export const BORDER_CONFIGS: Record<string, {
   name: string;
-  avatarRing: (isCyber: boolean) => any;
+  avatarRing: (isCyber: boolean) => TargetAndTransition;
   avatarBorder: (isCyber: boolean) => string;
   cardStyle: (isCyber: boolean) => React.CSSProperties;
 }> = {
@@ -326,7 +328,12 @@ const nameLetterVariants = {
   },
 };
 
-export function ProfileCard() {
+export interface ProfileCardProps {
+  compact?: boolean;
+  className?: string;
+}
+
+export function ProfileCard({ compact = false, className = "" }: ProfileCardProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const profile = useDashboardStore((s) => s.profile);
@@ -359,6 +366,19 @@ export function ProfileCard() {
     rawY.set(0);
   };
 
+  const hobbySkills = useDashboardStore((s) => s.hobbySkills || []);
+  const projects = useDashboardStore((s) => s.projects || []);
+
+  const activeHobby = useMemo(() => {
+    if (!hobbySkills || hobbySkills.length === 0) return null;
+    return hobbySkills.find((h) => h.priority === "Priority") || hobbySkills[0];
+  }, [hobbySkills]);
+
+  const activeProject = useMemo(() => {
+    if (!projects || projects.length === 0) return null;
+    return projects.find((p) => p.status === "Development" || p.status === "Live" || p.isFeatured) || projects[0];
+  }, [projects]);
+
   return (
     <motion.div
       ref={cardRef}
@@ -371,140 +391,237 @@ export function ProfileCard() {
         transformStyle: "preserve-3d",
         perspective: "1000px",
       }}
-      className="col-span-1 md:col-span-2 lg:col-span-2 xl:col-span-2"
+      className={className || (compact ? "h-full w-full" : "col-span-1 md:col-span-2 lg:col-span-2 xl:col-span-2")}
     >
       <BentoCard
         id="profile-card"
         noHover
+        className={compact ? "h-full flex flex-col justify-between !p-4" : ""}
         style={borderConfig.cardStyle(isCyber)}
       >
-        {/* ── Entry Fade Animation Wrapper ─── */}
-        <motion.div
-          variants={welcomeFadeVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {/* ── Header Row ──────────────────────────────────────────────── */}
-          <div className="flex items-start gap-4 mb-5">
-            {/* Avatar */}
-            <div className="relative shrink-0">
-              {/* Animated ring */}
-              <motion.div
-                className="absolute inset-0 rounded-full"
-                animate={borderConfig.avatarRing(isCyber)}
-                transition={
-                  isCyber && borderStyleKey !== "brutal-bold"
-                    ? { duration: 2.5, repeat: Infinity, ease: "easeInOut" }
-                    : { duration: 0.4 }
-                }
-              />
-
-              <motion.div
-                className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden flex items-center justify-center relative z-10"
-                animate={{
-                  backgroundColor: isCyber ? "#0A0F2C" : "#FF6B35",
-                  border: borderConfig.avatarBorder(isCyber),
-                }}
-                transition={{ duration: 0.4 }}
-              >
-                {profile.avatar ? (
-                  <img
-                    src={profile.avatar}
-                    alt={profile.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className={`text-3xl font-black ${isCyber ? "cyber-glow-text" : "text-white"}`}>
-                    {profile.name
-                      .split(" ")
-                      .map((w) => w[0])
-                      .join("")
-                      .slice(0, 2)}
-                  </span>
-                )}
-              </motion.div>
-
-              {/* Status dot */}
-              <div
-                className={`status-dot ${status.dotClass} absolute -bottom-0.5 -right-0.5 border-2`}
-                style={{
-                  borderColor: isCyber ? "#0A0F2C" : "#FFFFFF",
-                }}
-              />
-            </div>
-
-            {/* Name & info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-2 flex-wrap">
-                {/* Name with tracking expansion animation */}
-                <motion.h1
-                  className={`font-black text-xl md:text-2xl leading-tight ${isCyber ? "cyber-gradient-text" : "theme-text-primary"}`}
-                  variants={nameLetterVariants}
-                  initial="hidden"
-                  animate="visible"
-                  style={{
-                    fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
-                  }}
-                >
-                  {profile.name}
-                </motion.h1>
-
-                {/* Status badge */}
+        {compact ? (
+          /* ── Compact Identity Snapshot for Dashboard ── */
+          <motion.div
+            variants={welcomeFadeVariants}
+            initial="hidden"
+            animate="visible"
+            className="flex flex-col justify-between h-full space-y-2.5"
+          >
+            {/* 1. Top Identity Row: Avatar + Name/Status + View Profile */}
+            <div className="flex items-start gap-3 shrink-0">
+              {/* Avatar with Animated Theme Ring */}
+              <div className="relative shrink-0">
                 <motion.div
-                  className="theme-badge flex items-center gap-1.5 shrink-0"
+                  className="absolute inset-0 rounded-full"
+                  animate={borderConfig.avatarRing(isCyber)}
+                  transition={
+                    isCyber && borderStyleKey !== "brutal-bold"
+                      ? { duration: 2.5, repeat: Infinity, ease: "easeInOut" }
+                      : { duration: 0.4 }
+                  }
+                />
+                <motion.div
+                  className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden flex items-center justify-center relative z-10"
                   animate={{
-                    backgroundColor: isCyber
-                      ? `rgba(${status.color === "#22C55E" ? "34,197,94" : "239,68,68"},0.15)`
-                      : "rgba(0,0,0,0)",
-                    color: status.color,
-                    borderColor: status.color,
+                    backgroundColor: isCyber ? "#0A0F2C" : "#FF6B35",
+                    border: borderConfig.avatarBorder(isCyber),
                   }}
                   transition={{ duration: 0.4 }}
                 >
-                  <span className={`status-dot ${status.dotClass} !w-1.5 !h-1.5`} />
-                  {status.label}
+                  {profile.avatar ? (
+                    <img
+                      src={profile.avatar}
+                      alt={profile.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className={`text-lg font-black ${isCyber ? "cyber-glow-text" : "text-white"}`}>
+                      {profile.name
+                        .split(" ")
+                        .map((w) => w[0])
+                        .join("")
+                        .slice(0, 2)}
+                    </span>
+                  )}
                 </motion.div>
+
+                {/* Status Dot */}
+                <div
+                  className={`status-dot ${status.dotClass} absolute -bottom-0.5 -right-0.5 border-2`}
+                  style={{
+                    borderColor: isCyber ? "#0A0F2C" : "#FFFFFF",
+                  }}
+                />
               </div>
 
-              <p className="theme-text-secondary text-sm md:text-base font-medium mt-0.5">
-                {profile.tagline}
-              </p>
+              {/* Name, Status, Location & Action Button */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-1.5">
+                  <div className="min-w-0 flex-1">
+                    <motion.h2
+                      className={`font-black text-sm md:text-base leading-tight truncate ${isCyber ? "cyber-gradient-text" : "theme-text-primary"}`}
+                      variants={nameLetterVariants}
+                      initial="hidden"
+                      animate="visible"
+                      style={{
+                        fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
+                      }}
+                    >
+                      {profile.name}
+                    </motion.h2>
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      <span className={`status-dot ${status.dotClass} !w-1.5 !h-1.5`} />
+                      <span
+                        className="text-[10px] font-bold uppercase tracking-wider font-mono"
+                        style={{ color: status.color }}
+                      >
+                        {status.label}
+                      </span>
+                      {profile.location && (
+                        <span className="text-[10px] theme-text-muted truncate">
+                          · 📍 {profile.location}
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-              <p className="theme-text-muted text-xs mt-1 block">
-                📍 {profile.location}
-              </p>
+                  {/* View Profile Action Button */}
+                  <Link
+                    href="/profile"
+                    className="px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all shrink-0 flex items-center gap-1 cursor-pointer border select-none group"
+                    style={{
+                      backgroundColor: isCyber ? "rgba(0, 245, 255, 0.12)" : "#000000",
+                      borderColor: isCyber ? "rgba(0, 245, 255, 0.4)" : "#000000",
+                      color: isCyber ? "#00F5FF" : "#FFFFFF",
+                      boxShadow: isCyber ? "0 0 10px rgba(0, 245, 255, 0.2)" : "2px 2px 0px #000000",
+                    }}
+                    title="View & customize full profile"
+                  >
+                    <span>Profile</span>
+                    <ArrowUpRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  </Link>
+                </div>
+
+                {/* Compact Focus / Tagline */}
+                <p className="theme-text-secondary text-[11px] font-medium mt-0.5 line-clamp-1">
+                  {profile.tagline || (profile.bio ? profile.bio.slice(0, 60) : "Interactive Command Center")}
+                </p>
+              </div>
             </div>
-          </div>
 
-          {/* ── Bio ──────────────────────────────────────────────────────── */}
-          <motion.p
-            className="theme-text-secondary text-sm leading-relaxed mb-4 pb-4"
-            style={{
-              borderBottomWidth: isCyber ? "1px" : "2px",
-              borderBottomStyle: "solid",
-              borderBottomColor: isCyber ? "rgba(0,245,255,0.15)" : "rgba(0,0,0,0.1)",
-            }}
-            animate={{ borderBottomColor: isCyber ? "rgba(0,245,255,0.15)" : "rgba(0,0,0,0.1)" }}
-            transition={{ duration: 0.4 }}
-          >
-            {profile.bio}
-          </motion.p>
+            {/* 2. Personal Snapshot: Active Pursuit & Streak */}
+            {activeHobby ? (
+              <div
+                className="p-2 rounded-xl border flex items-center justify-between gap-2 shrink-0"
+                style={{
+                  backgroundColor: isCyber ? "rgba(255, 255, 255, 0.02)" : "#F8FAFC",
+                  borderColor: isCyber ? "rgba(255, 255, 255, 0.08)" : "#E2E8F0",
+                }}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px]">🎯</span>
+                    <span className="text-[11px] font-bold theme-text-primary truncate">
+                      {activeHobby.name}
+                    </span>
+                  </div>
+                  {activeHobby.progress !== undefined && (
+                    <div className="w-full bg-slate-800/40 rounded-full h-1 mt-1.5 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${Math.min(100, Math.max(5, activeHobby.progress))}%`,
+                          backgroundColor: isCyber ? "#00F5FF" : "#0284C7",
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
 
-          {/* ── Attributes & Stats Block ────────────────────────────────── */}
-          {(profile.mbti || profile.zodiac || profile.phoneNumber) && (
-            <div className="mb-5 flex flex-wrap gap-2 relative z-10">
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {activeHobby.streak > 0 && (
+                    <span
+                      className="text-[10px] font-mono font-black px-1.5 py-0.5 rounded border flex items-center gap-0.5 select-none"
+                      style={{
+                        backgroundColor: isCyber ? "rgba(249, 115, 22, 0.12)" : "#FFF7ED",
+                        borderColor: isCyber ? "rgba(249, 115, 22, 0.4)" : "#FDBA74",
+                        color: isCyber ? "#FB923C" : "#C2410C",
+                      }}
+                      title={`${activeHobby.streak} day current streak`}
+                    >
+                      <span>🔥</span>
+                      <span>{activeHobby.streak}d</span>
+                    </span>
+                  )}
+                  {activeHobby.level !== undefined && (
+                    <span
+                      className="text-[10px] font-mono font-black px-1.5 py-0.5 rounded border select-none"
+                      style={{
+                        backgroundColor: isCyber ? "rgba(168, 85, 247, 0.12)" : "#FAF5FF",
+                        borderColor: isCyber ? "rgba(168, 85, 247, 0.4)" : "#D8B4FE",
+                        color: isCyber ? "#C084FC" : "#7E22CE",
+                      }}
+                      title={`Hobby Level ${activeHobby.level}`}
+                    >
+                      Lv.{activeHobby.level}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ) : profile.skills?.length > 0 ? (
+              /* Fallback Pursuit: Core Skills Stack */
+              <div className="flex flex-wrap gap-1 shrink-0">
+                {profile.skills.slice(0, 4).map((skill) => (
+                  <span
+                    key={skill}
+                    className="text-[10px] font-mono px-1.5 py-0.5 rounded border"
+                    style={{
+                      backgroundColor: isCyber ? "rgba(0, 245, 255, 0.06)" : "#F1F5F9",
+                      borderColor: isCyber ? "rgba(0, 245, 255, 0.25)" : "#CBD5E1",
+                      color: isCyber ? "#00F5FF" : "#334155",
+                    }}
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+
+            {/* 3. Quick Context Row: Current Project / Focus Context */}
+            {activeProject && (
+              <div className="flex items-center gap-1.5 text-[11px] theme-text-secondary truncate shrink-0">
+                <span className="shrink-0 text-xs">📌</span>
+                <span className="font-semibold theme-text-primary truncate text-[11px]">
+                  {activeProject.name}
+                </span>
+                {activeProject.status && (
+                  <span
+                    className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded border shrink-0"
+                    style={{
+                      borderColor: isCyber ? "rgba(34, 197, 94, 0.3)" : "#86EFAC",
+                      color: isCyber ? "#4ADE80" : "#16A34A",
+                    }}
+                  >
+                    {activeProject.status}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* 4. Compact Identity Chips: MBTI, Zodiac, Border Tier */}
+            <div className="pt-2 flex flex-wrap items-center gap-1.5 border-t border-white/10 shrink-0">
               {profile.mbti && (
                 <div
-                  className="text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition-all select-none border"
+                  className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1 transition-all select-none border"
                   style={{
                     background: isCyber ? "rgba(0, 245, 255, 0.08)" : "#E0F2FE",
                     borderColor: isCyber ? "rgba(0, 245, 255, 0.4)" : "#000000",
-                    boxShadow: isCyber ? "0 0 10px rgba(0, 245, 255, 0.2)" : "3px 3px 0px #000000",
+                    boxShadow: isCyber ? "0 0 8px rgba(0, 245, 255, 0.15)" : "2px 2px 0px #000000",
                     color: isCyber ? "#00F5FF" : "#0369A1",
-                    borderWidth: isCyber ? "1px" : "2.5px",
+                    borderWidth: isCyber ? "1px" : "2px",
                   }}
                 >
-                  <Brain className="w-3.5 h-3.5" />
+                  <Brain className="w-3 h-3" />
                   <span>{profile.mbti}</span>
                 </div>
               )}
@@ -513,13 +630,13 @@ export function ProfileCard() {
                 const zodiacInfo = ZODIAC_METADATA[profile.zodiac];
                 return (
                   <div
-                    className="text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition-all select-none border"
+                    className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1 transition-all select-none border"
                     style={{
                       background: isCyber ? `${zodiacInfo.color}15` : "#F5F3FF",
                       borderColor: isCyber ? zodiacInfo.color : "#000000",
-                      boxShadow: isCyber ? `0 0 10px ${zodiacInfo.color}33` : "3px 3px 0px #000000",
+                      boxShadow: isCyber ? `0 0 8px ${zodiacInfo.color}25` : "2px 2px 0px #000000",
                       color: isCyber ? zodiacInfo.color : "#5B21B6",
-                      borderWidth: isCyber ? "1px" : "2.5px",
+                      borderWidth: isCyber ? "1px" : "2px",
                     }}
                   >
                     <span>{zodiacInfo.symbol}</span>
@@ -528,100 +645,268 @@ export function ProfileCard() {
                 );
               })()}
 
-              {profile.phoneNumber && (
-                <div
-                  className="text-xs font-black px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition-all select-none border"
-                  style={{
-                    background: isCyber ? "rgba(34, 197, 94, 0.08)" : "#DCFCE7",
-                    borderColor: isCyber ? "rgba(34, 197, 94, 0.4)" : "#000000",
-                    boxShadow: isCyber ? "0 0 10px rgba(34, 197, 94, 0.2)" : "3px 3px 0px #000000",
-                    color: isCyber ? "#22C55E" : "#166534",
-                    borderWidth: isCyber ? "1px" : "2.5px",
-                  }}
-                >
-                  <Phone className="w-3.5 h-3.5" />
-                  <span>{profile.phoneNumber}</span>
-                </div>
-              )}
+              <div
+                className="text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 transition-all select-none border ml-auto"
+                style={{
+                  background: isCyber ? "rgba(255, 215, 0, 0.08)" : "#FEF3C7",
+                  borderColor: isCyber ? "rgba(255, 215, 0, 0.4)" : "#000000",
+                  boxShadow: isCyber ? "0 0 8px rgba(255, 215, 0, 0.15)" : "2px 2px 0px #000000",
+                  color: isCyber ? "#FFD700" : "#B45309",
+                  borderWidth: isCyber ? "1px" : "2px",
+                }}
+                title={`Custom Border Aura: ${borderConfig.name}`}
+              >
+                <span>🛡️</span>
+                <span className="truncate max-w-[100px]">{borderConfig.name}</span>
+              </div>
             </div>
-          )}
+          </motion.div>
+        ) : (
+          /* ── Entry Fade Animation Wrapper (Original Full Profile Preview) ─── */
+          <motion.div
+            variants={welcomeFadeVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {/* ── Header Row ──────────────────────────────────────────────── */}
+            <div className="flex items-start gap-4 mb-5">
+              {/* Avatar */}
+              <div className="relative shrink-0">
+                {/* Animated ring */}
+                <motion.div
+                  className="absolute inset-0 rounded-full"
+                  animate={borderConfig.avatarRing(isCyber)}
+                  transition={
+                    isCyber && borderStyleKey !== "brutal-bold"
+                      ? { duration: 2.5, repeat: Infinity, ease: "easeInOut" }
+                      : { duration: 0.4 }
+                  }
+                />
 
-          {/* ── Skills ───────────────────────────────────────────────────── */}
-          <div className="mb-4">
-            <p className="theme-text-muted text-[10px] font-bold tracking-widest uppercase mb-2">
-              Stack
-            </p>
+                <motion.div
+                  className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden flex items-center justify-center relative z-10"
+                  animate={{
+                    backgroundColor: isCyber ? "#0A0F2C" : "#FF6B35",
+                    border: borderConfig.avatarBorder(isCyber),
+                  }}
+                  transition={{ duration: 0.4 }}
+                >
+                  {profile.avatar ? (
+                    <img
+                      src={profile.avatar}
+                      alt={profile.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className={`text-3xl font-black ${isCyber ? "cyber-glow-text" : "text-white"}`}>
+                      {profile.name
+                        .split(" ")
+                        .map((w) => w[0])
+                        .join("")
+                        .slice(0, 2)}
+                    </span>
+                  )}
+                </motion.div>
+
+                {/* Status dot */}
+                <div
+                  className={`status-dot ${status.dotClass} absolute -bottom-0.5 -right-0.5 border-2`}
+                  style={{
+                    borderColor: isCyber ? "#0A0F2C" : "#FFFFFF",
+                  }}
+                />
+              </div>
+
+              {/* Name & info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2 flex-wrap">
+                  {/* Name with tracking expansion animation */}
+                  <motion.h1
+                    className={`font-black text-xl md:text-2xl leading-tight ${isCyber ? "cyber-gradient-text" : "theme-text-primary"}`}
+                    variants={nameLetterVariants}
+                    initial="hidden"
+                    animate="visible"
+                    style={{
+                      fontFamily: isCyber ? "var(--font-orbitron)" : "inherit",
+                    }}
+                  >
+                    {profile.name}
+                  </motion.h1>
+
+                  {/* Status badge */}
+                  <motion.div
+                    className="theme-badge flex items-center gap-1.5 shrink-0"
+                    animate={{
+                      backgroundColor: isCyber
+                        ? `rgba(${status.color === "#22C55E" ? "34,197,94" : "239,68,68"},0.15)`
+                        : "rgba(0,0,0,0)",
+                      color: status.color,
+                      borderColor: status.color,
+                    }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    <span className={`status-dot ${status.dotClass} !w-1.5 !h-1.5`} />
+                    {status.label}
+                  </motion.div>
+                </div>
+
+                <p className="theme-text-secondary text-sm md:text-base font-medium mt-0.5">
+                  {profile.tagline}
+                </p>
+
+                <p className="theme-text-muted text-xs mt-1 block">
+                  📍 {profile.location}
+                </p>
+              </div>
+            </div>
+
+            {/* ── Bio ──────────────────────────────────────────────────────── */}
+            <motion.p
+              className="theme-text-secondary text-sm leading-relaxed mb-4 pb-4"
+              style={{
+                borderBottomWidth: isCyber ? "1px" : "2px",
+                borderBottomStyle: "solid",
+                borderBottomColor: isCyber ? "rgba(0,245,255,0.15)" : "rgba(0,0,0,0.1)",
+              }}
+              animate={{ borderBottomColor: isCyber ? "rgba(0,245,255,0.15)" : "rgba(0,0,0,0.1)" }}
+              transition={{ duration: 0.4 }}
+            >
+              {profile.bio}
+            </motion.p>
+
+            {/* ── Attributes & Stats Block ────────────────────────────────── */}
+            {(profile.mbti || profile.zodiac || profile.phoneNumber) && (
+              <div className="mb-5 flex flex-wrap gap-2 relative z-10">
+                {profile.mbti && (
+                  <div
+                    className="text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition-all select-none border"
+                    style={{
+                      background: isCyber ? "rgba(0, 245, 255, 0.08)" : "#E0F2FE",
+                      borderColor: isCyber ? "rgba(0, 245, 255, 0.4)" : "#000000",
+                      boxShadow: isCyber ? "0 0 10px rgba(0, 245, 255, 0.2)" : "3px 3px 0px #000000",
+                      color: isCyber ? "#00F5FF" : "#0369A1",
+                      borderWidth: isCyber ? "1px" : "2.5px",
+                    }}
+                  >
+                    <Brain className="w-3.5 h-3.5" />
+                    <span>{profile.mbti}</span>
+                  </div>
+                )}
+
+                {profile.zodiac && ZODIAC_METADATA[profile.zodiac] && (() => {
+                  const zodiacInfo = ZODIAC_METADATA[profile.zodiac];
+                  return (
+                    <div
+                      className="text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition-all select-none border"
+                      style={{
+                        background: isCyber ? `${zodiacInfo.color}15` : "#F5F3FF",
+                        borderColor: isCyber ? zodiacInfo.color : "#000000",
+                        boxShadow: isCyber ? `0 0 10px ${zodiacInfo.color}33` : "3px 3px 0px #000000",
+                        color: isCyber ? zodiacInfo.color : "#5B21B6",
+                        borderWidth: isCyber ? "1px" : "2.5px",
+                      }}
+                    >
+                      <span>{zodiacInfo.symbol}</span>
+                      <span>{profile.zodiac} {zodiacInfo.emoji}</span>
+                    </div>
+                  );
+                })()}
+
+                {profile.phoneNumber && (
+                  <div
+                    className="text-xs font-black px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition-all select-none border"
+                    style={{
+                      background: isCyber ? "rgba(34, 197, 94, 0.08)" : "#DCFCE7",
+                      borderColor: isCyber ? "rgba(34, 197, 94, 0.4)" : "#000000",
+                      boxShadow: isCyber ? "0 0 10px rgba(34, 197, 94, 0.2)" : "3px 3px 0px #000000",
+                      color: isCyber ? "#22C55E" : "#166534",
+                      borderWidth: isCyber ? "1px" : "2.5px",
+                    }}
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>{profile.phoneNumber}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Skills ───────────────────────────────────────────────────── */}
+            <div className="mb-4">
+              <p className="theme-text-muted text-[10px] font-bold tracking-widest uppercase mb-2">
+                Stack
+              </p>
+              <motion.div
+                className="flex flex-wrap gap-2"
+                variants={listContainerVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                {profile.skills.map((skill, i) => (
+                  <motion.span
+                    key={skill}
+                    variants={listItemVariants}
+                    custom={i}
+                    className="theme-badge"
+                    style={{
+                      backgroundColor: isCyber ? "rgba(0,245,255,0.08)" : "rgba(255,107,53,0.12)",
+                      color: isCyber ? "#00F5FF" : "#FF6B35",
+                      borderColor: isCyber ? "rgba(0,245,255,0.35)" : "#FF6B35",
+                    }}
+                    whileHover={{ scale: 1.06 }}
+                  >
+                    {skill}
+                  </motion.span>
+                ))}
+              </motion.div>
+            </div>
+
+            {/* ── Socials ──────────────────────────────────────────────────── */}
             <motion.div
-              className="flex flex-wrap gap-2"
+              className="flex flex-wrap gap-2 mt-auto pt-2"
               variants={listContainerVariants}
               initial="hidden"
               animate="visible"
             >
-              {profile.skills.map((skill, i) => (
-                <motion.span
-                  key={skill}
-                  variants={listItemVariants}
-                  custom={i}
-                  className="theme-badge"
-                  style={{
-                    backgroundColor: isCyber ? "rgba(0,245,255,0.08)" : "rgba(255,107,53,0.12)",
-                    color: isCyber ? "#00F5FF" : "#FF6B35",
-                    borderColor: isCyber ? "rgba(0,245,255,0.35)" : "#FF6B35",
-                  }}
-                  whileHover={{ scale: 1.06 }}
-                >
-                  {skill}
-                </motion.span>
-              ))}
+              {profile.socials.map((s) => {
+                const brand = getSocialBrand(s.platform, s.handle, s.url);
+                const Icon = brand.icon;
+                return (
+                  <motion.a
+                    key={s.platform}
+                    href={s.url ?? "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    variants={listItemVariants}
+                    className="theme-badge inline-flex items-center gap-1.5 no-underline transition-all"
+                    style={{
+                      background: isCyber ? brand.bgCyber : brand.bgBrutal,
+                      color: isCyber ? brand.textCyber : brand.textBrutal,
+                      borderColor: isCyber ? brand.borderCyber : brand.borderBrutal,
+                      borderWidth: isCyber ? "1px" : "2px",
+                      boxShadow: isCyber ? `0 0 8px ${brand.borderCyber}22` : `3px 3px 0px ${brand.borderBrutal}`,
+                    }}
+                    whileHover={{
+                      scale: 1.04,
+                      boxShadow: isCyber 
+                        ? `0 0 16px ${brand.textCyber}55` 
+                        : `5px 5px 0px ${brand.borderBrutal}`,
+                      y: isCyber ? 0 : -2
+                    }}
+                    whileTap={{ 
+                      scale: 0.97,
+                      y: isCyber ? 0 : 1,
+                      boxShadow: isCyber ? "none" : "1px 1px 0px #000"
+                    }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{s.handle}</span>
+                  </motion.a>
+                );
+              })}
             </motion.div>
-          </div>
-
-          {/* ── Socials ──────────────────────────────────────────────────── */}
-          <motion.div
-            className="flex flex-wrap gap-2 mt-auto pt-2"
-            variants={listContainerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {profile.socials.map((s) => {
-              const brand = getSocialBrand(s.platform, s.handle, s.url);
-              const Icon = brand.icon;
-              return (
-                <motion.a
-                  key={s.platform}
-                  href={s.url ?? "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  variants={listItemVariants}
-                  className="theme-badge inline-flex items-center gap-1.5 no-underline transition-all"
-                  style={{
-                    background: isCyber ? brand.bgCyber : brand.bgBrutal,
-                    color: isCyber ? brand.textCyber : brand.textBrutal,
-                    borderColor: isCyber ? brand.borderCyber : brand.borderBrutal,
-                    borderWidth: isCyber ? "1px" : "2px",
-                    boxShadow: isCyber ? `0 0 8px ${brand.borderCyber}22` : `3px 3px 0px ${brand.borderBrutal}`,
-                  }}
-                  whileHover={{
-                    scale: 1.04,
-                    boxShadow: isCyber 
-                      ? `0 0 16px ${brand.textCyber}55` 
-                      : `5px 5px 0px ${brand.borderBrutal}`,
-                    y: isCyber ? 0 : -2
-                  }}
-                  whileTap={{ 
-                    scale: 0.97,
-                    y: isCyber ? 0 : 1,
-                    boxShadow: isCyber ? "none" : "1px 1px 0px #000"
-                  }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{s.handle}</span>
-                </motion.a>
-              );
-            })}
           </motion.div>
-        </motion.div>
+        )}
       </BentoCard>
     </motion.div>
   );
