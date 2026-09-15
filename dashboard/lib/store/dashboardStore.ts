@@ -271,6 +271,8 @@ export interface GameCharacterEntry {
   splashArt?: string;
   gallery?: string[];
   cardVideo?: string;
+  cardVideoCrop?: any;
+  videoFraming?: any;
   previewVideo?: string;
   accentColor?: string;
   // Meta
@@ -284,6 +286,8 @@ export interface GameCharacterEntry {
   tags?: string[];
   links?: any;
   tier?: string;
+  /** Canonical ID of the creature designated as this Game Character's Main Creature */
+  mainCreatureId?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -641,6 +645,8 @@ export interface HallOfFameEntry {
   avatarUrl?: string;
   avatarSource?: "card" | "custom";
   cardVideo?: string;
+  cardVideoCrop?: any;
+  videoFraming?: any;
   previewVideo?: string;
   accentColor?: string;
 
@@ -649,6 +655,8 @@ export interface HallOfFameEntry {
 
   socialLinks?: { platform: string; url: string }[];
   details?: Record<string, any>;
+  /** Canonical ID of the creature designated as this Character's Main Creature */
+  mainCreatureId?: string;
 }
 
 export interface HallEventEntry {

@@ -17,7 +17,7 @@ interface CreatureDossierModalProps {
   creature: CreatureEntry | null;
   onEdit?: (creature: CreatureEntry) => void;
   /** Called when user clicks a derived/source creature to navigate to it */
-  onOpenCreature?: (creature: CreatureEntry) => void;
+  onOpenCreature?: (creature: CreatureEntry, formId?: string | null) => void;
   zIndex?: number;
   initialFormId?: string | null;
 }
@@ -97,7 +97,7 @@ export function CreatureDossierModal({
 }: CreatureDossierModalProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { toggleFavoriteCreature, bondCreature, creatures: allCreatures } = useDashboardStore();
+  const { toggleFavoriteCreature, bondCreature, creatures: allCreatures, hallOfFame, gameCharacters } = useDashboardStore();
 
   const loveBurstRef = useRef<RomanticLoveBurstHandle>(null);
   const favBurstRef = useRef<RomanticLoveBurstHandle>(null);
@@ -108,10 +108,20 @@ export function CreatureDossierModal({
   // ── Lineage: creatures derived FROM this creature (reverse lookup) ──────────
   const derivativeCreatures = useMemo(() => {
     if (!creature) return [];
-    return allCreatures.filter((c) =>
-      c.id !== creature.id &&
-      (c.derivedFrom || []).some((d) => d.creatureId === creature.id)
-    );
+    const creatureNameLower = creature.name.toLowerCase().trim();
+    return allCreatures.flatMap((c) => {
+      if (c.id === creature.id) return [];
+      const matchingRefs = (c.derivedFrom || []).filter(
+        (d) =>
+          d.creatureId === creature.id ||
+          (d.creatureName && d.creatureName.toLowerCase().trim() === creatureNameLower)
+      );
+      if (matchingRefs.length === 0) return [];
+      return matchingRefs.map((ref) => ({
+        creature: c,
+        relationshipType: ref.relationshipType || "Derivative",
+      }));
+    });
   }, [allCreatures, creature]);
 
   // ── Lineage: source creatures this creature was derived FROM ────────────────
@@ -120,10 +130,29 @@ export function CreatureDossierModal({
     return creature.derivedFrom
       .map((ref) => ({
         ref,
-        entry: allCreatures.find((c) => c.id === ref.creatureId) ?? null,
+        entry:
+          allCreatures.find(
+            (c) =>
+              c.id === ref.creatureId ||
+              (ref.creatureName && c.name.toLowerCase().trim() === ref.creatureName.toLowerCase().trim())
+          ) ?? null,
       }))
       .filter((x) => x.entry !== null) as Array<{ ref: (typeof creature.derivedFrom)[0]; entry: CreatureEntry }>;
   }, [allCreatures, creature]);
+
+  // ── Main Creature Ownership: characters & game-chars that point to this creature ──
+  const mainCreatureOwners = useMemo(() => {
+    if (!creature) return { hofOwners: [], gcOwners: [] };
+    const hofOwners = (hallOfFame || []).filter(
+      (h) => h.mainCreatureId === creature.id ||
+             ((h.details as any)?.mainCreatureId === creature.id)
+    );
+    const gcOwners = (gameCharacters || []).filter(
+      (g) => g.mainCreatureId === creature.id ||
+             (g.stats as any)?.mainCreatureId === creature.id
+    );
+    return { hofOwners, gcOwners };
+  }, [hallOfFame, gameCharacters, creature]);
 
   // Scroll to and highlight targeted form if initialFormId is passed
   useEffect(() => {
@@ -300,9 +329,9 @@ export function CreatureDossierModal({
     const cTierMeta = CREATURE_TIER_META[c.tier] || CREATURE_TIER_META.S;
     return (
       <button
-        key={c.id}
+        key={`${c.id}-${label}`}
         type="button"
-        onClick={() => onOpenCreature?.(c)}
+        onClick={() => onOpenCreature?.(c, null)}
         className={`group relative rounded-2xl overflow-hidden border cursor-pointer flex flex-col transition-all duration-300 text-left w-full ${
           isCyber
             ? "bg-[#060a18] border-white/10 hover:border-amber-400/60 hover:shadow-[0_0_20px_rgba(255,215,0,0.15)]"
@@ -694,8 +723,8 @@ export function CreatureDossierModal({
                   The following creatures list <strong>{creature.name}</strong> as a source component in their creation.
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {derivativeCreatures.map((c) =>
-                    renderLineageCard(c, "Derivative")
+                  {derivativeCreatures.map((item) =>
+                    renderLineageCard(item.creature, item.relationshipType)
                   )}
                 </div>
               </div>
@@ -727,6 +756,79 @@ export function CreatureDossierModal({
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {groupedGameChars.map((group) => renderGroupedCharCard(group, true))}
+                </div>
+              </div>
+            )}
+
+            {/* ── MAIN CREATURE FOR (Ownership: bidirectional Main Creature lookup) ── */}
+            {(mainCreatureOwners.hofOwners.length > 0 || mainCreatureOwners.gcOwners.length > 0) && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🌟</span>
+                  <h4 className="text-xs font-mono font-black tracking-wider uppercase text-amber-400">
+                    Main Creature For
+                  </h4>
+                  <span className={`ml-auto text-[10px] font-mono px-2 py-0.5 rounded-full border font-bold ${
+                    isCyber
+                      ? "bg-amber-500/15 text-amber-300 border-amber-500/40"
+                      : "bg-amber-100 text-amber-900 border-amber-400 shadow-[1px_1px_0_#000]"
+                  }`}>
+                    {mainCreatureOwners.hofOwners.length + mainCreatureOwners.gcOwners.length} owner{(mainCreatureOwners.hofOwners.length + mainCreatureOwners.gcOwners.length) > 1 ? "s" : ""}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {mainCreatureOwners.hofOwners.map((owner) => (
+                    <div key={owner.id}
+                      className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
+                        isCyber
+                          ? "bg-amber-500/5 border-amber-500/20"
+                          : "bg-amber-50 border border-amber-300 shadow-[2px_2px_0px_#000]"
+                      }`}
+                    >
+                      <div className="shrink-0 w-10 h-10 rounded-xl overflow-hidden border border-black/20 bg-slate-900">
+                        {owner.avatarUrl || owner.imageUrl ? (
+                          <img src={owner.avatarUrl || owner.imageUrl} alt={owner.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-lg">👤</div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-xs font-black font-mono truncate ${isCyber ? "text-white" : "text-black"}`}>{owner.name}</p>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold ${isCyber ? "bg-cyan-500/20 text-cyan-300" : "bg-cyan-100 text-cyan-900"}`}>📚 Character Dict</span>
+                          {owner.type && <span className={`text-[9px] font-mono opacity-60 ${isCyber ? "text-slate-400" : "text-slate-600"}`}>{owner.type}</span>}
+                        </div>
+                      </div>
+                      <span className={`shrink-0 text-xs font-mono font-bold ${isCyber ? "text-amber-300" : "text-amber-700"}`}>✓</span>
+                    </div>
+                  ))}
+
+                  {mainCreatureOwners.gcOwners.map((owner) => (
+                    <div key={owner.id}
+                      className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
+                        isCyber
+                          ? "bg-amber-500/5 border-amber-500/20"
+                          : "bg-amber-50 border border-amber-300 shadow-[2px_2px_0px_#000]"
+                      }`}
+                    >
+                      <div className="shrink-0 w-10 h-10 rounded-xl overflow-hidden border border-black/20 bg-slate-900">
+                        {owner.avatarUrl || owner.cardImage ? (
+                          <img src={(owner.avatarUrl || owner.cardImage)!} alt={owner.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-lg">🎮</div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-xs font-black font-mono truncate ${isCyber ? "text-white" : "text-black"}`}>{owner.name}</p>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold ${isCyber ? "bg-purple-500/20 text-purple-300" : "bg-purple-100 text-purple-900"}`}>🎮 Game Char</span>
+                          {owner.gameName && <span className={`text-[9px] font-mono opacity-60 truncate ${isCyber ? "text-slate-400" : "text-slate-600"}`}>{owner.gameName}</span>}
+                        </div>
+                      </div>
+                      <span className={`shrink-0 text-xs font-mono font-bold ${isCyber ? "text-amber-300" : "text-amber-700"}`}>✓</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

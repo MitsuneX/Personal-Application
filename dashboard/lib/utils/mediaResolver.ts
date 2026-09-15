@@ -86,6 +86,7 @@ export interface VideoFraming {
   y: number;
   zoom: number;
   aspect: number;
+  rotation?: number;
   posterUrl?: string;
   posterTimestamp?: number;
   customPosterUrl?: string;
@@ -97,12 +98,13 @@ export interface VideoFraming {
  * Guarantees VideoCropModal, LazyCardVideo, and card previews render 100% pixel-perfect identical compositions.
  */
 export function getVideoFramingStyle(framing?: Partial<VideoFraming> | null): React.CSSProperties {
-  const x = typeof framing?.x === "number" ? framing.x : 0;
-  const y = typeof framing?.y === "number" ? framing.y : 0;
-  const zoom = typeof framing?.zoom === "number" && framing.zoom > 0 ? framing.zoom : 1.0;
+  const x = typeof framing?.x === "number" && !isNaN(framing.x) ? framing.x : 0;
+  const y = typeof framing?.y === "number" && !isNaN(framing.y) ? framing.y : 0;
+  const zoom = typeof framing?.zoom === "number" && !isNaN(framing.zoom) && framing.zoom > 0 ? framing.zoom : 1.0;
+  const rotation = typeof framing?.rotation === "number" && !isNaN(framing.rotation) ? ((framing.rotation % 360) + 360) % 360 : 0;
 
   return {
-    transform: `translate(${x}%, ${y}%) scale(${zoom})`,
+    transform: `translate(${x}%, ${y}%) rotate(${rotation}deg) scale(${zoom})`,
     transformOrigin: "center center",
   };
 }
@@ -118,7 +120,7 @@ export const VIDEO_FRAMING_MEDIA_CLASS = "w-full h-full object-contain object-ce
  */
 export function getCardVideoFraming(entry: any): VideoFraming {
   if (!entry) {
-    return { x: 0, y: 0, zoom: 1, aspect: 0.75 };
+    return { x: 0, y: 0, zoom: 1, rotation: 0, aspect: 0.75 };
   }
 
   const crop =
@@ -178,6 +180,7 @@ export function getCardVideoFraming(entry: any): VideoFraming {
     x: typeof crop?.x === "number" ? crop.x : 0,
     y: typeof crop?.y === "number" ? crop.y : 0,
     zoom: typeof crop?.zoom === "number" && crop.zoom > 0 ? crop.zoom : 1,
+    rotation: typeof crop?.rotation === "number" ? ((crop.rotation % 360) + 360) % 360 : 0,
     aspect: typeof crop?.aspect === "number" && crop.aspect > 0 ? crop.aspect : 0.75, // 3:4 aspect ratio
     posterUrl: posterUrl && typeof posterUrl === "string" ? posterUrl : undefined,
     posterTimestamp: typeof posterTimestamp === "number" ? posterTimestamp : undefined,
@@ -208,6 +211,7 @@ export function getCardVideoPosterFraming(entry: any): VideoFraming | null {
     x: typeof posterCrop.x === "number" ? posterCrop.x : 0,
     y: typeof posterCrop.y === "number" ? posterCrop.y : 0,
     zoom: typeof posterCrop.zoom === "number" && posterCrop.zoom > 0 ? posterCrop.zoom : 1,
+    rotation: typeof posterCrop.rotation === "number" ? ((posterCrop.rotation % 360) + 360) % 360 : 0,
     aspect: typeof posterCrop.aspect === "number" && posterCrop.aspect > 0 ? posterCrop.aspect : 0.75,
   };
 }

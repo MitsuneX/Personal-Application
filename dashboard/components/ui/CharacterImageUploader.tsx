@@ -5,6 +5,7 @@ import { useTheme } from "@/lib/theme";
 import { ImageCropModal, CropData } from "@/components/ui/ImageCropModal";
 import { VideoCropModal, VideoCropData } from "@/components/ui/VideoCropModal";
 import { useToast } from "@/components/ui/ToastProvider";
+import { getVideoFramingStyle, VIDEO_FRAMING_MEDIA_CLASS } from "@/lib/utils/mediaResolver";
 
 interface CharacterImageUploaderProps {
   label: string;
@@ -297,7 +298,8 @@ export function CharacterImageUploader({
                 loop
                 muted
                 playsInline
-                className="absolute inset-0 w-full h-full object-cover"
+                style={getVideoFramingStyle(cropData)}
+                className={VIDEO_FRAMING_MEDIA_CLASS}
               />
             ) : (
               <img

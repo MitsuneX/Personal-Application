@@ -28,6 +28,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { GameCharacterJsonEditor } from "@/components/ui/GameCharacterJsonEditor";
 import { normalizeGameCharacterJson, exportGameCharacterToJson } from "@/lib/data/gameCharacterSchema";
 import { isGameCharacterDuplicate } from "@/lib/data/duplicateHelper";
+import { MainCreatureSelector } from "@/components/creatures/MainCreatureSelector";
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 const TABS = [
@@ -343,7 +344,7 @@ function TextareaField({
 export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: Props) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { games, gameCharacters, addGameCharacter, updateGameCharacter } = useDashboardStore();
+  const { games, gameCharacters, addGameCharacter, updateGameCharacter, creatures = [] } = useDashboardStore();
   const { success: toastSuccess, error: toastError, warning: toastWarning } = useToast();
 
   const [activeTab, setActiveTab] = useState<TabId>("basic");
@@ -421,6 +422,9 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
   const [avatarCrop, setAvatarCrop] = useState<any>(null);
   const [splashArtCrop, setSplashArtCrop] = useState<any>(null);
 
+  // ── Main Creature designation ──
+  const [mainCreatureId, setMainCreatureId] = useState<string | null>(null);
+
   // ── Reset on open ──
   useEffect(() => {
     if (!isOpen) return;
@@ -486,9 +490,19 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
       setGallery(c.gallery || []);
       // Persistent Crop Data
       const existingCrop = c.stats?.cropData || {};
-      setCardImageCrop(existingCrop.cardImageCrop || null);
+      const savedCardCrop =
+        existingCrop.cardVideoCrop ||
+        (c.stats as any)?.cardVideoCrop ||
+        (c as any).cardVideoCrop ||
+        (c.stats as any)?.videoFraming ||
+        (c as any).videoFraming ||
+        existingCrop.cardImageCrop ||
+        null;
+      setCardImageCrop(savedCardCrop);
       setAvatarCrop(existingCrop.avatarCrop || null);
       setSplashArtCrop(existingCrop.splashArtCrop || null);
+      // Main Creature
+      setMainCreatureId(c.mainCreatureId || (c.stats as any)?.mainCreatureId || null);
     } else {
       // Reset all
       setName(""); setOfficialName(""); setAlias(""); setNickname(""); setNativeName(""); setTitle("");
@@ -501,6 +515,7 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
       setPersonality(""); setBiography(""); setOfficialDescription(""); setFavoriteQuote(""); setNotes("");
       setCardImage(""); setAvatarUrl(""); setSplashArt(""); setGallery([]);
       setCardImageCrop(null); setAvatarCrop(null); setSplashArtCrop(null);
+      setMainCreatureId(null);
     }
   }, [characterToEdit, isOpen]);
 
@@ -708,13 +723,21 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
       notes: notes || undefined,
       stats: {
         ...(characterToEdit?.stats || {}),
+        cardVideoCrop: cardImageCrop || undefined,
+        videoFraming: cardImageCrop || undefined,
         cropData: {
+          ...(characterToEdit?.stats?.cropData || {}),
           cardImageCrop,
-          cardVideoCrop: cardImageCrop?.x !== undefined ? cardImageCrop : (characterToEdit?.stats?.cropData?.cardVideoCrop || null),
+          cardVideoCrop: cardImageCrop || undefined,
+          videoFraming: cardImageCrop || undefined,
           avatarCrop,
           splashArtCrop,
         },
+        mainCreatureId: mainCreatureId || undefined,
       },
+      cardVideoCrop: cardImageCrop || undefined,
+      videoFraming: cardImageCrop || undefined,
+      mainCreatureId: mainCreatureId || undefined,
     };
 
     try {
@@ -967,6 +990,24 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
             <TextareaField label="Official Description" value={officialDescription} onChange={setOfficialDescription} placeholder="Paste the official in-game description…" rows={3} isCyber={isCyber} />
             <FormField label="Favorite Quote" value={favoriteQuote} onChange={setFavoriteQuote} placeholder={`"Their most iconic line…"`} isCyber={isCyber} />
             <TextareaField label="Personal Notes" value={notes} onChange={setNotes} placeholder="Your personal thoughts, build notes, combos…" rows={2} isCyber={isCyber} />
+
+            {/* ── Main Creature Designation ── */}
+            <div className="pt-3 border-t" style={{ borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#E5E7EB" }}>
+              <div className="mb-2 flex items-center gap-2">
+                <span className={`text-[10px] font-mono font-black uppercase tracking-widest ${isCyber ? "text-amber-400" : "text-amber-700"}`}>
+                  🌟 Main Creature Assignment
+                </span>
+                <span className={`text-[10px] font-mono ${isCyber ? "text-slate-500" : "text-slate-400"}`}>
+                  Canonical creature this game character is most closely associated with
+                </span>
+              </div>
+              <MainCreatureSelector
+                value={mainCreatureId}
+                creatures={creatures}
+                onChange={setMainCreatureId}
+                isCyber={isCyber}
+              />
+            </div>
           </div>
         );
 
@@ -980,13 +1021,16 @@ export function GameCharacterEditorModal({ isOpen, onClose, characterToEdit }: P
                   value={cardImage}
                   cropData={cardImageCrop}
                   allowVideo={true}
+                  onVideoCropChange={(crop) => {
+                    setCardImageCrop(crop);
+                  }}
                   onChange={(url, crop) => {
                     setCardImage(url);
                     if (crop) setCardImageCrop(crop);
                   }}
                   onClear={() => { setCardImage(""); setCardImageCrop(null); }}
                   aspect={3 / 4}
-                  hint="Used ONLY on grid cards. Supports MP4."
+                  hint="Used ONLY on grid cards. Supports MP4 video previews with crop & rotate framing."
                   previewClass="h-40 w-full"
                 />
                 <input

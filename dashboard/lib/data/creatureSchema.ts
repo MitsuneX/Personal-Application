@@ -96,6 +96,7 @@ export const CREATURE_TIER_META: Record<
 };
 
 export const CREATURE_RELATIONSHIP_TYPES = [
+  "Main Creature",
   "Partner",
   "Companion",
   "User",
@@ -635,3 +636,67 @@ export const SAMPLE_CREATURES: CreatureEntry[] = [
     updatedAt: new Date().toISOString(),
   },
 ];
+
+// ─── Main Creature Helpers ───────────────────────────────────────────────────
+
+/**
+ * Checks if a creature is designated as the Main Creature for a given Character or Game Character.
+ * Checks both explicit canonical ID references (`mainCreatureId`) and connection records (`relationshipType === "Main Creature"`).
+ */
+export function isMainCreature(
+  creature: CreatureEntry | null | undefined,
+  characterId: string | null | undefined,
+  directMainCreatureId?: string | null
+): boolean {
+  if (!creature || !characterId) return false;
+  if (directMainCreatureId && directMainCreatureId === creature.id) return true;
+  return Boolean(
+    (creature.connectedCharacters || []).some(
+      (ref) => ref.characterId === characterId && ref.relationshipType === "Main Creature"
+    )
+  );
+}
+
+/**
+ * Finds all Characters (HallOfFame) and GameCharacters that have explicitly designated
+ * this creature as their Main Creature.
+ */
+export function getMainCreatureOwners(
+  creature: CreatureEntry | null | undefined,
+  hallOfFame: Array<{ id: string; name: string; mainCreatureId?: string; details?: Record<string, unknown>; [key: string]: unknown }> = [],
+  gameCharacters: Array<{ id: string; name: string; mainCreatureId?: string; stats?: Record<string, unknown>; [key: string]: unknown }> = []
+): {
+  hofOwners: Array<{ id: string; name: string; [key: string]: unknown }>;
+  gameCharOwners: Array<{ id: string; name: string; [key: string]: unknown }>;
+} {
+  if (!creature) return { hofOwners: [], gameCharOwners: [] };
+
+  const explicitHofIds = new Set(
+    (creature.connectedCharacters || [])
+      .filter((ref) => ref.characterType === "character_dict" && ref.relationshipType === "Main Creature")
+      .map((ref) => ref.characterId)
+  );
+
+  const explicitGameCharIds = new Set(
+    (creature.connectedCharacters || [])
+      .filter((ref) => ref.characterType === "game_character" && ref.relationshipType === "Main Creature")
+      .map((ref) => ref.characterId)
+  );
+
+  const hofOwners = hallOfFame.filter(
+    (h) =>
+      h.mainCreatureId === creature.id ||
+      (h.details as Record<string, unknown> | undefined)?.mainCreatureId === creature.id ||
+      explicitHofIds.has(h.id)
+  );
+
+  const gameCharOwners = gameCharacters.filter(
+    (gc) =>
+      gc.mainCreatureId === creature.id ||
+      (gc.stats as Record<string, unknown> | undefined)?.mainCreatureId === creature.id ||
+      explicitGameCharIds.has(gc.id)
+  );
+
+  return { hofOwners, gameCharOwners };
+}
+

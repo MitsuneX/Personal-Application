@@ -13,6 +13,39 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v13.10.0",
+    date: "2026-09-15",
+    title: "Persistent 3:4 Video Card Crop & Rotate + Bidirectional Main Creature Lineage",
+    badge: "FEATURE",
+    type: "minor",
+    summary: "Implemented a full-featured, persistent Crop & Rotate engine for 3:4 card videos across Character Dictionary (Hall of Fame) and Game Characters, ensuring live editor viewports and rendered cards match pixel-for-pixel with non-destructive MP4 preservation. In addition, established a canonical Main Creature ownership and bidirectional lineage discovery architecture across Bestiary, Hall of Fame, and Game Characters with automatic form propagation and targeted deep-link highlighting.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🔄 Persistent 3:4 Video Crop & Rotate (components/ui/VideoCropModal.tsx, lib/utils/mediaResolver.ts): Added complete rotation control for card videos (90° quick step buttons ↺/↻, preset pills 0°/90°/180°/270°, and fine slider 0°–359°). Live viewport framing visually matches final 3:4 video cards pixel-for-pixel, with affine canvas transformations generating accurate thumbnail posters.",
+          "🐉 Canonical Main Creature Ownership (lib/data/creatureSchema.ts, components/creatures/MainCreatureSelector.tsx): Introduced premier 'Main Creature' designation for Characters and Game Characters with uncropped art previews, searchable selection modal, and dedicated hero showcase in profile dossiers.",
+          "✨ Automatic Creature Form Propagation (components/ui/CharacterDictProfileModal.tsx, components/game/CharacterProfileModal.tsx): Characters with a designated Main Creature automatically inherit and showcase all creature forms and evolutions in their dossier without manual form-by-form assignment.",
+          "🎯 Targeted Deep-Link Form Highlighting (components/ui/CreatureDossierModal.tsx): Clicking any form card opens the creature dossier, smoothly scrolls directly to the targeted form, and activates a luminous theme-aligned highlight aura.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "📐 Shared Affine Transform Pipeline (lib/utils/mediaResolver.ts): Unified transform calculation via getVideoFramingStyle with centered transform origin, NaN guards, and 0°–359° angle normalization, guaranteeing identical video framing across roster cards, profile modals, and gallery tabs.",
+          "💾 Non-Destructive Video Framing Persistence (components/ui/HofEditorModal.tsx, components/ui/GameCharacterEditorModal.tsx): Stored framing metadata (x, y, zoom, rotation, aspect, posterUrl) in JSON stats/details without modifying or transcoding the original source MP4 files or requiring database migrations.",
+          "🧬 Generic Bidirectional Lineage Discovery (components/ui/CreatureDossierModal.tsx): Source creatures and derivative/fusion creatures discover and link to each other bidirectionally at runtime without redundant reverse indexing.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🎨 Dual-Theme Polish across Editor & Modals: Delivered crisp Cyberpunk neon accents (cyan/amber glow) and Neo-Brutalism high-contrast borders and solid drop-shadows across the VideoCropModal rotation controls, MainCreatureSelector, and creature dossier highlights.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v13.9.1",
     date: "2026-09-14",
     title: "Dashboard Polish — Profile Density, Uncropped Artwork & Live Creature Synchronization",

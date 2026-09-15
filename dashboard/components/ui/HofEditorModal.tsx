@@ -16,6 +16,7 @@ import { isTokusatsuEntry } from "@/lib/data/tokusatsuDataHelper";
 import { HofJsonEditor } from "@/components/ui/HofJsonEditor";
 import { isHofDuplicate } from "@/lib/data/duplicateHelper";
 import { mergeCharacterDictionaryMediaIntoGallery } from "@/lib/utils/mediaResolver";
+import { MainCreatureSelector } from "@/components/creatures/MainCreatureSelector";
 
 interface HofEditorModalProps {
   isOpen: boolean;
@@ -44,7 +45,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   }
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const { updateHof, hallOfFame } = useDashboardStore();
+  const { updateHof, hallOfFame, creatures = [] } = useDashboardStore();
   const { success: toastSuccess, error: toastError, warning: toastWarning } = useToast();
 
   const [activeFormTab, setActiveFormTab] = useState<FormTab>("basic");
@@ -65,6 +66,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   // cardVideo stores an MP4/WebM URL when the card image slot holds a video.
   // Persisted via details.cardVideo so no schema migration is needed.
   const [cardVideo, setCardVideo] = useState("");
+  const [cardVideoCrop, setCardVideoCrop] = useState<any>(null);
   const [note, setNote] = useState("");
   const [rank, setRank] = useState<number | null>(null);
   const [isChampion, setIsChampion] = useState(false);
@@ -139,6 +141,9 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
   const [isUploading, setIsUploading] = useState(false);
   const [imgError, setImgError] = useState(false);
 
+  // Main Creature designation
+  const [mainCreatureId, setMainCreatureId] = useState<string | null>(null);
+
   const currentStepIndex = TABS_LIST.indexOf(activeFormTab);
 
   const scrollToTab = (tabId: FormTab) => {
@@ -205,8 +210,10 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       // cardVideo holds a video URL when the card slot contains an MP4/WebM.
       const savedCardVideo = details.cardVideo || "";
       const savedImageUrl = entryToEdit.imageUrl || "";
+      const savedCrop = details.cropData?.cardVideoCrop || details.cardVideoCrop || details.videoFraming || (entryToEdit as any).cardVideoCrop || (entryToEdit as any).videoFraming || null;
       setImageUrl(savedImageUrl);
       setCardVideo(savedCardVideo);
+      setCardVideoCrop(savedCrop);
       setNote(entryToEdit.note || "");
       setRank(entryToEdit.rank !== undefined ? entryToEdit.rank : null);
       setIsChampion(entryToEdit.isChampion || false);
@@ -274,6 +281,9 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       setBirthday(entryToEdit.birthday || details.birthday || "");
       setDebutDate(entryToEdit.debutDate || details.debutDate || "");
       setVtuberStatus(entryToEdit.vtuberStatus || details.vtuberStatus || "Active");
+
+      // Main Creature
+      setMainCreatureId(entryToEdit.mainCreatureId || details.mainCreatureId || null);
     } else {
       setName("");
       setType("actress");
@@ -283,6 +293,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       setSingerType("Solo Artist");
       setImageUrl("");
       setCardVideo("");
+      setCardVideoCrop(null);
       setNote("");
       setRank(null);
       setIsChampion(false);
@@ -335,6 +346,7 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       setRelatedWorks("");
       setGalleryUrls([]);
       setSocialLinks([]);
+      setMainCreatureId(null);
     }
 
     setLinkPlatform("");
@@ -488,6 +500,9 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
       gallery: Array.isArray(galleryUrls) ? galleryUrls : [],
       socialLinks: validSocialLinks,
       accentColor,
+      cardVideo: str(cardVideo) || undefined,
+      cardVideoCrop: cardVideoCrop || undefined,
+      videoFraming: cardVideoCrop || undefined,
       // VTuber fields
       agency: str(agency) || undefined,
       group: str(group) || undefined,
@@ -514,6 +529,12 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
     if (updated.nationality !== undefined) setNationality(updated.nationality || "");
     if (updated.singerType !== undefined) setSingerType(updated.singerType || "Solo Artist");
     if (updated.imageUrl !== undefined) setImageUrl(updated.imageUrl || "");
+    if ((updated as any).cardVideo !== undefined) setCardVideo((updated as any).cardVideo || "");
+    else if ((updated as any).details?.cardVideo !== undefined) setCardVideo((updated as any).details.cardVideo || "");
+    if ((updated as any).cardVideoCrop !== undefined) setCardVideoCrop((updated as any).cardVideoCrop);
+    else if ((updated as any).details?.cardVideoCrop !== undefined) setCardVideoCrop((updated as any).details.cardVideoCrop);
+    else if ((updated as any).details?.cropData?.cardVideoCrop !== undefined) setCardVideoCrop((updated as any).details.cropData.cardVideoCrop);
+    else if ((updated as any).details?.videoFraming !== undefined) setCardVideoCrop((updated as any).details.videoFraming);
     if (updated.portraitUrl !== undefined) {
       setPortraitUrl(updated.portraitUrl || "");
       setPortraitSource(updated.portraitUrl ? "url" : "card");
@@ -708,6 +729,13 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
         // Store card video URL separately so imageUrl stays a static-image URL.
         // getCardVideoUrl() already reads entry.details.cardVideo — no DB migration needed.
         cardVideo: str(cardVideo) || undefined,
+        cardVideoCrop: cardVideoCrop || undefined,
+        videoFraming: cardVideoCrop || undefined,
+        cropData: {
+          ...(entryToEdit?.details?.cropData || {}),
+          cardVideoCrop: cardVideoCrop || undefined,
+          videoFraming: cardVideoCrop || undefined,
+        },
         // VTuber fields
         agency: str(agency) || undefined,
         group: str(group) || undefined,
@@ -716,6 +744,8 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
         birthday: str(birthday) || undefined,
         debutDate: str(debutDate) || undefined,
         vtuberStatus: str(vtuberStatus) || undefined,
+        // Main Creature
+        mainCreatureId: mainCreatureId || undefined,
       };
 
       await updateHof(id, {
@@ -784,7 +814,10 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
         }),
         socialLinks: validSocialLinks,
         accentColor,
+        cardVideoCrop: cardVideoCrop || undefined,
+        videoFraming: cardVideoCrop || undefined,
         details: detailsObj,
+        mainCreatureId: mainCreatureId || undefined,
       });
 
       toastSuccess(`✓ Saved "${name}" to Master Character Directory.`);
@@ -1393,6 +1426,24 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                 </label>
                 <textarea value={characterDevelopment} onChange={(e) => setCharacterDevelopment(e.target.value)} rows={2} placeholder="Development arc through seasons or story patches..." className={inputClass + " resize-none"} style={inputStyle} />
               </div>
+
+              {/* ── Main Creature Designation ── */}
+              <div className="pt-3 border-t" style={{ borderColor: isCyber ? "rgba(255,255,255,0.08)" : "#E5E7EB" }}>
+                <div className="mb-2 flex items-center gap-2">
+                  <span className={`text-[10px] font-mono font-black uppercase tracking-widest ${isCyber ? "text-amber-400" : "text-amber-700"}`}>
+                    🌟 Main Creature Assignment
+                  </span>
+                  <span className={`text-[10px] font-mono ${isCyber ? "text-slate-500" : "text-slate-400"}`}>
+                    The canonical creature this character is most closely associated with
+                  </span>
+                </div>
+                <MainCreatureSelector
+                  value={mainCreatureId}
+                  creatures={creatures}
+                  onChange={setMainCreatureId}
+                  isCyber={isCyber}
+                />
+              </div>
             </div>
           )}
 
@@ -1455,13 +1506,20 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                     label="Card Image / Preview (3:4)"
                     allowVideo={true}
                     value={cardVideo || imageUrl}
-                    onChange={(url) => {
+                    cropData={cardVideoCrop}
+                    onVideoCropChange={(newCrop) => {
+                      setCardVideoCrop(newCrop);
+                    }}
+                    onChange={(url, newCrop) => {
                       setImgError(false);
                       // Detect whether the uploaded file is a video or static image
                       // and route to the correct state field.
                       const isVid = /\.(mp4|webm|mov|ogg)(?:[?#]|$)/i.test(url) || url.startsWith("data:video/");
                       if (isVid) {
                         setCardVideo(url);
+                        if (newCrop) {
+                          setCardVideoCrop(newCrop);
+                        }
                         // Keep imageUrl as-is so a prior static image isn't lost
                       } else {
                         setImageUrl(url);
@@ -1471,10 +1529,11 @@ export function HofEditorModal({ isOpen, onClose, entryToEdit }: HofEditorModalP
                     onClear={() => {
                       setImageUrl("");
                       setCardVideo("");
+                      setCardVideoCrop(null);
                       setImgError(false);
                     }}
                     aspect={3 / 4}
-                    hint="Supports images and MP4 video previews."
+                    hint="Supports images and MP4 video previews with crop & rotate framing."
                     previewClass="h-44 w-full"
                   />
                   <input

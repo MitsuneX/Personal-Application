@@ -2,6 +2,7 @@
  * Automated Verification Script — Game Character MP4 Card Preview Pipeline
  * Tests media resolution, neutral startup framing, custom poster priority, CORS safety, DB baselines, and shared video framing calculation.
  */
+import "dotenv/config";
 import prisma from "../lib/prisma";
 import {
   isVideoUrl,
@@ -51,6 +52,7 @@ async function runPipelineTest() {
           x: 12.5,
           y: -5.0,
           zoom: 1.4,
+          rotation: 90,
           aspect: 0.75,
           posterUrl: "https://example.com/captured_poster.jpg",
           customPosterUrl: "https://example.com/custom_poster.png",
@@ -87,20 +89,53 @@ async function runPipelineTest() {
   assert(resolvedFraming.x === 12.5, "getCardVideoFraming extracts correct X offset");
   assert(resolvedFraming.y === -5.0, "getCardVideoFraming extracts correct Y offset");
   assert(resolvedFraming.zoom === 1.4, "getCardVideoFraming extracts correct Zoom factor");
+  assert(resolvedFraming.rotation === 90, "getCardVideoFraming extracts correct Rotation (90 deg)");
   assert(resolvedFraming.aspect === 0.75, "getCardVideoFraming preserves 3:4 card aspect ratio");
+
+  // Rotation normalization tests
+  const rotatedNegChar = {
+    name: "Neg Rot",
+    cardImage: "https://example.com/video.mp4",
+    stats: { cropData: { cardVideoCrop: { x: 0, y: 0, zoom: 1, rotation: -90 } } },
+  };
+  assert(getCardVideoFraming(rotatedNegChar).rotation === 270, "getCardVideoFraming normalizes negative rotation (-90 -> 270 deg)");
+
+  const rotatedOver360Char = {
+    name: "Over 360",
+    cardImage: "https://example.com/video.mp4",
+    stats: { cropData: { cardVideoCrop: { x: 0, y: 0, zoom: 1, rotation: 450 } } },
+  };
+  assert(getCardVideoFraming(rotatedOver360Char).rotation === 90, "getCardVideoFraming normalizes >360 rotation (450 -> 90 deg)");
+
+  // Hall of Fame details resolution
+  const dummyHof = {
+    id: "hof-1",
+    name: "HOF Character",
+    details: {
+      cardVideo: "https://example.com/hof.mp4",
+      cardVideoCrop: {
+        x: -10,
+        y: 15,
+        zoom: 1.5,
+        rotation: 180,
+      },
+    },
+  };
+  const hofFraming = getCardVideoFraming(dummyHof);
+  assert(hofFraming.rotation === 180, "getCardVideoFraming extracts rotation from Hall of Fame details.cardVideoCrop");
 
   // Neutral default check for new uploads without crop data
   const newUploadChar = { name: "New Upload", cardImage: "https://example.com/new_clip.mp4" };
   const newFraming = getCardVideoFraming(newUploadChar);
-  assert(newFraming.x === 0 && newFraming.y === 0 && newFraming.zoom === 1.0, "New uploads default to neutral x=0, y=0, zoom=1.0 (Full Source Video)");
+  assert(newFraming.x === 0 && newFraming.y === 0 && newFraming.zoom === 1.0 && newFraming.rotation === 0, "New uploads default to neutral x=0, y=0, zoom=1.0, rotation=0 (Full Source Video)");
 
   // ─── Shared Framing Style Calculation Assertions ───────────────────────────
   const styleCustom = getVideoFramingStyle(resolvedFraming);
-  assert(styleCustom.transform === "translate(12.5%, -5%) scale(1.4)", "getVideoFramingStyle calculates correct CSS transform for custom framing");
+  assert(styleCustom.transform === "translate(12.5%, -5%) rotate(90deg) scale(1.4)", "getVideoFramingStyle calculates correct CSS transform for custom framing with rotation");
   assert(styleCustom.transformOrigin === "center center", "getVideoFramingStyle uses center transform origin");
 
   const styleDefault = getVideoFramingStyle(newFraming);
-  assert(styleDefault.transform === "translate(0%, 0%) scale(1)", "getVideoFramingStyle calculates neutral translate(0%, 0%) scale(1) for uncropped video");
+  assert(styleDefault.transform === "translate(0%, 0%) rotate(0deg) scale(1)", "getVideoFramingStyle calculates neutral translate(0%, 0%) rotate(0deg) scale(1) for uncropped video");
 
   assert(VIDEO_FRAMING_MEDIA_CLASS.includes("object-contain"), "VIDEO_FRAMING_MEDIA_CLASS utilizes object-contain to match VideoCropModal viewport geometry");
 
@@ -147,4 +182,13 @@ async function runPipelineTest() {
   console.log("=============================================================");
 }
 
-runPipelineTest().finally(() => prisma.$disconnect());
+runPipelineTest()
+  .then(async () => {
+    await prisma.$disconnect();
+    process.exit(0);
+  })
+  .catch(async (e) => {
+    console.error(e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });

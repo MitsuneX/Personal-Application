@@ -13,6 +13,7 @@ export interface VideoCropData {
   y: number;               // -60% to 60%
   zoom: number;            // 1.0 to 3.0 (1.0 = Full Original Video)
   aspect: number;          // 0.75 for 3:4 aspect ratio
+  rotation?: number;       // 0 to 359 degrees
   posterUrl?: string;      // Generated poster frame URL
   posterTimestamp?: number;// Video playback timestamp (seconds) used for poster frame
   customPosterUrl?: string;// Optional user-uploaded custom poster image
@@ -54,12 +55,14 @@ export function VideoCropModal({
   const [x, setX] = useState<number>(0);
   const [y, setY] = useState<number>(0);
   const [zoom, setZoom] = useState<number>(1);
+  const [rotation, setRotation] = useState<number>(0);
 
   // ── Custom Poster State & Framing ───
   const [customPosterUrl, setCustomPosterUrl] = useState<string | null>(null);
   const [posterX, setPosterX] = useState<number>(0);
   const [posterY, setPosterY] = useState<number>(0);
   const [posterZoom, setPosterZoom] = useState<number>(1);
+  const [posterRotation, setPosterRotation] = useState<number>(0);
 
   const [isPlaying, setIsPlaying] = useState(true);
   const [duration, setDuration] = useState(0);
@@ -77,12 +80,20 @@ export function VideoCropModal({
       setX(initialCropData?.x !== undefined ? initialCropData.x : 0);
       setY(initialCropData?.y !== undefined ? initialCropData.y : 0);
       setZoom(initialCropData?.zoom !== undefined ? initialCropData.zoom : 1.0);
+      const initRot = typeof initialCropData?.rotation === "number" && !isNaN(initialCropData.rotation)
+        ? ((initialCropData.rotation % 360) + 360) % 360
+        : 0;
+      setRotation(initRot);
       setCustomPosterUrl(initialCropData?.customPosterUrl || null);
 
       const pFraming = initialCropData?.posterFraming;
       setPosterX(pFraming?.x !== undefined ? pFraming.x : 0);
       setPosterY(pFraming?.y !== undefined ? pFraming.y : 0);
       setPosterZoom(pFraming?.zoom !== undefined ? pFraming.zoom : 1.0);
+      const initPosterRot = typeof pFraming?.rotation === "number" && !isNaN(pFraming.rotation)
+        ? ((pFraming.rotation % 360) + 360) % 360
+        : initRot;
+      setPosterRotation(initPosterRot);
 
       setActiveMode("video");
       setIsPlaying(true);
@@ -195,10 +206,37 @@ export function VideoCropModal({
       setX(0);
       setY(0);
       setZoom(1.0);
+      setRotation(0);
     } else {
       setPosterX(0);
       setPosterY(0);
       setPosterZoom(1.0);
+      setPosterRotation(0);
+    }
+  };
+
+  const handleRotateLeft = () => {
+    if (activeMode === "video") {
+      setRotation((prev) => (prev - 90 + 360) % 360);
+    } else {
+      setPosterRotation((prev) => (prev - 90 + 360) % 360);
+    }
+  };
+
+  const handleRotateRight = () => {
+    if (activeMode === "video") {
+      setRotation((prev) => (prev + 90) % 360);
+    } else {
+      setPosterRotation((prev) => (prev + 90) % 360);
+    }
+  };
+
+  const handleSetAngle = (deg: number) => {
+    const norm = ((deg % 360) + 360) % 360;
+    if (activeMode === "video") {
+      setRotation(norm);
+    } else {
+      setPosterRotation(norm);
     }
   };
 
@@ -233,11 +271,18 @@ export function VideoCropModal({
           ctx.fillStyle = "#000000";
           ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-          // Draw framed video onto canvas matching transform
+          // Draw framed video onto canvas matching transform matrix pixel-for-pixel
           ctx.save();
+          // Move to center of canvas
           ctx.translate(canvasWidth / 2, canvasHeight / 2);
-          ctx.scale(zoom, zoom);
+          // Apply translation offset in viewport percentage space
           ctx.translate((x / 100) * canvasWidth, (y / 100) * canvasHeight);
+          // Apply rotation
+          if (rotation) {
+            ctx.rotate((rotation * Math.PI) / 180);
+          }
+          // Apply zoom scale
+          ctx.scale(zoom, zoom);
 
           // Draw centered video matching object-contain geometry
           const vw = video.videoWidth;
@@ -267,6 +312,7 @@ export function VideoCropModal({
       y,
       zoom,
       aspect,
+      rotation,
       posterTimestamp: currentTime,
       customPosterUrl: customPosterUrl || undefined,
       posterFraming: customPosterUrl
@@ -275,6 +321,7 @@ export function VideoCropModal({
             y: posterY,
             zoom: posterZoom,
             aspect,
+            rotation: posterRotation,
           }
         : undefined,
       originalUrl: videoSrc || undefined,
@@ -282,13 +329,14 @@ export function VideoCropModal({
 
     onConfirm(cropDataResult, posterBlob);
     setIsProcessing(false);
-  }, [x, y, zoom, aspect, currentTime, customPosterUrl, posterX, posterY, posterZoom, videoSrc, onConfirm]);
+  }, [x, y, zoom, aspect, rotation, currentTime, customPosterUrl, posterX, posterY, posterZoom, posterRotation, videoSrc, onConfirm]);
 
   if (!isOpen || !videoSrc) return null;
 
   const curX = activeMode === "video" ? x : posterX;
   const curY = activeMode === "video" ? y : posterY;
   const curZoom = activeMode === "video" ? zoom : posterZoom;
+  const curRot = activeMode === "video" ? rotation : posterRotation;
 
   return (
     <OverlayPortal>
@@ -335,7 +383,7 @@ export function VideoCropModal({
                     {title}
                   </h2>
                   <p className="text-[11px] font-mono opacity-60">
-                    {activeMode === "video" ? "Video Frame • Position & Scale for 3:4 Card" : "Custom Poster • Position & Scale for 3:4 Card"}
+                    {activeMode === "video" ? "Video Frame • Position, Scale & Rotate for 3:4 Card" : "Custom Poster • Position, Scale & Rotate for 3:4 Card"}
                   </p>
                 </div>
               </div>
@@ -373,7 +421,7 @@ export function VideoCropModal({
                       : "opacity-60 hover:opacity-100"
                   }`}
                 >
-                  🎬 Video Frame ({x}%, {y}%, {zoom.toFixed(2)}x)
+                  🎬 Video Frame ({x}%, {y}%, {zoom.toFixed(2)}x, {rotation}°)
                 </button>
                 <button
                   type="button"
@@ -386,7 +434,7 @@ export function VideoCropModal({
                       : "opacity-60 hover:opacity-100"
                   }`}
                 >
-                  📷 Custom Poster Frame ({posterX}%, {posterY}%, {posterZoom.toFixed(2)}x)
+                  📷 Custom Poster Frame ({posterX}%, {posterY}%, {posterZoom.toFixed(2)}x, {posterRotation}°)
                 </button>
               </div>
             )}
@@ -403,8 +451,8 @@ export function VideoCropModal({
               <span>ℹ️</span>
               <span>
                 {activeMode === "video"
-                  ? "Full Source Video shown. Drag and zoom to position inside the 3:4 card boundary."
-                  : "Custom Poster shown. Drag and zoom to position inside the 3:4 card boundary."}
+                  ? "Full Source Video shown. Drag, zoom, and rotate to position inside the 3:4 card boundary."
+                  : "Custom Poster shown. Drag, zoom, and rotate to position inside the 3:4 card boundary."}
               </span>
             </div>
 
@@ -448,14 +496,14 @@ export function VideoCropModal({
                         setCurrentTime(videoRef.current.currentTime || 0);
                       }
                     }}
-                    style={getVideoFramingStyle({ x, y, zoom })}
+                    style={getVideoFramingStyle({ x, y, zoom, rotation })}
                     className={VIDEO_FRAMING_MEDIA_CLASS}
                   />
                 ) : (
                   <img
                     src={customPosterUrl!}
                     alt="Custom Poster Preview"
-                    style={getVideoFramingStyle({ x: posterX, y: posterY, zoom: posterZoom })}
+                    style={getVideoFramingStyle({ x: posterX, y: posterY, zoom: posterZoom, rotation: posterRotation })}
                     className={VIDEO_FRAMING_MEDIA_CLASS}
                     draggable={false}
                   />
@@ -474,14 +522,19 @@ export function VideoCropModal({
                   <div />
                 </div>
 
-                {/* Drag Hint & Zoom Badge */}
-                <div className="absolute bottom-2 left-2 right-2 text-center pointer-events-none flex items-center justify-center gap-1.5">
+                {/* Drag Hint & Zoom & Rotation Badges */}
+                <div className="absolute bottom-2 left-2 right-2 text-center pointer-events-none flex items-center justify-center gap-1.5 flex-wrap">
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-black/70 text-white/90 backdrop-blur-sm border border-white/10">
                     ✋ Drag ({curX}%, {curY}%)
                   </span>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-black/70 text-cyan-300 backdrop-blur-sm border border-cyan-500/30">
                     {curZoom.toFixed(2)}x
                   </span>
+                  {curRot !== 0 && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-black/70 text-amber-300 backdrop-blur-sm border border-amber-500/30">
+                      ⟳ {curRot}°
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -519,7 +572,7 @@ export function VideoCropModal({
                 </div>
               )}
 
-              {/* Zoom & Framing Controls */}
+              {/* Zoom, Rotation & Framing Controls */}
               <div className="w-full space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/10">
                   <div className="flex items-center gap-2 flex-1 min-w-[180px]">
@@ -554,7 +607,7 @@ export function VideoCropModal({
                         borderColor: isCyber ? "rgba(255,255,255,0.2)" : "#000000",
                         color: isCyber ? "#CBD5E1" : "#000000",
                       }}
-                      title="Reset to unscaled 1.0x"
+                      title="Reset to unscaled 1.0x and 0° rotation"
                     >
                       Reset
                     </button>
@@ -571,6 +624,77 @@ export function VideoCropModal({
                     >
                       Fill 3:4
                     </button>
+                  </div>
+                </div>
+
+                {/* ── Rotation Controls ────────────────────────────────────── */}
+                <div className="pt-2 border-t border-white/10 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-mono font-bold opacity-70">
+                      {activeMode === "video" ? "Video Rotation" : "Poster Rotation"} ({curRot}°):
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={handleRotateLeft}
+                        className="px-2.5 py-1 text-[11px] font-mono font-bold rounded-lg border cursor-pointer hover:opacity-80 transition-all flex items-center gap-1"
+                        style={{
+                          backgroundColor: isCyber ? "rgba(0,245,255,0.1)" : "#F1F5F9",
+                          borderColor: isCyber ? "rgba(0,245,255,0.4)" : "#000000",
+                          color: isCyber ? "#00F5FF" : "#000000",
+                        }}
+                        title="Rotate 90° counter-clockwise"
+                      >
+                        ↺ -90°
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRotateRight}
+                        className="px-2.5 py-1 text-[11px] font-mono font-bold rounded-lg border cursor-pointer hover:opacity-80 transition-all flex items-center gap-1"
+                        style={{
+                          backgroundColor: isCyber ? "rgba(0,245,255,0.1)" : "#F1F5F9",
+                          borderColor: isCyber ? "rgba(0,245,255,0.4)" : "#000000",
+                          color: isCyber ? "#00F5FF" : "#000000",
+                        }}
+                        title="Rotate 90° clockwise"
+                      >
+                        ↻ +90°
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Preset Pills & Fine Slider */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 shrink-0">
+                      {[0, 90, 180, 270].map((deg) => (
+                        <button
+                          key={deg}
+                          type="button"
+                          onClick={() => handleSetAngle(deg)}
+                          className={`px-2 py-0.5 text-[10px] font-mono font-bold rounded-md border cursor-pointer transition-all ${
+                            curRot === deg
+                              ? isCyber
+                                ? "bg-cyan-500/30 text-cyan-300 border-cyan-400"
+                                : "bg-blue-600 text-white border-black shadow-sm"
+                              : isCyber
+                              ? "bg-white/5 text-gray-400 border-white/10 hover:border-white/30"
+                              : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200"
+                          }`}
+                        >
+                          {deg}°
+                        </button>
+                      ))}
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={359}
+                      step={1}
+                      value={curRot}
+                      onChange={(e) => handleSetAngle(parseInt(e.target.value, 10) || 0)}
+                      className="flex-1 accent-cyan-400 cursor-pointer h-2 bg-black/40 rounded-lg"
+                      title="Fine angle adjustment (0° - 359°)"
+                    />
                   </div>
                 </div>
 
