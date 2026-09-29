@@ -56,6 +56,7 @@ const NAV_SECTIONS = [
   {
     label: "Misc",
     items: [
+      { href: "/home-training", icon: "🥋", label: "Home Training", activePrefixes: ["/home-training"] },
       { href: "/hobbies", icon: "🎯", label: "Hobbies" },
       { href: "/notepad", icon: "📝", label: "Notepad" },
       { href: "/links", icon: "🔗", label: "Links" },

@@ -2,6 +2,57 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [13.11.0] - 2026-09-29
+
+### 🥋 Canonical Home Training Hub & Adaptive 3-State Recovery Architecture
+
+**1. Canonical Weekly Schedule & Extensible Data Architecture (`lib/data/trainingSchedule.ts`)**
+- Implemented structured data model for weekly training routine (Monday Boxing & Upper Body, Tuesday Taekwondo & Balance, Wednesday Active Recovery & Grip, Thursday Boxing & Lower Strength, Friday Taekwondo & Speed, Saturday Light Boxing & Core, Sunday Full Rest & Reset).
+- Extensible schema: blocks, rounds, sets, repetitions, rest periods, intensity, technique cues, and assigned XP derive completely from configuration without hardcoded JSX checks.
+
+**2. Three Training States with Legitimate "Exhausted" Recovery Logging (`components/training/DailyTrainingDetail.tsx`)**
+- Added first-class support for three distinct training states: `PENDING`, `COMPLETED`, and `EXHAUSTED`.
+- Marking an exercise/block as `EXHAUSTED` logs legitimate fatigue without failure labels, preserves daily consistency and streak, awards 0 completion XP, and permits seamless state re-evaluation.
+- Daily sessions evaluate to `Completed` (all required tasks completed), `Recovery Complete` (all tasks addressed with at least one exhausted), `In Progress`, or `Not Started`.
+
+**3. Idempotent XP & Authenticated Postgres / Isolated Guest Persistence (`TrainingSession` Prisma Model & `dashboardStore.ts`)**
+- Added `TrainingSession` model with compound unique constraint `@@unique([userId, dateKey])` to prevent duplicate awards on rapid clicks or page refreshes.
+- XP is idempotently recalculated from canonical schedule definitions rather than incremented counters.
+- Full guest sandbox isolation: guest progress persists in client storage and never writes to PostgreSQL.
+
+**4. Weekly Schedule Overview & Live Today Focus Highlight (`components/training/WeeklyScheduleOverview.tsx`)**
+- Real-time date detection automatically highlights the current day with glowing neon (Cyberpunk) or high-contrast bold borders (Neo-Brutalism).
+- Displays duration, available XP, and real completion status for all 7 days of the routine.
+- Sunday is intentionally rendered as a biological reset and rest day that does not count as a missed workout.
+
+**5. Non-Punitive Consistency & Habit Engine (`components/training/TrainingConsistencyCard.tsx`)**
+- Tracks active training streaks where intentional Sunday rest days do not break streak continuity.
+- Distinct counters for fully completed workouts versus sessions where fatigue was honored (`Recovery Logged`).
+
+**6. Automated Motivational Training Quotes (`components/training/TrainingQuoteCard.tsx`, `lib/data/trainingQuotes.ts`)**
+- Self-contained component rotating data-driven martial arts and discipline quotes every ~3.5 seconds.
+- Isolated local state prevents parent page rerenders; fully respects `prefers-reduced-motion`.
+
+**7. Navigation & Cross-System Hobbies Integration (`Sidebar.tsx`, `CommandPalette.tsx`, `app/hobbies/page.tsx`)**
+- Added `Home Training` to Sidebar under the `Misc` section (`/home-training`).
+- Added bidirectional cross-linking between Home Training workouts and matching pursuit skills in `/hobbies` (Boxing, Taekwondo, Martial Arts, Fitness).
+
+## [13.10.0] - 2026-09-15
+
+### 🔄 Persistent 3:4 Video Card Crop & Rotate + Bidirectional Main Creature Lineage
+
+**1. Persistent 3:4 Video Crop & Rotate (`components/ui/VideoCropModal.tsx`, `lib/utils/mediaResolver.ts`)**
+- Added complete rotation control for card videos (90° quick step buttons ↺/↻, preset pills 0°/90°/180°/270°, and fine slider 0°–359°). Live viewport framing visually matches final 3:4 video cards pixel-for-pixel, with affine canvas transformations generating accurate thumbnail posters.
+
+**2. Canonical Main Creature Ownership (`lib/data/creatureSchema.ts`, `components/creatures/MainCreatureSelector.tsx`)**
+- Introduced premier 'Main Creature' designation for Characters and Game Characters with uncropped art previews, searchable selection modal, and dedicated hero showcase in profile dossiers.
+
+**3. Automatic Creature Form Propagation (`components/ui/CharacterDictProfileModal.tsx`, `components/game/CharacterProfileModal.tsx`)**
+- Characters with a designated Main Creature automatically inherit and showcase all creature forms and evolutions in their dossier without manual form-by-form assignment.
+
+**4. Targeted Deep-Link Form Highlighting (`components/ui/CreatureDossierModal.tsx`)**
+- Clicking any form card opens the creature dossier, smoothly scrolls directly to the targeted form, and activates a luminous theme-aligned highlight aura.
+
 ## [12.1.0] - 2026-08-14
 
 ### 🚀 Targeted Dashboard Performance & Hydration Enhancements

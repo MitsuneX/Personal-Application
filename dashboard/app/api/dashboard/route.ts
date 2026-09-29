@@ -123,6 +123,7 @@ export async function GET() {
       dbCouples,
       dbCoupleLikes,
       dbCreatures,
+      dbTrainingSessions,
     ] = await Promise.all([
       safeQuery(() => prisma.profile.findFirst({ where: { OR: [{ userId }, { id: userId }] } }), null),
       safeQuery(
@@ -163,6 +164,12 @@ export async function GET() {
       safeQuery(() => (prisma.couple?.findMany ? prisma.couple.findMany({ where: { userId }, orderBy: [{ isFavorite: "desc" }, { createdAt: "desc" }] }) : Promise.resolve([])), []),
       safeQuery(() => (prisma.coupleLike?.findMany ? prisma.coupleLike.findMany({ where: { userId } }) : Promise.resolve([])), []),
       safeQuery(() => (prisma.creature?.findMany ? prisma.creature.findMany({ where: { userId }, orderBy: [{ isFavorite: "desc" }, { createdAt: "desc" }] }) : Promise.resolve([])), []),
+      safeQuery(() => {
+        const since90 = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+        return (prisma as any).trainingSession?.findMany
+          ? (prisma as any).trainingSession.findMany({ where: { userId, createdAt: { gte: since90 } }, orderBy: { dateKey: "desc" } })
+          : Promise.resolve([]);
+      }, []),
     ]);
 
     let dbProfile = rawProfile;
@@ -360,6 +367,7 @@ export async function GET() {
       userLikedCoupleIds: dbCoupleLikes.map((l: any) => l.coupleId),
       creatures: (dbCreatures || []).map((c: any) => normalizeCreatureJson(c)),
       userLikedCreatureIds: [],
+      trainingSessions: dbTrainingSessions || [],
     });
   } catch (error: any) {
     console.error("API GET Dashboard Error:", error);

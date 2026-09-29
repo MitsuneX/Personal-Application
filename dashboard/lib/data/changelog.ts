@@ -13,6 +13,35 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v13.11.0",
+    date: "2026-09-29",
+    title: "Canonical Home Training Hub & Adaptive 3-State Recovery Architecture",
+    badge: "NEW HUB",
+    type: "minor",
+    summary: "Integrated a comprehensive personal Home Training Hub into the Misc suite featuring canonical weekly routines for Boxing, Taekwondo, Strength, and Active Recovery. Introduces an adaptive three-state tracking model (Pending, Completed, Exhausted) that honors fatigue as a legitimate recovery state rather than a failure, alongside idempotent session XP, non-punitive streaks, isolated guest sandbox support, and bidirectional Hobbies cross-linking.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🥋 Canonical Weekly Routine Hub (app/home-training/page.tsx, lib/data/trainingSchedule.ts): Deployed structured data-driven training schedule covering Monday Boxing & Upper Strength, Tuesday Taekwondo & Balance, Wednesday Active Recovery & Grip, Thursday Boxing & Lower Strength, Friday Taekwondo & Speed, Saturday Light Boxing & Core, and Sunday Full Rest & Reset.",
+          "⚡ Adaptive 3-State Task Execution (components/training/DailyTrainingDetail.tsx): Added distinct Complete and Exhausted interactions per training block. Marking a task as Exhausted honors bodily fatigue, preserves streak continuity, logs zero completion XP, and safely allows future completion re-evaluation.",
+          "📅 Live Schedule Overview & Real-Time Today Focus (components/training/WeeklyScheduleOverview.tsx): Dynamically detects the current date, highlights today's session with theme-tailored glowing neon or bold brutalist styling, and displays real session progress across all 7 days.",
+          "🔥 Non-Punitive Consistency Engine (components/training/TrainingConsistencyCard.tsx): Tracks training engagement streaks where intentional Sunday recovery days never penalize streak continuity, distinguishing fully completed workouts from recovery days.",
+          "🥊 Rotating Motivational Quotes (components/training/TrainingQuoteCard.tsx, lib/data/trainingQuotes.ts): Integrated an isolated component cycling curated discipline and martial arts quotes every ~3.5s with full prefers-reduced-motion support and zero parent rerenders.",
+          "🎯 Bidirectional Hobbies Integration (components/training/DailyTrainingDetail.tsx, app/hobbies/page.tsx): Connected daily workouts with matching Hobby pursuits (Boxing, Taekwondo, Martial Arts, Fitness), showcasing live progress levels and direct reciprocal navigation.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "🛡️ Idempotent Training Session Persistence (prisma/schema.prisma, app/api/action/route.ts): Added TrainingSession model with compound unique constraint (userId, dateKey) preventing duplicate XP grants on rapid taps, network retries, or page reloads.",
+          "🏝️ Zero-Database Guest Isolation (lib/store/dashboardStore.ts): Enforced strict client-side storage for guest sessions, guaranteeing unauthenticated users never contaminate PostgreSQL database records.",
+          "💎 Dual-Theme Aesthetic Parity: Crafted full visual parity across Cyberpunk neon-glow cards and Neo-Brutalism high-contrast black borders with responsive mobile workout usability.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v13.10.0",
     date: "2026-09-15",
     title: "Persistent 3:4 Video Card Crop & Rotate + Bidirectional Main Creature Lineage",

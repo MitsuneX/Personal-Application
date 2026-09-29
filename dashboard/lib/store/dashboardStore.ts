@@ -836,6 +836,21 @@ export interface HobbySessionEntry {
   createdAt: string;
 }
 
+export interface TrainingSessionEntry {
+  id: string;
+  userId?: string | null;
+  dayId: string;
+  dateKey: string; // YYYY-MM-DD
+  status: "COMPLETED" | "RECOVERY_COMPLETE" | "EXHAUSTED" | "IN_PROGRESS" | "NOT_STARTED";
+  completedBlocks: string[];
+  exhaustedBlocks: string[];
+  xpEarned: number;
+  note?: string | null;
+  durationMin?: number | null;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface NotificationEntry {
   id: string;
   title: string;
@@ -1055,6 +1070,19 @@ interface DashboardState {
   deleteCreature: (id: string) => Promise<void>;
   toggleFavoriteCreature: (id: string) => Promise<void>;
   bondCreature: (creatureId: string) => Promise<{ liked: boolean; likesCount: number }>;
+
+  // Home Training System Actions
+  trainingSessions: TrainingSessionEntry[];
+  saveTrainingSession: (session: {
+    dayId: string;
+    dateKey: string;
+    status: string;
+    completedBlocks: string[];
+    exhaustedBlocks: string[];
+    xpEarned: number;
+    note?: string;
+    durationMin?: number;
+  }) => Promise<TrainingSessionEntry | null>;
 }
 
 // ─── Seed Data (Fallback) ──────────────────────────────────────────────────────
@@ -1225,6 +1253,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   hobbySessions: [],
   notifications: [],
   profileHistory: [],
+  trainingSessions: [],
   isGuest: false,
   requestSequenceId: 0,
   isLoading: false,
@@ -1274,6 +1303,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       hobbySessions: [],
       notifications: [],
       profileHistory: [],
+      trainingSessions: [],
       isGuest: false,
     }));
   },
@@ -1363,6 +1393,25 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
             ...h,
             createdAt: h.createdAt ?? new Date().toISOString(),
           })),
+          trainingSessions: (() => {
+            if (data.isGuest) {
+              if (typeof window !== "undefined") {
+                try {
+                  const stored = localStorage.getItem("guest_training_sessions");
+                  if (stored) return JSON.parse(stored);
+                } catch {}
+              }
+              return [];
+            }
+            return (data.trainingSessions || []).map((s: any) => ({
+              ...s,
+              completedBlocks: Array.isArray(s.completedBlocks) ? s.completedBlocks : [],
+              exhaustedBlocks: Array.isArray(s.exhaustedBlocks) ? s.exhaustedBlocks : [],
+              xpEarned: s.xpEarned ?? 0,
+              createdAt: s.createdAt ?? new Date().toISOString(),
+              updatedAt: s.updatedAt ?? new Date().toISOString(),
+            }));
+          })(),
           isHydrated: true,
           fetchError: null,
         });
@@ -3284,6 +3333,91 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     } catch (err) {
       console.error("Failed to clear notifications:", err);
     }
+  },
+
+  // ─── Home Training System Actions ──────────────────────────────────────────
+
+  saveTrainingSession: async (payload) => {
+    const isGuest = get().isGuest;
+    const nowIso = new Date().toISOString();
+    const existingIndex = get().trainingSessions.findIndex(
+      (s) => s.dateKey === payload.dateKey
+    );
+
+    let sessionRecord: TrainingSessionEntry;
+    if (existingIndex >= 0) {
+      const existing = get().trainingSessions[existingIndex];
+      sessionRecord = {
+        ...existing,
+        ...payload,
+        status: payload.status as any,
+        completedBlocks: payload.completedBlocks || [],
+        exhaustedBlocks: payload.exhaustedBlocks || [],
+        xpEarned: payload.xpEarned !== undefined ? payload.xpEarned : existing.xpEarned,
+        note: payload.note !== undefined ? payload.note : existing.note,
+        durationMin: payload.durationMin !== undefined ? payload.durationMin : existing.durationMin,
+        updatedAt: nowIso,
+      };
+      set((s) => ({
+        trainingSessions: s.trainingSessions.map((ts, idx) =>
+          idx === existingIndex ? sessionRecord : ts
+        ),
+      }));
+    } else {
+      sessionRecord = {
+        id: `ts_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        userId: isGuest ? "guest" : undefined,
+        dayId: payload.dayId,
+        dateKey: payload.dateKey,
+        status: payload.status as any,
+        completedBlocks: payload.completedBlocks || [],
+        exhaustedBlocks: payload.exhaustedBlocks || [],
+        xpEarned: payload.xpEarned || 0,
+        note: payload.note || null,
+        durationMin: payload.durationMin || null,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      };
+      set((s) => ({
+        trainingSessions: [sessionRecord, ...s.trainingSessions],
+      }));
+    }
+
+    if (isGuest) {
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("guest_training_sessions", JSON.stringify(get().trainingSessions));
+        } catch {}
+      }
+      return sessionRecord;
+    }
+
+    try {
+      const res = await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "SAVE_TRAINING_SESSION", payload }),
+      });
+      const data = await res.json();
+      if (data && data.success && data.data) {
+        const returned: TrainingSessionEntry = {
+          ...data.data,
+          completedBlocks: Array.isArray(data.data.completedBlocks) ? data.data.completedBlocks : [],
+          exhaustedBlocks: Array.isArray(data.data.exhaustedBlocks) ? data.data.exhaustedBlocks : [],
+          createdAt: data.data.createdAt ? String(data.data.createdAt) : nowIso,
+          updatedAt: data.data.updatedAt ? String(data.data.updatedAt) : nowIso,
+        };
+        set((s) => ({
+          trainingSessions: s.trainingSessions.map((ts) =>
+            ts.dateKey === payload.dateKey ? returned : ts
+          ),
+        }));
+        return returned;
+      }
+    } catch (err) {
+      console.error("Failed to persist training session:", err);
+    }
+    return sessionRecord;
   },
 
   // ─── Profile Aesthetics Actions ──────────────────────────────────────────────

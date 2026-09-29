@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useMemo, useRef } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/lib/theme";
@@ -871,22 +872,38 @@ export default function HobbiesPage() {
               </h1>
             </div>
 
-            {/* Add Skill button */}
-            <motion.button
-              onClick={() => setAddSkillOpen(true)}
-              className="shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-black flex items-center gap-1.5"
-              style={{
-                background: isCyber ? "rgba(0,245,255,0.08)" : "#FFF",
-                border: isCyber ? "1px solid rgba(0,245,255,0.25)" : "2px solid #000",
-                color: isCyber ? "#00F5FF" : "#1A1A1A",
-                boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.1)" : "2px 2px 0 #000",
-              }}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              <span>+</span>
-              <span className="hidden sm:inline">{isCyber ? "ADD_SKILL" : "Add Skill"}</span>
-            </motion.button>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/home-training"
+                className="shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-black flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95"
+                style={{
+                  background: isCyber ? "rgba(168,85,247,0.12)" : "#FFE600",
+                  border: isCyber ? "1px solid rgba(168,85,247,0.4)" : "2px solid #000",
+                  color: isCyber ? "#C084FC" : "#000",
+                  boxShadow: isCyber ? "0 0 10px rgba(168,85,247,0.2)" : "2px 2px 0 #000",
+                }}
+              >
+                <span>🥋</span>
+                <span className="hidden sm:inline">{isCyber ? "HOME_TRAINING" : "Home Training"}</span>
+              </Link>
+
+              {/* Add Skill button */}
+              <motion.button
+                onClick={() => setAddSkillOpen(true)}
+                className="shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-black flex items-center gap-1.5"
+                style={{
+                  background: isCyber ? "rgba(0,245,255,0.08)" : "#FFF",
+                  border: isCyber ? "1px solid rgba(0,245,255,0.25)" : "2px solid #000",
+                  color: isCyber ? "#00F5FF" : "#1A1A1A",
+                  boxShadow: isCyber ? "0 0 10px rgba(0,245,255,0.1)" : "2px 2px 0 #000",
+                }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <span>+</span>
+                <span className="hidden sm:inline">{isCyber ? "ADD_SKILL" : "Add Skill"}</span>
+              </motion.button>
+            </div>
           </div>
 
           <p className="text-xs font-bold" style={{ color: isCyber ? "rgba(255,255,255,0.5)" : "#8A8A8A" }}>

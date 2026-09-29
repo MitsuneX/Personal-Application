@@ -809,4 +809,22 @@ model Creature {
 }
 
 
+model TrainingSession {
+  id            String   @id @default(uuid())
+  userId        String?
+  dayId         String   // e.g. "monday", "tuesday"
+  dateKey       String   // YYYY-MM-DD (idempotent key — one record per day)
+  status        String   // "COMPLETED" | "RECOVERY_COMPLETE" | "EXHAUSTED" | "IN_PROGRESS" | "NOT_STARTED"
+  completedBlocks String[] @default([]) // array of block IDs marked done
+  exhaustedBlocks String[] @default([]) // array of block IDs marked exhausted
+  xpEarned      Float    @default(0)    // XP earned for completed blocks
+  note          String?
+  durationMin   Int?     // actual minutes spent
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
+  @@unique([userId, dateKey])
+  @@index([userId])
+  @@index([userId, dayId])
+  @@index([dateKey])
+}

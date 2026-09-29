@@ -1712,8 +1712,87 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true, likesCount: updated.likes });
       }
 
+
+      // ────────────────────────────────────────────────────────────────────────
+      // Home Training Actions
+      // ────────────────────────────────────────────────────────────────────────
+
+      case "SAVE_TRAINING_SESSION": {
+        /**
+         * Idempotent upsert — keyed on (userId, dateKey).
+         * Only one record allowed per day per user.
+         *
+         * payload: {
+         *   dayId: string             // e.g. "monday"
+         *   dateKey: string           // YYYY-MM-DD
+         *   status: "COMPLETED" | "EXHAUSTED" | "SKIPPED"
+         *   completedBlocks: string[] // block IDs marked done
+         *   xpEarned: number          // 0 for EXHAUSTED/SKIPPED
+         *   note?: string
+         *   durationMin?: number
+         * }
+         */
+        const { dayId, dateKey, status, completedBlocks, exhaustedBlocks, xpEarned, note, durationMin } = payload;
+
+        // Validate dateKey format
+        if (!dateKey || !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+          return NextResponse.json({ error: "Invalid dateKey format" }, { status: 400 });
+        }
+
+        // Check if a session already exists for this day
+        const existing = await (prisma as any).trainingSession.findUnique({
+          where: { userId_dateKey: { userId, dateKey } },
+        });
+
+        let session;
+        if (existing) {
+          session = await (prisma as any).trainingSession.update({
+            where: { userId_dateKey: { userId, dateKey } },
+            data: {
+              status,
+              completedBlocks: completedBlocks ?? existing.completedBlocks,
+              exhaustedBlocks: exhaustedBlocks ?? existing.exhaustedBlocks,
+              xpEarned: xpEarned !== undefined ? xpEarned : existing.xpEarned,
+              note: note !== undefined ? note : existing.note,
+              durationMin: durationMin !== undefined ? durationMin : existing.durationMin,
+            },
+          });
+        } else {
+          session = await (prisma as any).trainingSession.create({
+            data: {
+              userId,
+              dayId,
+              dateKey,
+              status,
+              completedBlocks: completedBlocks ?? [],
+              exhaustedBlocks: exhaustedBlocks ?? [],
+              xpEarned: xpEarned ?? 0,
+              note: note ?? null,
+              durationMin: durationMin ?? null,
+            },
+          });
+        }
+
+        return NextResponse.json({ success: true, data: session });
+      }
+
+      case "GET_TRAINING_HISTORY": {
+        /**
+         * Returns training session records.
+         * payload: { days?: number }  — optional window (default: 30 days)
+         */
+        const windowDays = Number(payload?.days ?? 30);
+        const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
+        const sessions = await (prisma as any).trainingSession.findMany({
+          where: { userId, createdAt: { gte: since } },
+          orderBy: { dateKey: "desc" },
+        });
+        return NextResponse.json({ success: true, data: sessions });
+      }
+
       default:
         return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+
     }
   } catch (error: any) {
     console.error("Action handler error:", error);

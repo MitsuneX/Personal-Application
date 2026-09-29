@@ -31,6 +31,8 @@ const CATEGORY_META: Record<string, { label: string; icon: string }> = {
   savedPrompts: { label: "Saved AI Prompts", icon: "⚡" },
   prompts: { label: "Saved AI Prompts", icon: "⚡" },
   hobbies: { label: "Hobby Skills", icon: "🎯" },
+  training: { label: "Home Training Hub", icon: "🥋" },
+  homeTraining: { label: "Home Training Hub", icon: "🥋" },
   profiles: { label: "User Profiles", icon: "👤" },
   profile: { label: "User Profiles", icon: "👤" },
 };
