@@ -13,6 +13,36 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v13.12.0",
+    date: "2026-09-29",
+    title: "Home Training Command Center Visual & UX Overhaul",
+    badge: "RENEWAL",
+    type: "minor",
+    summary: "Comprehensive Visual and UX Renewal of the Home Training system, transforming it from a stacked checklist of nested boxes into a sleek, premium Training Command Center. Introduces a commanding Today Hero focal point with connected companion progress panel, an interactive horizontal Weekly Training Rail, a guided vertical workout progression timeline with clean scannable exercise rows, pop-out exercise cues via OverlayPortal, a dedicated biological reset view for Sunday rest, compact activity strips with full history archive filtering, and seamless bi-directional cross-system Hobbies integration.",
+    categories: [
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "🥋 Today's Training Hero & Companion Progress Panel (components/training/TodayHeroSection.tsx): Elevated today's routine into a strong typographic focal point with discipline title, category badges, key metrics, and an adjacent session progress card showing completion percentage, dynamic XP progress bar, and real-time task breakdown pills (✓ Done, ⚡ Rec, ○ Left).",
+          "⚡ Guided Session Timeline & Scannable Exercise Rows (components/training/SessionTimelineView.tsx): Replaced nested card boxes with a guided progression timeline along a connecting rail line with numbered step nodes (01, 02...), compact scannable exercise rows with technique cues and rep/duration tags, and dual [ ✓ Complete ] / [ ⚡ Exhausted ] action buttons.",
+          "📅 Horizontal Weekly Training Rail (components/training/WeeklyTrainingRail.tsx): Replaced bulky 7-card grid with a responsive day navigation rail featuring real-time status icons (✓ Done, ⚡ Rec, 🛌 Rest, ○ Plan, ⏳ Prog), elevated selection contrast, and prominent TODAY pill.",
+          "🧘 Sunday Biological Reset Experience (components/training/SundayRestExperience.tsx): Dedicated restorative view outlining recovery pillars (Protein Meal Prep, Cellular Hydration, Sleep Architecture) and explicit streak continuity protection notice.",
+          "🥊 Atmospheric Discipline Mantra Ribbon (components/training/TrainingQuoteRibbon.tsx): Rotates curated training and martial arts quotes (~3.5s interval) with self-contained state avoiding parent re-renders and full prefers-reduced-motion compliance.",
+          "💎 Elimination of Nested Boxes & Dual-Theme Polishing: Completely eradicated repetitive box-in-a-box styling across Cyberpunk neon glowing surfaces and Neo-Brutalist high-contrast borders and shadows.",
+        ],
+      },
+      {
+        name: "New Features",
+        items: [
+          "ℹ️ Exercise Detail Pop-out Modal (components/training/ExerciseDetailModal.tsx): In-depth round breakdowns, technical instructions, rest intervals, and quick status toggles rendered in an accessible modal using OverlayPortal.",
+          "🎯 Connected Hobby Inspection Modal (components/training/ConnectedHobbyModal.tsx): Clicking connected hobbies in the Hero opens an authoritative inspection modal displaying current level, XP, streak, total logged minutes, and all canonical Home Training days featuring that discipline with direct plan inspection.",
+          "🔗 Bi-Directional Hobbies OS Integration (app/hobbies/page.tsx): Hobby skill cards dynamically detect and highlight related Home Training days with an interactive badge (🥋 X Home Training Sessions: MON · THU · SAT →) linking directly to the training hub.",
+          "📜 Compact Activity Strip & History Archive Modal (components/training/RecentTrainingStrip.tsx, components/training/TrainingHistoryModal.tsx): Replaced giant main-page tables with a 3-session compact summary and an interactive full archive modal with status filtering (ALL, COMPLETED, RECOVERY).",
+        ],
+      },
+    ],
+  },
+  {
     version: "v13.11.0",
     date: "2026-09-29",
     title: "Canonical Home Training Hub & Adaptive 3-State Recovery Architecture",

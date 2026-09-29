@@ -2,6 +2,38 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [13.12.0] - 2026-09-29
+
+### 🥋 Home Training Command Center Visual & UX Overhaul
+
+**1. Today's Training Hero & Companion Progress Panel (`components/training/TodayHeroSection.tsx`)**
+- Transformed Today's workout into an authoritative typographic focal point with large discipline title, category chips, duration, block metrics, and connected Hobbies pills with live level indicators.
+- Added adjacent session progress panel displaying completion percentage, animated XP progress bar, and real-time task breakdown pills (`✓ Done`, `⚡ Rec`, `○ Left`), plus smooth scroll navigation to the timeline.
+
+**2. Guided Workout Timeline & Scannable Exercise Rows (`components/training/SessionTimelineView.tsx`)**
+- Replaced the repetitive stack of nested cards with a guided vertical timeline featuring continuous connecting rail line, numbered step nodes (`01`, `02`...), and compact scannable exercise rows with technique cues, notes, and repetition/duration badges.
+- Streamlined block actions with responsive `[ ✓ Complete ]` (+XP) and `[ ⚡ Exhausted ]` buttons honoring recovery without penalty or failure labels.
+
+**3. Horizontal Weekly Training Rail (`components/training/WeeklyTrainingRail.tsx`)**
+- Replaced bulky 7-card box grid with a responsive day navigation rail (MON–SUN) with real-time status badges (`✓ Done`, `⚡ Rec`, `🛌 Rest`, `○ Plan`, `⏳ Prog`), prominent `TODAY` pill, and elevated selection styling.
+
+**4. Exercise Detail Pop-out Modal (`components/training/ExerciseDetailModal.tsx`)**
+- In-depth round breakdowns, technical instructions, rest intervals, and quick status toggles rendered in an accessible modal via `OverlayPortal`, keeping the main workout view scannable and uncluttered.
+
+**5. Sunday Biological Reset Experience (`components/training/SundayRestExperience.tsx`)**
+- Dedicated restorative view outlining recovery pillars (Protein Meal Prep, Cellular Hydration, Sleep Architecture) and explicit streak continuity protection notice.
+
+**6. Bi-Directional Hobbies OS Integration (`components/training/ConnectedHobbyModal.tsx`, `app/hobbies/page.tsx`)**
+- Clicking connected hobbies in the Hero opens `ConnectedHobbyModal` displaying authoritative skill data (Level, XP, streak, logged minutes), cross-system training days, and direct links to Hobbies OS.
+- Hobby skill cards dynamically detect and highlight related Home Training days with an interactive badge (`🥋 X Home Training Sessions: MON · THU · SAT →`) linking directly to the training hub.
+
+**7. Compact Activity Strip & History Archive Modal (`components/training/RecentTrainingStrip.tsx`, `components/training/TrainingHistoryModal.tsx`)**
+- Replaced giant main-page tables with a 3-session compact summary and an interactive full archive modal with status filtering (`ALL`, `COMPLETED`, `RECOVERY`).
+
+**8. Habit Consistency Strip & Atmospheric Mantra Ribbon (`components/training/TrainingConsistencyStrip.tsx`, `components/training/TrainingQuoteRibbon.tsx`)**
+- Compact metric tiles for active streak, completed routines, recovery sessions, and total XP.
+- Atmospheric rotating discipline mantras (~3.5s cycle) with self-contained state avoiding parent re-renders and full `prefers-reduced-motion` compliance.
+
 ## [13.11.0] - 2026-09-29
 
 ### 🥋 Canonical Home Training Hub & Adaptive 3-State Recovery Architecture

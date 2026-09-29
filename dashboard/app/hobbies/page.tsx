@@ -17,6 +17,7 @@ import {
   aggregateHobbyCategories,
   HobbyCategoryAggregate,
 } from "@/lib/utils/hobbyProgression";
+import { WEEKLY_TRAINING_SCHEDULE } from "@/lib/data/trainingSchedule";
 
 // ─── Theme Color Resolver ──────────────────────────────────────────────────────
 const PRIORITY_BADGE: Record<string, { label: string; cyberColor: string; brutalColor: string }> = {
@@ -433,6 +434,21 @@ function SkillCard({ skill, logs, isCyber, onHover, onLeave, onLearnToday }: Ski
   const lastLearned = formatLastLearned(skill.lastLearnedAt);
   const learnedToday = lastLearned === "Today";
 
+  // Dynamic lookup for canonical Home Training days connected to this hobby skill
+  const relatedTrainingDays = WEEKLY_TRAINING_SCHEDULE.filter((day) => {
+    const nameMatch = day.hobbyLinks?.some(
+      (link) =>
+        skill.name.toLowerCase().includes(link.toLowerCase()) ||
+        link.toLowerCase().includes(skill.name.toLowerCase())
+    );
+    const categoryMatch = day.categories.some(
+      (cat) =>
+        skill.category.toLowerCase().includes(cat.toLowerCase()) ||
+        skill.name.toLowerCase().includes(cat.toLowerCase())
+    );
+    return nameMatch || categoryMatch;
+  });
+
   return (
     <motion.div
       className="rounded-2xl p-4 flex flex-col gap-2.5 relative overflow-hidden cursor-default"
@@ -577,6 +593,29 @@ function SkillCard({ skill, logs, isCyber, onHover, onLeave, onLearnToday }: Ski
           height={44}
         />
       </div>
+
+      {/* Connected Home Training Sessions indicator */}
+      {relatedTrainingDays.length > 0 && (
+        <Link
+          href="/home-training"
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center justify-between px-2.5 py-1 rounded-xl text-[9px] font-bold transition-all mt-0.5 group"
+          style={{
+            background: isCyber ? "rgba(0,245,255,0.06)" : "#F0F9FF",
+            border: isCyber ? "1px solid rgba(0,245,255,0.25)" : "1.5px solid #BAE6FD",
+            color: isCyber ? "#00F5FF" : "#0284C7",
+          }}
+          title={`Related Home Training: ${relatedTrainingDays.map((d) => `${d.short} (${d.title})`).join(", ")}`}
+        >
+          <span className="flex items-center gap-1">
+            <span>🥋</span>
+            <span>{relatedTrainingDays.length} Home Training {relatedTrainingDays.length === 1 ? "Session" : "Sessions"}</span>
+          </span>
+          <span className="font-mono text-[8px] opacity-80 group-hover:opacity-100">
+            {relatedTrainingDays.map((d) => d.short).join(" · ")} →
+          </span>
+        </Link>
+      )}
 
       {/* [ Learn Today ] button */}
       <motion.button
