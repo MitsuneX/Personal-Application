@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { useConfirm } from "@/lib/context/ConfirmContext";
 import { useToast } from "@/components/ui/ToastProvider";
 import { LANDING_MODULE_CATALOG } from "@/lib/config/landingModules";
+import { ContentLockSettingsCard } from "@/components/security/ContentLockSettingsCard";
 
 const PLATFORMS = ["GitHub", "Twitter/X", "Discord", "Instagram", "LinkedIn", "Tiktok"];
 
@@ -328,10 +329,10 @@ export default function ProfilePage() {
       </motion.div>
 
       {/* Grid Content */}
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* Left Side: Live Preview Card */}
-        <div className="xl:col-span-2 space-y-5">
+        {/* Left Side: Live Preview Card & Session Status */}
+        <div className="lg:col-span-5 xl:col-span-4 space-y-6">
           <h3 className="text-xs font-black uppercase tracking-widest theme-text-muted mb-2 flex items-center gap-1">
             <span>👁️</span> Live Card Preview
           </h3>
@@ -405,9 +406,12 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Right Side: Configuration Form */}
-        <div className="xl:col-span-3">
+        {/* Right Side: Configuration Matrix */}
+        <div className="lg:col-span-7 xl:col-span-8">
           <form onSubmit={handleSubmit} className="space-y-6">
+
+            {/* Content Security Locks */}
+            <ContentLockSettingsCard />
 
             {/* 0. Account & Security Subsection */}
             <div
@@ -512,9 +516,12 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* 1. Core Profile Details Card */}
-            <div
-              className="p-6 rounded-2xl border-adaptive-unique relative overflow-hidden"
+            {/* Section: Profile Details & Styling Matrix */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+
+              {/* 1. Core Profile Details Card */}
+              <div
+                className="p-6 rounded-2xl border-adaptive-unique relative overflow-hidden"
               style={{
                 backgroundColor: isCyber ? "rgba(10,15,44,0.6)" : "#FFFFFF",
                 boxShadow: isCyber ? "none" : "4px 4px 0px 0px #000000",
@@ -852,9 +859,14 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* 3. Tech Stack & Skills Editor */}
-            <div
-              className="p-6 rounded-2xl border-adaptive-unique relative overflow-hidden"
+            </div>
+
+            {/* Section: Skills & Social Accounts Matrix */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+
+              {/* 3. Tech Stack & Skills Editor */}
+              <div
+                className="p-6 rounded-2xl border-adaptive-unique relative overflow-hidden"
               style={{
                 backgroundColor: isCyber ? "rgba(10,15,44,0.6)" : "#FFFFFF",
                 boxShadow: isCyber ? "none" : "4px 4px 0px 0px #000000",
@@ -950,6 +962,8 @@ export default function ProfilePage() {
                   ))}
                 </div>
               )}
+            </div>
+
             </div>
 
             {/* 6. 🌐 Landing Page & Public Identity Customization */}

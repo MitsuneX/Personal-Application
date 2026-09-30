@@ -99,7 +99,7 @@ export function TrainingHistoryView({
       ) : (
         <div className="flex flex-col gap-2.5 max-h-[380px] overflow-y-auto pr-1 scrollbar-thin">
           {filteredSessions.map((session) => {
-            const dayDef = WEEKLY_TRAINING_SCHEDULE.find((d) => d.id === session.dayId);
+            const dayDef = session.sessionSnapshot || WEEKLY_TRAINING_SCHEDULE.find((d) => d.id === session.dayId);
             const totalAvailXp = dayDef ? getTotalDayXp(dayDef) : session.xpEarned;
             const completedCount = session.completedBlocks?.length || 0;
             const exhaustedCount = session.exhaustedBlocks?.length || 0;

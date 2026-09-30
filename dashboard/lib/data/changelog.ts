@@ -13,6 +13,42 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
   {
+    version: "v13.13.0",
+    date: "2026-09-30",
+    title: "Home Training Customizer, Session & Exercise Timers, Profile 2-Column Grid & Content Lock Security",
+    badge: "FEATURE",
+    type: "minor",
+    summary: "Comprehensive functional expansion and visual renewal introducing full non-destructive Home Training routine customization, real-time global session timer and exercise countdown/stopwatch timers, immutable historical workout snapshots, responsive 2-column desktop grid for Profile Settings, and a complete Content Lock Security System with PIN/password protection, PBKDF2 cryptography, rate limiting lockout, and route-level interception.",
+    categories: [
+      {
+        name: "New Features",
+        items: [
+          "🛠️ Routine Customization Engine (components/training/TrainingCustomizerModal.tsx, app/api/action/route.ts, prisma/schema.prisma): Full builder allowing users to add, edit, delete, and reorder routine blocks and exercises with accessible up/down controls and drag handles, move exercises between blocks, configure sets/reps/rest/cues/required flags, with options to 'Save to My Schedule', 'Apply to Today's Session Only', or 'Reset to Default'.",
+          "⏱️ Live Global Session Timer Widget (components/training/SessionTimerWidget.tsx): Persistent workout timer dock with real-time tracking of Planned, Active, Elapsed, and Rest time, complete with Start, Pause, Resume, Reset, and Finish controls.",
+          "⏱️ Exercise Countdown & Stopwatch Modal (components/training/ExerciseTimerModal.tsx): Dedicated exercise timer modal with quick preset chips (30s, 45s, 60s, 90s, 2m, 3m), audio/visual completion alerts, launchable via [ + Add Custom Timer ] or directly from timeline exercise items.",
+          "🔐 Content Lock Security System (components/security/*, lib/security/*, app/api/auth/content-lock/*): Robust security protecting sensitive modules (Notepad, Characters, Games, Favourites, Misc) with PIN (4–8 digits) or Password (min 6 chars), PBKDF2 (SHA-512) salted hashing, 5-attempt rate-limiting lockout with 5-minute cooldown, optional hint reveal, and login password recovery.",
+          "🛡️ Route-Level Content Guard & Padlock Badges (components/security/ContentLockGuard.tsx, components/security/ContentLockScreen.tsx, components/layout/Sidebar.tsx): Intercepts protected route navigation and renders a dual-theme keypad unlock screen; displays dynamic 🔒 padlock badges in sidebar and navigation links for locked sections.",
+        ],
+      },
+      {
+        name: "UI & Aesthetics",
+        items: [
+          "📐 Responsive 2-Column Profile Layout (app/profile/page.tsx): Re-engineered profile settings from a narrow single column with excessive vertical whitespace into an expansive responsive desktop grid (lg:grid-cols-12) featuring a sticky Live Card Preview on the left and a structured configuration matrix on the right, preserving 100% of existing settings and controls.",
+          "🔐 Content Security & Locks Profile Card (components/security/ContentLockSettingsCard.tsx): Elevated management card on the Profile page with real-time security status, protected areas summary, manual lock toggling, and interactive modal configuration.",
+          "💎 Dual-Theme Aesthetic Parity: All new modals, timers, keypads, and layout surfaces crafted with bespoke styling, shadows, and contrast for both Cyberpunk neon glow and Neo-Brutalism high-contrast palettes.",
+        ],
+      },
+      {
+        name: "Bug Fixes & Engine",
+        items: [
+          "📜 Immutable Historical Session Snapshots (prisma/schema.prisma, app/api/action/route.ts, components/training/TrainingHistoryModal.tsx): Added sessionSnapshot (JSONB) to TrainingSession. Automatically captures the exact effective routine when a session is logged, ensuring past historical logs remain 100% accurate even if future routines are customized.",
+          "⚡ Trailing Slash Route Standardization (next.config.ts, lib/store/dashboardStore.ts): Aligned all newly added client fetch endpoints with Next.js trailingSlash: true configuration, eliminating unnecessary 308 redirect roundtrips on API calls.",
+          "🏖️ Dual-Session Sandbox Isolation: Implemented PBKDF2 encrypted cookie fallback for Guest Mode, enabling full end-to-end testing and operation of the Content Lock system in guest sandboxes without database mutations.",
+        ],
+      },
+    ],
+  },
+  {
     version: "v13.12.0",
     date: "2026-09-29",
     title: "Home Training Command Center Visual & UX Overhaul",

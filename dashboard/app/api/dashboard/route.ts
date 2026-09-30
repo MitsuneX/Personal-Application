@@ -29,6 +29,7 @@ import { normalizeCreatureJson } from "@/lib/data/creatureSchema";
 import { DEFAULT_AI_TOOLS } from "@/lib/data/initialAiTools";
 import { DEFAULT_GAMES } from "@/lib/data/initialGames";
 import { ensureInitialHallHistory } from "@/lib/utils/hofEventEngine";
+import { validateUnlockSessionToken } from "@/lib/security/contentLockCrypto";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +71,36 @@ export async function GET() {
         userLikedCoupleIds: ["guest-couple-1", "guest-couple-2"],
         creatures: GUEST_CREATURES,
         userLikedCreatureIds: [],
+        trainingSessions: [],
+        customTrainingPlans: [],
+        contentLock: (() => {
+          try {
+            const guestLockRaw = cookieStore.get("nexus_guest_lock")?.value;
+            if (guestLockRaw) {
+              const parsed = JSON.parse(decodeURIComponent(guestLockRaw));
+              if (parsed.enabled) {
+                const unlockToken = cookieStore.get("nexus_content_unlock_token")?.value;
+                const isUnlocked = unlockToken ? validateUnlockSessionToken(unlockToken, "guest-user") : false;
+                return {
+                  enabled: true,
+                  method: parsed.method || "PIN",
+                  protectedScopes: parsed.protectedScopes || [],
+                  hasHint: Boolean(parsed.hint),
+                  hint: parsed.hint || null,
+                  isUnlocked,
+                };
+              }
+            }
+          } catch {}
+          return {
+            enabled: false,
+            method: "PIN",
+            protectedScopes: [],
+            hasHint: false,
+            hint: null,
+            isUnlocked: true,
+          };
+        })(),
       });
     }
 
@@ -124,6 +155,8 @@ export async function GET() {
       dbCoupleLikes,
       dbCreatures,
       dbTrainingSessions,
+      dbCustomTrainingPlans,
+      dbContentLockSettings,
     ] = await Promise.all([
       safeQuery(() => prisma.profile.findFirst({ where: { OR: [{ userId }, { id: userId }] } }), null),
       safeQuery(
@@ -170,6 +203,12 @@ export async function GET() {
           ? (prisma as any).trainingSession.findMany({ where: { userId, createdAt: { gte: since90 } }, orderBy: { dateKey: "desc" } })
           : Promise.resolve([]);
       }, []),
+      safeQuery(() => (prisma as any).userTrainingPlan?.findMany
+        ? (prisma as any).userTrainingPlan.findMany({ where: { userId } })
+        : Promise.resolve([]), []),
+      safeQuery(() => (prisma as any).contentLockSettings?.findUnique
+        ? (prisma as any).contentLockSettings.findUnique({ where: { userId } })
+        : Promise.resolve(null), null),
     ]);
 
     let dbProfile = rawProfile;
@@ -368,6 +407,25 @@ export async function GET() {
       creatures: (dbCreatures || []).map((c: any) => normalizeCreatureJson(c)),
       userLikedCreatureIds: [],
       trainingSessions: dbTrainingSessions || [],
+      customTrainingPlans: Array.isArray(dbCustomTrainingPlans)
+        ? (dbCustomTrainingPlans as any[]).reduce((acc: Record<string, any>, p: any) => {
+            if (p.dayId && p.customPlan) {
+              acc[p.dayId] = p.customPlan;
+            }
+            return acc;
+          }, {})
+        : {},
+      contentLock: {
+        enabled: Boolean((dbContentLockSettings as any)?.enabled),
+        method: (dbContentLockSettings as any)?.method || "PIN",
+        protectedScopes: (dbContentLockSettings as any)?.protectedScopes || [],
+        hasHint: Boolean((dbContentLockSettings as any)?.hint && String((dbContentLockSettings as any).hint).trim().length > 0),
+        hint: (dbContentLockSettings as any)?.hint || null,
+        isUnlocked: Boolean(
+          cookieStore.get("nexus_content_unlock_token")?.value &&
+          validateUnlockSessionToken(cookieStore.get("nexus_content_unlock_token")!.value, userId)
+        ),
+      },
     });
   } catch (error: any) {
     console.error("API GET Dashboard Error:", error);

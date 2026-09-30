@@ -2,6 +2,36 @@
 
 All notable changes to the Nexus Xenon Personal Dashboard project will be documented in this file.
 
+## [13.13.0] - 2026-09-30
+
+### 🥋 Home Training Customizer, Session & Exercise Timers, Profile 2-Column Grid & Content Lock Security
+
+**1. Home Training Customizer Engine (`components/training/TrainingCustomizerModal.tsx`, `app/api/action/route.ts`, `prisma/schema.prisma`)**
+- Built an accessible and interactive routine builder enabling users to customize workouts without modifying the canonical schedule baseline (`WEEKLY_TRAINING_SCHEDULE`).
+- Manage routine blocks and exercises with accessible up/down ordering buttons and drag handles.
+- Move exercises between blocks, configure sets, reps, duration, rest intervals, intensity badges, coaching cues, and required vs. optional task toggles.
+- Supports **"Save to My Schedule"** (persisted per day in PostgreSQL via `UserTrainingPlan`), **"Apply to Today's Session Only"** (ephemeral day session adjustment), and **"Reset to Default"** (instant baseline recovery).
+
+**2. Global Session Timer & Multi-Mode Exercise Timers (`components/training/SessionTimerWidget.tsx`, `components/training/ExerciseTimerModal.tsx`)**
+- Integrated a live floating/docked Session Timer widget tracking **Planned Time**, **Active Time**, **Elapsed Time**, and **Rest Time** with Start, Pause, Resume, Reset, and Finish controls.
+- Built a multi-mode Exercise Timer modal featuring countdown presets (30s, 45s, 60s, 90s, 2m, 3m) and stopwatch modes with completion indicators, triggered from the Hero section or timeline exercises.
+
+**3. Immutable Historical Session Snapshots (`sessionSnapshot` in `prisma/schema.prisma`, `app/api/action/route.ts`)**
+- Added `sessionSnapshot` (`JSONB`) to `TrainingSession`, capturing an exact snapshot of the effective routine at session completion.
+- Decouples historical logs from future routine adjustments, ensuring workout archive entries remain permanent and accurate.
+
+**4. Responsive 2-Column Profile Settings Grid (`app/profile/page.tsx`)**
+- Reorganized the Profile configuration page from a narrow single column with excessive vertical whitespace into an expansive responsive desktop layout (`lg:grid-cols-12`).
+- Left column (`lg:col-span-5 xl:col-span-4`): Sticky live profile card preview, avatar upload/crop, level progression, and session management.
+- Right column (`lg:col-span-7 xl:col-span-8`): Structured configuration matrix preserving 100% of existing profile and account settings.
+
+**5. Content Lock Security System (`components/security/*`, `lib/security/*`, `app/api/auth/content-lock/*`)**
+- Multi-module security shield protecting sensitive sections (`Notepad`, `Characters`, `Games`, `Favourites`, `Misc`).
+- Dual authentication methods: PIN (4–8 numeric digits) or Password (minimum 6 characters) secured via PBKDF2 (SHA-512) hashing with per-user salt.
+- Rate-limiting lockout guard: triggers a 5-minute security cooldown after 5 consecutive failed attempts.
+- Credential recovery: securely verify and reset lock settings using the user's primary Supabase account login password.
+- Route-level lock screen interceptor (`ContentLockGuard.tsx`, `ContentLockScreen.tsx`) and dynamic `🔒` padlock badges across navigation links.
+
 ## [13.12.0] - 2026-09-29
 
 ### 🥋 Home Training Command Center Visual & UX Overhaul

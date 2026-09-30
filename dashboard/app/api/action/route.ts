@@ -1732,7 +1732,7 @@ export async function POST(req: Request) {
          *   durationMin?: number
          * }
          */
-        const { dayId, dateKey, status, completedBlocks, exhaustedBlocks, xpEarned, note, durationMin } = payload;
+        const { dayId, dateKey, status, completedBlocks, exhaustedBlocks, xpEarned, note, durationMin, sessionSnapshot } = payload;
 
         // Validate dateKey format
         if (!dateKey || !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
@@ -1755,6 +1755,7 @@ export async function POST(req: Request) {
               xpEarned: xpEarned !== undefined ? xpEarned : existing.xpEarned,
               note: note !== undefined ? note : existing.note,
               durationMin: durationMin !== undefined ? durationMin : existing.durationMin,
+              sessionSnapshot: sessionSnapshot !== undefined ? sessionSnapshot : existing.sessionSnapshot,
             },
           });
         } else {
@@ -1769,11 +1770,57 @@ export async function POST(req: Request) {
               xpEarned: xpEarned ?? 0,
               note: note ?? null,
               durationMin: durationMin ?? null,
+              sessionSnapshot: sessionSnapshot ?? null,
             },
           });
         }
 
         return NextResponse.json({ success: true, data: session });
+      }
+
+      case "SAVE_CUSTOM_TRAINING_PLAN": {
+        const planData = payload.customPlan || payload;
+        const dayId = payload.dayId || planData.dayId || planData.id;
+        const { title, subtitle, estimatedDuration, categories, blocks } = planData;
+
+        if (!dayId || !Array.isArray(blocks)) {
+          return NextResponse.json({ error: "Invalid plan payload: dayId and blocks are required" }, { status: 400 });
+        }
+
+        const plan = await (prisma as any).userTrainingPlan.upsert({
+          where: { userId_dayId: { userId, dayId } },
+          create: {
+            userId,
+            dayId,
+            title: title || null,
+            subtitle: subtitle || null,
+            estimatedDuration: estimatedDuration || null,
+            categories: Array.isArray(categories) ? categories : [],
+            blocks,
+          },
+          update: {
+            title: title || null,
+            subtitle: subtitle || null,
+            estimatedDuration: estimatedDuration || null,
+            categories: Array.isArray(categories) ? categories : [],
+            blocks,
+          },
+        });
+
+        return NextResponse.json({ success: true, data: plan });
+      }
+
+      case "RESET_CUSTOM_TRAINING_PLAN": {
+        const { dayId } = payload;
+        if (!dayId) {
+          return NextResponse.json({ error: "dayId is required" }, { status: 400 });
+        }
+
+        await (prisma as any).userTrainingPlan.deleteMany({
+          where: { userId, dayId },
+        });
+
+        return NextResponse.json({ success: true, message: `Reset plan for ${dayId}` });
       }
 
       case "GET_TRAINING_HISTORY": {

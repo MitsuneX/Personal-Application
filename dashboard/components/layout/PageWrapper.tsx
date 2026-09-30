@@ -4,6 +4,8 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 
+import { ContentLockGuard } from "@/components/security/ContentLockGuard";
+
 interface PageWrapperProps {
   children: React.ReactNode;
 }
@@ -44,7 +46,7 @@ export function PageWrapper({ children }: PageWrapperProps) {
         exit="exit"
         className="w-full min-h-full"
       >
-        {children}
+        <ContentLockGuard>{children}</ContentLockGuard>
       </motion.div>
     </AnimatePresence>
   );

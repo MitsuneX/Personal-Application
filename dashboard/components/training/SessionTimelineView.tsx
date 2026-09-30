@@ -14,12 +14,14 @@ interface SessionTimelineViewProps {
     blockId: string,
     newState: "PENDING" | "COMPLETED" | "EXHAUSTED"
   ) => Promise<void>;
+  onStartTimer?: (title: string, duration?: string) => void;
 }
 
 export function SessionTimelineView({
   day,
   currentSession,
   onUpdateBlockState,
+  onStartTimer,
 }: SessionTimelineViewProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
@@ -313,13 +315,29 @@ export function SessionTimelineView({
                           </span>
                         )}
                         {ex.duration && !ex.reps && (
-                          <span
-                            className={`font-mono text-[11px] font-bold px-2 py-0.5 rounded ${
-                              isCyber ? "bg-slate-800 text-cyan-300" : "bg-gray-100 text-black border border-black/20"
-                            }`}
-                          >
-                            {ex.duration}
-                          </span>
+                          <div className="flex items-center gap-1">
+                            <span
+                              className={`font-mono text-[11px] font-bold px-2 py-0.5 rounded ${
+                                isCyber ? "bg-slate-800 text-cyan-300" : "bg-gray-100 text-black border border-black/20"
+                              }`}
+                            >
+                              {ex.duration}
+                            </span>
+                            {onStartTimer && (
+                              <button
+                                type="button"
+                                onClick={() => onStartTimer(ex.name, ex.duration)}
+                                title="Start exercise timer"
+                                className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold transition-all cursor-pointer ${
+                                  isCyber
+                                    ? "bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 border border-cyan-400/30"
+                                    : "bg-[#FFE17D] hover:bg-amber-300 text-black border border-black shadow-[1px_1px_0px_#000]"
+                                }`}
+                              >
+                                ⏱️
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -341,6 +359,7 @@ export function SessionTimelineView({
           isExhausted={exhaustedBlocks.includes(inspectingBlock.id)}
           onClose={() => setInspectingBlock(null)}
           onToggleState={handleToggleState}
+          onStartTimer={onStartTimer}
         />
       )}
     </div>

@@ -19,9 +19,11 @@ interface NavLinkProps {
    * e.g. activePrefixes={["/heroes"]} means /heroes and /heroes/[id] all activate this item.
    */
   activePrefixes?: string[];
+  /** If true, indicates this module is currently protected and locked */
+  isLocked?: boolean;
 }
 
-export function NavLink({ href, icon, label, exact = false, collapsed = false, onClick, activePrefixes }: NavLinkProps) {
+export function NavLink({ href, icon, label, exact = false, collapsed = false, onClick, activePrefixes, isLocked = false }: NavLinkProps) {
   const pathname = usePathname();
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
@@ -78,13 +80,27 @@ export function NavLink({ href, icon, label, exact = false, collapsed = false, o
 
         {/* Label */}
         {!collapsed && (
-          <motion.span
-            className="font-semibold text-sm tracking-wide truncate"
-            animate={{ fontFamily: isCyber && isActive ? "var(--font-orbitron)" : "inherit" }}
-            transition={{ duration: 0.3 }}
-          >
-            {label}
-          </motion.span>
+          <div className="flex-1 flex items-center justify-between min-w-0">
+            <motion.span
+              className="font-semibold text-sm tracking-wide truncate"
+              animate={{ fontFamily: isCyber && isActive ? "var(--font-orbitron)" : "inherit" }}
+              transition={{ duration: 0.3 }}
+            >
+              {label}
+            </motion.span>
+            {isLocked && (
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold tracking-wider shrink-0 ml-1.5 ${
+                  isCyber
+                    ? "bg-cyan-950/60 border border-cyan-500/40 text-cyan-400"
+                    : "bg-black text-white"
+                }`}
+                title="Protected Section"
+              >
+                🔒
+              </span>
+            )}
+          </div>
         )}
 
         {/* Cyber glow bg on active */}

@@ -132,7 +132,7 @@ export function TrainingHistoryModal({
                 </div>
               ) : (
                 filtered.map((session) => {
-                  const dayDef = WEEKLY_TRAINING_SCHEDULE.find((d) => d.id === session.dayId);
+                  const dayDef = session.sessionSnapshot || WEEKLY_TRAINING_SCHEDULE.find((d) => d.id === session.dayId);
                   const totalAvailXp = dayDef ? getTotalDayXp(dayDef) : session.xpEarned;
                   const completedCount = session.completedBlocks?.length || 0;
                   const exhaustedCount = session.exhaustedBlocks?.length || 0;

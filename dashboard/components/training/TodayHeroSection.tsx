@@ -17,6 +17,7 @@ interface TodayHeroSectionProps {
   onScrollToTimeline: () => void;
   onSelectToday: () => void;
   onSelectDay?: (dayId: string) => void;
+  onCustomize?: () => void;
 }
 
 export function TodayHeroSection({
@@ -28,6 +29,7 @@ export function TodayHeroSection({
   onScrollToTimeline,
   onSelectToday,
   onSelectDay,
+  onCustomize,
 }: TodayHeroSectionProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
@@ -250,7 +252,7 @@ export function TodayHeroSection({
 
           {/* Primary Action Button */}
           {!day.isRestDay && (
-            <div className="pt-2">
+            <div className="pt-2 flex items-center gap-3 flex-wrap">
               <button
                 type="button"
                 onClick={onScrollToTimeline}
@@ -263,6 +265,21 @@ export function TodayHeroSection({
                 <span>{completedCount > 0 ? "Continue Session" : "Start Guided Timeline"}</span>
                 <span>↓</span>
               </button>
+
+              {onCustomize && (
+                <button
+                  type="button"
+                  onClick={onCustomize}
+                  className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+                    isCyber
+                      ? "bg-slate-900/80 hover:bg-slate-800 text-cyan-300 border border-cyan-500/40 hover:border-cyan-400"
+                      : "bg-white hover:bg-gray-100 text-black border-2 border-black shadow-[3px_3px_0px_#000]"
+                  }`}
+                >
+                  <span>⚙️</span>
+                  <span>Customize Plan</span>
+                </button>
+              )}
             </div>
           )}
         </div>

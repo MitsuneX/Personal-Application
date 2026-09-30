@@ -14,6 +14,7 @@ interface ExerciseDetailModalProps {
   isExhausted: boolean;
   onClose: () => void;
   onToggleState: (blockId: string, targetState: "COMPLETED" | "EXHAUSTED") => void;
+  onStartTimer?: (title: string, duration?: string) => void;
 }
 
 export function ExerciseDetailModal({
@@ -24,6 +25,7 @@ export function ExerciseDetailModal({
   isExhausted,
   onClose,
   onToggleState,
+  onStartTimer,
 }: ExerciseDetailModalProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
@@ -203,13 +205,29 @@ export function ExerciseDetailModal({
                         </span>
                       )}
                       {ex.duration && !ex.reps && (
-                        <span
-                          className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${
-                            isCyber ? "bg-cyan-950 text-cyan-300" : "bg-black text-white"
-                          }`}
-                        >
-                          {ex.duration}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${
+                              isCyber ? "bg-cyan-950 text-cyan-300" : "bg-black text-white"
+                            }`}
+                          >
+                            {ex.duration}
+                          </span>
+                          {onStartTimer && (
+                            <button
+                              type="button"
+                              onClick={() => onStartTimer(ex.name, ex.duration)}
+                              title="Start exercise countdown timer"
+                              className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded transition-all cursor-pointer ${
+                                isCyber
+                                  ? "bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/40"
+                                  : "bg-[#FFE17D] hover:bg-amber-300 text-black border border-black shadow-[1px_1px_0px_#000]"
+                              }`}
+                            >
+                              ⏱️ Timer
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                     {ex.detail && (

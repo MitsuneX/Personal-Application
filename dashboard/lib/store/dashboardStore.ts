@@ -4,7 +4,8 @@ import { INITIAL_DOSSIER_CHARACTERS } from "@/lib/data/initialDossierCharacters"
 import { CoupleEntry, normalizeCoupleJson } from "@/lib/data/coupleSchema";
 import { CreatureEntry, normalizeCreatureJson } from "@/lib/data/creatureSchema";
 import { QuickLaunchShortcut, DEFAULT_QUICK_LAUNCH_SHORTCUTS } from "@/lib/data/guestSeedData";
-export type { QuickLaunchShortcut };
+import { TrainingDay } from "@/lib/data/trainingSchedule";
+export type { QuickLaunchShortcut, TrainingDay };
 
 // ─── Shared Types ─────────────────────────────────────────────────────────────
 
@@ -847,8 +848,26 @@ export interface TrainingSessionEntry {
   xpEarned: number;
   note?: string | null;
   durationMin?: number | null;
+  sessionSnapshot?: any;
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface ContentLockState {
+  enabled: boolean;
+  method: "PIN" | "PASSWORD";
+  protectedScopes: string[];
+  hasHint: boolean;
+  hint?: string | null;
+  isUnlocked: boolean;
+}
+
+export interface SessionTimerState {
+  isRunning: boolean;
+  startedAt: number | null;
+  elapsedSeconds: number;
+  activeSeconds: number;
+  currentDayId: string | null;
 }
 
 export interface NotificationEntry {
@@ -1073,6 +1092,7 @@ interface DashboardState {
 
   // Home Training System Actions
   trainingSessions: TrainingSessionEntry[];
+  customTrainingPlans: Record<string, TrainingDay>;
   saveTrainingSession: (session: {
     dayId: string;
     dateKey: string;
@@ -1082,7 +1102,39 @@ interface DashboardState {
     xpEarned: number;
     note?: string;
     durationMin?: number;
+    sessionSnapshot?: any;
   }) => Promise<TrainingSessionEntry | null>;
+  saveCustomTrainingPlan: (dayId: string, customDay: Partial<TrainingDay>) => Promise<void>;
+  resetCustomTrainingPlan: (dayId: string) => Promise<void>;
+
+  // Training Session Timers
+  sessionTimer: SessionTimerState;
+  startSessionTimer: (dayId: string) => void;
+  pauseSessionTimer: () => void;
+  resumeSessionTimer: () => void;
+  resetSessionTimer: () => void;
+  finishSessionTimer: () => number;
+  tickSessionTimer: () => void;
+
+  // Content Lock Security System
+  contentLock: ContentLockState;
+  fetchContentLockStatus: () => Promise<void>;
+  unlockContent: (credential: string) => Promise<{ success: boolean; error?: string; remainingSeconds?: number }>;
+  lockContent: () => Promise<void>;
+  updateContentLockConfig: (config: {
+    enabled: boolean;
+    method?: "PIN" | "PASSWORD";
+    credential?: string;
+    currentCredential?: string;
+    loginPassword?: string;
+    hint?: string | null;
+    protectedScopes?: string[];
+  }) => Promise<{ success: boolean; error?: string }>;
+  recoverContentLock: (payload: {
+    loginPassword: string;
+    newCredential?: string;
+    newMethod?: "PIN" | "PASSWORD";
+  }) => Promise<{ success: boolean; error?: string }>;
 }
 
 // ─── Seed Data (Fallback) ──────────────────────────────────────────────────────
@@ -1254,6 +1306,22 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   notifications: [],
   profileHistory: [],
   trainingSessions: [],
+  customTrainingPlans: {},
+  sessionTimer: {
+    isRunning: false,
+    startedAt: null,
+    elapsedSeconds: 0,
+    activeSeconds: 0,
+    currentDayId: null,
+  },
+  contentLock: {
+    enabled: false,
+    method: "PIN",
+    protectedScopes: [],
+    hasHint: false,
+    hint: null,
+    isUnlocked: true,
+  },
   isGuest: false,
   requestSequenceId: 0,
   isLoading: false,
@@ -1304,6 +1372,22 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       notifications: [],
       profileHistory: [],
       trainingSessions: [],
+      customTrainingPlans: {},
+      sessionTimer: {
+        isRunning: false,
+        startedAt: null,
+        elapsedSeconds: 0,
+        activeSeconds: 0,
+        currentDayId: null,
+      },
+      contentLock: {
+        enabled: false,
+        method: "PIN",
+        protectedScopes: [],
+        hasHint: false,
+        hint: null,
+        isUnlocked: true,
+      },
       isGuest: false,
     }));
   },
@@ -1408,10 +1492,33 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
               completedBlocks: Array.isArray(s.completedBlocks) ? s.completedBlocks : [],
               exhaustedBlocks: Array.isArray(s.exhaustedBlocks) ? s.exhaustedBlocks : [],
               xpEarned: s.xpEarned ?? 0,
+              sessionSnapshot: s.sessionSnapshot || null,
               createdAt: s.createdAt ?? new Date().toISOString(),
               updatedAt: s.updatedAt ?? new Date().toISOString(),
             }));
           })(),
+          customTrainingPlans: (() => {
+            if (data.isGuest) {
+              if (typeof window !== "undefined") {
+                try {
+                  const stored = localStorage.getItem("guest_custom_training_plans");
+                  if (stored) return JSON.parse(stored);
+                } catch {}
+              }
+              return {};
+            }
+            return data.customTrainingPlans || {};
+          })(),
+          contentLock: data.contentLock
+            ? {
+                enabled: Boolean(data.contentLock.enabled),
+                method: data.contentLock.method || "PIN",
+                protectedScopes: Array.isArray(data.contentLock.protectedScopes) ? data.contentLock.protectedScopes : [],
+                hasHint: Boolean(data.contentLock.hasHint),
+                hint: data.contentLock.hint || null,
+                isUnlocked: data.contentLock.isUnlocked ?? true,
+              }
+            : get().contentLock,
           isHydrated: true,
           fetchError: null,
         });
@@ -3356,6 +3463,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         xpEarned: payload.xpEarned !== undefined ? payload.xpEarned : existing.xpEarned,
         note: payload.note !== undefined ? payload.note : existing.note,
         durationMin: payload.durationMin !== undefined ? payload.durationMin : existing.durationMin,
+        sessionSnapshot: payload.sessionSnapshot !== undefined ? payload.sessionSnapshot : existing.sessionSnapshot,
         updatedAt: nowIso,
       };
       set((s) => ({
@@ -3375,6 +3483,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         xpEarned: payload.xpEarned || 0,
         note: payload.note || null,
         durationMin: payload.durationMin || null,
+        sessionSnapshot: payload.sessionSnapshot || null,
         createdAt: nowIso,
         updatedAt: nowIso,
       };
@@ -3404,6 +3513,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           ...data.data,
           completedBlocks: Array.isArray(data.data.completedBlocks) ? data.data.completedBlocks : [],
           exhaustedBlocks: Array.isArray(data.data.exhaustedBlocks) ? data.data.exhaustedBlocks : [],
+          sessionSnapshot: data.data.sessionSnapshot || sessionRecord.sessionSnapshot || null,
           createdAt: data.data.createdAt ? String(data.data.createdAt) : nowIso,
           updatedAt: data.data.updatedAt ? String(data.data.updatedAt) : nowIso,
         };
@@ -3418,6 +3528,255 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       console.error("Failed to persist training session:", err);
     }
     return sessionRecord;
+  },
+
+  saveCustomTrainingPlan: async (dayId, customDay) => {
+    const isGuest = get().isGuest;
+    const current = get().customTrainingPlans;
+    const updated = {
+      ...current,
+      [dayId]: {
+        ...(current[dayId] || {}),
+        ...customDay,
+        id: dayId,
+      } as TrainingDay,
+    };
+    set({ customTrainingPlans: updated });
+
+    if (isGuest) {
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("guest_custom_training_plans", JSON.stringify(updated));
+        } catch {}
+      }
+      return;
+    }
+
+    try {
+      await fetch("/api/action/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "SAVE_CUSTOM_TRAINING_PLAN",
+          payload: { dayId, customPlan: updated[dayId] },
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to persist custom training plan:", err);
+    }
+  },
+
+  resetCustomTrainingPlan: async (dayId) => {
+    const isGuest = get().isGuest;
+    const current = { ...get().customTrainingPlans };
+    delete current[dayId];
+    set({ customTrainingPlans: current });
+
+    if (isGuest) {
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("guest_custom_training_plans", JSON.stringify(current));
+        } catch {}
+      }
+      return;
+    }
+
+    try {
+      await fetch("/api/action/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "RESET_CUSTOM_TRAINING_PLAN",
+          payload: { dayId },
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to reset custom training plan:", err);
+    }
+  },
+
+  startSessionTimer: (dayId) => {
+    const now = Date.now();
+    set((s) => ({
+      sessionTimer: {
+        isRunning: true,
+        startedAt: s.sessionTimer.startedAt || now,
+        elapsedSeconds: s.sessionTimer.currentDayId === dayId ? s.sessionTimer.elapsedSeconds : 0,
+        activeSeconds: s.sessionTimer.currentDayId === dayId ? s.sessionTimer.activeSeconds : 0,
+        currentDayId: dayId,
+      },
+    }));
+  },
+
+  pauseSessionTimer: () => {
+    set((s) => ({
+      sessionTimer: {
+        ...s.sessionTimer,
+        isRunning: false,
+      },
+    }));
+  },
+
+  resumeSessionTimer: () => {
+    set((s) => ({
+      sessionTimer: {
+        ...s.sessionTimer,
+        isRunning: true,
+        startedAt: s.sessionTimer.startedAt || Date.now(),
+      },
+    }));
+  },
+
+  resetSessionTimer: () => {
+    set({
+      sessionTimer: {
+        isRunning: false,
+        startedAt: null,
+        elapsedSeconds: 0,
+        activeSeconds: 0,
+        currentDayId: null,
+      },
+    });
+  },
+
+  finishSessionTimer: () => {
+    const elapsed = get().sessionTimer.elapsedSeconds;
+    set({
+      sessionTimer: {
+        isRunning: false,
+        startedAt: null,
+        elapsedSeconds: 0,
+        activeSeconds: 0,
+        currentDayId: null,
+      },
+    });
+    return elapsed;
+  },
+
+  tickSessionTimer: () => {
+    const timer = get().sessionTimer;
+    if (!timer.isRunning) return;
+    set((s) => ({
+      sessionTimer: {
+        ...s.sessionTimer,
+        elapsedSeconds: s.sessionTimer.elapsedSeconds + 1,
+        activeSeconds: s.sessionTimer.activeSeconds + 1,
+      },
+    }));
+  },
+
+  fetchContentLockStatus: async () => {
+    try {
+      const res = await fetch("/api/auth/content-lock/");
+      if (res.ok) {
+        const data = await res.json();
+        set({
+          contentLock: {
+            enabled: Boolean(data.enabled),
+            method: data.method || "PIN",
+            protectedScopes: Array.isArray(data.protectedScopes) ? data.protectedScopes : [],
+            hasHint: Boolean(data.hasHint),
+            hint: data.hint || null,
+            isUnlocked: data.isUnlocked ?? true,
+          },
+        });
+      }
+    } catch (err) {
+      console.error("Failed to fetch content lock status:", err);
+    }
+  },
+
+  unlockContent: async (credential: string) => {
+    try {
+      const res = await fetch("/api/auth/content-lock/verify/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        set((s) => ({
+          contentLock: {
+            ...s.contentLock,
+            isUnlocked: true,
+          },
+        }));
+        return { success: true };
+      }
+      return {
+        success: false,
+        error: data.error || "Invalid credential",
+        remainingSeconds: data.remainingSeconds,
+      };
+    } catch (err: any) {
+      return { success: false, error: err.message || "Failed to unlock" };
+    }
+  },
+
+  lockContent: async () => {
+    try {
+      await fetch("/api/auth/content-lock/lock/", { method: "POST" });
+    } catch {}
+    set((s) => ({
+      contentLock: {
+        ...s.contentLock,
+        isUnlocked: false,
+      },
+    }));
+  },
+
+  updateContentLockConfig: async (config) => {
+    try {
+      const res = await fetch("/api/auth/content-lock/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(config),
+      });
+      const data = await res.json();
+      if (data.success && data.contentLock) {
+        set({
+          contentLock: {
+            enabled: Boolean(data.contentLock.enabled),
+            method: data.contentLock.method || "PIN",
+            protectedScopes: Array.isArray(data.contentLock.protectedScopes) ? data.contentLock.protectedScopes : [],
+            hasHint: Boolean(data.contentLock.hasHint),
+            hint: data.contentLock.hint || null,
+            isUnlocked: data.contentLock.isUnlocked ?? true,
+          },
+        });
+        return { success: true };
+      }
+      return { success: false, error: data.error || "Failed to update content lock" };
+    } catch (err: any) {
+      return { success: false, error: err.message || "Failed to update content lock" };
+    }
+  },
+
+  recoverContentLock: async (payload) => {
+    try {
+      const res = await fetch("/api/auth/content-lock/recover/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success && data.contentLock) {
+        set({
+          contentLock: {
+            enabled: Boolean(data.contentLock.enabled),
+            method: data.contentLock.method || "PIN",
+            protectedScopes: Array.isArray(data.contentLock.protectedScopes) ? data.contentLock.protectedScopes : [],
+            hasHint: Boolean(data.contentLock.hasHint),
+            hint: data.contentLock.hint || null,
+            isUnlocked: true,
+          },
+        });
+        return { success: true };
+      }
+      return { success: false, error: data.error || "Failed to recover content lock" };
+    } catch (err: any) {
+      return { success: false, error: err.message || "Failed to recover content lock" };
+    }
   },
 
   // ─── Profile Aesthetics Actions ──────────────────────────────────────────────

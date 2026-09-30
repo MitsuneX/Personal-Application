@@ -17,6 +17,9 @@ import { SundayRestExperience } from "@/components/training/SundayRestExperience
 import { RecentTrainingStrip } from "@/components/training/RecentTrainingStrip";
 import { TrainingConsistencyStrip } from "@/components/training/TrainingConsistencyStrip";
 import { TrainingQuoteRibbon } from "@/components/training/TrainingQuoteRibbon";
+import { SessionTimerWidget } from "@/components/training/SessionTimerWidget";
+import { ExerciseTimerModal } from "@/components/training/ExerciseTimerModal";
+import { TrainingCustomizerModal } from "@/components/training/TrainingCustomizerModal";
 
 export default function HomeTrainingPage() {
   const { theme } = useTheme();
@@ -26,6 +29,9 @@ export default function HomeTrainingPage() {
     trainingSessions,
     saveTrainingSession,
     hobbySkills,
+    customTrainingPlans,
+    saveCustomTrainingPlan,
+    resetCustomTrainingPlan,
   } = useDashboardStore();
 
   const todayDay = useMemo(() => getTodayTrainingDay(), []);
@@ -33,19 +39,56 @@ export default function HomeTrainingPage() {
 
   const [selectedDayId, setSelectedDayId] = useState<string>(todayDay.id);
 
-  const selectedDay = useMemo(() => {
+  // Modals state
+  const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
+  const [timerModal, setTimerModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    subtitle?: string;
+    initialSeconds: number;
+  }>({
+    isOpen: false,
+    title: "",
+    initialSeconds: 45,
+  });
+
+  // Session-only override state for temporary today adjustments
+  const [sessionOnlyOverrides, setSessionOnlyOverrides] = useState<Record<string, TrainingDay>>({});
+
+  // Canonical baseline day
+  const canonicalDay = useMemo(() => {
     return (
       WEEKLY_TRAINING_SCHEDULE.find((d) => d.id === selectedDayId) || todayDay
     );
   }, [selectedDayId, todayDay]);
 
+  const isDayCustomized = Boolean(
+    customTrainingPlans[selectedDayId] || sessionOnlyOverrides[selectedDayId]
+  );
+
+  // Effective Day: Session-only override > Saved custom plan > Canonical schedule
+  const effectiveDay: TrainingDay = useMemo(() => {
+    if (sessionOnlyOverrides[selectedDayId]) {
+      return sessionOnlyOverrides[selectedDayId];
+    }
+    const custom = customTrainingPlans[selectedDayId];
+    if (custom && custom.blocks && custom.blocks.length > 0) {
+      return {
+        ...canonicalDay,
+        ...custom,
+        blocks: custom.blocks,
+      };
+    }
+    return canonicalDay;
+  }, [selectedDayId, sessionOnlyOverrides, customTrainingPlans, canonicalDay]);
+
   // Find session for the selected day — prefer today's dateKey if selected day is today, or most recent session for that day
   const currentSession = useMemo(() => {
-    if (selectedDay.id === todayDay.id) {
+    if (effectiveDay.id === todayDay.id) {
       return trainingSessions.find((s) => s.dateKey === todayDateKey);
     }
-    return trainingSessions.find((s) => s.dayId === selectedDay.id);
-  }, [trainingSessions, selectedDay.id, todayDay.id, todayDateKey]);
+    return trainingSessions.find((s) => s.dayId === effectiveDay.id);
+  }, [trainingSessions, effectiveDay.id, todayDay.id, todayDateKey]);
 
   // Smooth scroll down to timeline
   const handleScrollToTimeline = useCallback(() => {
@@ -62,8 +105,7 @@ export default function HomeTrainingPage() {
       blockId: string,
       newState: "PENDING" | "COMPLETED" | "EXHAUSTED"
     ) => {
-      const targetDay =
-        WEEKLY_TRAINING_SCHEDULE.find((d) => d.id === dayId) || selectedDay;
+      const targetDay = effectiveDay;
 
       const existingCompleted = currentSession?.completedBlocks || [];
       const existingExhausted = currentSession?.exhaustedBlocks || [];
@@ -83,10 +125,10 @@ export default function HomeTrainingPage() {
         nextExhausted = nextExhausted.filter((id) => id !== blockId);
       }
 
-      // Idempotent XP calculation from canonical schedule
+      // Idempotent XP calculation from active schedule
       const xpEarned = targetDay.blocks
         .filter((b) => nextCompleted.includes(b.id))
-        .reduce((sum, b) => sum + b.xp, 0);
+        .reduce((sum, b) => sum + (b.xp || 0), 0);
 
       // Determine day status
       const requiredBlocks = targetDay.blocks.filter((b) => b.required);
@@ -109,10 +151,11 @@ export default function HomeTrainingPage() {
       }
 
       const dateKey =
-        selectedDay.id === todayDay.id
+        effectiveDay.id === todayDay.id
           ? todayDateKey
           : currentSession?.dateKey || todayDateKey;
 
+      // Save training session with historical snapshot of the exact routine at this time
       await saveTrainingSession({
         dayId: targetDay.id,
         dateKey,
@@ -120,10 +163,71 @@ export default function HomeTrainingPage() {
         completedBlocks: nextCompleted,
         exhaustedBlocks: nextExhausted,
         xpEarned,
+        sessionSnapshot: targetDay,
       });
     },
-    [selectedDay, currentSession, todayDay.id, todayDateKey, saveTrainingSession]
+    [effectiveDay, currentSession, todayDay.id, todayDateKey, saveTrainingSession]
   );
+
+  const handleStartTimer = (title: string, duration?: string) => {
+    let secs = 45;
+    if (duration) {
+      const minM = duration.match(/(\d+)\s*(?:min|minute)/i);
+      if (minM) secs = parseInt(minM[1], 10) * 60;
+      const secM = duration.match(/(\d+)\s*(?:sec|second|s\b)/i);
+      if (secM) secs = parseInt(secM[1], 10);
+    }
+    setTimerModal({
+      isOpen: true,
+      title,
+      subtitle: duration ? `Target: ${duration}` : undefined,
+      initialSeconds: secs,
+    });
+  };
+
+  const handleSaveCustomPlan = async (customDay: TrainingDay, isSessionOnly: boolean) => {
+    if (isSessionOnly) {
+      setSessionOnlyOverrides((prev) => ({
+        ...prev,
+        [customDay.id]: customDay,
+      }));
+    } else {
+      // Clear session-only override if user saves as permanent
+      setSessionOnlyOverrides((prev) => {
+        const next = { ...prev };
+        delete next[customDay.id];
+        return next;
+      });
+      await saveCustomTrainingPlan(customDay.id, customDay);
+    }
+  };
+
+  const handleResetCustomPlan = async () => {
+    setSessionOnlyOverrides((prev) => {
+      const next = { ...prev };
+      delete next[selectedDayId];
+      return next;
+    });
+    await resetCustomTrainingPlan(selectedDayId);
+  };
+
+  const handleFinishSessionWithDuration = async (durationMin: number) => {
+    const dateKey =
+      effectiveDay.id === todayDay.id
+        ? todayDateKey
+        : currentSession?.dateKey || todayDateKey;
+
+    await saveTrainingSession({
+      dayId: effectiveDay.id,
+      dateKey,
+      status: currentSession?.status || "IN_PROGRESS",
+      completedBlocks: currentSession?.completedBlocks || [],
+      exhaustedBlocks: currentSession?.exhaustedBlocks || [],
+      xpEarned: currentSession?.xpEarned || 0,
+      durationMin,
+      sessionSnapshot: effectiveDay,
+    });
+  };
 
   return (
     <AppShell>
@@ -155,8 +259,41 @@ export default function HomeTrainingPage() {
             </p>
           </div>
 
-          {/* Current Date & Active Streak Context */}
-          <div className="flex items-center gap-2 text-xs">
+          {/* Header Action Tools */}
+          <div className="flex items-center gap-2.5 flex-wrap text-xs">
+            <button
+              type="button"
+              onClick={() =>
+                setTimerModal({
+                  isOpen: true,
+                  title: "Custom Activity Timer",
+                  subtitle: "Deep Stretch / Extra Conditioning",
+                  initialSeconds: 300,
+                })
+              }
+              className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+                isCyber
+                  ? "bg-slate-900 border border-slate-700 text-cyan-300 hover:border-cyan-400"
+                  : "bg-white border-2 border-black text-black shadow-[2px_2px_0px_#000]"
+              }`}
+            >
+              <span>⏱️</span>
+              <span>+ Custom Timer</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsCustomizerOpen(true)}
+              className={`px-3.5 py-1.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+                isCyber
+                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 hover:bg-cyan-500/30"
+                  : "bg-[#FFE17D] hover:bg-amber-300 text-black border-2 border-black shadow-[2px_2px_0px_#000]"
+              }`}
+            >
+              <span>⚙️</span>
+              <span>Customize Training</span>
+            </button>
+
             <span
               className={`px-3 py-1 rounded-xl font-bold font-mono ${
                 isCyber
@@ -169,9 +306,16 @@ export default function HomeTrainingPage() {
           </div>
         </div>
 
+        {/* Global Live Session Timer Widget */}
+        <SessionTimerWidget
+          day={effectiveDay}
+          todayDateKey={todayDateKey}
+          onFinishSession={handleFinishSessionWithDuration}
+        />
+
         {/* 2. Today's Training Hero + Progress Panel */}
         <TodayHeroSection
-          day={selectedDay}
+          day={effectiveDay}
           todayDay={todayDay}
           todayDateKey={todayDateKey}
           currentSession={currentSession}
@@ -179,6 +323,7 @@ export default function HomeTrainingPage() {
           onScrollToTimeline={handleScrollToTimeline}
           onSelectToday={() => setSelectedDayId(todayDay.id)}
           onSelectDay={(dayId) => setSelectedDayId(dayId)}
+          onCustomize={() => setIsCustomizerOpen(true)}
         />
 
         {/* 3. Weekly Training Rail (Navigation) */}
@@ -190,13 +335,14 @@ export default function HomeTrainingPage() {
         />
 
         {/* 4. Active Session Display: Guided Timeline or Sunday Rest Experience */}
-        {selectedDay.isRestDay ? (
-          <SundayRestExperience day={selectedDay} />
+        {effectiveDay.isRestDay ? (
+          <SundayRestExperience day={effectiveDay} />
         ) : (
           <SessionTimelineView
-            day={selectedDay}
+            day={effectiveDay}
             currentSession={currentSession}
             onUpdateBlockState={handleUpdateBlockState}
+            onStartTimer={handleStartTimer}
           />
         )}
 
@@ -214,6 +360,27 @@ export default function HomeTrainingPage() {
           <TrainingQuoteRibbon />
         </div>
       </div>
+
+      {/* Training Customizer Modal */}
+      <TrainingCustomizerModal
+        isOpen={isCustomizerOpen}
+        onClose={() => setIsCustomizerOpen(false)}
+        day={effectiveDay}
+        canonicalDay={canonicalDay}
+        isCustomized={isDayCustomized}
+        onSavePlan={handleSaveCustomPlan}
+        onResetToDefault={handleResetCustomPlan}
+      />
+
+      {/* Individual Exercise / Custom Timer Modal */}
+      <ExerciseTimerModal
+        isOpen={timerModal.isOpen}
+        onClose={() => setTimerModal({ ...timerModal, isOpen: false })}
+        title={timerModal.title}
+        subtitle={timerModal.subtitle}
+        initialSeconds={timerModal.initialSeconds}
+      />
     </AppShell>
   );
 }
+

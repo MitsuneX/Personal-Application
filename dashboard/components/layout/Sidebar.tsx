@@ -10,6 +10,7 @@ import { ProfileEditorModal } from "@/components/ui/ProfileEditorModal";
 import { FloatingPopover } from "@/components/ui/FloatingPopover";
 import { ProfilePopoutCard } from "@/components/profile/ProfilePopoutCard";
 import { AestheticsModal } from "@/components/ui/AestheticsModal";
+import { getProtectedScopeForPath } from "@/components/security/ContentLockConstants";
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -120,7 +121,7 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
   const [aestheticsOpen, setAestheticsOpen] = useState(false);
   const router = useRouter();
 
-  const { profile } = useDashboardStore();
+  const { profile, contentLock } = useDashboardStore();
   const avatar = profile.avatar || "/avatar.png";
   const isDramaActive = pathname.startsWith("/drama");
 
@@ -384,6 +385,11 @@ export function Sidebar({ collapsed = false, onClose, isMobileDrawer = false, on
                         collapsed={collapsed}
                         onClick={onClose}
                         activePrefixes={"activePrefixes" in item ? (item as any).activePrefixes : undefined}
+                        isLocked={Boolean(
+                          contentLock.enabled &&
+                          !contentLock.isUnlocked &&
+                          getProtectedScopeForPath(item.href, contentLock.protectedScopes)
+                        )}
                       />
                     )}
                   </div>
