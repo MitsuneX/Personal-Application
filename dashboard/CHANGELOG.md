@@ -20,10 +20,14 @@ All notable changes to the Nexus Xenon Personal Dashboard project will be docume
 - Added `sessionSnapshot` (`JSONB`) to `TrainingSession`, capturing an exact snapshot of the effective routine at session completion.
 - Decouples historical logs from future routine adjustments, ensuring workout archive entries remain permanent and accurate.
 
-**4. Responsive 2-Column Profile Settings Grid (`app/profile/page.tsx`)**
-- Reorganized the Profile configuration page from a narrow single column with excessive vertical whitespace into an expansive responsive desktop layout (`lg:grid-cols-12`).
-- Left column (`lg:col-span-5 xl:col-span-4`): Sticky live profile card preview, avatar upload/crop, level progression, and session management.
-- Right column (`lg:col-span-7 xl:col-span-8`): Structured configuration matrix preserving 100% of existing profile and account settings.
+**4. 5-Zone Full-Width Profile Control Center Workspace (`app/profile/page.tsx`, `components/cards/ProfileCard.tsx`)**
+- Rebuilt the Profile page into an expansive full-width Personal Profile Control Center structured across 5 major functional zones:
+  - **Zone 1 — Identity Workspace**: Interactive 3D Live Card Preview with real-time draft state updates, alongside a direct avatar upload/cropper/history restore bar on the left, paired with Core Profile Details (Name, Status Tier, Tagline, Location, Bio, Phone, MBTI, Zodiac, and custom frame selectors) on the right without card-in-card nesting.
+  - **Zone 2 — Activity, RPG & Appearance**: Expansive `GamifiedStatsWidget` displaying combat level, vitality pools, and live activity streams, paired with Appearance & Visual Theme settings (theme mode toggle, hero style, background animation, and custom accent palette).
+  - **Zone 3 — Personalization & Showcase**: World name customization, access routing modes, public privacy checkboxes, and interactive 8-module showcase catalog.
+  - **Zone 4 — Account Credentials & Security Matrix**: Primary username, verified email address, email relinking modal, session sign out, and embedded Content Security shield with PIN/password protection and rate-limiting lockout with zero text wrapping.
+  - **Zone 5 — Social Presence & Skills Matrix**: Tech stack input with live rendered badge preview and linked social platform accounts.
+  - **Docked Action Bar**: Sticky bottom bar providing instant landing preview and unified save controls.
 
 **5. Content Lock Security System (`components/security/*`, `lib/security/*`, `app/api/auth/content-lock/*`)**
 - Multi-module security shield protecting sensitive sections (`Notepad`, `Characters`, `Games`, `Favourites`, `Misc`).

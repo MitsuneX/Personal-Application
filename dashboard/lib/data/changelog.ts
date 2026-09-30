@@ -33,7 +33,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
       {
         name: "UI & Aesthetics",
         items: [
-          "📐 Responsive 2-Column Profile Layout (app/profile/page.tsx): Re-engineered profile settings from a narrow single column with excessive vertical whitespace into an expansive responsive desktop grid (lg:grid-cols-12) featuring a sticky Live Card Preview on the left and a structured configuration matrix on the right, preserving 100% of existing settings and controls.",
+          "📐 5-Zone Full-Width Profile Control Center Workspace (app/profile/page.tsx, components/cards/ProfileCard.tsx): Rebuilt the Profile page into an expansive full-width Personal Profile Control Center structured across 5 major functional zones (Zone 1: Identity Workspace with interactive 3D Live Card Preview & adjacent avatar engine; Zone 2: Activity / RPG Progression & Visual Themes; Zone 3: Personalization & Public Showcase; Zone 4: Account Credentials & Embedded Content Security Shield; Zone 5: Tech Stack Badges & Connected Socials) with zero card-in-card nesting, natural fluid desktop grid, reactive draft card preview, and a docked bottom action bar.",
           "🔐 Content Security & Locks Profile Card (components/security/ContentLockSettingsCard.tsx): Elevated management card on the Profile page with real-time security status, protected areas summary, manual lock toggling, and interactive modal configuration.",
           "💎 Dual-Theme Aesthetic Parity: All new modals, timers, keypads, and layout surfaces crafted with bespoke styling, shadows, and contrast for both Cyberpunk neon glow and Neo-Brutalism high-contrast palettes.",
         ],

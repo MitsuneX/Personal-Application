@@ -4,7 +4,7 @@ import React, { useRef, useMemo } from "react";
 import { motion, useMotionValue, useSpring, useTransform, type TargetAndTransition } from "framer-motion";
 import { BentoCard } from "./BentoCard";
 import { useTheme } from "@/lib/theme";
-import { useDashboardStore } from "@/lib/store/dashboardStore";
+import { useDashboardStore, type ProfileData } from "@/lib/store/dashboardStore";
 import { listContainerVariants, listItemVariants } from "@/lib/theme/motionVariants";
 
 import Link from "next/link";
@@ -331,12 +331,14 @@ const nameLetterVariants = {
 export interface ProfileCardProps {
   compact?: boolean;
   className?: string;
+  draftProfile?: Partial<ProfileData>;
 }
 
-export function ProfileCard({ compact = false, className = "" }: ProfileCardProps) {
+export function ProfileCard({ compact = false, className = "", draftProfile }: ProfileCardProps) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
-  const profile = useDashboardStore((s) => s.profile);
+  const storeProfile = useDashboardStore((s) => s.profile);
+  const profile = useMemo(() => ({ ...storeProfile, ...draftProfile }), [storeProfile, draftProfile]);
   const status = STATUS_CONFIG[profile.status] || STATUS_CONFIG.online;
 
   // Load Custom Border config

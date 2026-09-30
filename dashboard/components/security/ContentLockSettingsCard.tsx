@@ -7,7 +7,11 @@ import { useDashboardStore } from "@/lib/store/dashboardStore";
 import { PROTECTED_SCOPES } from "./ContentLockConstants";
 import { useToast } from "@/components/ui/ToastProvider";
 
-export function ContentLockSettingsCard() {
+export interface ContentLockSettingsCardProps {
+  embedded?: boolean;
+}
+
+export function ContentLockSettingsCard({ embedded = false }: ContentLockSettingsCardProps = {}) {
   const { theme } = useTheme();
   const isCyber = theme === "cyber";
   const { contentLock, updateContentLockConfig, lockContent, unlockContent } = useDashboardStore();
@@ -158,8 +162,8 @@ export function ContentLockSettingsCard() {
   return (
     <>
       <div
-        className="p-6 rounded-2xl border-adaptive-unique relative overflow-hidden transition-all duration-200"
-        style={{
+        className={embedded ? "space-y-4" : "p-6 rounded-2xl border-adaptive-unique relative overflow-hidden transition-all duration-200"}
+        style={embedded ? {} : {
           backgroundColor: isCyber ? "rgba(10,15,44,0.6)" : "#FFFFFF",
           boxShadow: isCyber ? "none" : "4px 4px 0px 0px #000000",
         }}
